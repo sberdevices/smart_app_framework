@@ -1,0 +1,26 @@
+{
+  "test_case_1": {
+    "user": {},
+    "messages": [
+      {
+        "request": {
+          "payload": {
+            "message": {},
+            "intent": "hello_scenario"
+          }
+        },
+        "response": {
+          "user": {},
+          "messages": [
+            {
+              "message_name": "ANSWER_TO_USER",
+              "payload": {
+                "pronounceText": "Привет  \"local_testing_1\"!"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

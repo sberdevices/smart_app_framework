@@ -1,0 +1,54 @@
+---
+loggers:
+  app_logger:
+    handlers:
+      - console_app_handler
+      - file_app_handler
+    propagate: false
+    level: DEBUG
+  system_logger:
+    handlers:
+      - console_handler
+      - file_handler
+    propagate: false
+    level: DEBUG
+version: 1
+root:
+  handlers:
+    - console_handler
+  level: INFO
+handlers:
+  file_app_handler:
+    backupCount: 30
+    encoding: utf-8
+    filename: "/tmp/app.log"
+    formatter: file_json_formatter
+    class: logging.handlers.RotatingFileHandler
+    maxBytes: 15728640
+  console_app_handler:
+    formatter: console_app_formatter
+    class: logging.StreamHandler
+    stream: ext://sys.stdout
+  file_handler:
+    backupCount: 30
+    encoding: utf-8
+    filename: "/tmp/system.log"
+    formatter: file_json_formatter
+    class: logging.handlers.RotatingFileHandler
+    maxBytes: 15728640
+  console_handler:
+    formatter: console_simple_formatter
+    class: logging.StreamHandler
+    stream: ext://sys.stdout
+formatters:
+  file_json_formatter:
+    "()": smart_kit.utils.logger_writer.logger_formatter.SmartKitJsonFormatter
+    json_ensure_ascii: false
+    format: "%(created)f %(msecs)d %(relativeCreated)d %(levelname)s %(name)s %(asctime)s
+      %(module)s  %(message)s"
+  console_app_formatter:
+    style: "{"
+    format: "[{levelname}] {name} {asctime} {module} {args[uid]} {args[message_id]}
+      {args[logging_uuid]} {args[class_name]}: {message}"
+  console_simple_formatter:
+    format: "[%(levelname)s] %(name)s %(asctime)s %(module)s: %(message)s"

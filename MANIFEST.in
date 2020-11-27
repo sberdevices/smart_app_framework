@@ -1,0 +1,3 @@
+recursive-include smart_kit/template/ *.py-tpl
+recursive-include smart_kit/template/static/ *.json
+recursive-include smart_kit/template/static/ *.yml

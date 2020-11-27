@@ -1,0 +1,10 @@
+{
+  "run_app": {
+    "actions": [
+      {
+        "type": "run_scenario",
+        "scenario": "hello_scenario"
+      }
+    ]
+  }
+}

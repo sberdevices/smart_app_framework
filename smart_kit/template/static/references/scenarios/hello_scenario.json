@@ -1,0 +1,16 @@
+{
+  "hello_scenario": {
+    "type": "form_filling",
+    "form": "hello_form",
+    "actions": [
+      {
+        "type": "string",
+        "command": "ANSWER_TO_USER",
+        "nodes": {
+          "pronounceText": "Привет  {{main_form.name}}!"
+        }
+      }
+    ],
+    "scenario_description": "hello_scenario"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "exception_action": {
+    "command": "ANSWER_TO_USER",
+    "nodes": {
+      "answer": [
+        [
+          "Произошёл технический сбой, извините. Давайте попробуем ещё раз?"
+        ]
+      ]
+    }
+  },
+  "process_behavior_action": {
+    "type": "process_behavior"
+  }
+}

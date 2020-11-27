@@ -1,0 +1,25 @@
+{
+  "hello_form": {
+    "fields": {
+      "name": {
+        "required": true,
+        "questions": [
+          {
+            "type": "string",
+            "command": "ANSWER_TO_USER",
+            "nodes": {
+              "answer": [
+                [
+                  "Какой твой  userID?"
+                ]
+              ]
+            }
+          }
+        ],
+        "filler": {
+          "type": "user_id"
+        }
+      }
+    }
+  }
+}

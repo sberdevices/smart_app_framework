@@ -1,0 +1,16 @@
+{
+  "common_behavior": {
+    "timeout": 4,
+    "success_action": {
+      "type": "run_last_scenario"
+    },
+    "fail_action": {
+      "type": "external",
+      "action": "exception_reset_scenario"
+    },
+    "timeout_action": {
+      "type": "external",
+      "action": "timeout_reset_scenario"
+    }
+  }
+}

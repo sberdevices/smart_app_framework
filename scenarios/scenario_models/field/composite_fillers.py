@@ -1,4 +1,4 @@
-from typing import Optional, Union, List, Dict
+from typing import Optional, Union, List, Dict, Any
 
 from lazy import lazy
 
@@ -14,6 +14,10 @@ from scenarios.user.user_model import User
 
 
 class RequirementFiller(RequirementAction):
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
+        super(RequirementFiller, self).__init__(items, id)
+        self._item = items["filler"]
 
     @lazy
     @factory(FieldFillerDescription)
@@ -32,6 +36,11 @@ class RequirementFiller(RequirementAction):
 
 
 class ChoiceFiller(ChoiceAction):
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
+        super(ChoiceFiller, self).__init__(items, id)
+        self._requirement_items = items["requirement_fillers"]
+        self._else_item = items.get("else_filler")
+
     @lazy
     @list_factory(RequirementFiller)
     def items(self):
@@ -40,7 +49,7 @@ class ChoiceFiller(ChoiceAction):
     @lazy
     @factory(FieldFillerDescription)
     def else_item(self):
-        return self._else_action
+        return self._else_item
 
     def on_extract_error(self, text_preprocessing_result, user):
         log("exc_handler: ChoiceFiller failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value),
@@ -55,6 +64,11 @@ class ChoiceFiller(ChoiceAction):
 
 
 class ElseFiller(ElseAction):
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
+        super(ElseFiller, self).__init__(items, id)
+        self._item = items["filler"]
+        self._else_item = items.get("else_filler")
+
     @lazy
     @factory(FieldFillerDescription)
     def item(self):

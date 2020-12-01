@@ -1,23 +1,203 @@
 {
   "hello_form": {
     "fields": {
-      "name": {
+      "person": {
         "required": true,
         "questions": [
           {
             "type": "string",
             "command": "ANSWER_TO_USER",
             "nodes": {
-              "answer": [
-                [
-                  "Какой твой  userID?"
-                ]
+              "pronounceText": "Как тебя зовут?",
+              "items": [
+                {
+                  "bubble": {
+                    "text": "Как тебя зовут?"
+                  }
+                }
               ]
             }
           }
         ],
         "filler": {
-          "type": "user_id"
+          "type": "get_first_person"
+        },
+        "on_filled_actions": [
+          {
+            "type": "string",
+            "command": "ANSWER_TO_USER",
+            "nodes": {
+              "pronounceText": "Привет, {{main_form.person.name}}!",
+              "items": [
+                {
+                  "bubble": {
+                    "text": "Привет, {{main_form.person.name|title}}!"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "experience": {
+        "required": true,
+        "questions": [
+          {
+            "type": "string",
+            "command": "ANSWER_TO_USER",
+            "nodes": {
+              "pronounceText": "Сколько лет ты программируешь на Python?",
+              "items": [
+                {
+                  "bubble": {
+                    "text": "Сколько лет ты программируешь на Python?"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "filler": {
+          "type": "number_first"
+        },
+        "on_filled_actions": [
+          {
+            "type": "else",
+            "requirement": {
+              "type": "template",
+              "template": "{{main_form.experience >= 2}}"
+            },
+            "action": {
+              "type": "string",
+              "command": "ANSWER_TO_USER",
+              "nodes": {
+                "pronounceText": "Ах, приятно знать что ты в опытных руках!",
+                "items": [
+                  {
+                    "bubble": {
+                      "text": "Ах, приятно знать что ты в опытных руках!"
+                    }
+                  }
+                ]
+              }
+            },
+            "else_action": {
+              "type": "string",
+              "command": "ANSWER_TO_USER",
+              "nodes": {
+                "pronounceText": "Мне будет приятно учиться новому вместе с тобой!",
+                "items": [
+                  {
+                    "bubble": {
+                      "text": "Мне будет приятно учиться новому вместе с тобой!"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "tell_me_more": {
+        "required": true,
+        "questions": [
+          {
+            "type": "string",
+            "command": "ANSWER_TO_USER",
+            "nodes": {
+              "pronounceText": "Хочешь я тебе расскажу о том, что умею?",
+              "items": [
+                {
+                  "bubble": {
+                    "text": "Хочешь я тебе расскажу о том, что умею?"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "filler": {
+          "type": "intersection",
+          "cases": {
+            "да": [
+              "да"
+            ],
+            "нет": [
+              "нет"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "emotion_form": {
+    "fields": {
+      "emotion": {
+        "required": true,
+        "questions": [
+          {
+            "type": "string",
+            "command": "ANSWER_TO_USER",
+            "nodes": {
+              "pronounceText": "Я могу предложить пользователю несколько готовых вариантов на выбор. Например, выбери эмоцию!",
+              "items": [
+                {
+                  "bubble": {
+                    "text": "Я могу предложить пользователю несколько готовых вариантов на выбор. Например, выбери эмоцию!"
+                  }
+                }
+              ],
+              "suggestions": {
+                "buttons": [
+                  {
+                    "title": "Беспокойство",
+                    "action": {
+                      "text": "Беспокойство",
+                      "type": "text"
+                    }
+                  },
+                  {
+                    "title": "Смущение",
+                    "action": {
+                      "text": "Смущение",
+                      "type": "text"
+                    }
+                  },
+                  {
+                    "title": "Одобрение",
+                    "action": {
+                      "text": "Одобрение",
+                      "type": "text"
+                    }
+                  },
+                  {
+                    "title": "Предвкушение",
+                    "action": {
+                      "text": "Предвкушение",
+                      "type": "text"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ],
+        "filler": {
+          "type": "intersection",
+          "cases": {
+            "bespokoistvo": [
+              "беспокойство"
+            ],
+            "ok_prinyato": [
+              "одобрение"
+            ],
+            "smushchennaya_ulibka": [
+              "смущение"
+            ],
+            "predvkusheniye": [
+              "предвкушение"
+            ]
+          }
         }
       }
     }

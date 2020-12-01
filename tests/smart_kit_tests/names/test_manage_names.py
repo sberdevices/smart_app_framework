@@ -8,7 +8,6 @@ class MessageNamesTest1(unittest.TestCase):
         self.assertIsNotNone(message_names.ANSWER_TO_USER)
         self.assertIsNotNone(message_names.ERROR)
         self.assertIsNotNone(message_names.NOTHING_FOUND)
-        self.assertIsNotNone(message_names.MESSAGE_FROM_USER)
         self.assertIsNotNone(message_names.MESSAGE_TO_SKILL)
         self.assertIsNotNone(message_names.LOCAL_TIMEOUT)
         self.assertIsNotNone(message_names.RUN_APP)

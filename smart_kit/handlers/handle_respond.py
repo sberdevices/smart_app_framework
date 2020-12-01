@@ -6,7 +6,7 @@ import scenarios.logging.logger_constants as log_const
 from smart_kit.handlers.handler_base import HandlerBase
 from smart_kit.message.app_info import AppInfo
 from core.names.field import SERVER_ACTION, APP_INFO
-from smart_kit.names.message_names import MESSAGE_FROM_USER, RUN_APP
+from smart_kit.names.message_names import RUN_APP
 from smart_kit.utils.monitoring import smart_kit_metrics
 
 
@@ -31,7 +31,7 @@ class HandlerRespond(HandlerBase):
             action_params = user.behaviors.get_callback_action_params(callback_id)
             if action_params:
                 app_info = None
-                for original_message_name in [MESSAGE_FROM_USER, SERVER_ACTION, RUN_APP]:
+                for original_message_name in [SERVER_ACTION, RUN_APP]:
                     if original_message_name in action_params:
                         app_info = AppInfo(action_params[original_message_name].get(APP_INFO, {}))
                         break

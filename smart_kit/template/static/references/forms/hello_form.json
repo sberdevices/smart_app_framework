@@ -3,6 +3,7 @@
     "fields": {
       "person": {
         "required": true,
+        "available": false,
         "questions": [
           {
             "type": "string",
@@ -20,18 +21,29 @@
           }
         ],
         "filler": {
-          "type": "get_first_person"
+          "type": "composite",
+          "fillers": [
+            {
+              "type": "get_first_person"
+            },
+            {
+              "_description": "Локальная предобработка текста не умеет выделять имена, поэтому испоьзуем регулярное выражение",
+              "type": "regexp",
+              "exp": ".*",
+              "delimiter": ""
+            }
+          ]
         },
         "on_filled_actions": [
           {
             "type": "string",
             "command": "ANSWER_TO_USER",
             "nodes": {
-              "pronounceText": "Привет, {{main_form.person.name}}!",
+              "pronounceText": "Привет, {% if main_form.person.name is defined %}{{main_form.person.name}}{% else %}{{main_form.person}}{% endif %}!",
               "items": [
                 {
                   "bubble": {
-                    "text": "Привет, {{main_form.person.name|title}}!"
+                    "text": "Привет, {% if main_form.person.name is defined %}{{main_form.person.name|title}}{% else %}{{main_form.person|title}}{% endif %}!"
                   }
                 }
               ]

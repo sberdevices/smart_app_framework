@@ -290,7 +290,13 @@ class CLInterface(cmd.Cmd):
             return
 
         for answer in answers:
-            print("{}\nrequest type: {}\n".format(self.format_answer_value(answer.raw), answer.request_type))
+            ans = answer.raw
+            print("{}\nrequest type: {}\n".format(self.format_answer_value(ans), answer.request_type))
+            if ans["message_name"] == "ANSWER_TO_USER":
+                params = ans["payload"]
+                intent = params.get("intent")
+                if intent:
+                    self.environment.intent = intent
             if self.lt_settings.DISPLAY_RAW:
                 pprint.pprint(answer.raw)
 

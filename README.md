@@ -1,4 +1,3 @@
-
 # SmartApp Framework
 
 **SmartApp Framework** - это Python-фреймворк, который позволяет создавать смартапы для виртуальных ассистентов Салют. 
@@ -63,7 +62,7 @@ python3 -m pip install git+https://github.com/sberdevices/smart_app_framework@ma
 ```bash
 python3 -m smart_kit create_app <YOUR_APP_NAME>
 ```
-После этого в текущей директории появится каталог с проектом. Он уже содержит в себе всё необходимое для запуска минимального приложения, включая базовый сценарий hello_scenario. Описание сценариев и форм можно найти в <YOUR_APP_NAME>/static/references/.
+После этого в текущей директории появится каталог с проектом. Он уже содержит в себе всё необходимое для запуска минимального приложения, включая базовый сценарий hello_scenario. Описание сценариев и форм можно найти в `<YOUR_APP_NAME>/static/references/`.
 
 
 ## Тестирование онлайн
@@ -97,17 +96,10 @@ intent = run_app
 > Привет
 pronounceText: Как тебя зовут?
 ```
-
-
 ____
-
-
 
 # Документация и поддержка
 
 Вы можете ознакомиться с подробной документацией по работе со SmartApp Framework в [справочнике разработчика](https://developer.sberdevices.ru/docs/ru/developer_tools/framework/overview.md).
 
 C вопросами и предложениями пишите нам по адресу: developer@sberdevices.ru 
-
-
-

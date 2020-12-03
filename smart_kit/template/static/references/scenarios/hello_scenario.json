@@ -67,6 +67,21 @@
         }
       },
       {
+        "type": "string",
+        "command": "ANSWER_TO_USER",
+        "nodes": {
+          "pronounceTextType": "application/ssml",
+          "pronounceText": "С помощью <say-as interpret-as=\"spell-out\">SSML</say-as> разметки я умею делать <break time=\"2s\" /> паузы, <break /> произносить слова по <say-as interpret-as=\"characters\">буквам</say-as> и многое другое.",
+          "items": [
+            {
+              "bubble": {
+                "text": "С помощью SSML-разметки я умею делать... паузы, произносить слова по б-у-к-в-а-м и многое другое."
+              }
+            }
+          ]
+        }
+      },
+      {
         "type": "run_scenario",
         "scenario": "emotion_scenario"
       }

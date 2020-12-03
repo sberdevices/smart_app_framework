@@ -4,7 +4,7 @@ import json
 import re
 from lazy import lazy
 from jinja2 import exceptions as jexcept
-from typing import Dict, List, Union, Optional, Any, Callable, Pattern
+from typing import Dict, List, Union, Optional, Any, Callable, Pattern, Set
 from itertools import islice
 
 import core.logging.logger_constants as core_log_const
@@ -392,3 +392,71 @@ class IntersectionOriginalTextFiller(FieldFillerDescription):
                     message = "Filler: %(filler)s, tpr_original_set: %(tpr_original_set)s, tokens: %(tokens)s"
                     log(message, user, log_params)
                     return key
+
+
+class ApproveFiller(FieldFillerDescription):
+    yes_words: Optional[List]
+    no_words: Optional[List]
+
+    def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str] = None) -> None:
+        super(ApproveFiller, self).__init__(items, id)
+
+        from smart_kit.configs import get_app_config
+        app_config = get_app_config()
+
+        self.yes_words = items.get("yes_words")
+        self.no_words = items.get("no_words")
+        self.set_yes_words: Set = set(self.yes_words or [])
+        self.set_no_words: Set = set(self.no_words or [])
+        self.yes_words_normalized: Set = {
+            TextPreprocessingResult(result).tokenized_string for result in
+            app_config.NORMALIZER.normalize_sequence(self.set_yes_words)
+        }
+        self.no_words_normalized: Set = {
+            TextPreprocessingResult(result).tokenized_string for result in
+            app_config.NORMALIZER.normalize_sequence(self.set_no_words)
+        }
+
+    @exc_handler(on_error_obj_method_name="on_extract_error")
+    def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User,
+                params: Dict[str, Any] = None) -> Optional[bool]:
+        if text_preprocessing_result.tokenized_string in self.yes_words_normalized:
+            params = self._log_params()
+            params["tokenized_string"] = text_preprocessing_result.tokenized_string
+            params["yes_words"] = self.yes_words_normalized
+            message = "Filler: %(filler)s, normalized_text: %(tokenized_string)s, self.yes_words: %(yes_words)s"
+            log(message, user, params)
+            response = True
+        elif text_preprocessing_result.words_tokenized_set.intersection(self.no_words_normalized):
+            params = self._log_params()
+            params["tokenized_string"] = text_preprocessing_result.words_tokenized_set
+            params["no_words"] = self.no_words_normalized
+            message = "Filler: %(filler)s, normalized_text: %(tokenized_string)s, self.no_words: %(no_words)s"
+            log(message, user, params)
+            response = False
+        else:
+            response = None
+        return response
+
+
+class ApproveRawTextFiller(ApproveFiller):
+    @exc_handler(on_error_obj_method_name="on_extract_error")
+    def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User) -> Optional[bool]:
+        original_text = ' '.join(text_preprocessing_result.original_text.split()).lower().rstrip('!.)')
+        if original_text in self.set_yes_words:
+            params = self._log_params()
+            params["original_text"] = original_text
+            params["yes_words"] = self.set_yes_words
+            message = "Filler: %(filler)s, original_text: %(original_text)s, self.yes_words: %(yes_words)s"
+            log(message, user, params)
+            response = True
+        elif text_preprocessing_result.words_tokenized_set.intersection(self.no_words_normalized):
+            params = self._log_params()
+            params["words_tokenized_set"] = text_preprocessing_result.words_tokenized_set
+            params["no_words"] = self.set_no_words
+            message = "Filler: %(filler)s, words_normalized_set: %(words_tokenized_set)s, self.no_words: %(no_words)s"
+            log(message, user, params)
+            response = False
+        else:
+            response = None
+        return response

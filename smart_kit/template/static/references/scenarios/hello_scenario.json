@@ -7,7 +7,7 @@
         "type": "else",
         "requirement": {
           "type": "template",
-          "template": "{{ main_form.tell_me_more == \"да\" }}"
+          "template": "{{ main_form.tell_me_more }}"
         },
         "action": {
           "type": "run_scenario",

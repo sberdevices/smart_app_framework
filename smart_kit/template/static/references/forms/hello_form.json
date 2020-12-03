@@ -129,15 +129,8 @@
           }
         ],
         "filler": {
-          "type": "intersection",
-          "cases": {
-            "да": [
-              "да"
-            ],
-            "нет": [
-              "нет"
-            ]
-          }
+          "type": "external",
+          "filler": "yes_no_soft_filler"
         }
       }
     }

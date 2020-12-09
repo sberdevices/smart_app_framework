@@ -9,9 +9,6 @@ from smart_kit.names.message_names import ANSWER_TO_USER
 
 
 def combine_answer_to_user(commands: typing.List[Command]) -> Command:
-    from smart_kit.configs import get_app_config
-    config = get_app_config()
-
     answer = Command(name=ANSWER_TO_USER, request_data=commands[0].request_data, request_type=commands[0].request_type)
     summary_pronounce_text = []
     auto_listening = None
@@ -37,12 +34,9 @@ def combine_answer_to_user(commands: typing.List[Command]) -> Command:
 
         answer.payload.update(payload)
 
-    if auto_listening is None:
-        auto_listening = config.AUTO_LISTENING
-
     if summary_pronounce_text:
         answer.payload[field.PRONOUNCE_TEXT] = " ".join(summary_pronounce_text)
-        answer.payload[field.AUTO_LISTENING] = auto_listening
+    answer.payload[field.AUTO_LISTENING] = auto_listening
 
     return answer
 
@@ -71,6 +65,11 @@ def combine_commands(commands: typing.List[Command], user: User, **kwargs) -> ty
         if field.FINISHED not in answer_to_user.payload:
             finished = last_scenario_name is None
             answer_to_user.payload[field.FINISHED] = finished
+
+        from smart_kit.configs import get_app_config
+        config = get_app_config()
+        if answer_to_user.payload.get(field.AUTO_LISTENING) is None:
+            answer_to_user.payload[field.AUTO_LISTENING] = config.AUTO_LISTENING
 
         events = user.history.get_events()
         if events and user.history.enabled:

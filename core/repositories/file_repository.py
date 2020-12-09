@@ -12,12 +12,12 @@ class FileRepository(ItemsRepository):
         self.save_target = save_target
 
     def load(self):
-        try:
+        if self.source.path_exists(self.filename):
             with self.source.open(self.filename, 'rb') as stream:
                 binary_data = stream.read()
                 data = binary_data.decode()
                 self.fill(self.loader(data))
-        except FileNotFoundError:
+        else:
             params = {
                 "error_repository_path": self.filename,
                 log_const.KEY_NAME: log_const.EXCEPTION_VALUE

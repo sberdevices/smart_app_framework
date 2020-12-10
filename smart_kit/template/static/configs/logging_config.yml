@@ -21,7 +21,7 @@ handlers:
   file_app_handler:
     backupCount: 30
     encoding: utf-8
-    filename: "/tmp/app.log"
+    filename: "./app.log"
     formatter: file_json_formatter
     class: logging.handlers.RotatingFileHandler
     maxBytes: 15728640
@@ -32,7 +32,7 @@ handlers:
   file_handler:
     backupCount: 30
     encoding: utf-8
-    filename: "/tmp/system.log"
+    filename: "./system.log"
     formatter: file_json_formatter
     class: logging.handlers.RotatingFileHandler
     maxBytes: 15728640

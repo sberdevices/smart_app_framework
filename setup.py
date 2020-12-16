@@ -47,6 +47,7 @@ setup(
         'jaeger_client==4.3.0',
         'dill',
         'redis',
+        'aiohttp==3.7.3',
     ],
     classifiers=[
         "Programming Language :: Python :: 3"

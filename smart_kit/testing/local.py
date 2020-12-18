@@ -53,49 +53,60 @@ class TypeCastByAnnotation:
 
 
 class Environment(TypeCastByAnnotation):
-    intent: str
-    user_id: str
     chat_id: str
-    message_id: int
+    device_capabilities_misc: bool
+    device_capabilities_screen: bool
+    device_capabilities_speak: bool
     device_channel: str
     device_channel_version: str
     device_client_type: str
     device_platform_name: str
     device_platform_version: str
-    csa_profile_id: int
+    device_surface_version: str
+    intent: str
+    message_id: int
     message_name: str
-    token: str
-    project_name: str
+    meta_time_timestamp: int
+    meta_time_timezone_id: str
+    meta_time_timezone_offset_sec: int
     new_session: bool
+    project_name: str
     user_channel: str
+    user_id: str
 
     exclude = ("as_dict",)
 
     def __init__(self):
-        self.intent = None
-        self.user_id = "local_testing_1"
+        from smart_kit.configs import get_app_config
+
+        self.__message = {"original_text": ""}
+        self.character_appeal = "official"
+        self.character_gender = "male"
+        self.character_id = "sber"
+        self.character_name = "Сбербанк"
         self.chat_id = "1"
-        self.message_id = 0
+        self.config = get_app_config()
+        self.device_capabilities_misc = True
+        self.device_capabilities_screen = True
+        self.device_capabilities_speak = True
         self.device_channel = "MP_SBOL_IOS"
         self.device_channel_version = "9.1"
         self.device_client_type = "RETAIL"
         self.device_platform_name = "iPhone"
+        self.device_platform_type = "IOS"
         self.device_platform_version = "11.1"
-        self.csa_profile_id = 123
+        self.device_surface = "SBOL"
+        self.device_surface_version = "testSurfaceVersion"
+        self.intent = None
+        self.message_id = 0
         self.message_name = "MESSAGE_TO_SKILL"
-
-        self.token = "test_token"
-        self.project_name = "test_project_name"
-
-        self.user_channel = None
-
-        self.__message = {
-            "original_text": ""
-        }
-
+        self.meta_time_timestamp = 1432233446145000
+        self.meta_time_timezone_id = "Europe/Moscow"
+        self.meta_time_timezone_offset_sec = 10800
         self.new_session = False
-        from smart_kit.configs import get_app_config
-        self.config = get_app_config()
+        self.project_name = "test_project_name"
+        self.user_channel = None
+        self.user_id = "local_testing_1"
 
     @property
     def as_dict(self):
@@ -105,20 +116,48 @@ class Environment(TypeCastByAnnotation):
             "uuid": {
                 "userChannel": self.user_channel,
                 "chatId": self.chat_id,
-                "userId": self.user_id
+                "userId": self.user_id,
             },
             "payload": {
-                "personInfo": {},
-                "device": {"client_type": self.device_client_type, "channel": self.device_channel,
-                           "channel_version": self.device_channel_version,
-                           "platform_name": self.device_platform_name,
-                           "platform_version": self.device_platform_version},
-                "projectName": self.project_name,
+                "character": {
+                    "id": self.character_id,
+                    "name": self.character_name,
+                    "gender": self.character_gender,
+                    "appeal": self.character_appeal,
+                },
+                "device": {
+                    "platformType": self.device_platform_type,
+                    "platformVersion": self.device_platform_version,
+                    "surface": self.device_surface,
+                    "surfaceVersion": self.device_surface_version,
+                    "features": {
+                        "appTypes": ["DIALOG", "WEB_APP"],
+                    },
+                    "capabilities": {
+                        "misc": {
+                            "available": self.device_capabilities_misc,
+                        },
+                        "screen": {
+                            "available": self.device_capabilities_screen,
+                        },
+                        "speak": {
+                            "available": self.device_capabilities_speak,
+                        },
+                    },
+                },
                 "intent": self.intent,
-                "token": self.token,
+                "message": self.__message,
+                "meta": {
+                    "time": {
+                        "timezone_id": self.meta_time_timezone_id,
+                        "timezone_offset_sec": self.meta_time_timezone_offset_sec,
+                        "timestamp": self.meta_time_timestamp,
+                    },
+                },
                 "new_session": self.new_session,
-                "message": self.__message
-            }
+                "personInfo": {},
+                "projectName": self.project_name,
+            },
         }
 
     @property

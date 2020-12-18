@@ -20,6 +20,7 @@ def as_is(value):
 
 __typecast_map = {
     bool: to_bool,
+    float: float,
     int: int,
     str: str,
 }

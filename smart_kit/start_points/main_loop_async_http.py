@@ -4,7 +4,7 @@ import aiohttp
 import aiohttp.web
 
 import scenarios.logging.logger_constants as log_const
-from core.db_adapter.db_adapter import DBAdapterException
+from core.db_adapter.db_adapter import DBAdapterException, db_adapter_factory
 from core.logging.logger_utils import log
 from core.message.from_message import SmartAppFromMessage
 from core.utils.stats_timer import StatsTimer
@@ -15,11 +15,20 @@ from smart_kit.utils.monitoring import smart_kit_metrics
 
 class AIOHttpMainLoop(BaseHttpMainLoop):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         self.app = aiohttp.web.Application()
         self.app.add_routes([aiohttp.web.get('/', self.iterate)])
+        super().__init__(*args, **kwargs)
+
+    def get_db(self):
+        db_adapter = db_adapter_factory(self.settings["template_settings"].get("db_adapter", {}))
+        if not db_adapter.IS_ASYNC:
+            raise Exception(
+                f"Sync adapter {db_adapter.__class__.__name__} doesnt compare with {self.__class__.__name__}"
+            )
         self.app.on_startup.append(self.background)
         self.app.on_cleanup.append(self.clear_background)
+
+        return db_adapter
 
     async def background(self, app):
         app["database"] = app.loop.create_task(self.connect_to_db())
@@ -108,7 +117,7 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
             user = await self.load_user(db_uid, message)
         stats += "Loading time: {} msecs\n".format(load_timer.msecs)
         with StatsTimer() as script_timer:
-            commands = self.model.answer(message, user)  # TODO: await
+            commands = await self.get_answer_in_thread(message, user)
             if commands:
                 answer = self._generate_answers(user, commands, message)
             else:
@@ -120,6 +129,9 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         stats += "Saving time: {} msecs\n".format(save_timer.msecs)
         log(stats, params={log_const.KEY_NAME: "timings"})
         return answer, stats
+
+    async def get_answer_in_thread(self, message, user):
+        return await self.app.loop.run_in_executor(None, self.model.answer, message, user)
 
     async def iterate(self, request: aiohttp.web.Request):
         headers = self._get_headers(request.headers)

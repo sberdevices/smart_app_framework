@@ -26,8 +26,7 @@ class BaseMainLoop:
             self.model = model
             self.user_cls = user_cls
             self.parametrizer_cls = parametrizer_cls
-            self.db_adapter = db_adapter_factory(settings["template_settings"].get("db_adapter", {}))
-            self.db_adapter.connect()
+            self.db_adapter = self.get_db()
             self.is_work = True
 
             template_settings = self.settings["template_settings"]
@@ -51,6 +50,15 @@ class BaseMainLoop:
                                                                         "class_name": self.__class__.__name__},
                           level="ERROR", exc_info=True)
             raise
+
+    def get_db(self):
+        db_adapter = db_adapter_factory(self.settings["template_settings"].get("db_adapter", {}))
+        if db_adapter.IS_ASYNC:
+            raise Exception(
+                f"Async adapter {db_adapter.__class__.__name__} doesnt compare with {self.__class__.__name__}"
+            )
+        db_adapter.connect()
+        return db_adapter
 
     def _generate_answers(self, user, commands, message, **kwargs):
         raise NotImplementedError

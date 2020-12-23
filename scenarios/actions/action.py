@@ -17,7 +17,7 @@ from core.logging.logger_utils import log
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 
 import scenarios.logging.logger_constants as log_const
-from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, SAVED_MESSAGES
+from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, SAVED_MESSAGES, LOCAL_VARS
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User
 from scenarios.scenario_models.history import Event
@@ -170,7 +170,6 @@ class SetVariableAction(Action):
     parametrizer: BasicParametrizer
     loader: Optional[str]
     key: str
-    loader: Optional[str]
     loaders = collections.defaultdict(str, {"json": json.loads, "float": float, "int": int})
     ttl: int
     value: Union[str, Dict]
@@ -282,7 +281,7 @@ class RunScenarioAction(Action):
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Union[None, str, List[Command]]:
-        params = user.parametrizer.collect(text_preprocessing_result)
+        params.update(user.parametrizer.collect(text_preprocessing_result))
         scenario_id = self.scenario.render(params)
         scenario = user.descriptions["scenarios"].get(scenario_id)
         if scenario:
@@ -478,7 +477,15 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
         return extra_request_data
 
     def _save_behavior(self, callback_id, user, scenario, text_preprocessing_result, save_params):
-        user.behaviors.add(callback_id, self.behavior, scenario, text_preprocessing_result.raw, save_params)
+        save_params[LOCAL_VARS] = copy.deepcopy(user.local_vars.values)
+        user.local_vars.clear()
+        user.behaviors.add(
+            callback_id,
+            self.behavior,
+            scenario,
+            text_preprocessing_result.raw,
+            save_params,
+        )
 
     def _get_save_params(self, user, action_params, command_action_params):
         save_params = self._get_rendered_tree_recursive(self.save_params_template_data, action_params)
@@ -491,3 +498,38 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
         save_params.update({TO_MESSAGE_PARAMS: command_action_params})
         save_params.update({TO_MESSAGE_NAME: self.command})
         return save_params
+
+
+class SetLocalVariableAction(Action):
+    key: str
+    loader: Optional[str]
+    loaders = collections.defaultdict(str, {"json": json.loads, "float": float, "int": int})
+    value: Union[str, Dict]
+
+    def __init__(self, items: Dict[str, Any], id_: Optional[str] = None):
+        super(SetLocalVariableAction, self).__init__(items, id_)
+        self.key: str = items["key"]
+        self.loader = items.get('loader')
+        value: str = items["value"]
+        self.template: UnifiedTemplate = UnifiedTemplate(value)
+
+    def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
+            params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
+        params = user.parametrizer.collect(text_preprocessing_result)
+        try:
+            # if path is wrong, it may fail with UndefinedError
+            # notion: {key: None} will return "None";
+            # not existing key or value "" will return ""; otherwise question in scenario will go in cycles
+            value = self.template.render(params)
+        except jexcept.UndefinedError:
+            value = None
+
+        if self.loader:
+            if value:
+                loader = self.loaders[self.loader]
+                value = loader(value)
+            else:
+                value = None
+
+        user.local_vars.set(self.key, value)
+

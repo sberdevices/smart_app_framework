@@ -67,7 +67,7 @@ from scenarios.actions.action import (
     AskAgainAction, BreakScenarioAction, ClearCurrentScenarioAction, ClearCurrentScenarioFormAction, ClearFormAction,
     ClearInnerFormAction, ClearScenarioByIdAction, ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction,
     FillFieldAction, RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
-    ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction
+    ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction
 )
 from scenarios.requirements.requirements import AskAgainExistRequirement, TemplateInArrayRequirement, \
     ArrayItemInTemplateRequirement, RegexpInTemplateRequirement
@@ -269,6 +269,7 @@ class SmartAppResources(BaseConfig):
         actions["sdk_answer"] = SDKAnswer
         actions["sdk_answer_to_user"] = SDKAnswerToUser
         actions["self_service_with_state"] = SelfServiceActionWithState
+        actions["set_local_variable"] = SetLocalVariableAction
         actions["set_variable"] = SetVariableAction
         actions["string"] = StringAction
 

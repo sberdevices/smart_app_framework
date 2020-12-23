@@ -19,12 +19,14 @@ class BaseUser(Model):
 
     counters: Counters
     variables: Variables
+    local_vars: Variables
 
     def __init__(self, id, message, values, descriptions, load_error=False):
         self.id = id
         self.message = message
         self.descriptions = descriptions
         self.load_error = load_error
+        self.local_vars = Variables(None, None)
         super(BaseUser, self).__init__(values=values, user=self)
 
     @lazy
@@ -53,3 +55,4 @@ class BaseUser(Model):
     def expire(self):
         self.counters.expire()
         self.variables.expire()
+        self.local_vars.expire()

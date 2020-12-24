@@ -15,9 +15,10 @@ from core.basic_models.parametrizers.parametrizer import BasicParametrizer
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.logging.logger_utils import log
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
+from core.utils.pickle_copy import pickle_deepcopy
 
 import scenarios.logging.logger_constants as log_const
-from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, SAVED_MESSAGES
+from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, SAVED_MESSAGES, INTEGRATION_FIELD
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User
 from scenarios.scenario_models.history import Event
@@ -128,7 +129,7 @@ class SaveBehaviorAction(Action):
         if self.check_scenario:
             scenario_id = user.last_scenarios.last_scenario_name
         user.behaviors.add(user.message.generate_new_callback_id(), self.behavior, scenario_id,
-                           text_preprocessing_result.raw)
+                           text_preprocessing_result.raw, action_params=pickle_deepcopy(params))
 
 
 class BasicSelfServiceActionWithState(StringAction):
@@ -483,6 +484,7 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
     def _get_save_params(self, user, action_params, command_action_params):
         save_params = self._get_rendered_tree_recursive(self.save_params_template_data, action_params)
         save_params.update({SAVED_MESSAGES: action_params.get(SAVED_MESSAGES, {})})
+        save_params.update({INTEGRATION_FIELD: action_params.get(INTEGRATION_FIELD, {})})
 
         saved_messages = save_params[SAVED_MESSAGES]
         if user.message.message_name not in saved_messages or self.rewrite_saved_params:

@@ -64,7 +64,7 @@ class ExternalFieldFillerDescription(FieldFillerDescription):
         super(ExternalFieldFillerDescription, self).__init__(items, id)
         self.filler = items.get("filler")
 
-    @exc_handler(on_error_obj_method_name="on_extract_error")
+    # @exc_handler(on_error_obj_method_name="on_extract_error")
     def extract(self, text_preprocessing_result: BaseTextPreprocessingResult,
                 user: User, params: Dict[str, Any] = None) -> Optional[Union[int, float, str, bool, List, Dict]]:
         filler = user.descriptions["external_field_fillers"][self.filler]

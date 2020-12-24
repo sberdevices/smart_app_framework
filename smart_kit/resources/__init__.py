@@ -48,10 +48,12 @@ from scenarios.scenario_models.forms.form_description import form_descriptions, 
 from scenarios.scenario_models.forms.form import BaseForm, form_models, form_model_factory, Form
 from scenarios.scenario_models.forms.composite_forms import CompositeForm
 from scenarios.scenario_models.field.field_descriptions.composite_field_description import CompositeFieldDescription
-from scenarios.scenario_models.field.field_descriptions.field_description import field_descriptions, \
-    field_description_factory, \
-    FieldDescription
-from scenarios.scenario_models.field.field import field_models, Field, field_model_factory
+from scenarios.scenario_models.field.field_descriptions.basic_field_description import field_descriptions, \
+    field_description_factory, BasicFieldDescription
+from scenarios.scenario_models.field.field_descriptions.question_field_description import QuestionFieldDescription
+from scenarios.scenario_models.field.field_descriptions.integration_field_description import IntegrationFieldDescription
+from scenarios.scenario_models.field.field import field_models, field_model_factory, BasicField, IntegrationField, \
+    QuestionField
 from scenarios.scenario_models.field.composite_field import CompositeField
 from scenarios.scenario_models.scenario_models import scenario_models, scenario_model_factory, BaseScenarioModel, \
     TreeScenarioModel, FormFillingScenarioModel
@@ -148,36 +150,35 @@ class SmartAppResources(BaseConfig):
     def init_field_requirements(self):
         frd.field_requirements[None] = frd.FieldRequirement
         frd.field_requirements["and"] = frd.AndFieldRequirement
-        frd.field_requirements["comparison"] = frd.ComparisonFieldRequirement
-        frd.field_requirements["field_text_length"] = frd.TextLengthFieldRequirement
-        frd.field_requirements["is_int"] = frd.IsIntFieldRequirement
-        frd.field_requirements["not"] = frd.NotFieldRequirement
         frd.field_requirements["or"] = frd.OrFieldRequirement
-        frd.field_requirements["token_part_in_set"] = frd.TokenPartInSet
+        frd.field_requirements["not"] = frd.NotFieldRequirement
+        frd.field_requirements["comparison"] = frd.ComparisonFieldRequirement
+        frd.field_requirements["is_int"] = frd.IsIntFieldRequirement
         frd.field_requirements["value_in_set"] = frd.ValueInSetRequirement
+        frd.field_requirements["token_part_in_set"] = frd.TokenPartInSet
+        frd.field_requirements["field_text_length"] = frd.TextLengthFieldRequirement
 
     def init_field_filler_description(self):
         ffd.field_filler_description[None] = ffd.FieldFillerDescription
-        ffd.field_filler_description["all_regexps"] = ffd.AllRegexpsFieldFiller
-        ffd.field_filler_description["approve"] = ffd.ApproveFiller
-        ffd.field_filler_description["approve_strictly"] = ffd.ApproveRawTextFiller
         ffd.field_filler_description["available_info_filler"] = ffd.AvailableInfoFiller
-        ffd.field_filler_description["choice"] = cffd.ChoiceFiller
         ffd.field_filler_description["composite"] = ffd.CompositeFiller
-        ffd.field_filler_description["currency_first"] = ffd.FirstCurrencyFiller
-        ffd.field_filler_description["else"] = cffd.ElseFiller
         ffd.field_filler_description["external"] = ffd.ExternalFieldFillerDescription
-        ffd.field_filler_description["geo"] = ffd.FirstGeoFiller
-        ffd.field_filler_description["get_first_person"] = ffd.FirstPersonFiller
-        ffd.field_filler_description["intersection"] = ffd.IntersectionFieldFiller
-        ffd.field_filler_description["intersection_original_text"] = ffd.IntersectionOriginalTextFiller
         ffd.field_filler_description["number_first"] = ffd.FirstNumberFiller
+        ffd.field_filler_description["currency_first"] = ffd.FirstCurrencyFiller
         ffd.field_filler_description["organisation"] = ffd.FirstOrgFiller
-        ffd.field_filler_description["previous_messages_filler"] = ffd.PreviousMessagesFiller
+        ffd.field_filler_description["geo"] = ffd.FirstGeoFiller
         ffd.field_filler_description["regexp"] = ffd.RegexpFieldFiller
         ffd.field_filler_description["regexp_string_operations"] = ffd.RegexpAndStringOperationsFieldFiller
+        ffd.field_filler_description["all_regexps"] = ffd.AllRegexpsFieldFiller
+        ffd.field_filler_description["get_first_person"] = ffd.FirstPersonFiller
+        ffd.field_filler_description["previous_messages_filler"] = ffd.PreviousMessagesFiller
         ffd.field_filler_description["requirement"] = cffd.RequirementFiller
+        ffd.field_filler_description["choice"] = cffd.ChoiceFiller
+        ffd.field_filler_description["else"] = cffd.ElseFiller
         ffd.field_filler_description["user_id"] = ffd.UserIdFiller
+        ffd.field_filler_description["intersection"] = ffd.IntersectionFieldFiller
+        ffd.field_filler_description["intersection_original_text"] = ffd.IntersectionOriginalTextFiller
+        ffd.field_filler_description["approve"] = ffd.ApproveFiller
 
     def init_scenarios(self):
         scenarios[None] = BaseScenario
@@ -194,12 +195,16 @@ class SmartAppResources(BaseConfig):
         form_models[CompositeFormDescription] = CompositeForm
 
     def init_field_descriptions(self):
-        field_descriptions[None] = FieldDescription
+        field_descriptions[None] = BasicFieldDescription
+        field_descriptions["question"] = QuestionFieldDescription
         field_descriptions["composite"] = CompositeFieldDescription
+        field_descriptions["integration"] = IntegrationFieldDescription
 
     def init_field_model(self):
-        field_models[FieldDescription] = Field
+        field_models[BasicFieldDescription] = BasicField
         field_models[CompositeFieldDescription] = CompositeField
+        field_models[QuestionFieldDescription] = QuestionField
+        field_models[IntegrationFieldDescription] = IntegrationField
 
     def init_scenario_models(self):
         scenario_models[FormFillingScenario] = FormFillingScenarioModel
@@ -212,8 +217,8 @@ class SmartAppResources(BaseConfig):
         registered_factories[BaseScenarioModel] = scenario_model_factory
         registered_factories[BaseFormDescription] = form_description_factory
         registered_factories[BaseForm] = form_model_factory
-        registered_factories[FieldDescription] = field_description_factory
-        registered_factories[Field] = field_model_factory
+        registered_factories[BasicFieldDescription] = field_description_factory
+        registered_factories[BasicField] = field_model_factory
         registered_factories[op.Operator] = op.operator_factory
         registered_factories[cmp.Comparator] = cmp.comparator_factory
         registered_factories[Requirement] = requirement_factory
@@ -234,95 +239,95 @@ class SmartAppResources(BaseConfig):
 
     def init_actions(self):
         actions[None] = EmptyAction
-        actions["add_history_event"] = AddHistoryEventAction
-        actions["ask_again"] = AskAgainAction
-        actions["break_scenario"] = BreakScenarioAction
-        actions["choice"] = ChoiceAction
-        actions["clear_current_scenario"] = ClearCurrentScenarioAction
-        actions["clear_current_scenario_form"] = ClearCurrentScenarioFormAction
+        actions["string"] = StringAction
         actions["clear_form_by_id"] = ClearFormAction
         actions["clear_inner_form_by_id"] = ClearInnerFormAction
-        actions["clear_scenario_by_id"] = ClearScenarioByIdAction
-        actions["clear_variables"] = ClearVariablesAction
-        actions["composite"] = CompositeAction
-        actions["composite_fill_field"] = CompositeFillFieldAction
-        actions["counter_clear"] = CounterClearAction
-        actions["counter_copy"] = CounterCopyAction
-        actions["counter_decrement"] = CounterDecrementAction
-        actions["counter_increment"] = CounterIncrementAction
-        actions["counter_set"] = CounterSetAction
-        actions["delete_variable"] = DeleteVariableAction
-        actions["do_nothing"] = DoingNothingAction
-        actions["else"] = ElseAction
-        actions["external"] = ExternalAction
-        actions["fill_field"] = FillFieldAction
-        actions["http_request"] = HTTPRequestAction
-        actions["process_behavior"] = ProcessBehaviorAction
-        actions["random_field_answer"] = AfinaAnswerAction
-        actions["remove_composite_form_field"] = RemoveCompositeFormFieldAction
+        actions["break_scenario"] = BreakScenarioAction
+        actions["ask_again"] = AskAgainAction
         actions["remove_form_field"] = RemoveFormFieldAction
-        actions["requirement"] = RequirementAction
-        actions["reset_current_node"] = ResetCurrentNodeAction
-        actions["run_last_scenario"] = RunLastScenarioAction
-        actions["run_scenario"] = RunScenarioAction
-        actions["save_behavior"] = SaveBehaviorAction
+        actions["remove_composite_form_field"] = RemoveCompositeFormFieldAction
         actions["sdk_answer"] = SDKAnswer
-        actions["sdk_answer_to_user"] = SDKAnswerToUser
+        actions["external"] = ExternalAction
+        actions["do_nothing"] = DoingNothingAction
+        actions["requirement"] = RequirementAction
+        actions["choice"] = ChoiceAction
+        actions["else"] = ElseAction
+        actions["composite"] = CompositeAction
+        actions["counter_increment"] = CounterIncrementAction
+        actions["counter_decrement"] = CounterDecrementAction
+        actions["counter_clear"] = CounterClearAction
+        actions["counter_set"] = CounterSetAction
+        actions["counter_copy"] = CounterCopyAction
+        actions["random_field_answer"] = AfinaAnswerAction
+        actions["save_behavior"] = SaveBehaviorAction
         actions["self_service_with_state"] = SelfServiceActionWithState
         actions["set_variable"] = SetVariableAction
-        actions["string"] = StringAction
+        actions["clear_variables"] = ClearVariablesAction
+        actions["delete_variable"] = DeleteVariableAction
+        actions["fill_field"] = FillFieldAction
+        actions["composite_fill_field"] = CompositeFillFieldAction
+        actions["sdk_answer_to_user"] = SDKAnswerToUser
+        actions["run_scenario"] = RunScenarioAction
+        actions["run_last_scenario"] = RunLastScenarioAction
+        actions["clear_current_scenario"] = ClearCurrentScenarioAction
+        actions["clear_scenario_by_id"] = ClearScenarioByIdAction
+        actions["clear_current_scenario_form"] = ClearCurrentScenarioFormAction
+        actions["reset_current_node"] = ResetCurrentNodeAction
+        actions["add_history_event"] = AddHistoryEventAction
+        actions["process_behavior"] = ProcessBehaviorAction
+        actions["http_request"] = HTTPRequestAction
 
     def init_requirements(self):
         requirements[None] = Requirement
         requirements["and"] = AndRequirement
-        requirements["app_type"] = dr.AppTypeRequirement
-        requirements["array_item_in_template"] = ArrayItemInTemplateRequirement
-        requirements["ask_again_exist"] = AskAgainExistRequirement
-        requirements["capabilities_property_available"] = dr.CapabilitiesPropertyAvailableRequirement
-        requirements["channel"] = ChannelRequirement
-        requirements["counter_time"] = CounterUpdateTimeRequirement
-        requirements["counter_value"] = CounterValueRequirement
-        requirements["external"] = ExternalRequirement
-        requirements["not"] = NotRequirement
         requirements["or"] = OrRequirement
+        requirements["not"] = NotRequirement
+        requirements["ask_again_exist"] = AskAgainExistRequirement
+        requirements["template_in_array"] = TemplateInArrayRequirement
+        requirements["array_item_in_template"] = ArrayItemInTemplateRequirement
+        requirements["regexp_in_template"] = RegexpInTemplateRequirement
+        requirements["template"] = TemplateRequirement
+        requirements["random"] = RandomRequirement
+        requirements["counter_value"] = CounterValueRequirement
+        requirements["counter_time"] = CounterUpdateTimeRequirement
+        requirements["channel"] = ChannelRequirement
+        requirements["external"] = ExternalRequirement
         requirements["platform_type"] = dr.PlatformTypeRequirement
         requirements["platform_version"] = dr.PlatformVersionRequirement
-        requirements["random"] = RandomRequirement
-        requirements["regexp_in_template"] = RegexpInTemplateRequirement
         requirements["surface"] = dr.SurfaceRequirement
         requirements["surface_version"] = dr.SurfaceVersionRequirement
-        requirements["template"] = TemplateRequirement
-        requirements["template_in_array"] = TemplateInArrayRequirement
+        requirements["app_type"] = dr.AppTypeRequirement
+        requirements["capabilities_property_available"] = dr.CapabilitiesPropertyAvailableRequirement
 
     def init_sdk_items(self):
         answer_items["bubble_text"] = BubbleText
         answer_items["item_card"] = ItemCard
         answer_items["pronounce_text"] = PronounceText
-        answer_items["raw"] = RawItem
-        answer_items["suggest_deeplink"] = SuggestDeepLink
         answer_items["suggest_text"] = SuggestText
+        answer_items["suggest_deeplink"] = SuggestDeepLink
+        answer_items["raw"] = RawItem
 
     def init_operators(self):
-        op.operators["any"] = op.AnyOperator
-        op.operators["composite"] = op.CompositeOperator
-        op.operators["endswith"] = op.EndsWithOperator
-        op.operators["equal"] = op.EqualOperator
-        op.operators["exists"] = op.Exists
-        op.operators["in"] = op.InOperator
-        op.operators["less"] = op.LessOperator
-        op.operators["less_or_equal"] = op.LessOrEqualOperator
         op.operators["more"] = op.MoreOperator
         op.operators["more_or_equal"] = op.MoreOrEqualOperator
+        op.operators["equal"] = op.EqualOperator
         op.operators["not_equal"] = op.NotEqualOperator
+        op.operators["less"] = op.LessOperator
+        op.operators["less_or_equal"] = op.LessOrEqualOperator
+        op.operators["exists"] = op.Exists
+        op.operators["composite"] = op.CompositeOperator
+        op.operators["any"] = op.AnyOperator
+        op.operators["in"] = op.InOperator
+        op.operators["endswith"] = op.EndsWithOperator
         op.operators["startswith"] = op.StartsWithOperator
 
     def init_comparators(self):
-        cmp.comparators["equal"] = cmp.EqualComparator
-        cmp.comparators["less"] = cmp.LessComparator
-        cmp.comparators["less_or_equal"] = cmp.LessOrEqualComparator
         cmp.comparators["more"] = cmp.MoreComparator
         cmp.comparators["more_or_equal"] = cmp.MoreOrEqualComparator
+        cmp.comparators["equal"] = cmp.EqualComparator
         cmp.comparators["not_equal"] = cmp.NotEqualComparator
+        cmp.comparators["less"] = cmp.LessComparator
+        cmp.comparators["less_or_equal"] = cmp.LessOrEqualComparator
 
     def init_history_formatters(self):
         formatters[None] = HistoryEventFormatter

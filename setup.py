@@ -47,6 +47,7 @@ setup(
         'jaeger_client==4.3.0',
         'dill',
         'redis',
+        'pydantic',
     ],
     classifiers=[
         'Programming Language :: Python :: 3.6',

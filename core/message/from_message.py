@@ -1,7 +1,10 @@
 # coding=utf-8
+from typing import Optional
 from lazy import lazy
 import json
 import uuid
+
+from pydantic import BaseModel, ValidationError
 
 from core.configs.global_constants import CALLBACK_ID_HEADER
 from core.message.app_info import AppInfo
@@ -12,6 +15,11 @@ from core.logging.logger_utils import log
 from core.utils.masking_message import masking
 from core.utils.pickle_copy import pickle_deepcopy
 from core.utils.utils import current_time_ms
+
+
+class SmartAppPayloadModel(BaseModel):
+    intent: str
+    annotations: Optional[str]
 
 
 class Headers:
@@ -32,6 +40,8 @@ class Headers:
 
 
 class SmartAppFromMessage:
+    PAYLOAD_MODEL = SmartAppPayloadModel
+
     MESSAGE_NAME = "messageName"
     MESSAGE_ID = "messageId"
     UUID = "uuid"
@@ -90,6 +100,23 @@ class SmartAppFromMessage:
                 exc_info=True,
                 level="ERROR",
             )
+            return False
+
+        # Validate payload
+        try:
+            self.PAYLOAD_MODEL(**self.payload)
+        except ValidationError as ex:
+            for problem in ex.errors():
+                field = problem["loc"][0]
+                error = problem["type"].split(".")
+                required_field = f"payload.{field}"
+                required_field_type = None
+                if error[0] == "type_error":
+                    required_field_type = error[1]
+                elif error[0] == "value_error" and error[1] == "missing":
+                    # required_field is set, this is enough
+                    pass
+                self.print_validation_error(required_field, required_field_type)
             return False
 
         return True

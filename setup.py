@@ -5,14 +5,20 @@ import smart_kit
 with open("README.md", "r", encoding='utf-8') as file:
     long_description = file.read()
 
+with open("LICENSE", "r", encoding='utf-8') as file:
+    license_text = file.read()
+
 setup(
     name="smart_app_framework",
     version=smart_kit.__version__,
-    author="Platform NLP team",
+    author="SberDevices",
     author_email="developer@sberdevices.ru",
-    description="SmartApp Framework is a framework that makes it easier to create smart-apps",
+    description="SmartApp Framework — это фреймворк, "
+                "который позволяет создавать смартапы "
+                "с поддержкой виртуальных ассистентов Салют.",
     long_description=long_description,
     long_description_content_type="text/markdown",
+    license=license_text,
     packages=find_packages(exclude=[]),
     include_package_data=True,
     install_requires=[

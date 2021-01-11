@@ -21,15 +21,16 @@ class Parametrizer(BasicParametrizer):
         forms = self._user.forms.collect_form_fields()
         main_form = self._get_main_form(forms)
         data = {
+            "counters": self._user.counters.raw,
+            "forms": forms,
+            "gender_sensitive_text": self._user.gender_selector.get_text_by_key,
+            "local_vars": self._user.local_vars.values,
+            "main_form": main_form,
             "message": self._user.message,
             "payload": self._user.message.payload,
-            "uuid": self._user.message.uuid,
-            "forms": forms,
-            "main_form": main_form,
-            "text_preprocessing_result": tpr_data,
-            "variables": self._user.variables.values,
-            "counters": self._user.counters.raw,
             "scenario_id": self._user.last_scenarios.last_scenario_name,
-            "gender_sensitive_text": self._user.gender_selector.get_text_by_key
+            "text_preprocessing_result": tpr_data,
+            "uuid": self._user.message.uuid,
+            "variables": self._user.variables.values,
         }
         return data

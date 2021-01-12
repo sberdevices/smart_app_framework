@@ -4,7 +4,7 @@ from lazy import lazy
 import json
 import uuid
 
-from pydantic import BaseModel, ValidationError
+import pydantic
 
 from core.configs.global_constants import CALLBACK_ID_HEADER
 from core.message.app_info import AppInfo
@@ -17,9 +17,17 @@ from core.utils.pickle_copy import pickle_deepcopy
 from core.utils.utils import current_time_ms
 
 
-class SmartAppPayloadModel(BaseModel):
+class SmartAppPayloadModel(pydantic.BaseModel):
     intent: str
     annotations: Optional[str]
+
+
+class FromMessageValueModel(pydantic.BaseModel):
+    session_id: str = pydantic.Field(alias='sessionId')
+    incremental_id: str = pydantic.Field(alias='messageId')
+    message_name: str = pydantic.Field(alias='messageName')
+    uuid: dict
+    payload: dict
 
 
 class Headers:
@@ -40,6 +48,7 @@ class Headers:
 
 
 class SmartAppFromMessage:
+    VALUE_MODEL = FromMessageValueModel
     PAYLOAD_MODEL = SmartAppPayloadModel
 
     MESSAGE_NAME = "messageName"
@@ -48,13 +57,11 @@ class SmartAppFromMessage:
     PAYLOAD = "payload"
     SESSION_ID = "sessionId"
 
-    payload: dict
-    uuid: dict
-    incremental_id: str
-    message_name: str
-
-    def __init__(self, value: str, topic_key: str = None, creation_time=None, kafka_key: str = None, headers=None,
-                 masking_fields=None, headers_required=True):
+    def __init__(
+            self, value: str, topic_key: str = None,
+            creation_time=None, kafka_key: str = None, headers=None,
+            masking_fields=None, headers_required=True
+    ):
         self.logging_uuid = str(uuid.uuid4())
         self._value = value
         self.topic_key = topic_key
@@ -70,29 +77,29 @@ class SmartAppFromMessage:
     def validate(self):
         """
             Try to json.load message and check for all required fields
-         """
+        """
+        result = True
+
         if self._headers_required and not self.headers:
             log("Message headers is empty", level="ERROR")
-            return False
+            result = False
 
         try:
-            for r_field in self._required_fields:
-                if r_field not in self.as_dict:
-                    self.print_validation_error(r_field)
-                    return False
+            # Validate value
+            try:
+                obj = self.VALUE_MODEL(**self.as_dict)
+                print(obj)
+                print(type(obj))
+            except pydantic.ValidationError as ex:
+                self.print_validation_error(ex)
+                result = False
 
-                if r_field not in self.__annotations__:
-                    continue
-
-                if not isinstance(
-                        self.as_dict[r_field],
-                        self.__annotations__[r_field],
-                ):
-                    self.print_validation_error(
-                        r_field,
-                        self.__annotations__[r_field],
-                    )
-                    return False
+            # Validate payload
+            try:
+                self.PAYLOAD_MODEL(**self.payload)
+            except pydantic.ValidationError as ex:
+                self.print_validation_error(ex, 'payload')
+                result = False
 
         except (json.JSONDecodeError, TypeError):
             log(
@@ -100,69 +107,41 @@ class SmartAppFromMessage:
                 exc_info=True,
                 level="ERROR",
             )
-            return False
+            result = False
 
-        # Validate payload
-        try:
-            self.PAYLOAD_MODEL(**self.payload)
-        except ValidationError as ex:
-            for problem in ex.errors():
-                field = problem["loc"][0]
-                error = problem["type"].split(".")
-                required_field = f"payload.{field}"
-                required_field_type = None
-                if error[0] == "type_error":
-                    required_field_type = error[1]
-                elif error[0] == "value_error" and error[1] == "missing":
-                    # required_field is set, this is enough
-                    pass
-                self.print_validation_error(required_field, required_field_type)
-            return False
+        return result
 
-        return True
-
-    def print_validation_error(
-            self,
-            required_field=None,
-            required_field_type=None,
-    ):
-        if self._value:
+    def print_validation_error(self, ex: pydantic.ValidationError, prefix: Optional[str] = None):
+        for problem in ex.errors():
+            error = problem["type"].split(".")
+            required_field = problem["loc"][0]
+            if prefix is not None:
+                required_field = f"{prefix}.{required_field}"
+            required_field_type = None
+            if error[0] == "type_error":
+                required_field_type = error[1]
+                msg = (
+                    "Message validation error: Expected '%(required_field)s'"
+                    " of type '%(required_field_type)s': %(value)s"
+                )
+            elif error[0] == "value_error" and error[1] == "missing":
+                msg = (
+                    "Message validation error: Required field "
+                    "'%(required_field)s' is missing: %(value)s"
+                )
+            else:
+                msg = "Message validation error: Format is wrong: %(value)s"
             params = {
                 "value": str(self._value),
                 "required_field": required_field,
                 "required_field_type": required_field_type,
                 log_const.KEY_NAME: log_const.EXCEPTION_VALUE
             }
-            if required_field and required_field_type:
-                log(
-                    "Message validation error: Expected '%(required_field)s'"
-                    " of type '%(required_field_type)s': %(value)s",
-                    params=params,
-                    level="ERROR",
-                )
-            elif required_field:
-                log(
-                    "Message validation error: Required field "
-                    "'%(required_field)s' is missing: %(value)s",
-                    params=params,
-                    level="ERROR",
-                )
-            else:
-                log(
-                    "Message validation error: Format is wrong: %(value)s",
-                    params=params,
-                    level="ERROR",
-                )
-        else:
-            log("Message validation error: Message is empty", level="ERROR")
+            log(msg, params=params, level="ERROR")
 
     @property
     def _callback_id_header_name(self):
         return CALLBACK_ID_HEADER
-
-    @property
-    def _required_fields(self):
-        return {self.MESSAGE_ID, self.UUID, self.PAYLOAD, self.SESSION_ID, self.MESSAGE_NAME}
 
     @lazy
     def session_id(self):

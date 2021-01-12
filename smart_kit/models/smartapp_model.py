@@ -55,7 +55,7 @@ class SmartAppModel:
     @exc_handler(on_error_obj_method_name="on_answer_error")
     def answer(self, message, user):
         user.expire()
-        handler = self.get_handler(message.type)
+        handler = self.get_handler(message.message_name)
 
         if not user.load_error:
             commands = handler.run(message.payload, user)

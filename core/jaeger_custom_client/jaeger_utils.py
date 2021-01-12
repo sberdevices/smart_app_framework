@@ -19,7 +19,7 @@ def get_incoming_spam(tracer, from_message: SmartAppFromMessage, mq_message: Mes
     """
     span_context = tracer.extract(KAFKA_MAP, mq_message)
     span = tracer.start_span(
-        operation_name=from_message.type,
+        operation_name=from_message.message_name,
         child_of=span_context)
     params = build_log_params(from_message)
     for key, value in params.items():

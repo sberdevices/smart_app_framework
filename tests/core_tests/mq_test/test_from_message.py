@@ -40,7 +40,7 @@ class TestFromMessage(TestCase):
         self.assertAlmostEqual(message.creation_time, current_time)
         self.assertEqual(2, message.incremental_id)
         self.assertEqual(input_msg["uuid"]["userChannel"], message.channel)
-        self.assertEqual(input_msg["messageName"], message.type)
+        self.assertEqual(input_msg["messageName"], message.message_name)
         self.assertEqual(input_msg["uuid"]["userId"], message.uid)
         self.assertEqual(json_input_msg, message.value)
         self.assertEqual("sub_userId_B2C", message.db_uid)

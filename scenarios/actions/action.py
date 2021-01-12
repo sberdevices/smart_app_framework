@@ -486,7 +486,7 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
 
         saved_messages = save_params[SAVED_MESSAGES]
         if user.message.message_name not in saved_messages or self.rewrite_saved_params:
-            saved_messages[user.message.type] = user.message.payload
+            saved_messages[user.message.message_name] = user.message.payload
 
         save_params.update({TO_MESSAGE_PARAMS: command_action_params})
         save_params.update({TO_MESSAGE_NAME: self.command})

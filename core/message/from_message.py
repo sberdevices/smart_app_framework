@@ -172,10 +172,6 @@ class SmartAppFromMessage:
     def payload(self):
         return self.as_dict[self.PAYLOAD]
 
-    @lazy
-    def type(self):
-        return self.as_dict[self.MESSAGE_NAME]
-
     def project_name(self):
         return self.payload.get(field.PROJECT_NAME)
 

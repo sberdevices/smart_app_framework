@@ -1,5 +1,6 @@
 import typing
 
+import asyncio
 import aiohttp
 import aiohttp.web
 
@@ -19,24 +20,21 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         self.app.add_routes([aiohttp.web.get('/', self.iterate)])
         super().__init__(*args, **kwargs)
 
+    async def async_init(self):
+        await self.db_adapter.connect()
+
     def get_db(self):
         db_adapter = db_adapter_factory(self.settings["template_settings"].get("db_adapter", {}))
         if not db_adapter.IS_ASYNC:
             raise Exception(
                 f"Sync adapter {db_adapter.__class__.__name__} doesnt compare with {self.__class__.__name__}"
             )
-        self.app.on_startup.append(self.background)
-        self.app.on_cleanup.append(self.clear_background)
+        self.app.on_cleanup.append(self.close_db)
 
         return db_adapter
 
-    async def background(self, app):
-        app["database"] = app.loop.create_task(self.connect_to_db())
-
-    async def connect_to_db(self):
-        await self.db_adapter.connect()
-
-    async def clear_background(self, app):
+    # noinspection PyMethodMayBeStatic
+    async def close_db(self, app):
         app["database"].cancel()
         await app["database"]
 
@@ -92,6 +90,7 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         aiohttp_config = self.settings["aiohttp"]
         if not aiohttp_config:
             log("aiohttp.yml is empty or missing. Server will be started with default parameters", level="WARN")
+        asyncio.get_event_loop().run_until_complete(self.async_init())
         aiohttp.web.run_app(app=self.app, **aiohttp_config)
 
     def stop(self, signum, frame):

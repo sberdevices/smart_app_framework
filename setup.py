@@ -48,6 +48,7 @@ setup(
         'dill',
         'redis',
         'aiohttp==3.7.3',
+        'aioredis'
     ],
     classifiers=[
         "Programming Language :: Python :: 3"

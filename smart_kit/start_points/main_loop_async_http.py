@@ -17,7 +17,7 @@ from smart_kit.utils.monitoring import smart_kit_metrics
 class AIOHttpMainLoop(BaseHttpMainLoop):
     def __init__(self, *args, **kwargs):
         self.app = aiohttp.web.Application()
-        self.app.add_routes([aiohttp.web.get('/{tail:.*}', self.iterate)])
+        self.app.add_routes([aiohttp.web.route('*', '/{tail:.*}', self.iterate)])
         super().__init__(*args, **kwargs)
 
     async def async_init(self):

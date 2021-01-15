@@ -27,7 +27,7 @@ from core.basic_models.requirement.basic_requirements import requirement_factory
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink, RawItem
 from core.basic_models.requirement.basic_requirements import requirements, Requirement, AndRequirement, \
-    OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement
+    OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement, TimeRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
@@ -295,6 +295,7 @@ class SmartAppResources(BaseConfig):
         requirements["surface_version"] = dr.SurfaceVersionRequirement
         requirements["template"] = TemplateRequirement
         requirements["template_in_array"] = TemplateInArrayRequirement
+        requirements["time"] = TimeRequirement
 
     def init_sdk_items(self):
         answer_items["bubble_text"] = BubbleText

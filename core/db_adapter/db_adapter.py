@@ -13,6 +13,7 @@ class DBAdapterException(Exception):
 
 
 class DBAdapter(Rerunable):
+    IS_ASYNC = False
 
     def __init__(self, config=None):
         super(DBAdapter, self).__init__(config)

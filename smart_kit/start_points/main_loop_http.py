@@ -1,35 +1,64 @@
-import threading
+import typing
 from wsgiref.simple_server import make_server
 
 import scenarios.logging.logger_constants as log_const
+from core.basic_models.actions.command import Command
+from core.configs.global_constants import CALLBACK_ID_HEADER
 from core.logging.logger_utils import log
-from core.utils.stats_timer import StatsTimer
 from core.message.from_message import SmartAppFromMessage
-
+from core.utils.stats_timer import StatsTimer
 from smart_kit.compatibility.commands import combine_commands
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
+from smart_kit.names import message_names
 from smart_kit.start_points.base_main_loop import BaseMainLoop
-from core.configs.global_constants import CALLBACK_ID_HEADER
 
 
-class HttpMainLoop(BaseMainLoop):
+class BaseHttpMainLoop(BaseMainLoop):
     HEADER_START_WITH = "HTTP_SMART_APP_"
+    BAD_REQUEST_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Message"})
+    NO_ANSWER_COMMAND = Command(message_names.NOTHING_FOUND)
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def run(self):
+        raise NotImplementedError
 
-        self._server = None
+    def stop(self, signum, frame):
+        raise NotImplementedError
 
-    def __call__(self, environ, start_response):
-        return self.iterate(environ, start_response)
+    def handle_message(self, message: SmartAppFromMessage) -> typing.Tuple[int, str, SmartAppToMessage]:
+        if not message.validate():
+            return 400, "BAD REQUEST", SmartAppToMessage(self.BAD_REQUEST_COMMAND, message=message, request=None)
 
-    def _generate_answers(self, user, commands, message, **kwargs):
-        commands = combine_commands(commands, user)
-        if len(commands) > 1:
-            raise ValueError
-        answer = commands.pop() if commands else None
+        answer, stats = self.process_message(message)
+        if not answer:
+            return 204, "NO CONTENT", SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None)
 
-        return answer
+        return 200, "OK", SmartAppToMessage(answer, message, request=None)
+
+    def process_message(self, message: SmartAppFromMessage, *args, **kwargs):
+        stats = ""
+        log("INCOMING DATA: {}".format(message.masked_value),
+            params={log_const.KEY_NAME: "incoming_policy_message"})
+        db_uid = message.db_uid
+
+        with StatsTimer() as load_timer:
+            user = self.load_user(db_uid, message)
+        stats += "Loading time: {} msecs\n".format(load_timer.msecs)
+        with StatsTimer() as script_timer:
+            commands = self.model.answer(message, user)
+            if commands:
+                answer = self._generate_answers(user, commands, message)
+            else:
+                answer = None
+
+        stats += "Script time: {} msecs\n".format(script_timer.msecs)
+        with StatsTimer() as save_timer:
+            self.save_user(db_uid, user, message)
+        stats += "Saving time: {} msecs\n".format(save_timer.msecs)
+        log(stats, params={log_const.KEY_NAME: "timings"})
+        return answer, stats
+
+    def _get_headers(self, environ):
+        return [(key, value) for key, value in environ.items() if key.startswith(self.HEADER_START_WITH)]
 
     # noinspection PyMethodMayBeStatic
     def _get_outgoing_headers(self, incoming_headers, command=None):
@@ -43,56 +72,37 @@ class HttpMainLoop(BaseMainLoop):
 
         return list(headers.items())
 
-    def handle_message(self, message: SmartAppFromMessage, stats, *args, **kwargs):
-        log("INCOMING DATA: {}".format(message.masked_value),
-                      params={log_const.KEY_NAME: "incoming_policy_message"})
-        db_uid = message.db_uid
+    def _generate_answers(self, user, commands, message, **kwargs):
+        commands = combine_commands(commands, user)
+        if len(commands) > 1:
+            raise ValueError
+        answer = commands.pop() if commands else None
 
-        with StatsTimer() as load_timer:
-            user = self.load_user(db_uid, message)
-        stats += "Loading time: {} msecs\n".format(load_timer.msecs)
-        with StatsTimer() as script_timer:
-            commands = self.model.answer(message, user)
-            answer = self._generate_answers(user, commands, message)
+        return answer
 
-        stats += "Script time: {} msecs\n".format(script_timer.msecs)
-        with StatsTimer() as save_timer:
-            self.save_user(db_uid, user, message)
-        stats += "Saving time: {} msecs\n".format(save_timer.msecs)
 
-        return answer, stats
+class HttpMainLoop(BaseHttpMainLoop):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._server = None
 
-    def _get_headers(self, environ):
-        return [(key, value) for key, value in environ.items() if key.startswith(self.HEADER_START_WITH)]
+    def __call__(self, environ, start_response):
+        return self.iterate(environ, start_response)
 
     def iterate(self, environ, start_response):
-        stats = ""
-        with StatsTimer() as poll_timer:
-            try:
-                content_length = int(environ.get('CONTENT_LENGTH', '0'))
-                request = environ["wsgi.input"].read(content_length).decode()
-                headers = self._get_headers(environ)
-            except KeyError:
-                log("Error in request data", level="ERROR")
-                raise Exception("Error in request data")
+        try:
+            content_length = int(environ.get('CONTENT_LENGTH', '0'))
+            body = environ["wsgi.input"].read(content_length).decode()
+            headers = self._get_headers(environ)
+        except KeyError:
+            log("Error in request data", level="ERROR")
+            raise Exception("Error in request data")
 
-        stats += "Polling time: {} msecs\n".format(poll_timer.msecs)
+        message = SmartAppFromMessage(body, headers=headers, headers_required=False)
 
-        message = SmartAppFromMessage(request, headers=headers, headers_required=False)
-        if not message.validate():
-            start_response("400 BAD REQUEST", self._get_outgoing_headers(headers))
-            return [b'{"message": "invalid message"}']
+        status, reason, answer = self.handle_message(message)
 
-        answer, stats = self.handle_message(message, stats)
-        with StatsTimer() as publish_timer:
-            if not answer:
-                start_response("204 NO CONTENT", self._get_outgoing_headers(headers))
-                return [b'{"message": "no answer"}']
-            start_response("200 OK", self._get_outgoing_headers(headers, answer))
-            answer = SmartAppToMessage(answer, message, request=None)
-
-        stats += "Publishing time: {} msecs".format(publish_timer.msecs)
-        log(stats, params={log_const.KEY_NAME: "timings"})
+        start_response(f"{status} {reason}", self._get_outgoing_headers(headers, answer.command))
         return [answer.value.encode()]
 
     def run(self):

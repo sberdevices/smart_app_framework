@@ -2,6 +2,7 @@ from core.configs.base_config import BaseConfig
 
 import core.basic_models.operators.operators as op
 import core.basic_models.operators.comparators as cmp
+from core.db_adapter.aioredis_adapter import AIORedisAdapter
 
 from core.db_adapter.db_adapter import db_adapters
 from core.db_adapter.ignite_adapter import IgniteAdapter
@@ -14,7 +15,7 @@ from core.request.rest_request import RestRequest
 from core.descriptions.descriptions import registered_description_factories
 from core.basic_models.scenarios.base_scenario import scenarios
 from core.model.registered import registered_factories
-from core.basic_models.actions.basic_actions import actions, action_factory, Action,\
+from core.basic_models.actions.basic_actions import actions, action_factory, Action, \
     DoingNothingAction, RequirementAction, ChoiceAction, ElseAction, CompositeAction
 from core.basic_models.scenarios.base_scenario import BaseScenario
 from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAction, SDKAnswer, \
@@ -83,32 +84,32 @@ class SmartAppResources(BaseConfig):
         super(SmartAppResources, self).__init__(source=source)
         self.references_path = references_path
         self.repositories = [
-                           FolderRepository(self.subfolder_path("forms"), loader=ordered_json, source=source,
-                                            key="forms"),
-                           FolderRepository(self.subfolder_path("scenarios"), loader=ordered_json, source=source,
-                                            key="scenarios"),
-                           FileRepository(self.subfolder_path("preprocessing_messages_for_scenarios_settings.json"),
-                                          loader=ordered_json,
-                                          source=source, key="preprocessing_messages_for_scenarios"),
-                           FileRepository(self.subfolder_path("last_scenarios_descriptions.json"), loader=ordered_json,
-                                          source=source, key="last_scenarios"),
-                           FileRepository(self.subfolder_path("history.json"), loader=ordered_json, source=source,
-                                          key="history"),
-                           FolderRepository(self.subfolder_path("behaviors"), loader=ordered_json, source=source,
-                                            key="behaviors"),
-                           FolderRepository(self.subfolder_path("actions"), loader=ordered_json, source=source,
-                                            key="external_actions"),
-                           FolderRepository(self.subfolder_path("requirements"), loader=ordered_json, source=source,
-                                            key="external_requirements"),
-                           FolderRepository(self.subfolder_path("field_fillers"), loader=ordered_json, source=source,
-                                            key="external_field_fillers"),
-                           FileRepository(self.subfolder_path("responses.json"), loader=ordered_json, source=source,
-                                          key="responses"),
-                           FileRepository(self.subfolder_path("last_action_ids.json"), loader=ordered_json,
-                                          source=source, key="last_action_ids"),
-                           FolderRepository(self.subfolder_path("bundles"), loader=ordered_json, source=source,
-                                            key="bundles")
-                       ]
+            FolderRepository(self.subfolder_path("forms"), loader=ordered_json, source=source,
+                             key="forms"),
+            FolderRepository(self.subfolder_path("scenarios"), loader=ordered_json, source=source,
+                             key="scenarios"),
+            FileRepository(self.subfolder_path("preprocessing_messages_for_scenarios_settings.json"),
+                           loader=ordered_json,
+                           source=source, key="preprocessing_messages_for_scenarios"),
+            FileRepository(self.subfolder_path("last_scenarios_descriptions.json"), loader=ordered_json,
+                           source=source, key="last_scenarios"),
+            FileRepository(self.subfolder_path("history.json"), loader=ordered_json, source=source,
+                           key="history"),
+            FolderRepository(self.subfolder_path("behaviors"), loader=ordered_json, source=source,
+                             key="behaviors"),
+            FolderRepository(self.subfolder_path("actions"), loader=ordered_json, source=source,
+                             key="external_actions"),
+            FolderRepository(self.subfolder_path("requirements"), loader=ordered_json, source=source,
+                             key="external_requirements"),
+            FolderRepository(self.subfolder_path("field_fillers"), loader=ordered_json, source=source,
+                             key="external_field_fillers"),
+            FileRepository(self.subfolder_path("responses.json"), loader=ordered_json, source=source,
+                           key="responses"),
+            FileRepository(self.subfolder_path("last_action_ids.json"), loader=ordered_json,
+                           source=source, key="last_action_ids"),
+            FolderRepository(self.subfolder_path("bundles"), loader=ordered_json, source=source,
+                             key="bundles")
+        ]
 
         self.repositories = self.override_repositories(self.repositories)
         self.init()
@@ -339,3 +340,4 @@ class SmartAppResources(BaseConfig):
         db_adapters["ignite"] = IgniteAdapter
         db_adapters["memory"] = MemoryAdapter
         db_adapters["redis"] = RedisAdapter
+        db_adapters["aioredis"] = AIORedisAdapter

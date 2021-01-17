@@ -40,7 +40,8 @@ class LocalTestingCommand(AppCommand):
 
     def execute(self, *args, **kwargs):
         init_logger(self.app_config)
-        self.app_config.NORMALIZER.load_everything()
+        if self.app_config.NORMALIZER:
+            self.app_config.NORMALIZER.load_everything()
         return self._local_testing_wrapper.run_local_testing(*args, **kwargs)
 
 
@@ -51,7 +52,8 @@ class RunAppCommand(AppCommand):
 
     def execute(self, *args, **kwargs):
         init_logger(self.app_config)
-        self.app_config.NORMALIZER.load_everything()
+        if self.app_config.NORMALIZER:
+            self.app_config.NORMALIZER.load_everything()
         return self._runner(self.app_config)
 
 

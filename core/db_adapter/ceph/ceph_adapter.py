@@ -16,9 +16,8 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 class CephAdapter(DBAdapter):
     def __init__(self, config):
-        self.config = config
         self._bucket = None
-        super(CephAdapter, self).__init__({"try_count": self.config.get("open_tries")})
+        super(CephAdapter, self).__init__(config)
 
     def connect(self):
         try:

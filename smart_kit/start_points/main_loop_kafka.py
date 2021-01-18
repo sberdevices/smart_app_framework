@@ -48,9 +48,11 @@ class MainLoop(BaseMainLoop):
                 "%(class_name)s START CONSUMERS/PUBLISHERS CREATE",
                 params={"class_name": self.__class__.__name__}, level="WARNING"
             )
-            for key in kafka_config:
-                consumers.update({key: KafkaConsumer(kafka_config[key])})
-                publishers.update({key: KafkaPublisher(kafka_config[key])})
+            for key, config in kafka_config.items():
+                if config.get("consumer"):
+                    consumers.update({key: KafkaConsumer(kafka_config[key])})
+                if config.get("publisher"):
+                    publishers.update({key: KafkaPublisher(kafka_config[key])})
             log(
                 "%(class_name)s FINISHED CONSUMERS/PUBLISHERS CREATE",
                 params={"class_name": self.__class__.__name__}, level="WARNING"
@@ -212,17 +214,17 @@ class MainLoop(BaseMainLoop):
                                                   headers=mq_message.headers(),
                                                   masking_fields=self.masking_fields)
 
-                    log(
-                        "INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %(incoming_data)s",
-                        params={log_const.KEY_NAME: "incoming_message",
-                                "topic": mq_message.topic(),
-                                "message_partition": mq_message.partition(),
-                                "message_key": mq_message.key(),
-                                "kafka_key": kafka_key,
-                                "incoming_data": str(message.masked_value),
-                                "headers": str(mq_message.headers())})
-
+                    # TODO вернуть проверку ключа!!!
                     if message.validate():  # and self.check_message_key(message, mq_message.key()):
+                        log("INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %(incoming_data)s",
+                                      params={log_const.KEY_NAME: "incoming_message",
+                                              "topic": mq_message.topic(),
+                                              "message_partition": mq_message.partition(),
+                                              "message_key": mq_message.key(),
+                                              "kafka_key": kafka_key,
+                                              "incoming_data": str(message.masked_value),
+                                              "headers": str(mq_message.headers())})
+
                         db_uid = message.db_uid
 
                         span = jaeger_utils.get_incoming_spam(self.tracer, message, mq_message)
@@ -233,7 +235,7 @@ class MainLoop(BaseMainLoop):
 
                         with self.tracer.scope_manager.activate(span, True) as scope:
                             with self.tracer.start_span('Loading time', child_of=scope.span) as span:
-                                smart_kit_metrics.sampling_load_time(self.app_name, load_timer.msecs)
+                                smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
                                 stats += "Loading time: {} msecs\n".format(load_timer.msecs)
                                 with StatsTimer() as script_timer:
                                     commands = self.model.answer(message, user)
@@ -242,14 +244,14 @@ class MainLoop(BaseMainLoop):
                                 answers = self._generate_answers(user=user, commands=commands, message=message,
                                                                  topic_key=topic_key,
                                                                  kafka_key=kafka_key)
-                                smart_kit_metrics.sampling_script_time(self.app_name, script_timer.msecs)
+                                smart_kit_metrics.sampling_script_time(self.app_name, script_timer.secs)
                                 stats += "Script time: {} msecs\n".format(script_timer.msecs)
 
                             with self.tracer.start_span('Saving time', child_of=scope.span) as span:
                                 with StatsTimer() as save_timer:
                                     user_save_no_collisions = self.save_user(db_uid, user, message)
 
-                            smart_kit_metrics.sampling_save_time(self.app_name, save_timer.msecs)
+                            smart_kit_metrics.sampling_save_time(self.app_name, save_timer.secs)
                             stats += "Saving time: {} msecs\n".format(save_timer.msecs)
                             if not user_save_no_collisions:
                                 log(
@@ -279,8 +281,13 @@ class MainLoop(BaseMainLoop):
                                 stats += "Publishing time: {} msecs".format(publish_timer.msecs)
                                 log(stats)
                     else:
-                        log("Message validation failed %(message_id)s", params={
-                            log_const.KEY_NAME: "invalid_message", "message_id": message.incremental_id}, level="ERROR")
+                        try:
+                            data = message.masked_value
+                        except:
+                            data = "<DATA FORMAT ERROR>"
+                        log(f"Message validation failed, skip message handling.",
+                                      params={log_const.KEY_NAME: "invalid_message",
+                                              "data": data}, level="ERROR")
                         smart_kit_metrics.counter_invalid_message(self.app_name)
                 if user and not user_save_no_collisions:
                     log(
@@ -314,7 +321,6 @@ class MainLoop(BaseMainLoop):
                 log("Error handling worker fail exception.",
                     level="ERROR", exc_info=True)
 
-            raise
 
     def check_message_key(self, from_message, message_key):
         message_key = message_key or b""
@@ -345,9 +351,10 @@ class MainLoop(BaseMainLoop):
         self._log_request(user, request, answer, mq_message)
 
     def _log_request(self, user, request, answer, original_mq_message):
-        log("OUTGOING TO TOPIC_KEY: %(topic_key)s DATA: {}".format(answer.masked_value),
-            params={log_const.KEY_NAME: "outgoing_message",
-                    "topic_key": request.topic_key}, user=user)
+        log("OUTGOING TO TOPIC_KEY: %(topic_key)s",
+                      params={log_const.KEY_NAME: "outgoing_message",
+                              "topic_key": request.topic_key,
+                              "data": answer.masked_value}, user=user)
 
     @lazy
     def _topic_names(self):

@@ -164,6 +164,12 @@ class Metrics:
         c.labels(request_message_name, status).inc()
 
     @silence_it
+    def counter_mq_long_waiting(self, app_name):
+        monitoring_msg = "{}_mq_long_waiting".format(app_name)
+        c = self._get_or_create_counter(_filter_monitoring_msg(monitoring_msg), "(Now - creation_time) is greater than threshold")
+        c.inc()
+
+    @silence_it
     def sampling_load_time(self, app_name, value):
         monitoring_msg = "{}_load_time".format(app_name)
         monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
@@ -176,6 +182,11 @@ class Metrics:
     @silence_it
     def sampling_save_time(self, app_name, value):
         monitoring_msg = "{}_save_time".format(app_name)
+        monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
+
+    @silence_it
+    def sampling_mq_waiting_time(self, app_name, value):
+        monitoring_msg = "{}_mq_waiting_time".format(app_name)
         monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
 
 

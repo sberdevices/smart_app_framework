@@ -14,10 +14,11 @@ from scenarios.user.user_model import User
 
 
 class RequirementFiller(RequirementAction):
+    FIELD_KEY = "filler"
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super(RequirementFiller, self).__init__(items, id)
-        self._item = items["filler"]
+        self._item = items[self.FIELD_KEY]
 
     @lazy
     @factory(FieldFillerDescription)

@@ -54,7 +54,8 @@ setup(
         'dill',
         'redis',
         'aiohttp==3.7.3',
-        'aioredis'
+        'aioredis',
+        'freezegun',
     ],
     classifiers=[
         'Programming Language :: Python :: 3.6',

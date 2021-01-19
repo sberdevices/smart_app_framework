@@ -1,18 +1,18 @@
 # coding: utf-8
 import hashlib
+from datetime import datetime, date
 from random import random
 from lazy import lazy
 from typing import List, Optional, Dict, Any
 
 import core.logging.logger_constants as log_const
+from core.basic_models.operators.operators import Operator
 from core.logging.logger_utils import log
+from core.model.base_user import BaseUser
 from core.model.factory import build_factory, list_factory, factory
 from core.model.registered import Registered
-from core.basic_models.operators.operators import Operator
 from core.text_preprocessing.base import BaseTextPreprocessingResult
-from core.model.base_user import BaseUser
 from core.unified_template.unified_template import UnifiedTemplate
-
 
 requirements = Registered()
 
@@ -29,9 +29,9 @@ class Requirement:
 
     def _log_params(self):
         return {
-                log_const.KEY_NAME: log_const.REQUIREMENT_CHECK_VALUE,
-                "requirement": self.__class__.__name__
-            }
+            log_const.KEY_NAME: log_const.REQUIREMENT_CHECK_VALUE,
+            "requirement": self.__class__.__name__
+        }
 
     def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
               params: Dict[str, Any] = None) -> bool:
@@ -161,3 +161,30 @@ class RollingRequirement(Requirement):
         hash = int(hashlib.sha256(s).hexdigest(), 16)
         res = hash % 100
         return res < self.percent
+
+
+class TimeRequirement(ComparisonRequirement):
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super().__init__(items, id)
+
+    def check(
+            self,
+            text_preprocessing_result: BaseTextPreprocessingResult,
+            user: BaseUser,
+            params: Dict[str, Any] = None
+    ) -> bool:
+        message_time = user.message.payload['meta']['time']
+        utc_now_timestamp = (
+                message_time['timestamp'] // 1000 +
+                message_time['timezone_offset_sec']
+        )
+        return self.operator.compare(utc_now_timestamp)
+
+    @lazy
+    @factory(Operator)
+    def operator(self):
+        operator = dict(self._operator)
+        amount_time = datetime.strptime(operator["amount"], '%H:%M:%S').time()
+        amount_datetime = datetime.combine(date.today(), amount_time)
+        operator["amount"] = amount_datetime.timestamp()
+        return operator

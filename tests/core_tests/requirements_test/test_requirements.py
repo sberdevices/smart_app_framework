@@ -1,4 +1,5 @@
 # coding: utf-8
+from freezegun import freeze_time
 import unittest
 from time import time
 from unittest.mock import Mock
@@ -7,11 +8,13 @@ from core.model.registered import registered_factories
 from core.basic_models.operators.operators import Operator
 
 from core.basic_models.requirement.basic_requirements import Requirement, CompositeRequirement, AndRequirement, \
-    OrRequirement, NotRequirement, RandomRequirement, TopicRequirement, TemplateRequirement, RollingRequirement
+    OrRequirement, NotRequirement, RandomRequirement, TopicRequirement, TemplateRequirement, RollingRequirement, \
+    TimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 
 
+@freeze_time("2021-01-18")
 class MockRequirement:
     def __init__(self, items=None):
         items = items or {}
@@ -214,6 +217,50 @@ class RequirementTest(unittest.TestCase):
         user = Mock()
         user.id = "353454"
         requirement = RollingRequirement({"percent": 0})
+        text_normalization_result = None
+        self.assertFalse(requirement.check(text_normalization_result, user))
+
+    def test_time_requirement_true(self):
+        user = Mock()
+        user.id = "353454"
+        user.message.payload = {
+            "meta": {
+                "time": {
+                    "timestamp": 1610979455663,  # ~ 2021-01-18 17:17:35
+                    "timezone_offset_sec": 0,
+                }
+            }
+        }
+        requirement = TimeRequirement(
+            {
+                "operator": {
+                    "type": "more",
+                    "amount": "02:00:00",
+                }
+            }
+        )
+        text_normalization_result = None
+        self.assertTrue(requirement.check(text_normalization_result, user))
+
+    def test_time_requirement_false(self):
+        user = Mock()
+        user.id = "353454"
+        user.message.payload = {
+            "meta": {
+                "time": {
+                    "timestamp": 1610979455663,  # ~ 2021-01-18 17:17:35
+                    "timezone_offset_sec": 0,
+                }
+            }
+        }
+        requirement = TimeRequirement(
+            {
+                "operator": {
+                    "type": "more",
+                    "amount": "23:59:59",
+                }
+            }
+        )
         text_normalization_result = None
         self.assertFalse(requirement.check(text_normalization_result, user))
 

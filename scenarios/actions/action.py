@@ -298,7 +298,10 @@ class RunScenarioAction(Action):
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Union[None, str, List[Command]]:
-        params.update(user.parametrizer.collect(text_preprocessing_result))
+        if params is None:
+            params = user.parametrizer.collect(text_preprocessing_result)
+        else:
+            params.update(user.parametrizer.collect(text_preprocessing_result))
         scenario_id = self.scenario.render(params)
         scenario = user.descriptions["scenarios"].get(scenario_id)
         if scenario:

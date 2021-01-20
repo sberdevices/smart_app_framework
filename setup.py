@@ -18,6 +18,7 @@ setup(
                 "с поддержкой виртуальных ассистентов Салют.",
     long_description=long_description,
     long_description_content_type="text/markdown",
+    licence="Sber Public License",
     license=license_text,
     packages=find_packages(exclude=[]),
     include_package_data=True,

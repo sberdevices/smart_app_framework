@@ -5,9 +5,6 @@ import smart_kit
 with open("README.md", "r", encoding='utf-8') as file:
     long_description = file.read()
 
-with open("LICENSE", "r", encoding='utf-8') as file:
-    license_text = file.read()
-
 setup(
     name="smart_app_framework",
     version=smart_kit.__version__,
@@ -18,7 +15,7 @@ setup(
                 "с поддержкой виртуальных ассистентов Салют.",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    license=license_text,
+    license="sberpl-2",
     packages=find_packages(exclude=[]),
     include_package_data=True,
     install_requires=[

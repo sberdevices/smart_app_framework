@@ -3,8 +3,8 @@ from core.logging.logger_utils import log
 import scenarios.logging.logger_constants as log_const
 from smart_kit.handlers.handler_base import HandlerBase
 from smart_kit.message.app_info import AppInfo
-from core.names.field import SERVER_ACTION, APP_INFO
-from smart_kit.names.message_names import RUN_APP, MESSAGE_TO_SKILL
+from core.names.field import APP_INFO
+from smart_kit.names.message_names import RUN_APP, MESSAGE_TO_SKILL, SERVER_ACTION
 from smart_kit.utils.monitoring import smart_kit_metrics
 
 

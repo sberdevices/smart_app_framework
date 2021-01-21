@@ -117,6 +117,7 @@ class MainLoop(BaseMainLoop):
         return answers
 
     def _get_timeout_from_message(self, orig_message_raw, callback_id, headers):
+        orig_message_raw = json.dumps(orig_message_raw)
         timeout_from_message = SmartAppFromMessage(orig_message_raw, headers=headers,
                                                    masking_fields=self.masking_fields)
         timeout_from_message.callback_id = callback_id
@@ -137,7 +138,7 @@ class MainLoop(BaseMainLoop):
                     orig_message_raw = json.loads(mq_message.value())
                     orig_message_raw[SmartAppFromMessage.MESSAGE_NAME] = message_names.LOCAL_TIMEOUT
 
-                    timeout_from_message = self._get_timeout_from_message(json.dumps(orig_message_raw), callback_id,
+                    timeout_from_message = self._get_timeout_from_message(orig_message_raw, callback_id,
                                                                           headers=mq_message.headers())
 
                     user = self.load_user(db_uid, timeout_from_message)

@@ -52,7 +52,6 @@ setup(
         'redis',
         'aiohttp==3.7.3',
         'aioredis',
-        'freezegun',
     ],
     classifiers=[
         'Programming Language :: Python :: 3.6',

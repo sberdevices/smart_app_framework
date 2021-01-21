@@ -1,5 +1,4 @@
 # coding: utf-8
-from freezegun import freeze_time
 import unittest
 from time import time
 from unittest.mock import Mock
@@ -14,7 +13,6 @@ from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 
 
-@freeze_time("2021-01-18")
 class MockRequirement:
     def __init__(self, items=None):
         items = items or {}
@@ -235,7 +233,7 @@ class RequirementTest(unittest.TestCase):
             {
                 "operator": {
                     "type": "more",
-                    "amount": "02:00:00",
+                    "amount": "17:00:00",
                 }
             }
         )
@@ -257,7 +255,7 @@ class RequirementTest(unittest.TestCase):
             {
                 "operator": {
                     "type": "more",
-                    "amount": "23:59:59",
+                    "amount": "18:00:00",
                 }
             }
         )

@@ -174,10 +174,7 @@ class TimeRequirement(ComparisonRequirement):
             params: Dict[str, Any] = None
     ) -> bool:
         message_time = user.message.payload['meta']['time']
-        utc_now_timestamp = (
-                message_time['timestamp'] // 1000 -
-                message_time['timezone_offset_sec']
-        )
+        utc_now_timestamp = message_time['timestamp'] // 1000
         utc_time = datetime.fromtimestamp(utc_now_timestamp).time()
         return self.operator.compare(utc_time)
 

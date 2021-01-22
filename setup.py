@@ -1,4 +1,5 @@
 from setuptools import find_packages, setup
+import versioneer
 
 import smart_kit
 
@@ -7,7 +8,8 @@ with open("README.md", "r", encoding='utf-8') as file:
 
 setup(
     name="smart_app_framework",
-    version=smart_kit.__version__,
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     author="SberDevices",
     author_email="developer@sberdevices.ru",
     description="SmartApp Framework — это фреймворк, "

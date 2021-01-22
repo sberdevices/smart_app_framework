@@ -1,6 +1,6 @@
 # coding: utf-8
 import hashlib
-from datetime import datetime, date
+from datetime import datetime
 from random import random
 from lazy import lazy
 from typing import List, Optional, Dict, Any
@@ -173,18 +173,15 @@ class TimeRequirement(ComparisonRequirement):
             user: BaseUser,
             params: Dict[str, Any] = None
     ) -> bool:
-        message_time = user.message.payload['meta']['time']
-        utc_now_timestamp = (
-                message_time['timestamp'] // 1000 +
-                message_time['timezone_offset_sec']
-        )
-        return self.operator.compare(utc_now_timestamp)
+        message_time_dict = user.message.payload['meta']['time']
+        message_timestamp_sec = message_time_dict['timestamp'] // 1000
+        message_time = datetime.fromtimestamp(message_timestamp_sec).time()
+        return self.operator.compare(message_time)
 
     @lazy
     @factory(Operator)
     def operator(self):
         operator = dict(self._operator)
         amount_time = datetime.strptime(operator["amount"], '%H:%M:%S').time()
-        amount_datetime = datetime.combine(date.today(), amount_time)
-        operator["amount"] = amount_datetime.timestamp()
+        operator["amount"] = amount_time
         return operator

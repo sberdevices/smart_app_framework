@@ -42,5 +42,5 @@ class BehaviorsTest3(unittest.TestCase):
 
     def test_behavoirs_log_const(self):
         self.assertIsNotNone(behaviors.log_const.KEY_NAME)
-        self.assertIsNotNone(behaviors.log_const.BEHAVIOUR_CALLBACK_ID_VALUE)
-        self.assertIsNotNone(behaviors.log_const.BEHAVIOUR_DATA_VALUE)
+        self.assertIsNotNone(behaviors.log_const.BEHAVIOR_CALLBACK_ID_VALUE)
+        self.assertIsNotNone(behaviors.log_const.BEHAVIOR_DATA_VALUE)

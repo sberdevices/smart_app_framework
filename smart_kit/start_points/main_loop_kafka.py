@@ -82,7 +82,7 @@ class MainLoop(BaseMainLoop):
         log("%(class_name)s.run started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                   "class_name": self.__class__.__name__})
         while self.is_work:
-            self.iterate_behaviour_timeouts()
+            self.iterate_behavior_timeouts()
             for kafka_key in self.consumers:
                 self.iterate(kafka_key)
 
@@ -123,7 +123,7 @@ class MainLoop(BaseMainLoop):
         timeout_from_message.callback_id = callback_id
         return timeout_from_message
 
-    def iterate_behaviour_timeouts(self):
+    def iterate_behavior_timeouts(self):
         now = time.time()
         while now > (self.behaviors_timeouts.get_head_key() or float("inf")):
             _, behavior_timeout_value = self.behaviors_timeouts.pop()
@@ -152,7 +152,7 @@ class MainLoop(BaseMainLoop):
 
                     if user and not user_save_no_collisions:
                         log(
-                            "MainLoop.iterate_behaviour_timeouts: save user got collision on uid %(uid)s db_version %(db_version)s.",
+                            "MainLoop.iterate_behavior_timeouts: save user got collision on uid %(uid)s db_version %(db_version)s.",
                             user=user,
                             params={log_const.KEY_NAME: "ignite_collision",
                                     "db_uid": db_uid,
@@ -166,7 +166,7 @@ class MainLoop(BaseMainLoop):
 
                 if not user_save_no_collisions:
                     log(
-                        "MainLoop.iterate_behaviour_timeouts: db_save collision all tries left on uid %(uid)s db_version %(db_version)s.",
+                        "MainLoop.iterate_behavior_timeouts: db_save collision all tries left on uid %(uid)s db_version %(db_version)s.",
                         user=user,
                         params={log_const.KEY_NAME: "ignite_collision",
                                 "db_uid": db_uid,

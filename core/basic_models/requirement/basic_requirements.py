@@ -1,6 +1,6 @@
 # coding: utf-8
 import hashlib
-from datetime import datetime
+from datetime import datetime, MINYEAR
 from random import random
 from lazy import lazy
 from typing import List, Optional, Dict, Any
@@ -184,4 +184,30 @@ class TimeRequirement(ComparisonRequirement):
         operator = dict(self._operator)
         amount_time = datetime.strptime(operator["amount"], '%H:%M:%S').time()
         operator["amount"] = amount_time
+        return operator
+
+
+class DateRequirement(ComparisonRequirement):
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super().__init__(items, id)
+
+    def check(
+            self,
+            text_preprocessing_result: BaseTextPreprocessingResult,
+            user: BaseUser,
+            params: Dict[str, Any] = None
+    ) -> bool:
+        message_time_dict = user.message.payload['meta']['time']
+        message_timestamp_sec = message_time_dict['timestamp'] // 1000
+        message_datetime = datetime.fromtimestamp(message_timestamp_sec)
+        message_date = message_datetime.replace(year=MINYEAR).date()
+        return self.operator.compare(message_date)
+
+    @lazy
+    @factory(Operator)
+    def operator(self):
+        operator = dict(self._operator)
+        amount_datetime = datetime.strptime(operator["amount"], '%d/%m')
+        amount_date = amount_datetime.replace(year=MINYEAR).date()
+        operator["amount"] = amount_date
         return operator

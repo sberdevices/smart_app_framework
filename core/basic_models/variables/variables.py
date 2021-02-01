@@ -4,12 +4,15 @@ import time
 class Variables:
     DEFAULT_TTL = 86400
 
-    def __init__(self, items, user):
+    def __init__(self, items, user, savable=True):
+        self._savable = savable
         self._storage = items or {}
 
     @property
     def raw(self):
-        return self._storage
+        if self._savable:
+            return self._storage
+        return None
 
     @property
     def values(self):

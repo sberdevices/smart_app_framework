@@ -79,10 +79,14 @@ class RequirementAction(Action):
     requirement: Requirement
     action: Action
 
+    FIELD_KEY = "action"
+
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super(RequirementAction, self).__init__(items, id)
         self._requirement = items["requirement"]
-        self._item = items["action"]
+        # can be used not only with actions but with every entity which implements Action interface
+        # to not change statics "item" key is added
+        self._item = items[self.FIELD_KEY]
 
     @lazy
     @factory(Requirement)

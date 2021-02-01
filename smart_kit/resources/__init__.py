@@ -2,6 +2,7 @@ from core.configs.base_config import BaseConfig
 
 import core.basic_models.operators.operators as op
 import core.basic_models.operators.comparators as cmp
+from core.db_adapter.aioredis_adapter import AIORedisAdapter
 
 from core.db_adapter.db_adapter import db_adapters
 from core.db_adapter.ignite_adapter import IgniteAdapter
@@ -14,7 +15,7 @@ from core.request.rest_request import RestRequest
 from core.descriptions.descriptions import registered_description_factories
 from core.basic_models.scenarios.base_scenario import scenarios
 from core.model.registered import registered_factories
-from core.basic_models.actions.basic_actions import actions, action_factory, Action,\
+from core.basic_models.actions.basic_actions import actions, action_factory, Action, \
     DoingNothingAction, RequirementAction, ChoiceAction, ElseAction, CompositeAction
 from core.basic_models.scenarios.base_scenario import BaseScenario
 from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAction, SDKAnswer, \
@@ -26,7 +27,7 @@ from core.basic_models.requirement.basic_requirements import requirement_factory
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink, RawItem
 from core.basic_models.requirement.basic_requirements import requirements, Requirement, AndRequirement, \
-    OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement
+    OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement, TimeRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
@@ -69,7 +70,7 @@ from scenarios.actions.action import (
     AskAgainAction, BreakScenarioAction, ClearCurrentScenarioAction, ClearCurrentScenarioFormAction, ClearFormAction,
     ClearInnerFormAction, ClearScenarioByIdAction, ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction,
     FillFieldAction, RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
-    ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction
+    ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction
 )
 from scenarios.requirements.requirements import AskAgainExistRequirement, TemplateInArrayRequirement, \
     ArrayItemInTemplateRequirement, RegexpInTemplateRequirement
@@ -85,32 +86,32 @@ class SmartAppResources(BaseConfig):
         super(SmartAppResources, self).__init__(source=source)
         self.references_path = references_path
         self.repositories = [
-                           FolderRepository(self.subfolder_path("forms"), loader=ordered_json, source=source,
-                                            key="forms"),
-                           FolderRepository(self.subfolder_path("scenarios"), loader=ordered_json, source=source,
-                                            key="scenarios"),
-                           FileRepository(self.subfolder_path("preprocessing_messages_for_scenarios_settings.json"),
-                                          loader=ordered_json,
-                                          source=source, key="preprocessing_messages_for_scenarios"),
-                           FileRepository(self.subfolder_path("last_scenarios_descriptions.json"), loader=ordered_json,
-                                          source=source, key="last_scenarios"),
-                           FileRepository(self.subfolder_path("history.json"), loader=ordered_json, source=source,
-                                          key="history"),
-                           FolderRepository(self.subfolder_path("behaviors"), loader=ordered_json, source=source,
-                                            key="behaviors"),
-                           FolderRepository(self.subfolder_path("actions"), loader=ordered_json, source=source,
-                                            key="external_actions"),
-                           FolderRepository(self.subfolder_path("requirements"), loader=ordered_json, source=source,
-                                            key="external_requirements"),
-                           FolderRepository(self.subfolder_path("field_fillers"), loader=ordered_json, source=source,
-                                            key="external_field_fillers"),
-                           FileRepository(self.subfolder_path("responses.json"), loader=ordered_json, source=source,
-                                          key="responses"),
-                           FileRepository(self.subfolder_path("last_action_ids.json"), loader=ordered_json,
-                                          source=source, key="last_action_ids"),
-                           FolderRepository(self.subfolder_path("bundles"), loader=ordered_json, source=source,
-                                            key="bundles")
-                       ]
+            FolderRepository(self.subfolder_path("forms"), loader=ordered_json, source=source,
+                             key="forms"),
+            FolderRepository(self.subfolder_path("scenarios"), loader=ordered_json, source=source,
+                             key="scenarios"),
+            FileRepository(self.subfolder_path("preprocessing_messages_for_scenarios_settings.json"),
+                           loader=ordered_json,
+                           source=source, key="preprocessing_messages_for_scenarios"),
+            FileRepository(self.subfolder_path("last_scenarios_descriptions.json"), loader=ordered_json,
+                           source=source, key="last_scenarios"),
+            FileRepository(self.subfolder_path("history.json"), loader=ordered_json, source=source,
+                           key="history"),
+            FolderRepository(self.subfolder_path("behaviors"), loader=ordered_json, source=source,
+                             key="behaviors"),
+            FolderRepository(self.subfolder_path("actions"), loader=ordered_json, source=source,
+                             key="external_actions"),
+            FolderRepository(self.subfolder_path("requirements"), loader=ordered_json, source=source,
+                             key="external_requirements"),
+            FolderRepository(self.subfolder_path("field_fillers"), loader=ordered_json, source=source,
+                             key="external_field_fillers"),
+            FileRepository(self.subfolder_path("responses.json"), loader=ordered_json, source=source,
+                           key="responses"),
+            FileRepository(self.subfolder_path("last_action_ids.json"), loader=ordered_json,
+                           source=source, key="last_action_ids"),
+            FolderRepository(self.subfolder_path("bundles"), loader=ordered_json, source=source,
+                             key="bundles")
+        ]
 
         self.repositories = self.override_repositories(self.repositories)
         self.init()
@@ -261,6 +262,7 @@ class SmartAppResources(BaseConfig):
         actions["random_field_answer"] = AfinaAnswerAction
         actions["save_behavior"] = SaveBehaviorAction
         actions["self_service_with_state"] = SelfServiceActionWithState
+        actions["set_local_variable"] = SetLocalVariableAction
         actions["set_variable"] = SetVariableAction
         actions["clear_variables"] = ClearVariablesAction
         actions["delete_variable"] = DeleteVariableAction
@@ -298,6 +300,9 @@ class SmartAppResources(BaseConfig):
         requirements["surface_version"] = dr.SurfaceVersionRequirement
         requirements["app_type"] = dr.AppTypeRequirement
         requirements["capabilities_property_available"] = dr.CapabilitiesPropertyAvailableRequirement
+        requirements["template"] = TemplateRequirement
+        requirements["template_in_array"] = TemplateInArrayRequirement
+        requirements["time"] = TimeRequirement
 
     def init_sdk_items(self):
         answer_items["bubble_text"] = BubbleText
@@ -343,3 +348,4 @@ class SmartAppResources(BaseConfig):
         db_adapters["ignite"] = IgniteAdapter
         db_adapters["memory"] = MemoryAdapter
         db_adapters["redis"] = RedisAdapter
+        db_adapters["aioredis"] = AIORedisAdapter

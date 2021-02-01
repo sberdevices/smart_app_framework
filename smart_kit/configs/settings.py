@@ -21,7 +21,8 @@ class Settings(BaseConfig):
         self.repositories = [
             FileRepository(self.subfolder_path("template_config.yml"), loader=yaml.safe_load, key="template_settings"),
             FileRepository(self.subfolder_secret_path("kafka_config.yml"), loader=yaml.safe_load, key="kafka"),
-            FileRepository(self.subfolder_path("ceph_config.yml"), loader=yaml.safe_load, key=self.CephAdapterKey)
+            FileRepository(self.subfolder_path("ceph_config.yml"), loader=yaml.safe_load, key=self.CephAdapterKey),
+            FileRepository(self.subfolder_path("aiohttp.yml"), loader=yaml.safe_load, key="aiohttp"),
         ]
         self.repositories = self.override_repositories(self.repositories)
         self.init()
@@ -42,8 +43,10 @@ class Settings(BaseConfig):
         return os.path.join(self.secret_path, filename)
 
     def get_source(self):
-        adapter_key = self.registered_repositories["template_settings"].data.get("data_adapter") or Settings.OSAdapterKey
-        adapter_settings = self.registered_repositories[adapter_key].data if adapter_key != Settings.OSAdapterKey else None
+        adapter_key = self.registered_repositories["template_settings"].data.get(
+            "data_adapter") or Settings.OSAdapterKey
+        adapter_settings = self.registered_repositories[
+            adapter_key].data if adapter_key != Settings.OSAdapterKey else None
         adapter = self.adapters[adapter_key](adapter_settings)
         adapter.connect()
         source = adapter.source

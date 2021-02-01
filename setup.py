@@ -1,4 +1,5 @@
 from setuptools import find_packages, setup
+import versioneer
 
 import smart_kit
 
@@ -7,12 +8,16 @@ with open("README.md", "r", encoding='utf-8') as file:
 
 setup(
     name="smart_app_framework",
-    version=smart_kit.__version__,
-    author="Platform NLP team",
-    author_email="NLPteam@sberbank.ru",
-    description="Smart App Framework - its framework for create smart apps",
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
+    author="SberDevices",
+    author_email="developer@sberdevices.ru",
+    description="SmartApp Framework — это фреймворк, "
+                "который позволяет создавать смартапы "
+                "с поддержкой виртуальных ассистентов Салют.",
     long_description=long_description,
     long_description_content_type="text/markdown",
+    license="sberpl-2",
     packages=find_packages(exclude=[]),
     include_package_data=True,
     install_requires=[
@@ -47,6 +52,8 @@ setup(
         'jaeger_client==4.3.0',
         'dill',
         'redis',
+        'aiohttp==3.7.3',
+        'aioredis',
     ],
     classifiers=[
         'Programming Language :: Python :: 3.6',

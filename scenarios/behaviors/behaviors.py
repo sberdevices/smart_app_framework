@@ -3,12 +3,14 @@ from time import time
 from collections import namedtuple
 from typing import Dict
 
-import scenarios.logging.logger_constants as log_const
+from core.basic_models.variables.variables import Variables
+from core.logging.logger_utils import log
 from core.names.field import APP_INFO
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
-from core.logging.logger_utils import log
-from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS
 from smart_kit.utils.monitoring import smart_kit_metrics
+
+from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, LOCAL_VARS
+import scenarios.logging.logger_constants as log_const
 
 
 class Behaviors:
@@ -44,12 +46,18 @@ class Behaviors:
             action_params=None):
         text_preprocessing_result_raw = text_preprocessing_result_raw or {}
         # behavior will be removed after timeout + EXPIRATION_DELAY
-        expiration_time = int(time()) + self.descriptions[behavior_id].timeout(self._user) + self.EXPIRATION_DELAY
-        callback = self.Callback(behavior_id=behavior_id,
-                                 expire_time=expiration_time,
-                                 scenario_id=scenario_id,
-                                 text_preprocessing_result=text_preprocessing_result_raw,
-                                 action_params=action_params)
+        expiration_time = (
+                int(time()) +
+                self.descriptions[behavior_id].timeout(self._user) +
+                self.EXPIRATION_DELAY
+        )
+        callback = self.Callback(
+            behavior_id=behavior_id,
+            expire_time=expiration_time,
+            scenario_id=scenario_id,
+            text_preprocessing_result=text_preprocessing_result_raw,
+            action_params=action_params,
+        )
         self._callbacks[callback_id] = callback
         log(
             f"behaviors.add: adding behavior %({log_const.BEHAVIOUR_ID_VALUE})s with scenario_id"
@@ -106,10 +114,16 @@ class Behaviors:
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
-            self._log_callback(callback_id, "SmartKitBehaviors_success",
-                                   smart_kit_metrics.counter_behavior_success, "success",
-                                   callback_action_params)
+            self._log_callback(
+                callback_id,
+                "SmartKitBehaviors_success",
+                smart_kit_metrics.counter_behavior_success,
+                "success",
+                callback_action_params,
+            )
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
+            for key, value in callback_action_params.get(LOCAL_VARS, {}).items():
+                self._user.local_vars.set(key, value)
             result = behavior.success_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
@@ -126,9 +140,11 @@ class Behaviors:
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
             self._log_callback(callback_id, "SmartKitBehaviors_fail",
-                                   smart_kit_metrics.counter_behavior_fail, "fail",
-                                   callback_action_params)
+                               smart_kit_metrics.counter_behavior_fail, "fail",
+                               callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
+            for key, value in callback_action_params.get(LOCAL_VARS, {}).items():
+                self._user.local_vars.set(key, value)
             result = behavior.fail_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
@@ -145,9 +161,11 @@ class Behaviors:
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
             self._log_callback(callback_id, "SmartKitBehaviors_timeout",
-                                   smart_kit_metrics.counter_behavior_timeout, "timeout",
-                                   callback_action_params)
+                               smart_kit_metrics.counter_behavior_timeout, "timeout",
+                               callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
+            for key, value in callback_action_params.get(LOCAL_VARS, {}).items():
+                self._user.local_vars.set(key, value)
             result = behavior.timeout_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result

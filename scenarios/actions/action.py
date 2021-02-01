@@ -6,19 +6,20 @@ from lazy import lazy
 from jinja2 import exceptions as jexcept
 from typing import Optional, Dict, Any, Union, List
 
-from core.basic_models.actions.string_actions import StringAction
-from core.configs.global_constants import CALLBACK_ID_HEADER
-from core.unified_template.unified_template import UnifiedTemplate
 from core.basic_models.actions.basic_actions import Action
 from core.basic_models.actions.command import Command
+from core.basic_models.actions.string_actions import StringAction
 from core.basic_models.parametrizers.parametrizer import BasicParametrizer
-from core.text_preprocessing.base import BaseTextPreprocessingResult
+from core.configs.global_constants import CALLBACK_ID_HEADER
 from core.logging.logger_utils import log
+from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
+from core.unified_template.unified_template import UnifiedTemplate
 from core.utils.pickle_copy import pickle_deepcopy
 
 import scenarios.logging.logger_constants as log_const
-from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, SAVED_MESSAGES, INTEGRATION_FIELD
+from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, SAVED_MESSAGES, \
+    INTEGRATION_FIELD, LOCAL_VARS
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User
 from scenarios.scenario_models.history import Event
@@ -166,23 +167,21 @@ class BasicSelfServiceActionWithState(StringAction):
             return self._run(user, text_preprocessing_result, params)
 
 
-class SetVariableAction(Action):
-    version: Optional[int]
-    parametrizer: BasicParametrizer
-    loader: Optional[str]
+class BaseSetVariableAction(Action):
     key: str
     loader: Optional[str]
     loaders = collections.defaultdict(str, {"json": json.loads, "float": float, "int": int})
-    ttl: int
     value: Union[str, Dict]
 
-    def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
-        super(SetVariableAction, self).__init__(items, id)
+    def __init__(self, items: Dict[str, Any], id_: Optional[str] = None):
+        super(BaseSetVariableAction, self).__init__(items, id_)
         self.key: str = items["key"]
         self.loader = items.get('loader')
-        self.ttl: int = items.get("ttl")
         value: str = items["value"]
         self.template: UnifiedTemplate = UnifiedTemplate(value)
+
+    def _set(self, user, value):
+        raise NotImplemented
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
@@ -202,6 +201,23 @@ class SetVariableAction(Action):
             else:
                 value = None
 
+        self._set(user, value)
+
+
+class SetVariableAction(BaseSetVariableAction):
+    version: Optional[int]
+    parametrizer: BasicParametrizer
+    loader: Optional[str]
+    key: str
+    loaders = collections.defaultdict(str, {"json": json.loads, "float": float, "int": int})
+    ttl: int
+    value: Union[str, Dict]
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
+        super(SetVariableAction, self).__init__(items, id)
+        self.ttl: int = items.get("ttl")
+
+    def _set(self, user, value):
         user.variables.set(self.key, value, self.ttl)
 
 
@@ -283,7 +299,10 @@ class RunScenarioAction(Action):
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Union[None, str, List[Command]]:
-        params = user.parametrizer.collect(text_preprocessing_result)
+        if params is None:
+            params = user.parametrizer.collect(text_preprocessing_result)
+        else:
+            params.update(user.parametrizer.collect(text_preprocessing_result))
         scenario_id = self.scenario.render(params)
         scenario = user.descriptions["scenarios"].get(scenario_id)
         if scenario:
@@ -479,12 +498,20 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
         return extra_request_data
 
     def _save_behavior(self, callback_id, user, scenario, text_preprocessing_result, save_params):
-        user.behaviors.add(callback_id, self.behavior, scenario, text_preprocessing_result.raw, save_params)
+        user.behaviors.add(
+            callback_id,
+            self.behavior,
+            scenario,
+            text_preprocessing_result.raw,
+            save_params,
+        )
 
     def _get_save_params(self, user, action_params, command_action_params):
         save_params = self._get_rendered_tree_recursive(self.save_params_template_data, action_params)
         save_params.update({SAVED_MESSAGES: action_params.get(SAVED_MESSAGES, {})})
+        save_params[LOCAL_VARS] = pickle_deepcopy(user.local_vars.values)
         save_params.update({INTEGRATION_FIELD: action_params.get(INTEGRATION_FIELD, {})})
+        user.local_vars.clear()
 
         saved_messages = save_params[SAVED_MESSAGES]
         if user.message.message_name not in saved_messages or self.rewrite_saved_params:
@@ -493,3 +520,8 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
         save_params.update({TO_MESSAGE_PARAMS: command_action_params})
         save_params.update({TO_MESSAGE_NAME: self.command})
         return save_params
+
+
+class SetLocalVariableAction(BaseSetVariableAction):
+    def _set(self, user, value):
+        user.local_vars.set(self.key, value)

@@ -7,7 +7,8 @@ from core.model.registered import registered_factories
 from core.basic_models.operators.operators import Operator
 
 from core.basic_models.requirement.basic_requirements import Requirement, CompositeRequirement, AndRequirement, \
-    OrRequirement, NotRequirement, RandomRequirement, TopicRequirement, TemplateRequirement, RollingRequirement
+    OrRequirement, NotRequirement, RandomRequirement, TopicRequirement, TemplateRequirement, RollingRequirement, \
+    TimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 
@@ -214,6 +215,50 @@ class RequirementTest(unittest.TestCase):
         user = Mock()
         user.id = "353454"
         requirement = RollingRequirement({"percent": 0})
+        text_normalization_result = None
+        self.assertFalse(requirement.check(text_normalization_result, user))
+
+    def test_time_requirement_true(self):
+        user = Mock()
+        user.id = "353454"
+        user.message.payload = {
+            "meta": {
+                "time": {
+                    "timestamp": 1610979455663,  # ~ 2021-01-18 17:17:35
+                    "timezone_offset_sec": 1000000000,  # shouldn't affect
+                }
+            }
+        }
+        requirement = TimeRequirement(
+            {
+                "operator": {
+                    "type": "more",
+                    "amount": "17:00:00",
+                }
+            }
+        )
+        text_normalization_result = None
+        self.assertTrue(requirement.check(text_normalization_result, user))
+
+    def test_time_requirement_false(self):
+        user = Mock()
+        user.id = "353454"
+        user.message.payload = {
+            "meta": {
+                "time": {
+                    "timestamp": 1610979455663,  # ~ 2021-01-18 17:17:35
+                    "timezone_offset_sec": 1000000000,  # shouldn't affect
+                }
+            }
+        }
+        requirement = TimeRequirement(
+            {
+                "operator": {
+                    "type": "more",
+                    "amount": "18:00:00",
+                }
+            }
+        )
         text_normalization_result = None
         self.assertFalse(requirement.check(text_normalization_result, user))
 

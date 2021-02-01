@@ -19,6 +19,7 @@ class BaseUser(Model):
 
     counters: Counters
     variables: Variables
+    local_vars: Variables
 
     def __init__(self, id, message, values, descriptions, load_error=False):
         self.id = id
@@ -33,17 +34,27 @@ class BaseUser(Model):
 
     @property
     def fields(self):
-        return [Field("counters", Counters),
-                Field("variables", Variables),
-                Field("last_messages_ids", LimitedQueuedHashableObjects,
-                      LimitedQueuedHashableObjectsDescription(None)),
-                Field("last_action_ids", LimitedQueuedHashableObjectsItems, self.descriptions["last_action_ids"])]
+        return [
+            Field("counters", Counters),
+            Field(
+                "last_action_ids",
+                LimitedQueuedHashableObjectsItems,
+                self.descriptions["last_action_ids"]
+            ),
+            Field(
+                "last_messages_ids",
+                LimitedQueuedHashableObjects,
+                LimitedQueuedHashableObjectsDescription(None)
+            ),
+            Field("local_vars", Variables, None, False),
+            Field("variables", Variables),
+        ]
 
     @property
     def raw(self):
         log("%(class_name)s.raw USER %(uid)s SAVE db_version = %(db_version)s.", self,
-                      {"db_version": str(self.variables.get(self.USER_DB_VERSION)),
-                       "uid": str(self.id)})
+            {"db_version": str(self.variables.get(self.USER_DB_VERSION)),
+             "uid": str(self.id)})
         return super(BaseUser, self).raw
 
     @property
@@ -53,3 +64,4 @@ class BaseUser(Model):
     def expire(self):
         self.counters.expire()
         self.variables.expire()
+        self.local_vars.expire()

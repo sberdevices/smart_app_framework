@@ -196,7 +196,7 @@ class SmartAppResources(BaseConfig):
         form_models[CompositeFormDescription] = CompositeForm
 
     def init_field_descriptions(self):
-        field_descriptions[None] = BasicFieldDescription
+        field_descriptions[None] = QuestionFieldDescription
         field_descriptions["question"] = QuestionFieldDescription
         field_descriptions["composite"] = CompositeFieldDescription
         field_descriptions["integration"] = IntegrationFieldDescription

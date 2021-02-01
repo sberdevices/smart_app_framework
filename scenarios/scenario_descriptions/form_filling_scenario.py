@@ -22,8 +22,6 @@ class FormFillingScenario(BaseScenario):
     def _get_form(self, user):
         form = user.forms.get_or_create(self.form_type)
         form = user.forms.new(self.form_type) if form.is_valid() else form
-        if form.is_valid():
-            form = user.forms.new(self.form_type)
         form.refresh()
         return form
 

@@ -26,7 +26,7 @@ class BasicField:
 
     @property
     def value(self):
-        return self._value if self._value is not None else None
+        return self._value
 
     @property
     def available(self):

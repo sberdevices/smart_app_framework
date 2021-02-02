@@ -30,7 +30,7 @@ class Behaviors:
             callback.setdefault("action_params", {})
             self._callbacks[key] = self.Callback(**callback)
 
-    def _add_behaviour_timeout(self, expire_time_us, callback_id):
+    def _add_behavior_timeout(self, expire_time_us, callback_id):
         self._behavior_timeouts.append((expire_time_us, callback_id))
 
     def get_behavior_timeouts(self):
@@ -60,19 +60,19 @@ class Behaviors:
         )
         self._callbacks[callback_id] = callback
         log(
-            f"behaviors.add: adding behavior %({log_const.BEHAVIOUR_ID_VALUE})s with scenario_id"
-            f" %({log_const.CHOSEN_SCENARIO_VALUE})s for callback %({log_const.BEHAVIOUR_CALLBACK_ID_VALUE})s"
+            f"behavior.add: adding behavior %({log_const.BEHAVIOR_ID_VALUE})s with scenario_id"
+            f" %({log_const.CHOSEN_SCENARIO_VALUE})s for callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s"
             f" expiration_time: %(expiration_time)s.",
             user=self._user,
-            params={log_const.KEY_NAME: log_const.BEHAVIOUR_ADD_VALUE,
-                    log_const.BEHAVIOUR_CALLBACK_ID_VALUE: callback_id,
-                    log_const.BEHAVIOUR_ID_VALUE: behavior_id,
+            params={log_const.KEY_NAME: log_const.BEHAVIOR_ADD_VALUE,
+                    log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id,
+                    log_const.BEHAVIOR_ID_VALUE: behavior_id,
                     log_const.CHOSEN_SCENARIO_VALUE: scenario_id,
                     "expiration_time": expiration_time})
 
         behavior_description = self.descriptions[behavior_id]
         expire_time_us = behavior_description.get_expire_time_from_now(self._user)
-        self._add_behaviour_timeout(expire_time_us, callback_id)
+        self._add_behavior_timeout(expire_time_us, callback_id)
 
     def _delete(self, callback_id):
         if callback_id in self._callbacks:
@@ -81,7 +81,7 @@ class Behaviors:
     def clear_all(self):
         self._callbacks = {}
 
-    def _log_callback(self, callback_id: str, log_name: str, metric, behaviour_result: str,
+    def _log_callback(self, callback_id: str, log_name: str, metric, behavior_result: str,
                       callback_action_params: Dict):
         callback = self._get_callback(callback_id)
         behavior = self.descriptions[callback.behavior_id] if callback else None
@@ -91,23 +91,23 @@ class Behaviors:
         app_info = to_message_params.get(APP_INFO, {})
         metric(self._user.settings.app_name, to_message_name)
         log_params = {log_const.KEY_NAME: log_name,
-                      log_const.BEHAVIOUR_CALLBACK_ID_VALUE: callback_id,
-                      log_const.BEHAVIOUR_ID_VALUE: str(behavior.id),
+                      log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id,
+                      log_const.BEHAVIOR_ID_VALUE: str(behavior.id),
                       log_const.CHOSEN_SCENARIO_VALUE: callback.scenario_id,
                       "to_message_name": to_message_name,
-                      "behaviour_result": behaviour_result}
+                      "behavior_result": behavior_result}
         log_params.update(app_info)
 
         log(
-            f"{self.__class__.__name__}.{behaviour_result}: found valid behavior %({log_const.BEHAVIOUR_ID_VALUE})s with scenario_id %({log_const.CHOSEN_SCENARIO_VALUE})s for callback %({log_const.BEHAVIOUR_CALLBACK_ID_VALUE})s with to_message_name %(to_message_name)s",
+            f"{self.__class__.__name__}.{behavior_result}: found valid behavior %({log_const.BEHAVIOR_ID_VALUE})s with scenario_id %({log_const.CHOSEN_SCENARIO_VALUE})s for callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s with to_message_name %(to_message_name)s",
             user=self._user,
             params=log_params)
 
     def success(self, callback_id: str):
-        log(f"behaviors.success started: got callback %({log_const.BEHAVIOUR_CALLBACK_ID_VALUE})s.",
+        log(f"behavior.success started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
-            params={log_const.KEY_NAME: log_const.BEHAVIOUR_SUCCESS_VALUE,
-                    log_const.BEHAVIOUR_CALLBACK_ID_VALUE: callback_id})
+            params={log_const.KEY_NAME: log_const.BEHAVIOR_SUCCESS_VALUE,
+                    log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id})
         callback = self._get_callback(callback_id)
         result = None
         if callback:
@@ -116,7 +116,7 @@ class Behaviors:
             callback_action_params = callback.action_params
             self._log_callback(
                 callback_id,
-                "SmartKitBehaviors_success",
+                "behavior_success",
                 smart_kit_metrics.counter_behavior_success,
                 "success",
                 callback_action_params,
@@ -129,17 +129,17 @@ class Behaviors:
         return result
 
     def fail(self, callback_id: str):
-        log(f"behaviors.fail started: got callback %({log_const.BEHAVIOUR_CALLBACK_ID_VALUE})s.",
+        log(f"behavior.fail started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
-            params={log_const.KEY_NAME: log_const.BEHAVIOUR_FAIL_VALUE,
-                    log_const.BEHAVIOUR_CALLBACK_ID_VALUE: callback_id})
+            params={log_const.KEY_NAME: log_const.BEHAVIOR_FAIL_VALUE,
+                    log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id})
         callback = self._get_callback(callback_id)
         result = None
         if callback:
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
-            self._log_callback(callback_id, "SmartKitBehaviors_fail",
+            self._log_callback(callback_id, "behavior_fail",
                                smart_kit_metrics.counter_behavior_fail, "fail",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
@@ -150,17 +150,17 @@ class Behaviors:
         return result
 
     def timeout(self, callback_id: str):
-        log(f"behaviors.timeout started: got callback %({log_const.BEHAVIOUR_CALLBACK_ID_VALUE})s.",
+        log(f"behavior.timeout started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
-            params={log_const.KEY_NAME: log_const.BEHAVIOUR_TIMEOUT_VALUE,
-                    log_const.BEHAVIOUR_CALLBACK_ID_VALUE: callback_id})
+            params={log_const.KEY_NAME: log_const.BEHAVIOR_TIMEOUT_VALUE,
+                    log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id})
         callback = self._get_callback(callback_id)
         result = None
         if callback:
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
-            self._log_callback(callback_id, "SmartKitBehaviors_timeout",
+            self._log_callback(callback_id, "behavior_timeout",
                                smart_kit_metrics.counter_behavior_timeout, "timeout",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
@@ -171,17 +171,17 @@ class Behaviors:
         return result
 
     def misstate(self, callback_id: str):
-        log(f"behaviors.misstate started: got callback %({log_const.BEHAVIOUR_CALLBACK_ID_VALUE})s.",
+        log(f"behavior.misstate started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
-            params={log_const.KEY_NAME: log_const.BEHAVIOUR_MISSTATE_VALUE,
-                    log_const.BEHAVIOUR_CALLBACK_ID_VALUE: callback_id})
+            params={log_const.KEY_NAME: log_const.BEHAVIOR_MISSTATE_VALUE,
+                    log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id})
         callback = self._get_callback(callback_id)
         result = None
         if callback:
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
-            self._log_callback(callback_id, "SmartKitBehaviors_misstate",
+            self._log_callback(callback_id, "behavior_misstate",
                                smart_kit_metrics.counter_behavior_misstate, "misstate",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
@@ -203,10 +203,10 @@ class Behaviors:
             return callback.action_params
 
     def check_misstate(self, callback_id: str):
-        log(f"behaviors.check_misstate started: got callback %({log_const.BEHAVIOUR_CALLBACK_ID_VALUE})s.",
+        log(f"behavior.check_misstate started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
-            params={log_const.KEY_NAME: log_const.BEHAVIOUR_CHECK_MISSTATE_VALUE,
-                    log_const.BEHAVIOUR_CALLBACK_ID_VALUE: callback_id})
+            params={log_const.KEY_NAME: log_const.BEHAVIOR_CHECK_MISSTATE_VALUE,
+                    log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id})
         callback = self._callbacks.get(callback_id)
         if callback:
             callback_scenario_id = callback.scenario_id
@@ -214,10 +214,10 @@ class Behaviors:
                 last_scenario_equal_callback_scenario = self._user.last_scenarios.last_scenario_name != callback_scenario_id
                 if not last_scenario_equal_callback_scenario:
                     log(
-                        f"behaviors.check_misstate: GOT MISSTATE for callback %({log_const.BEHAVIOUR_CALLBACK_ID_VALUE})s: user_scenario: %(user_scenario)s, callback_scenario: %(callback_scenario)s.",
+                        f"behavior.check_misstate: GOT MISSTATE for callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s: user_scenario: %(user_scenario)s, callback_scenario: %(callback_scenario)s.",
                         self._user,
-                        params={log_const.KEY_NAME: log_const.BEHAVIOUR_CHECK_MISSTATE_VALUE,
-                                log_const.BEHAVIOUR_CALLBACK_ID_VALUE: callback_id,
+                        params={log_const.KEY_NAME: log_const.BEHAVIOR_CHECK_MISSTATE_VALUE,
+                                log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id,
                                 "user_scenario": self._user.last_scenarios.last_scenario_name,
                                 "callback_scenario": callback_scenario_id},
                         level="WARNING")
@@ -236,12 +236,12 @@ class Behaviors:
             app_info = callback_action_params.get(APP_INFO, {})
             smart_kit_metrics.counter_behavior_expire(self._user.settings.app_name, to_message_name)
             log_params = {log_const.KEY_NAME: "behavior_expire",
-                          log_const.BEHAVIOUR_CALLBACK_ID_VALUE: callback_id,
-                          log_const.BEHAVIOUR_DATA_VALUE: str(self._callbacks[callback_id]),
+                          log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id,
+                          log_const.BEHAVIOR_DATA_VALUE: str(self._callbacks[callback_id]),
                           "to_message_name": to_message_name}
             log_params.update(app_info)
             log(
-                f"SmartKitBehaviors.expire: if you see this - something went wrong(should be timeout in normal case) callback %({log_const.BEHAVIOUR_CALLBACK_ID_VALUE})s,  with to_message_name %(to_message_name)s",
+                f"behavior.expire: if you see this - something went wrong(should be timeout in normal case) callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s,  with to_message_name %(to_message_name)s",
                 params=log_params, level="WARNING", user=self._user)
             self._delete(callback_id)
 
@@ -251,12 +251,12 @@ class Behaviors:
                               action_params) in self._callbacks.items():
                 if _behavior_id == behavior_id:
                     log(
-                        f"behaviors.check_got_saved_id == True: already got saved behavior %({log_const.BEHAVIOUR_ID_VALUE})s for callback_id %({log_const.BEHAVIOUR_CALLBACK_ID_VALUE})s",
+                        f"behavior.check_got_saved_id == True: already got saved behavior %({log_const.BEHAVIOR_ID_VALUE})s for callback_id %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s",
                         user=self._user,
                         params={log_const.KEY_NAME: "behavior_got_saved",
-                                log_const.BEHAVIOUR_CALLBACK_ID_VALUE: callback_id,
-                                log_const.BEHAVIOUR_ID_VALUE: behavior_id,
-                                log_const.BEHAVIOUR_DATA_VALUE: str(self._callbacks[callback_id])})
+                                log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id,
+                                log_const.BEHAVIOR_ID_VALUE: behavior_id,
+                                log_const.BEHAVIOR_DATA_VALUE: str(self._callbacks[callback_id])})
                     return True
             return False
         else:

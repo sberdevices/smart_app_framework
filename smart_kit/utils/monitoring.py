@@ -1,5 +1,5 @@
 from core.logging.logger_constants import KEY_NAME
-from core.logging.logger_utils import behaviour_log
+from core.logging.logger_utils import log
 from core.monitoring.monitoring import monitoring
 
 from prometheus_client import Counter
@@ -15,7 +15,7 @@ def silence_it(func):
         try:
             func(*args, **kwargs)
         except:
-            behaviour_log("Metrics: Failed send. Exception occurred.",
+            log("Metrics: Failed send. Exception occurred.",
                           params={KEY_NAME: "metrics_fail"}, level="ERROR", exc_info=True)
     return wrap
 

@@ -56,7 +56,7 @@ def log(message, user=None, params=None, level="INFO", exc_info=None):
     except timeout_decorator.TimeoutError:
         raise
     except:
-        app_logger.log(logging.getLevelName("ERROR"), "behaviour_log: Failed to write a log. Exception occurred",
+        app_logger.log(logging.getLevelName("ERROR"), "Failed to write a log. Exception occurred",
                        params, exc_info=True)
 
 

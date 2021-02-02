@@ -20,9 +20,9 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
     def __init__(self, *args, **kwargs):
         self.app = aiohttp.web.Application()
         self.app.add_routes([aiohttp.web.route('*', '/{tail:.*}', self.iterate)])
-        max_workers = self.settings.get("max_workers", (os.cpu_count() or 1) * 5)
-        self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
         super().__init__(*args, **kwargs)
+        max_workers = self.settings["template_settings"].get("max_workers", (os.cpu_count() or 1) * 5)
+        self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
 
     async def async_init(self):
         await self.db_adapter.connect()

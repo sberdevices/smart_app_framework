@@ -101,7 +101,7 @@ class RequirementAction(Action):
     def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         result = None
-        if self.requirement.check(text_preprocessing_result, user):
+        if self.requirement.check(text_preprocessing_result, user, params):
             result = self.internal_item.run(user, text_preprocessing_result, params)
         return result
 
@@ -131,7 +131,7 @@ class ChoiceAction(Action):
         result = None
         choice_is_made = False
         for item in self.items:
-            checked = item.requirement.check(text_preprocessing_result, user)
+            checked = item.requirement.check(text_preprocessing_result, user, params)
             if checked:
                 result = item.internal_item.run(user, text_preprocessing_result, params)
                 choice_is_made = True
@@ -170,7 +170,7 @@ class ElseAction(Action):
     def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Optional[Dict[str, Union[str, float, int]]]] = None) -> Optional[List[Command]]:
         result = None
-        if self.requirement.check(text_preprocessing_result, user):
+        if self.requirement.check(text_preprocessing_result, user, params):
             result = self.item.run(user, text_preprocessing_result, params)
         elif self._else_item:
             result = self.else_item.run(user, text_preprocessing_result, params)

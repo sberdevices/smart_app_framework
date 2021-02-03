@@ -27,7 +27,7 @@ from core.basic_models.requirement.basic_requirements import requirement_factory
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink, RawItem
 from core.basic_models.requirement.basic_requirements import requirements, Requirement, AndRequirement, \
-    OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement, TimeRequirement, DateRequirement
+    OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement, TimeRequirement, DateTimeRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
@@ -284,7 +284,7 @@ class SmartAppResources(BaseConfig):
         requirements["channel"] = ChannelRequirement
         requirements["counter_time"] = CounterUpdateTimeRequirement
         requirements["counter_value"] = CounterValueRequirement
-        requirements["date"] = DateRequirement
+        requirements["datetime"] = DateTimeRequirement
         requirements["external"] = ExternalRequirement
         requirements["not"] = NotRequirement
         requirements["or"] = OrRequirement

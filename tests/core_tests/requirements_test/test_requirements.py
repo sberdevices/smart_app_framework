@@ -8,7 +8,7 @@ from core.basic_models.operators.operators import Operator
 
 from core.basic_models.requirement.basic_requirements import Requirement, CompositeRequirement, AndRequirement, \
     OrRequirement, NotRequirement, RandomRequirement, TopicRequirement, TemplateRequirement, RollingRequirement, \
-    TimeRequirement, DateRequirement
+    TimeRequirement, DateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 
@@ -262,7 +262,7 @@ class RequirementTest(unittest.TestCase):
         text_normalization_result = None
         self.assertFalse(requirement.check(text_normalization_result, user))
 
-    def test_date_requirement_true(self):
+    def test_datetime_requirement_true(self):
         user = Mock()
         user.id = "353454"
         user.message.payload = {
@@ -273,18 +273,15 @@ class RequirementTest(unittest.TestCase):
                 }
             }
         }
-        requirement = DateRequirement(
+        requirement = DateTimeRequirement(
             {
-                "operator": {
-                    "type": "more",
-                    "amount": "01/01",
-                }
+                "match_cron": "*/17 14-19 * * mon"
             }
         )
         text_normalization_result = None
         self.assertTrue(requirement.check(text_normalization_result, user))
 
-    def test_date_requirement_false(self):
+    def test_datetime_requirement_false(self):
         user = Mock()
         user.id = "353454"
         user.message.payload = {
@@ -295,12 +292,9 @@ class RequirementTest(unittest.TestCase):
                 }
             }
         }
-        requirement = DateRequirement(
+        requirement = DateTimeRequirement(
             {
-                "operator": {
-                    "type": "more",
-                    "amount": "25/01",
-                }
+                "match_cron": "* * * * 6,7"
             }
         )
         text_normalization_result = None

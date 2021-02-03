@@ -1,7 +1,6 @@
 from setuptools import find_packages, setup
 import versioneer
 
-import smart_kit
 
 with open("README.md", "r", encoding='utf-8') as file:
     long_description = file.read()
@@ -54,6 +53,7 @@ setup(
         'redis',
         'aiohttp==3.7.3',
         'aioredis',
+        'croniter',
     ],
     classifiers=[
         'Programming Language :: Python :: 3.6',

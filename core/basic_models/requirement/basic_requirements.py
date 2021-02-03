@@ -1,9 +1,11 @@
 # coding: utf-8
 import hashlib
-from datetime import datetime, MINYEAR
+from datetime import datetime
 from random import random
 from lazy import lazy
 from typing import List, Optional, Dict, Any
+
+from croniter import croniter
 
 import core.logging.logger_constants as log_const
 from core.basic_models.operators.operators import Operator
@@ -187,9 +189,12 @@ class TimeRequirement(ComparisonRequirement):
         return operator
 
 
-class DateRequirement(ComparisonRequirement):
+class DateTimeRequirement(Requirement):
+    match_cron: str
+
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         super().__init__(items, id)
+        self.match_cron = items['match_cron']
 
     def check(
             self,
@@ -200,14 +205,4 @@ class DateRequirement(ComparisonRequirement):
         message_time_dict = user.message.payload['meta']['time']
         message_timestamp_sec = message_time_dict['timestamp'] // 1000
         message_datetime = datetime.fromtimestamp(message_timestamp_sec)
-        message_date = message_datetime.replace(year=MINYEAR).date()
-        return self.operator.compare(message_date)
-
-    @lazy
-    @factory(Operator)
-    def operator(self):
-        operator = dict(self._operator)
-        amount_datetime = datetime.strptime(operator["amount"], '%d/%m')
-        amount_date = amount_datetime.replace(year=MINYEAR).date()
-        operator["amount"] = amount_date
-        return operator
+        return croniter.match(self.match_cron, message_datetime)

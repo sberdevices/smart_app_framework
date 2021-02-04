@@ -5,6 +5,8 @@ from random import random
 from lazy import lazy
 from typing import List, Optional, Dict, Any
 
+from croniter import croniter
+
 import core.logging.logger_constants as log_const
 from core.basic_models.operators.operators import Operator
 from core.logging.logger_utils import log
@@ -185,3 +187,22 @@ class TimeRequirement(ComparisonRequirement):
         amount_time = datetime.strptime(operator["amount"], '%H:%M:%S').time()
         operator["amount"] = amount_time
         return operator
+
+
+class DateTimeRequirement(Requirement):
+    match_cron: str
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super().__init__(items, id)
+        self.match_cron = items['match_cron']
+
+    def check(
+            self,
+            text_preprocessing_result: BaseTextPreprocessingResult,
+            user: BaseUser,
+            params: Dict[str, Any] = None
+    ) -> bool:
+        message_time_dict = user.message.payload['meta']['time']
+        message_timestamp_sec = message_time_dict['timestamp'] // 1000
+        message_datetime = datetime.fromtimestamp(message_timestamp_sec)
+        return croniter.match(self.match_cron, message_datetime)

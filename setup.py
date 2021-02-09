@@ -54,6 +54,7 @@ setup(
         'aiohttp==3.7.3',
         'aioredis',
         'croniter',
+        'aiokafka'
     ],
     classifiers=[
         'Programming Language :: Python :: 3.6',

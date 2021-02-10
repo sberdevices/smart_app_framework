@@ -342,7 +342,19 @@ class MainLoop(BaseMainLoop):
         return message_key_is_valid
 
     def _send_request(self, user, answer, mq_message):
+        kafka_broker_settings = self.settings["template_settings"].get(
+            "route_kafka_broker"
+        )
+
         request = answer.request
+
+        for kb_setting in kafka_broker_settings:
+            if (
+                kb_setting["from_channel"] == answer.incoming_message.channel
+                and kb_setting["to_topic"] == request.topic_key
+            ):
+                request.kafka_key = kb_setting["route_to_broker"]
+
         request_params = dict()
         request_params["publishers"] = self.publishers
         request_params["mq_message"] = mq_message

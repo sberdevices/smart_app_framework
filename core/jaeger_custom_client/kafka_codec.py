@@ -28,6 +28,7 @@ class KafkaCodec(TextCodec):
 
         self.target_keys = {self.trace_id_header, self.baggage_prefix, self.debug_id_header, self.baggage_header}
         self.__logger = logging.getLogger(__name__)
+        self.is_async = False
 
     def inject(self, span_context, carrier: List[Tuple[str, bytes]]):
         if carrier is None:
@@ -46,7 +47,10 @@ class KafkaCodec(TextCodec):
                 carrier.append((key, value.encode(KafkaCodec.ENCODING)))
 
     def extract(self, carrier: Message) -> Optional[SpanContext]:
-        header = carrier.headers()
+        if self.is_async:
+            header = carrier.headers
+        else:
+            header = carrier.headers()
         header_dict = {}
         if header:
             for el in header:

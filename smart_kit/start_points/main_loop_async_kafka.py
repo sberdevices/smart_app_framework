@@ -1,6 +1,5 @@
 # coding=utf-8
 import asyncio
-from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 import json
 import time
 from collections import namedtuple
@@ -21,6 +20,8 @@ from smart_kit.names import message_names
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
 from smart_kit.start_points.base_main_loop import BaseMainLoop
 from smart_kit.utils.monitoring import smart_kit_metrics
+from core.mq.kafka.aio_kafka_consumer import KafkaConsumer
+from core.mq.kafka.aio_kafka_publisher import KafkaPublisher
 
 
 def _enrich_config_from_secret(kafka_config, secret_config):
@@ -31,28 +32,21 @@ def _enrich_config_from_secret(kafka_config, secret_config):
     return kafka_config
 
 
-class MainLoop(BaseMainLoop):
+class AIOKafkaMainLoop(BaseMainLoop):
 
     def __init__(self, model, user_cls, parametrizer_cls, settings, *args, **kwargs):
         super().__init__(model, user_cls, parametrizer_cls, settings, *args, **kwargs)
         log("%(class_name)s.__init__ started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                         "class_name": self.__class__.__name__})
         try:
-            kafka_config = _enrich_config_from_secret(
-                settings["kafka"]["template-engine"], settings.get("secret_kafka", {})
-            )
-
-            consumers = {}
-            publishers = {}
+            self.kafka_config = _enrich_config_from_secret(settings["kafka"]["template-engine"],
+                                                           settings.get("secret_kafka", {}))
+            self.consumers = []
+            self.publishers = []
             log(
                 "%(class_name)s START CONSUMERS/PUBLISHERS CREATE",
                 params={"class_name": self.__class__.__name__}, level="WARNING"
             )
-            for key, config in kafka_config.items():
-                if config.get("consumer"):
-                    consumers.update({key: AIOKafkaConsumer(kafka_config[key])})
-                if config.get("publisher"):
-                    publishers.update({key: AIOKafkaProducer(kafka_config[key])})
             log(
                 "%(class_name)s FINISHED CONSUMERS/PUBLISHERS CREATE",
                 params={"class_name": self.__class__.__name__}, level="WARNING"
@@ -63,13 +57,10 @@ class MainLoop(BaseMainLoop):
             self.model = model
             self.user_cls = user_cls
             self.parametrizer_cls = parametrizer_cls
-            self.consumers = consumers
-            for key in self.consumers:
-                self.consumers[key].subscribe()
-            self.publishers = publishers
             self.behaviors_timeouts_value_cls = namedtuple('behaviors_timeouts_value',
                                                            'db_uid, callback_id, mq_message, kafka_key')
             self.behaviors_timeouts = HeapqKV(value_to_key_func=lambda val: val.callback_id)
+            self.tracer.codecs["kafka_map"].is_async = True
             log("%(class_name)s.__init__ completed.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                               "class_name": self.__class__.__name__})
         except:
@@ -79,20 +70,18 @@ class MainLoop(BaseMainLoop):
             raise
 
     def run(self):
+        for key, config in self.kafka_config.items():
+            if config.get("consumer"):
+                self.consumers.append(key)
+            if config.get("publisher"):
+                self.publishers.append(key)
         log("%(class_name)s.run started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                   "class_name": self.__class__.__name__})
-
-        loop = asyncio.get_event_loop()
-        loop.create_task(self._run())
+        loop = asyncio.get_event_loop().run_until_complete(self._run())
+        # loop.create_task(self._run())
         loop.run_forever()
 
         log("Stopping Kafka handler", level="WARNING")
-        for kafka_key in self.consumers:
-            self.consumers[kafka_key].close()
-            log("Kafka consumer connection is closed", level="WARNING")
-            self.publishers[kafka_key].close()
-            log("Kafka publisher connection is closed", level="WARNING")
-        log("Kafka handler is stopped", level="WARNING")
 
     async def _run(self):
         while True:
@@ -101,29 +90,27 @@ class MainLoop(BaseMainLoop):
             self.health_check_server.iterate()
 
     def _get_topic_key(self, mq_message):
-        return self.default_topic_key or self._topic_names[mq_message.topic()]
+        return self.default_topic_key or self._topic_names[mq_message.topic]
 
     async def iterate(self, kafka_key):
-        consumer = self.consumers[kafka_key]
+        consumer = KafkaConsumer(self.kafka_config[kafka_key])
+        producer = KafkaPublisher(self.kafka_config[kafka_key])
         # Get cluster layout and join group `my-group`
         await consumer.start()
+        await producer.start()
         try:
             # Consume messages
             async for msg in consumer:
                 answers = self._iterate(msg, kafka_key)
-                consumer.commit_offset(msg)
-                producer = self.publishers[kafka_key]
                 # Get cluster layout and initial topic/partition leadership information
-                await producer.start()
-                try:
-                    # Produce message
-                    await producer.send_and_wait(self._get_topic_key(msg), answers)
-                finally:
-                    # Wait for all pending messages to be delivered or expire.
-                    await producer.stop()
+                # Produce message
+                if answers:
+                    for answer in answers:
+                        await producer.send_and_wait(self._get_topic_key(msg), bytearray(answer.value, 'utf-8'))
         finally:
             # Will leave consumer group; perform autocommit if enabled.
             await consumer.stop()
+            await producer.stop()
 
     def _iterate(self, mq_message, kafka_key):
         message_value = None
@@ -136,9 +123,9 @@ class MainLoop(BaseMainLoop):
             db_uid = None
             while save_tries < self.user_save_collisions_tries and not user_save_no_collisions:
                 save_tries += 1
-                message_value = mq_message.value()
+                message_value = mq_message.value
                 message = SmartAppFromMessage(message_value,
-                                              headers=mq_message.headers(),
+                                              headers=mq_message.headers,
                                               masking_fields=self.masking_fields)
 
                 # TODO вернуть проверку ключа!!!
@@ -146,12 +133,12 @@ class MainLoop(BaseMainLoop):
                     log(
                         "INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %(incoming_data)s",
                         params={log_const.KEY_NAME: "incoming_message",
-                                "topic": mq_message.topic(),
-                                "message_partition": mq_message.partition(),
-                                "message_key": mq_message.key(),
+                                "topic": mq_message.topic,
+                                "message_partition": mq_message.partition,
+                                "message_key": mq_message.key,
                                 "kafka_key": kafka_key,
                                 "incoming_data": str(message.masked_value),
-                                "headers": str(mq_message.headers())})
+                                "headers": str(mq_message.headers)})
 
                     db_uid = message.db_uid
 
@@ -194,10 +181,10 @@ class MainLoop(BaseMainLoop):
 
                         self.save_behavior_timeouts(user, mq_message, kafka_key)
 
-                    if mq_message.headers() is None:
-                        mq_message.set_headers([])
+                    if mq_message.headers is None:
+                        mq_message.headers =[]
                     self.tracer.inject(span_context=span.context, format=jaeger_kafka_codec.KAFKA_MAP,
-                                       carrier=mq_message.headers())
+                                       carrier=list(mq_message.headers))
 
                     if answers:
                         return answers
@@ -217,8 +204,8 @@ class MainLoop(BaseMainLoop):
                     user=user,
                     params={log_const.KEY_NAME: "ignite_collision",
                             "db_uid": db_uid,
-                            "message_key": mq_message.key(),
-                            "message_partition": mq_message.partition(),
+                            "message_key": mq_message.key,
+                            "message_partition": mq_message.partition,
                             "kafka_key": kafka_key,
                             "uid": user.id,
                             "db_version": str(user.variables.get(user.USER_DB_VERSION))},
@@ -280,11 +267,11 @@ class MainLoop(BaseMainLoop):
                 while save_tries < self.user_save_collisions_tries and not user_save_no_collisions:
                     save_tries += 1
 
-                    orig_message_raw = json.loads(mq_message.value())
+                    orig_message_raw = json.loads(mq_message.value)
                     orig_message_raw[SmartAppFromMessage.MESSAGE_NAME] = message_names.LOCAL_TIMEOUT
 
                     timeout_from_message = self._get_timeout_from_message(orig_message_raw, callback_id,
-                                                                          headers=mq_message.headers())
+                                                                          headers=mq_message.headers)
 
                     user = self.load_user(db_uid, timeout_from_message)
                     commands = self.model.answer(timeout_from_message, user)
@@ -301,7 +288,7 @@ class MainLoop(BaseMainLoop):
                             user=user,
                             params={log_const.KEY_NAME: "ignite_collision",
                                     "db_uid": db_uid,
-                                    "message_key": mq_message.key(),
+                                    "message_key": mq_message.key,
                                     "kafka_key": kafka_key,
                                     "uid": user.id,
                                     "db_version": str(user.variables.get(user.USER_DB_VERSION))},
@@ -315,8 +302,8 @@ class MainLoop(BaseMainLoop):
                         user=user,
                         params={log_const.KEY_NAME: "ignite_collision",
                                 "db_uid": db_uid,
-                                "message_key": mq_message.key(),
-                                "message_partition": mq_message.partition(),
+                                "message_key": mq_message.key,
+                                "message_partition": mq_message.partition,
                                 "kafka_key": kafka_key,
                                 "uid": user.id,
                                 "db_version": str(user.variables.get(user.USER_DB_VERSION))},
@@ -329,7 +316,7 @@ class MainLoop(BaseMainLoop):
             except:
                 log("%(class_name)s error.", params={log_const.KEY_NAME: "error_handling_timeout",
                                                      "class_name": self.__class__.__name__,
-                                                     log_const.REQUEST_VALUE: str(mq_message.value())},
+                                                     log_const.REQUEST_VALUE: str(mq_message.value)},
                     level="ERROR", exc_info=True)
 
     @staticmethod

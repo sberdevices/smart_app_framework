@@ -1,6 +1,8 @@
 import typing
+import os
 
 import asyncio
+import concurrent.futures
 import aiohttp
 import aiohttp.web
 
@@ -29,6 +31,8 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         self.app = aiohttp.web.Application()
         self.app.add_routes([aiohttp.web.route('*', '/{tail:.*}', self.iterate)])
         super().__init__(*args, **kwargs)
+        max_workers = self.settings["template_settings"].get("max_workers", (os.cpu_count() or 1) * 5)
+        self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
 
     async def async_init(self):
         await self.db_adapter.connect()
@@ -110,7 +114,7 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         if not message.validate():
             return 400, "BAD REQUEST", SmartAppToMessage(self.BAD_REQUEST_COMMAND, message=message, request=None)
 
-        answer, stats = await self.app.loop.run_in_executor(None, run_in_loop, self.process_message, message)
+        answer, stats = await self.app.loop.run_in_executor(self.pool, run_in_loop, self.process_message, message)
         if not answer:
             return 204, "NO CONTENT", SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None)
 

@@ -9,7 +9,7 @@ from lazy import lazy
 import scenarios.logging.logger_constants as log_const
 from core.jaeger_custom_client import jaeger_utils
 from core.jaeger_custom_client import kafka_codec as jaeger_kafka_codec
-from core.logging.logger_utils import log
+from core.logging.logger_utils import log, MESSAGE_ID_STR
 from core.message.from_message import SmartAppFromMessage
 from core.model.heapq.heapq_storage import HeapqKV
 from core.mq.kafka.kafka_consumer import KafkaConsumer
@@ -224,7 +224,8 @@ class MainLoop(BaseMainLoop):
                                               "message_key": mq_message.key(),
                                               "kafka_key": kafka_key,
                                               "incoming_data": str(message.masked_value),
-                                              "headers": str(mq_message.headers())})
+                                              "headers": str(mq_message.headers()),
+                                              MESSAGE_ID_STR: message.incremental_id})
 
                         db_uid = message.db_uid
 
@@ -344,7 +345,7 @@ class MainLoop(BaseMainLoop):
     def _send_request(self, user, answer, mq_message):
         kafka_broker_settings = self.settings["template_settings"].get(
             "route_kafka_broker"
-        )
+        ) or []
 
         request = answer.request
 

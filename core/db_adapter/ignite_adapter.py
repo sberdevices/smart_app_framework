@@ -37,7 +37,7 @@ class IgniteAdapter(DBAdapter):
         raise error.NotSupportedOperation
 
     def connect(self):
-        pass
+        self._get_cache()
 
     def _connect_thread(self, thread_id):
         try:

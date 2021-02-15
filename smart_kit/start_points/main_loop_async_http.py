@@ -39,12 +39,7 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
 
     def get_db(self):
         db_adapter = db_adapter_factory(self.settings["template_settings"].get("db_adapter", {}))
-        if not db_adapter.IS_ASYNC:
-            raise Exception(
-                f"Sync adapter {db_adapter.__class__.__name__} doesnt compare with {self.__class__.__name__}"
-            )
         self.app.on_cleanup.append(self.close_db)
-
         return db_adapter
 
     # noinspection PyMethodMayBeStatic
@@ -56,7 +51,10 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         db_data = None
         load_error = False
         try:
-            db_data = await self.db_adapter.get(db_uid)
+            if self.db_adapter.IS_ASYNC:
+                db_data = await self.db_adapter.get(db_uid)
+            else:
+                db_data = self.db_adapter.get(db_uid)
         except (DBAdapterException, ValueError):
             log("Failed to get user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                    log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")
@@ -86,12 +84,25 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
                     params={"uid": user.id,
                             log_const.KEY_NAME: "user_save",
                             "user_length": len(str_data)})
-                if user.initial_db_data and self.user_save_check_for_collisions:
-                    no_collisions = await self.db_adapter.replace_if_equals(db_uid,
-                                                                            sample=user.initial_db_data,
-                                                                            data=str_data)
+
+                if self.db_adapter.IS_ASYNC:
+                    if user.initial_db_data and self.user_save_check_for_collisions:
+                        no_collisions = await self.db_adapter.replace_if_equals(
+                            db_uid,
+                            sample=user.initial_db_data,
+                            data=str_data
+                        )
+                    else:
+                        await self.db_adapter.save(db_uid, str_data)
                 else:
-                    await self.db_adapter.save(db_uid, str_data)
+                    if user.initial_db_data and self.user_save_check_for_collisions:
+                        no_collisions = self.db_adapter.replace_if_equals(
+                            db_uid,
+                            sample=user.initial_db_data,
+                            data=str_data
+                        )
+                    else:
+                        self.db_adapter.save(db_uid, str_data)
             except (DBAdapterException, ValueError):
                 log("Failed to set user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                        log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")

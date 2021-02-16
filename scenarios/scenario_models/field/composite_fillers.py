@@ -24,15 +24,15 @@ class RequirementFiller(RequirementAction):
     def internal_item(self):
         return self._item
 
-    def on_extract_error(self, text_preprocessing_result, user):
+    def on_extract_error(self, text_preprocessing_result, user, params):
         log("exc_handler: RequirementFiller failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value),
             user, {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)
         return None
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
     def extract(self, text_preprocessing_result: BaseTextPreprocessingResult,
-                user: User) -> Optional[Union[int, float, str, bool, List, Dict]]:
-        return self.run(user, text_preprocessing_result)
+                user: User, params: Dict[str, Any] = None) -> Optional[Union[int, float, str, bool, List, Dict]]:
+        return self.run(user, text_preprocessing_result, params)
 
 
 class ChoiceFiller(ChoiceAction):
@@ -52,7 +52,7 @@ class ChoiceFiller(ChoiceAction):
     def else_item(self):
         return self._else_item
 
-    def on_extract_error(self, text_preprocessing_result, user):
+    def on_extract_error(self, text_preprocessing_result, user, params):
         log("exc_handler: ChoiceFiller failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value),
             user,
             {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)
@@ -60,8 +60,8 @@ class ChoiceFiller(ChoiceAction):
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
     def extract(self, text_preprocessing_result: BaseTextPreprocessingResult,
-                user: User) -> Optional[Union[int, float, str, bool, List, Dict]]:
-        return self.run(user, text_preprocessing_result)
+                user: User, params: Dict[str, Any] = None) -> Optional[Union[int, float, str, bool, List, Dict]]:
+        return self.run(user, text_preprocessing_result, params)
 
 
 class ElseFiller(ElseAction):
@@ -81,7 +81,7 @@ class ElseFiller(ElseAction):
     def else_item(self):
         return self._else_item
 
-    def on_extract_error(self, text_preprocessing_result, user):
+    def on_extract_error(self, text_preprocessing_result, user, params):
         log("exc_handler: ElseFiller failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value),
             user,
             {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)
@@ -89,5 +89,5 @@ class ElseFiller(ElseAction):
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
     def extract(self, text_preprocessing_result: BaseTextPreprocessingResult,
-                user: User) -> Optional[Union[int, float, str, bool, List, Dict]]:
-        return self.run(user, text_preprocessing_result)
+                user: User, params: Dict[str, Any] = None) -> Optional[Union[int, float, str, bool, List, Dict]]:
+        return self.run(user, text_preprocessing_result, params)

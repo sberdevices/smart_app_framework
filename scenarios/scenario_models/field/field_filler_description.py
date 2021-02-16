@@ -30,7 +30,7 @@ field_filler_factory = build_factory(field_filler_description)
 
 class FieldFillerDescription(Action):
 
-    def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str]=None) -> None:
+    def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str] = None) -> None:
         super().__init__(items, id)
 
     def _log_params(self):
@@ -43,13 +43,13 @@ class FieldFillerDescription(Action):
                 params: Dict[str, Any] = None) -> None:
         return None
 
-    def on_extract_error(self, text_preprocessing_result, user):
+    def on_extract_error(self, text_preprocessing_result, user, params=None):
         log("exc_handler: Filler failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value), user,
-                      {log_const.KEY_NAME: core_log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)
+            {log_const.KEY_NAME: core_log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)
         return None
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Any]]=None) -> None:
+            params: Optional[Dict[str, Any]] = None) -> None:
         return self.extract(text_preprocessing_result, user, params)
 
     def _postprocessing(self, user: User, item: str) -> None:
@@ -441,7 +441,9 @@ class ApproveFiller(FieldFillerDescription):
 
 class ApproveRawTextFiller(ApproveFiller):
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User) -> Optional[bool]:
+    def extract(
+            self, text_preprocessing_result: TextPreprocessingResult, user: User, params: Dict[str, Any] = None
+    ) -> Optional[bool]:
         original_text = ' '.join(text_preprocessing_result.original_text.split()).lower().rstrip('!.)')
         if original_text in self.set_yes_words:
             params = self._log_params()

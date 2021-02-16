@@ -8,7 +8,7 @@ from core.basic_models.operators.operators import Operator
 
 from core.basic_models.requirement.basic_requirements import Requirement, CompositeRequirement, AndRequirement, \
     OrRequirement, NotRequirement, RandomRequirement, TopicRequirement, TemplateRequirement, RollingRequirement, \
-    TimeRequirement
+    TimeRequirement, DateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 
@@ -224,7 +224,7 @@ class RequirementTest(unittest.TestCase):
         user.message.payload = {
             "meta": {
                 "time": {
-                    "timestamp": 1610979455663,  # ~ 2021-01-18 17:17:35
+                    "timestamp": 1610990255000,  # ~ 2021-01-18 17:17:35
                     "timezone_offset_sec": 1000000000,  # shouldn't affect
                 }
             }
@@ -257,6 +257,44 @@ class RequirementTest(unittest.TestCase):
                     "type": "more",
                     "amount": "18:00:00",
                 }
+            }
+        )
+        text_normalization_result = None
+        self.assertFalse(requirement.check(text_normalization_result, user))
+
+    def test_datetime_requirement_true(self):
+        user = Mock()
+        user.id = "353454"
+        user.message.payload = {
+            "meta": {
+                "time": {
+                    "timestamp": 1610979455663,  # ~ 2021-01-18 17:17:35
+                    "timezone_offset_sec": 1000000000,  # shouldn't affect
+                }
+            }
+        }
+        requirement = DateTimeRequirement(
+            {
+                "match_cron": "*/17 14-19 * * mon"
+            }
+        )
+        text_normalization_result = None
+        self.assertTrue(requirement.check(text_normalization_result, user))
+
+    def test_datetime_requirement_false(self):
+        user = Mock()
+        user.id = "353454"
+        user.message.payload = {
+            "meta": {
+                "time": {
+                    "timestamp": 1610979455663,  # ~ 2021-01-18 17:17:35
+                    "timezone_offset_sec": 1000000000,  # shouldn't affect
+                }
+            }
+        }
+        requirement = DateTimeRequirement(
+            {
+                "match_cron": "* * * * 6,7"
             }
         )
         text_normalization_result = None

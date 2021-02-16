@@ -170,6 +170,9 @@ class SelfServiceActionWithStateTest(unittest.TestCase):
         user = Mock()
         user.parametrizer = MockParametrizer(user, {})
         user.message = Mock()
+        local_vars = Mock()
+        local_vars.values = dict()
+        user.local_vars = local_vars
         test_incremental_id = "test_incremental_id"
         user.message.incremental_id = test_incremental_id
         behavior = Mock()
@@ -206,6 +209,10 @@ class SelfServiceActionWithStateTest(unittest.TestCase):
         user = Mock()
         user.parametrizer = MockParametrizer(user, {})
         user.message = Mock()
+        user.message = Mock()
+        local_vars = Mock()
+        local_vars.values = dict()
+        user.local_vars = local_vars
         test_incremental_id = "test_incremental_id"
         user.message.incremental_id = test_incremental_id
         _new_behavior_id = Mock()

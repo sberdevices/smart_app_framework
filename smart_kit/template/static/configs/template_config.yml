@@ -22,5 +22,4 @@ masking_fields:
   - refresh_token
   - epkId
   - profileId
-user_save_check_for_collisions: false
 user_save_collisions_tries: 2

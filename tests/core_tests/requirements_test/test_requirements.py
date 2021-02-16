@@ -224,7 +224,7 @@ class RequirementTest(unittest.TestCase):
         user.message.payload = {
             "meta": {
                 "time": {
-                    "timestamp": 1610979455663,  # ~ 2021-01-18 17:17:35
+                    "timestamp": 1610990255000,  # ~ 2021-01-18 17:17:35
                     "timezone_offset_sec": 1000000000,  # shouldn't affect
                 }
             }

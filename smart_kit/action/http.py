@@ -19,10 +19,10 @@ class HTTPRequestAction(NodeAction):
 
     def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
-        behavior = user.descriptions["behaviors"][self.behavior]
+        behavior_description = user.descriptions["behaviors"][self.behavior]
 
         request_params = self.params
-        request_params["timeout"] = behavior.timeout(user)
+        request_params["timeout"] = behavior_description.timeout(user)
 
         params = params or {}
         collected = user.parametrizer.collect(text_preprocessing_result)
@@ -34,8 +34,8 @@ class HTTPRequestAction(NodeAction):
             with requests.request(**request_parameters) as response:
                 response.raise_for_status()
                 user.variables.set(self.store, response.json())
-                return behavior.success_action.run(user, text_preprocessing_result, None)
+                return behavior_description.success_action.run(user, text_preprocessing_result, None)
         except requests.exceptions.Timeout:
-            return behavior.timeout_action.run(user, text_preprocessing_result, None)
+            return behavior_description.timeout_action.run(user, text_preprocessing_result, None)
         except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
-            return behavior.fail_action.run(user, text_preprocessing_result, None)
+            return behavior_description.fail_action.run(user, text_preprocessing_result, None)

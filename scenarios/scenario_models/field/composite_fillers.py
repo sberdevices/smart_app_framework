@@ -18,7 +18,6 @@ class RequirementFiller(RequirementAction):
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super(RequirementFiller, self).__init__(items, id)
-        self._item = items[self.FIELD_KEY]
 
     @lazy
     @factory(FieldFillerDescription)
@@ -37,10 +36,11 @@ class RequirementFiller(RequirementAction):
 
 
 class ChoiceFiller(ChoiceAction):
+    FIELD_REQUIREMENT_KEY = "requirement_fillers"
+    FIELD_ELSE_KEY = "else_filler"
+
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super(ChoiceFiller, self).__init__(items, id)
-        self._requirement_items = items["requirement_fillers"]
-        self._else_item = items.get("else_filler")
 
     @lazy
     @list_factory(RequirementFiller)
@@ -65,10 +65,11 @@ class ChoiceFiller(ChoiceAction):
 
 
 class ElseFiller(ElseAction):
+    FIELD_ITEM_KEY = "filler"
+    FIELD_ELSE_KEY = "else_filler"
+
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super(ElseFiller, self).__init__(items, id)
-        self._item = items["filler"]
-        self._else_item = items.get("else_filler")
 
     @lazy
     @factory(FieldFillerDescription)

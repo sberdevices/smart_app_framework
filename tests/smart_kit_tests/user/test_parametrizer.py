@@ -46,6 +46,9 @@ class UserTest1(unittest.TestCase):
         self.test_user4.last_scenarios.last_scenario_name = 22
         self.test_user4.gender_selector = Mock()
         self.test_user4.gender_selector.get_text_by_key = ''
+        local_vars = Mock()
+        local_vars.values = dict()
+        self.test_user4.local_vars = local_vars
         self.test_text_preprocessing_result = Mock('text_preprocessing_result')
         self.test_text_preprocessing_result.raw = {1: "any text"}
 
@@ -68,11 +71,11 @@ class UserTest1(unittest.TestCase):
         answer1 = {'payload': 'any payload', 'uuid': '1234-5678-9102', 'forms': {
             'any type 1': 'any form 1', 'any type 2': 'any form 2'}, 'main_form': 'any form 1',
                    'text_preprocessing_result': {}, 'variables': [1, 2, 3], 'counters': 3, 'scenario_id': 22,
-                   'gender_sensitive_text': ''}
+                   'gender_sensitive_text': '', 'local_vars': {}}
         answer2 = {'payload': 'any payload', 'uuid': '1234-5678-9102', 'forms': {
             'any type 1': 'any form 1', 'any type 2': 'any form 2'}, 'main_form': 'any form 1',
                    'text_preprocessing_result': {1: 'any text'}, 'variables': [1, 2, 3], 'counters': 3,
-                   'scenario_id': 22, 'gender_sensitive_text': ''}
+                   'scenario_id': 22, 'gender_sensitive_text': '', 'local_vars': {}}
         result1 = obj1._get_user_data()
         result1.pop('message')
         result2 = obj1._get_user_data(self.test_text_preprocessing_result)

@@ -1,6 +1,7 @@
 # coding: utf-8
 import hashlib
-from datetime import datetime
+
+from datetime import datetime, timezone
 from random import random
 from lazy import lazy
 from typing import List, Optional, Dict, Any
@@ -177,7 +178,7 @@ class TimeRequirement(ComparisonRequirement):
     ) -> bool:
         message_time_dict = user.message.payload['meta']['time']
         message_timestamp_sec = message_time_dict['timestamp'] // 1000
-        message_time = datetime.fromtimestamp(message_timestamp_sec).time()
+        message_time = datetime.fromtimestamp(message_timestamp_sec, tz=timezone.utc).time()
         return self.operator.compare(message_time)
 
     @lazy

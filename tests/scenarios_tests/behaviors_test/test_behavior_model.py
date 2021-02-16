@@ -5,8 +5,6 @@ from collections import namedtuple
 from unittest.mock import Mock
 import scenarios.behaviors.behaviors
 
-print(scenarios.behaviors.behaviors.time)
-
 
 class BehaviorsTest(unittest.TestCase):
     def setUp(self):

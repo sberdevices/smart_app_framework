@@ -6,17 +6,12 @@ loggers:
       - file_app_handler
     propagate: false
     level: DEBUG
-  system_logger:
-    handlers:
-      - console_handler
-      - file_handler
-    propagate: false
-    level: DEBUG
 version: 1
 root:
   handlers:
     - console_handler
-  level: INFO
+    - file_handler
+  level: DEBUG
 handlers:
   file_app_handler:
     backupCount: 30

@@ -1,6 +1,8 @@
 import typing
+import os
 
 import asyncio
+import concurrent.futures
 import aiohttp
 import aiohttp.web
 
@@ -19,6 +21,8 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         self.app = aiohttp.web.Application()
         self.app.add_routes([aiohttp.web.route('*', '/{tail:.*}', self.iterate)])
         super().__init__(*args, **kwargs)
+        max_workers = self.settings["template_settings"].get("max_workers", (os.cpu_count() or 1) * 5)
+        self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
 
     async def async_init(self):
         await self.db_adapter.connect()
@@ -130,7 +134,7 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         return answer, stats
 
     async def get_answer_in_thread(self, message, user):
-        return await self.app.loop.run_in_executor(None, self.model.answer, message, user)
+        return await self.app.loop.run_in_executor(self.pool, self.model.answer, message, user)
 
     async def iterate(self, request: aiohttp.web.Request):
         headers = self._get_headers(request.headers)

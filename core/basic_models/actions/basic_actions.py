@@ -111,10 +111,13 @@ class ChoiceAction(Action):
     requirement_actions: RequirementAction
     else_action: Action
 
+    FIELD_REQUIREMENT_KEY = "requirement_actions"
+    FIELD_ELSE_KEY = "else_action"
+
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super(ChoiceAction, self).__init__(items, id)
-        self._requirement_items = items["requirement_actions"]
-        self._else_action = items.get("else_action")
+        self._requirement_items = items[self.FIELD_REQUIREMENT_KEY]
+        self._else_item = items.get(self.FIELD_ELSE_KEY)
 
     @lazy
     @list_factory(RequirementAction)
@@ -124,7 +127,7 @@ class ChoiceAction(Action):
     @lazy
     @factory(Action)
     def else_item(self):
-        return self._else_action
+        return self._else_item
 
     def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
@@ -136,7 +139,7 @@ class ChoiceAction(Action):
                 result = item.internal_item.run(user, text_preprocessing_result, params)
                 choice_is_made = True
                 break
-        if not choice_is_made and self._else_action:
+        if not choice_is_made and self._else_item:
             result = self.else_item.run(user, text_preprocessing_result, params)
         return result
 
@@ -146,11 +149,14 @@ class ElseAction(Action):
     action: Requirement
     else_action: Optional[Action]
 
+    FIELD_ITEM_KEY = "action"
+    FIELD_ELSE_KEY = "else_action"
+
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super(ElseAction, self).__init__(items, id)
         self._requirement = items["requirement"]
-        self._item = items["action"]
-        self._else_item = items.get("else_action")
+        self._item = items[self.FIELD_ITEM_KEY]
+        self._else_item = items.get(self.FIELD_ELSE_KEY)
 
     @lazy
     @factory(Requirement)

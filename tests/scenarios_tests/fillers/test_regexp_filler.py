@@ -2,9 +2,13 @@ from unittest import TestCase
 from unittest.mock import Mock
 from scenarios.scenario_models.field.field_filler_description import RegexpFieldFiller
 
+
 class TestRegexpFiller(TestCase):
     def setUp(self):
         self.items = {"exp": "1-[0-9A-Z]{7}"}
+        self.user = Mock()
+        self.user.message = Mock()
+        self.user.message.masked_value = ""
 
     def test_no_exp_init(self):
         self.assertRaises(KeyError, RegexpFieldFiller, {})
@@ -16,7 +20,7 @@ class TestRegexpFiller(TestCase):
 
         filler = RegexpFieldFiller(self.items)
         filler.regexp = None
-        self.assertIsNone(filler.extract(text_preprocessing_result, None))
+        self.assertIsNone(filler.extract(text_preprocessing_result, self.user))
 
     def test_extract(self):
         field_value = "1-RSAR09A"
@@ -24,7 +28,7 @@ class TestRegexpFiller(TestCase):
         text_preprocessing_result.original_text = field_value
 
         filler = RegexpFieldFiller(self.items)
-        result = filler.extract(text_preprocessing_result, None)
+        result = filler.extract(text_preprocessing_result, self.user)
 
         self.assertEqual(field_value, result)
 
@@ -33,7 +37,7 @@ class TestRegexpFiller(TestCase):
         text_preprocessing_result.original_text = "text"
 
         filler = RegexpFieldFiller(self.items)
-        result = filler.extract(text_preprocessing_result, None)
+        result = filler.extract(text_preprocessing_result, self.user)
 
         self.assertIsNone(result)
 
@@ -44,10 +48,10 @@ class TestRegexpFiller(TestCase):
         text_preprocessing_result.original_text = field_value
 
         filler = RegexpFieldFiller(self.items)
-        result = filler.extract(text_preprocessing_result, None)
+        result = filler.extract(text_preprocessing_result, self.user)
 
         self.assertEqual(res, result)
-        
+
     def test_extract_mult_match_custom_delimiter(self):
         field_value = "1-RSAR09A пустой тест 1-RSAR02B"
         self.items["delimiter"] = ";"
@@ -56,6 +60,6 @@ class TestRegexpFiller(TestCase):
         text_preprocessing_result.original_text = field_value
 
         filler = RegexpFieldFiller(self.items)
-        result = filler.extract(text_preprocessing_result, None)
+        result = filler.extract(text_preprocessing_result, self.user)
 
         self.assertEqual(res, result)

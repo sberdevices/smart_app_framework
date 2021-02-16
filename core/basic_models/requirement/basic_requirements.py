@@ -179,7 +179,6 @@ class TimeRequirement(ComparisonRequirement):
         message_time_dict = user.message.payload['meta']['time']
         message_timestamp_sec = message_time_dict['timestamp'] // 1000
         message_time = datetime.fromtimestamp(message_timestamp_sec, tz=timezone.utc).time()
-        print("SUPER DBG!", message_time)
         return self.operator.compare(message_time)
 
     @lazy
@@ -188,7 +187,6 @@ class TimeRequirement(ComparisonRequirement):
         operator = dict(self._operator)
         amount_time = datetime.strptime(operator["amount"], '%H:%M:%S').time()
         operator["amount"] = amount_time
-        print("SUPER DEBUG!", amount_time)
         return operator
 
 

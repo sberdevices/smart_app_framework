@@ -24,7 +24,7 @@ class RequirementFiller(RequirementAction):
     def internal_item(self):
         return self._item
 
-    def on_extract_error(self, text_preprocessing_result, user, params):
+    def on_extract_error(self, text_preprocessing_result, user, params=None):
         log("exc_handler: RequirementFiller failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value),
             user, {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)
         return None
@@ -52,7 +52,7 @@ class ChoiceFiller(ChoiceAction):
     def else_item(self):
         return self._else_item
 
-    def on_extract_error(self, text_preprocessing_result, user, params):
+    def on_extract_error(self, text_preprocessing_result, user, params=None):
         log("exc_handler: ChoiceFiller failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value),
             user,
             {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)
@@ -81,7 +81,7 @@ class ElseFiller(ElseAction):
     def else_item(self):
         return self._else_item
 
-    def on_extract_error(self, text_preprocessing_result, user, params):
+    def on_extract_error(self, text_preprocessing_result, user, params=None):
         log("exc_handler: ElseFiller failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value),
             user,
             {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)

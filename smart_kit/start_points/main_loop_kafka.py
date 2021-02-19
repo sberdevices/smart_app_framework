@@ -316,7 +316,7 @@ class MainLoop(BaseMainLoop):
             try:
                 log("%(class_name)s iterate error. Kafka key %(kafka_key)s MESSAGE: {}.".format(message_value),
                     params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                            kafka_key: kafka_key},
+                            "kafka_key": kafka_key},
                     level="ERROR", exc_info=True)
                 consumer.commit_offset(mq_message)
             except Exception:

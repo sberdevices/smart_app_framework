@@ -33,7 +33,7 @@ setup(
         'setuptools',
         'Jinja2==2.10.1',
         'timeout-decorator==0.4.1',
-        'Twisted==20.3.0',
+        'Twisted',
         'confluent_kafka==1.1.0',
         'pymorphy2==0.8',
         'pymorphy2_dicts==2.4.393442.3710985',

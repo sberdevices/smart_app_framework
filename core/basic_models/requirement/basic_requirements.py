@@ -214,14 +214,14 @@ class DateTimeRequirement(Requirement):
 
 
 class IntersectionRequirement(Requirement):
-    yes_words: Optional[List]
+    phrases: Optional[List]
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         super().__init__(items, id)
         self.filler = IntersectionFieldFiller(
             {
                 'cases': {
-                    True: items.get('yes_words', []),
+                    True: items.get('phrases', []),
                 },
                 'default': False,
             },

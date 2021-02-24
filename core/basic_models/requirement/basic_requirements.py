@@ -15,7 +15,10 @@ from core.model.base_user import BaseUser
 from core.model.factory import build_factory, list_factory, factory
 from core.model.registered import Registered
 from core.text_preprocessing.base import BaseTextPreprocessingResult
+from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from core.unified_template.unified_template import UnifiedTemplate
+
+from scenarios.user.user_model import User
 
 requirements = Registered()
 
@@ -207,3 +210,33 @@ class DateTimeRequirement(Requirement):
         message_timestamp_sec = message_time_dict['timestamp'] // 1000
         message_datetime = datetime.fromtimestamp(message_timestamp_sec)
         return croniter.match(self.match_cron, message_datetime)
+
+
+class IntersectionRequirement(Requirement):
+    yes_words: Optional[List]
+    no_words: Optional[List]
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        from scenarios.scenario_models.field.field_filler_description import IntersectionFieldFiller
+        super().__init__(items, id)
+        self.filler = IntersectionFieldFiller(
+            {
+                'cases': {
+                    True: items.get('yes_words', []),
+                    False: items.get('no_words', []),
+                },
+                'default': False,
+            },
+            id,
+        )
+
+    def check(
+            self,
+            text_preprocessing_result: TextPreprocessingResult,
+            user: User,
+            params: Dict[str, Any] = None
+    ) -> bool:
+        result = bool(
+            self.filler.extract(text_preprocessing_result, user, params),
+        )
+        return result

@@ -18,6 +18,7 @@ from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from core.unified_template.unified_template import UnifiedTemplate
 
+from scenarios.scenario_models.field.field_filler_description import IntersectionFieldFiller
 from scenarios.user.user_model import User
 
 requirements = Registered()
@@ -214,16 +215,13 @@ class DateTimeRequirement(Requirement):
 
 class IntersectionRequirement(Requirement):
     yes_words: Optional[List]
-    no_words: Optional[List]
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
-        from scenarios.scenario_models.field.field_filler_description import IntersectionFieldFiller
         super().__init__(items, id)
         self.filler = IntersectionFieldFiller(
             {
                 'cases': {
                     True: items.get('yes_words', []),
-                    False: items.get('no_words', []),
                 },
                 'default': False,
             },

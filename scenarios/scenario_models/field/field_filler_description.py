@@ -9,7 +9,6 @@ from itertools import islice
 
 import core.logging.logger_constants as core_log_const
 from core.text_preprocessing.base import BaseTextPreprocessingResult
-from core.basic_models.actions.basic_actions import Action
 from core.model.factory import build_factory
 from core.model.factory import list_factory
 from core.model.registered import Registered
@@ -28,10 +27,12 @@ field_filler_description = Registered()
 field_filler_factory = build_factory(field_filler_description)
 
 
-class FieldFillerDescription(Action):
+class FieldFillerDescription:
 
     def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str] = None) -> None:
-        super().__init__(items, id)
+        items = items or {}
+        self.id = id
+        self.version = items.get("version", -1)
 
     def _log_params(self):
         return {

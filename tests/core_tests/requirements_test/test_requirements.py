@@ -1,16 +1,28 @@
 # coding: utf-8
+import os
 import unittest
 from time import time
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
+import smart_kit
 from core.model.registered import registered_factories
 from core.basic_models.operators.operators import Operator
 
 from core.basic_models.requirement.basic_requirements import Requirement, CompositeRequirement, AndRequirement, \
     OrRequirement, NotRequirement, RandomRequirement, TopicRequirement, TemplateRequirement, RollingRequirement, \
-    TimeRequirement, DateTimeRequirement
+    TimeRequirement, DateTimeRequirement, IntersectionRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
+from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
+
+
+def patch_get_app_config(mock_get_app_config):
+    result = Mock()
+    sk_path = os.path.dirname(smart_kit.__file__)
+    result.STATIC_PATH = os.path.join(sk_path, 'template/static')
+    mock_get_app_config.return_value = result
+    result.NORMALIZER = LocalTextNormalizer()
+    mock_get_app_config.return_value = result
 
 
 class MockRequirement:
@@ -298,6 +310,47 @@ class RequirementTest(unittest.TestCase):
             }
         )
         text_normalization_result = None
+        self.assertFalse(requirement.check(text_normalization_result, user))
+
+    @patch('smart_kit.configs.get_app_config')
+    def test_intersection_requirement_true(self, mock_get_app_config):
+        patch_get_app_config(mock_get_app_config)
+        user = Mock()
+        requirement = IntersectionRequirement(
+            {
+                "phrases": [
+                    'да',
+                    'давай',
+                    'хочу',
+                ]
+            }
+        )
+        text_normalization_result = Mock()
+        text_normalization_result.tokenized_elements_list = [
+            {'lemma': 'я'},
+            {'lemma': 'хотеть'},
+        ]
+        self.assertTrue(requirement.check(text_normalization_result, user))
+
+    @patch('smart_kit.configs.get_app_config')
+    def test_intersection_requirement_false(self, mock_get_app_config):
+        patch_get_app_config(mock_get_app_config)
+        user = Mock()
+        requirement = IntersectionRequirement(
+            {
+                "phrases": [
+                    'да',
+                    'давай',
+                    'хочу',
+                ]
+            }
+        )
+        text_normalization_result = Mock()
+        text_normalization_result.tokenized_elements_list = [
+            {'lemma': 'ни'},
+            {'lemma': 'за'},
+            {'lemma': 'что'},
+        ]
         self.assertFalse(requirement.check(text_normalization_result, user))
 
 

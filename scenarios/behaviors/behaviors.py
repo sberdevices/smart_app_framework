@@ -51,7 +51,7 @@ class Behaviors:
                 self.descriptions[behavior_id].timeout(self._user) +
                 self.EXPIRATION_DELAY
         )
-
+        action_params = action_params or dict()
         action_params[LOCAL_VARS] = pickle_deepcopy(self._user.local_vars.values)
 
         callback = self.Callback(

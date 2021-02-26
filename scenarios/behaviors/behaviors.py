@@ -6,7 +6,7 @@ from typing import Dict
 from core.logging.logger_utils import log
 from core.names.field import APP_INFO
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
-from smart_app_framework.core.utils.pickle_copy import pickle_deepcopy
+from core.utils.pickle_copy import pickle_deepcopy
 from smart_kit.utils.monitoring import smart_kit_metrics
 
 from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, LOCAL_VARS

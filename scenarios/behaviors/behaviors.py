@@ -3,10 +3,10 @@ from time import time
 from collections import namedtuple
 from typing import Dict
 
-from core.basic_models.variables.variables import Variables
 from core.logging.logger_utils import log
 from core.names.field import APP_INFO
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
+from smart_app_framework.core.utils.pickle_copy import pickle_deepcopy
 from smart_kit.utils.monitoring import smart_kit_metrics
 
 from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, LOCAL_VARS
@@ -51,6 +51,9 @@ class Behaviors:
                 self.descriptions[behavior_id].timeout(self._user) +
                 self.EXPIRATION_DELAY
         )
+
+        action_params[LOCAL_VARS] = pickle_deepcopy(self._user.local_vars.values)
+
         callback = self.Callback(
             behavior_id=behavior_id,
             expire_time=expiration_time,

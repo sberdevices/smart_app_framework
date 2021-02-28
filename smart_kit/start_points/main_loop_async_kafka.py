@@ -31,10 +31,7 @@ def _enrich_config_from_secret(kafka_config, secret_config):
 class AIOKafkaMainLoop(MainLoop):
 
     def __init__(self, model, user_cls, parametrizer_cls, settings, *args, **kwargs):
-        default_settings = deepcopy(settings)
-
-        default_settings["kafka"]["template-engine"] = {}
-        super().__init__(model, user_cls, parametrizer_cls, default_settings, *args, **kwargs)
+        super().__init__(model, user_cls, parametrizer_cls, settings, create_kafka=False, *args, **kwargs)
         log("%(class_name)s.__init__ started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                         "class_name": self.__class__.__name__})
         try:

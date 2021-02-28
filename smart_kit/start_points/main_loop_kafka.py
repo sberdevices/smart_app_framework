@@ -33,40 +33,41 @@ def _enrich_config_from_secret(kafka_config, secret_config):
 
 class MainLoop(BaseMainLoop):
 
-    def __init__(self, model, user_cls, parametrizer_cls, settings, *args, **kwargs):
+    def __init__(self, model, user_cls, parametrizer_cls, settings, create_kafka=True, *args, **kwargs):
         super().__init__(model, user_cls, parametrizer_cls, settings, *args, **kwargs)
         log("%(class_name)s.__init__ started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                         "class_name": self.__class__.__name__})
         try:
-            kafka_config = _enrich_config_from_secret(
-                settings["kafka"]["template-engine"], settings.get("secret_kafka", {})
-            )
+            if create_kafka:
+                kafka_config = _enrich_config_from_secret(
+                    settings["kafka"]["template-engine"], settings.get("secret_kafka", {})
+                )
 
-            consumers = {}
-            publishers = {}
-            log(
-                "%(class_name)s START CONSUMERS/PUBLISHERS CREATE",
-                params={"class_name": self.__class__.__name__}, level="WARNING"
-            )
-            for key, config in kafka_config.items():
-                if config.get("consumer"):
-                    consumers.update({key: KafkaConsumer(kafka_config[key])})
-                if config.get("publisher"):
-                    publishers.update({key: KafkaPublisher(kafka_config[key])})
-            log(
-                "%(class_name)s FINISHED CONSUMERS/PUBLISHERS CREATE",
-                params={"class_name": self.__class__.__name__}, level="WARNING"
-            )
+                consumers = {}
+                publishers = {}
+                log(
+                    "%(class_name)s START CONSUMERS/PUBLISHERS CREATE",
+                    params={"class_name": self.__class__.__name__}, level="WARNING"
+                )
+                for key, config in kafka_config.items():
+                    if config.get("consumer"):
+                        consumers.update({key: KafkaConsumer(kafka_config[key])})
+                    if config.get("publisher"):
+                        publishers.update({key: KafkaPublisher(kafka_config[key])})
+                log(
+                    "%(class_name)s FINISHED CONSUMERS/PUBLISHERS CREATE",
+                    params={"class_name": self.__class__.__name__}, level="WARNING"
+                )
+                self.consumers = consumers
+                for key in self.consumers:
+                    self.consumers[key].subscribe()
+                self.publishers = publishers
 
             self.settings = settings
             self.app_name = self.settings.app_name
             self.model = model
             self.user_cls = user_cls
             self.parametrizer_cls = parametrizer_cls
-            self.consumers = consumers
-            for key in self.consumers:
-                self.consumers[key].subscribe()
-            self.publishers = publishers
             self.behaviors_timeouts_value_cls = namedtuple('behaviors_timeouts_value',
                                                            'db_uid, callback_id, mq_message, kafka_key')
             self.behaviors_timeouts = HeapqKV(value_to_key_func=lambda val: val.callback_id)

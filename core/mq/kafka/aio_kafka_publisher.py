@@ -27,7 +27,7 @@ class KafkaPublisher:
         await self._producer.start()
 
     async def send_and_wait(self, topic_key, value):
-        topic = self._config[ "topic" ]
+        topic = self._config["topic"]
         if topic_key is not None:
             topic = topic[topic_key]
         await self._producer.send_and_wait(topic, value)

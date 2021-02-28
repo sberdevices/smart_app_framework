@@ -3,9 +3,8 @@ import asyncio
 import json
 import time
 from collections import namedtuple
-
+from copy import deepcopy
 from confluent_kafka.cimpl import KafkaException
-from lazy import lazy
 
 import scenarios.logging.logger_constants as log_const
 from core.jaeger_custom_client import jaeger_utils
@@ -14,11 +13,8 @@ from core.logging.logger_utils import log
 from core.message.from_message import SmartAppFromMessage
 from core.model.heapq.heapq_storage import HeapqKV
 from core.utils.stats_timer import StatsTimer
-from smart_kit.compatibility.commands import combine_commands
-from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.names import message_names
-from smart_kit.request.kafka_request import SmartKitKafkaRequest
-from smart_kit.start_points.base_main_loop import BaseMainLoop
+from smart_kit.start_points.main_loop_kafka import MainLoop
 from smart_kit.utils.monitoring import smart_kit_metrics
 from core.mq.kafka.aio_kafka_consumer import KafkaConsumer
 from core.mq.kafka.aio_kafka_publisher import KafkaPublisher
@@ -32,10 +28,13 @@ def _enrich_config_from_secret(kafka_config, secret_config):
     return kafka_config
 
 
-class AIOKafkaMainLoop(BaseMainLoop):
+class AIOKafkaMainLoop(MainLoop):
 
     def __init__(self, model, user_cls, parametrizer_cls, settings, *args, **kwargs):
-        super().__init__(model, user_cls, parametrizer_cls, settings, *args, **kwargs)
+        default_settings = deepcopy(settings)
+
+        default_settings["kafka"]["template-engine"] = {}
+        super().__init__(model, user_cls, parametrizer_cls, default_settings, *args, **kwargs)
         log("%(class_name)s.__init__ started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                         "class_name": self.__class__.__name__})
         try:
@@ -77,22 +76,19 @@ class AIOKafkaMainLoop(BaseMainLoop):
                 self.publishers.append(key)
         log("%(class_name)s.run started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                   "class_name": self.__class__.__name__})
-        loop = asyncio.get_event_loop().run_until_complete(self._run())
+        loop = asyncio.get_event_loop()#.run_until_complete(self._run())
+        for kafka_key in self.consumers:
+            loop.create_task(self.iterate(kafka_key, loop))
+        #loop.create_task(self.health_check_server.iterate())
         # loop.create_task(self._run())
         loop.run_forever()
 
         log("Stopping Kafka handler", level="WARNING")
 
-    async def _run(self):
-        while True:
-            for kafka_key in self.consumers:
-                await self.iterate(kafka_key)
-            self.health_check_server.iterate()
-
     def _get_topic_key(self, mq_message):
         return self.default_topic_key or self._topic_names[mq_message.topic]
 
-    async def iterate(self, kafka_key):
+    async def iterate(self, kafka_key, loop):
         consumer = KafkaConsumer(self.kafka_config[kafka_key])
         producer = KafkaPublisher(self.kafka_config[kafka_key])
         # Get cluster layout and join group `my-group`
@@ -101,18 +97,22 @@ class AIOKafkaMainLoop(BaseMainLoop):
         try:
             # Consume messages
             async for msg in consumer:
-                answers = self._iterate(msg, kafka_key)
+                loop.create_task(self._iterate(msg, kafka_key, producer))
                 # Get cluster layout and initial topic/partition leadership information
                 # Produce message
-                if answers:
-                    for answer in answers:
-                        await producer.send_and_wait(self._get_topic_key(msg), bytearray(answer.value, 'utf-8'))
         finally:
             # Will leave consumer group; perform autocommit if enabled.
             await consumer.stop()
             await producer.stop()
 
-    def _iterate(self, mq_message, kafka_key):
+    async def _iterate(self, mq_message, kafka_key, producer):
+        answers = self.__iterate(mq_message, kafka_key)
+        if answers:
+            for answer in answers:
+                await producer.send_and_wait(self._get_topic_key(mq_message), bytearray(answer.value, 'utf-8'))
+        self.health_check_server.iterate()
+
+    def __iterate(self, mq_message, kafka_key):
         message_value = None
         try:
             topic_key = self._get_topic_key(mq_message)
@@ -228,32 +228,6 @@ class AIOKafkaMainLoop(BaseMainLoop):
                 log("Error handling worker fail exception.",
                     level="ERROR", exc_info=True)
 
-    def _generate_answers(self, user, commands, message, **kwargs):
-        topic_key = kwargs["topic_key"]
-        kafka_key = kwargs["kafka_key"]
-        answers = []
-        commands = commands or []
-
-        commands = combine_commands(commands, user)
-
-        for command in commands:
-            request = SmartKitKafkaRequest(id=None, items=command.request_data)
-            request.update_empty_items({"topic_key": topic_key, "kafka_key": kafka_key})
-            answer = SmartAppToMessage(command=command, message=message, request=request,
-                                       masking_fields=self.masking_fields)
-            answers.append(answer)
-
-            smart_kit_metrics.counter_outgoing(self.app_name, command.name, answer, user)
-
-        return answers
-
-    def _get_timeout_from_message(self, orig_message_raw, callback_id, headers):
-        orig_message_raw = json.dumps(orig_message_raw)
-        timeout_from_message = SmartAppFromMessage(orig_message_raw, headers=headers,
-                                                   masking_fields=self.masking_fields)
-        timeout_from_message.callback_id = callback_id
-        return timeout_from_message
-
     def iterate_behavior_timeouts(self):
         answers = []
         now = time.time()
@@ -318,59 +292,3 @@ class AIOKafkaMainLoop(BaseMainLoop):
                                                      "class_name": self.__class__.__name__,
                                                      log_const.REQUEST_VALUE: str(mq_message.value)},
                     level="ERROR", exc_info=True)
-
-    @staticmethod
-    def check_message_key(from_message, message_key):
-        message_key = message_key or b""
-        sub = from_message.sub
-        channel = from_message.channel
-        uid = from_message.uid
-        if sub:
-            valid_key = "{}_{}_{}".format(channel, sub, uid)
-        else:
-            valid_key = "{}_{}".format(channel, uid)
-        key_str = message_key.decode()
-
-        message_key_is_valid = key_str == valid_key
-        if not message_key_is_valid:
-            log("Failed to check Kafka message key %(message_key)s !=  %(valid_key)s",
-                params={"message_key": key_str, "valid_key": valid_key},
-                level="ERROR", exc_info=True)
-        return message_key_is_valid
-
-    def save_behavior_timeouts(self, user, mq_message, kafka_key):
-        for i, (expire_time_us, callback_id) in enumerate(user.behaviors.get_behavior_timeouts()):
-            # two behaviors can be created in one query, so we need add some salt to make theirs key unique
-            unique_key = expire_time_us + i * 1e-5
-            log(
-                "%(class_name)s: adding local_timeout on callback %(callback_id)s with timeout on %(unique_key)s",
-                params={log_const.KEY_NAME: "adding_local_timeout",
-                        "class_name": self.__class__.__name__,
-                        "callback_id": callback_id,
-                        "unique_key": unique_key})
-            self.behaviors_timeouts.push(unique_key, self.behaviors_timeouts_value_cls._make(
-                (user.message.db_uid, callback_id, mq_message, kafka_key)))
-
-        for callback_id in user.behaviors.get_returned_callbacks():
-            log("%(class_name)s: removing local_timeout on callback %(callback_id)s",
-                params={log_const.KEY_NAME: "removing_local_timeout",
-                        "class_name": self.__class__.__name__,
-                        "callback_id": callback_id})
-            self.behaviors_timeouts.remove(callback_id)
-
-    @lazy
-    def _topic_names(self):
-        topics = self.settings["kafka"]["template-engine"]["main"]["consumer"]["topics"]
-        return {name: key for key, name in topics.items()}
-
-    @lazy
-    def default_topic_key(self):
-        return self.settings["kafka"]["template-engine"]["main"].get("default_topic_key")
-
-    @lazy
-    def masking_fields(self):
-        return self.settings["template_settings"].get("masking_fields")
-
-    def stop(self, signum, frame):
-        loop = asyncio.get_event_loop()
-        loop.stop()

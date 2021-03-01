@@ -459,7 +459,7 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
     def __init__(self, items, id=None):
         super().__init__(items, id)
         self.save_params_template_data = self._get_template_tree(items.get("save_params") or {})
-        self.rewrite_saved_params = items.get("rewrite_saved_params", False)
+        self.rewrite_saved_messages = items.get("rewrite_saved_messages", False)
         self._check_scenario: bool = items.get("check_scenario", True)
 
     def _run(self, user, text_preprocessing_result, params=None):
@@ -508,9 +508,10 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
         save_params = self._get_rendered_tree_recursive(self.save_params_template_data, action_params)
         save_params.update({SAVED_MESSAGES: action_params.get(SAVED_MESSAGES, {})})
 
-        saved_messages = save_params[SAVED_MESSAGES]
-        if user.message.message_name not in saved_messages or self.rewrite_saved_params:
-            saved_messages[user.message.type] = user.message.payload
+        if user.settings["template_settings"].get("self_service_with_state_save_messages", True):
+            saved_messages = save_params[SAVED_MESSAGES]
+            if user.message.message_name not in saved_messages or self.rewrite_saved_messages:
+                saved_messages[user.message.type] = user.message.payload
 
         save_params.update({TO_MESSAGE_PARAMS: command_action_params})
         save_params.update({TO_MESSAGE_NAME: self.command})

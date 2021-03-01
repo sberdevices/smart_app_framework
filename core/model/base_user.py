@@ -27,6 +27,11 @@ class BaseUser(Model):
         self.descriptions = descriptions
         self.load_error = load_error
         super(BaseUser, self).__init__(values=values, user=self)
+        self.initialize()
+
+    def initialize(self):
+        """Add here some things to do after creating fields."""
+        pass
 
     @lazy
     def parametrizer(self):

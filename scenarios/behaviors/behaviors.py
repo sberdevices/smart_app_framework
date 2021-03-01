@@ -17,7 +17,7 @@ class Behaviors:
     EXPIRATION_DELAY = 10
 
     def __init__(self, items, descriptions, user):
-        items = items or {}
+        self._items = items or {}
         self.descriptions = descriptions
         self._user = user
         self.Callback = namedtuple('Callback',
@@ -25,10 +25,19 @@ class Behaviors:
         self._callbacks = {}
         self._behavior_timeouts = []
         self._returned_callbacks = []
-        for key, callback in items.items():
+
+    def initialize(self):
+        for key, callback in self._items.items():
             callback.setdefault("text_preprocessing_result", {})
             callback.setdefault("action_params", {})
             self._callbacks[key] = self.Callback(**callback)
+
+        callback_id = self._user.message.callback_id
+        callback = self._get_callback(callback_id)
+        if callback:
+            callback_action_params = callback.action_params
+            for key, value in callback_action_params.get(LOCAL_VARS, {}).items():
+                self._user.local_vars.set(key, value)
 
     def _add_behavior_timeout(self, expire_time_us, callback_id):
         self._behavior_timeouts.append((expire_time_us, callback_id))

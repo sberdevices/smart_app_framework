@@ -15,10 +15,9 @@ from core.logging.logger_utils import log
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from core.unified_template.unified_template import UnifiedTemplate
-from core.utils.pickle_copy import pickle_deepcopy
 
 import scenarios.logging.logger_constants as log_const
-from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, SAVED_MESSAGES, LOCAL_VARS
+from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, SAVED_MESSAGES
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User
 from scenarios.scenario_models.history import Event
@@ -508,8 +507,6 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
     def _get_save_params(self, user, action_params, command_action_params):
         save_params = self._get_rendered_tree_recursive(self.save_params_template_data, action_params)
         save_params.update({SAVED_MESSAGES: action_params.get(SAVED_MESSAGES, {})})
-        save_params[LOCAL_VARS] = pickle_deepcopy(user.local_vars.values)
-        user.local_vars.clear()
 
         saved_messages = save_params[SAVED_MESSAGES]
         if user.message.message_name not in saved_messages or self.rewrite_saved_params:

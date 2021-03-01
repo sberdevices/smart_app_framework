@@ -27,6 +27,7 @@ class Behaviors:
         self._returned_callbacks = []
 
     def initialize(self):
+        """Should be invoked after __init__ """
         for key, callback in self._items.items():
             callback.setdefault("text_preprocessing_result", {})
             callback.setdefault("action_params", {})

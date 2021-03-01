@@ -161,27 +161,29 @@ class SaveBehaviorActionTest(unittest.TestCase):
 
 
 class SelfServiceActionWithStateTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.user = Mock()
+        self.user.settings = {"template_settings": {"self_service_with_state_save_messages": True}}
 
     def test_action_1(self):
         data = {"behavior": "test", "check_scenario": False, "command_action": {"command": "cmd_id", "nodes": {},
                                                                                 "request_data": {}}}
         registered_factories[Action] = action_factory
         actions["action_mock"] = MockAction
-        user = Mock()
-        user.parametrizer = MockParametrizer(user, {})
-        user.message = Mock()
+        self.user.parametrizer = MockParametrizer(self.user, {})
+        self.user.message = Mock()
         local_vars = Mock()
         local_vars.values = dict()
-        user.local_vars = local_vars
+        self.user.local_vars = local_vars
         test_incremental_id = "test_incremental_id"
-        user.message.incremental_id = test_incremental_id
+        self.user.message.incremental_id = test_incremental_id
         behavior = Mock()
         behavior.check_got_saved_id = Mock(return_value=False)
-        user.behaviors = behavior
+        self.user.behaviors = behavior
         action = SelfServiceActionWithState(data)
         text_preprocessing_result_raw = Mock()
         text_preprocessing_result = Mock(raw=text_preprocessing_result_raw)
-        result = action.run(user, text_preprocessing_result, None)
+        result = action.run(self.user, text_preprocessing_result, None)
         behavior.check_got_saved_id.assert_called_once()
         behavior.add.assert_called_once()
         self.assertEqual(result[0].name, "cmd_id")
@@ -189,16 +191,15 @@ class SelfServiceActionWithStateTest(unittest.TestCase):
 
     def test_action_2(self):
         data = {"behavior": "test", "check_scenario": False, "command_action": {"command": "cmd_id", "nodes": {}}}
-        user = Mock()
-        user.parametrizer = MockParametrizer(user, {})
-        user.message = Mock()
+        self.user.parametrizer = MockParametrizer(self.user, {})
+        self.user.message = Mock()
         test_incremental_id = "test_incremental_id"
-        user.message.incremental_id = test_incremental_id
+        self.user.message.incremental_id = test_incremental_id
         behavior = Mock()
-        user.behaviors = behavior
+        self.user.behaviors = behavior
         behavior.check_got_saved_id = Mock(return_value=True)
         action = SelfServiceActionWithState(data)
-        result = action.run(user, None)
+        result = action.run(self.user, None)
         behavior.add.assert_not_called()
         self.assertIsNone(result)
 
@@ -206,35 +207,34 @@ class SelfServiceActionWithStateTest(unittest.TestCase):
         data = {"behavior": "test", "command_action": {"command": "cmd_id", "nodes": {}, "request_data": {}}}
         registered_factories[Action] = action_factory
         actions["action_mock"] = MockAction
-        user = Mock()
-        user.parametrizer = MockParametrizer(user, {})
-        user.message = Mock()
-        user.message = Mock()
+        self.user.parametrizer = MockParametrizer(self.user, {})
+        self.user.message = Mock()
+        self.user.message = Mock()
         local_vars = Mock()
         local_vars.values = dict()
-        user.local_vars = local_vars
+        self.user.local_vars = local_vars
         test_incremental_id = "test_incremental_id"
-        user.message.incremental_id = test_incremental_id
+        self.user.message.incremental_id = test_incremental_id
         _new_behavior_id = Mock()
-        user.message.generate_new_callback_id = lambda: _new_behavior_id
+        self.user.message.generate_new_callback_id = lambda: _new_behavior_id
         behavior = Mock()
         behavior.check_got_saved_id = Mock(return_value=False)
         behavior.add = Mock()
-        user.behaviors = behavior
-        user.last_scenarios = Mock()
+        self.user.behaviors = behavior
+        self.user.last_scenarios = Mock()
         scenarios_names = ["test_scenario"]
-        user.last_scenarios.last_scenario_name = "test_scenario"
-        user.last_scenarios.scenarios_names = scenarios_names
+        self.user.last_scenarios.last_scenario_name = "test_scenario"
+        self.user.last_scenarios.scenarios_names = scenarios_names
         action = SelfServiceActionWithState(data)
         text_preprocessing_result_raw = Mock()
         text_preprocessing_result = Mock(raw=text_preprocessing_result_raw)
-        result = action.run(user, text_preprocessing_result, None)
+        result = action.run(self.user, text_preprocessing_result, None)
         behavior.check_got_saved_id.assert_called_once()
         behavior.add.assert_called_once()
         self.assertEqual(result[0].name, "cmd_id")
         self.assertEqual(result[0].raw, {'message_name': 'cmd_id', 'payload': {}})
         behavior.add.assert_called_once_with(
-            user.message.generate_new_callback_id(), "test", scenarios_names[-1], text_preprocessing_result_raw, ANY
+            self.user.message.generate_new_callback_id(), "test", scenarios_names[-1], text_preprocessing_result_raw, ANY
         )
 
 

@@ -11,6 +11,7 @@ class BehaviorsTest(unittest.TestCase):
         self.user = Mock()
         self.user.settings = Mock()
         self.user.settings.app_name = "app_name"
+        self.user.local_vars.values = {"test_local_var_key": "test_local_var_value"}
         self.description = Mock()
         self.description.timeout = Mock(return_value=10)
         self.success_action = Mock()
@@ -83,7 +84,8 @@ class BehaviorsTest(unittest.TestCase):
         _time = int(time()) + self.description.timeout(None) + scenarios.behaviors.behaviors.Behaviors.EXPIRATION_DELAY
 
         exp = OrderedDict(behavior_id=behavior_id, expire_time=_time, scenario_id=None,
-                          text_preprocessing_result=text_preprocessing_result, action_params=None)
+                          text_preprocessing_result=text_preprocessing_result,
+                          action_params={'local_vars': {'test_local_var_key': 'test_local_var_value'}})
         self.assertDictEqual(behaviors.raw, {callback_id: exp})
 
     @unittest.mock.patch.object(scenarios.behaviors.behaviors, "time", return_value=9999999999)
@@ -98,7 +100,8 @@ class BehaviorsTest(unittest.TestCase):
         behaviors.add(callback_id, behavior_id, scenario_id, text_preprocessing_result)
         _time = int(time()) + self.description.timeout(None) + scenarios.behaviors.behaviors.Behaviors.EXPIRATION_DELAY
         exp = OrderedDict(behavior_id=behavior_id, expire_time=_time, scenario_id=scenario_id,
-                          text_preprocessing_result=text_preprocessing_result, action_params=None)
+                          text_preprocessing_result=text_preprocessing_result,
+                          action_params={'local_vars': {'test_local_var_key': 'test_local_var_value'}})
         self.assertDictEqual(behaviors.raw, {callback_id: exp})
 
     def test_check_1(self):

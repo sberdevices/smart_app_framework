@@ -8,6 +8,7 @@ health_check:
   debug_envs:
     - local
 jaeger_config:
+  service_name: template-service-name
   logging: true
   enabled: false
   trace_id_header: template-app-trace-id

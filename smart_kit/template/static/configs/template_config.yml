@@ -23,3 +23,4 @@ masking_fields:
   - epkId
   - profileId
 user_save_collisions_tries: 2
+self_service_with_state_save_messages: true

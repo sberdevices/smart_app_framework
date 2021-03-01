@@ -32,6 +32,7 @@ class BehaviorsTest(unittest.TestCase):
                 "text_preprocessing_result": {}}
         items = {str(callback_id): item}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
+        behaviors.initialize()
         behaviors.success(callback_id)
         # self.success_action.run.assert_called_once_with(self.user, TextPreprocessingResult({}))
         self.success_action.run.assert_called_once()
@@ -41,6 +42,7 @@ class BehaviorsTest(unittest.TestCase):
         callback_id = "123"
         items = {}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
+        behaviors.initialize()
         behaviors.success(callback_id)
         self.success_action.run.assert_not_called()
 
@@ -50,6 +52,7 @@ class BehaviorsTest(unittest.TestCase):
         item = {"behavior_id": behavior_id, "expire_time": 2554416000, "scenario_id": None}
         items = {str(callback_id): item}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
+        behaviors.initialize()
         behaviors.fail(callback_id)
         self.fail_action.run.assert_called_once()
         self.assertDictEqual(behaviors.raw, {})
@@ -60,6 +63,7 @@ class BehaviorsTest(unittest.TestCase):
         item = {"behavior_id": behavior_id, "expire_time": 2554416000, "scenario_id": None}
         items = {str(callback_id): item}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
+        behaviors.initialize()
         behaviors.timeout(callback_id)
         self.timeout_action.run.assert_called_once()
         self.assertDictEqual(behaviors.raw, {})
@@ -70,6 +74,7 @@ class BehaviorsTest(unittest.TestCase):
         item = {"behavior_id": behavior_id, "expire_time": 1548079039, "scenario_id": None}
         items = {str(callback_id): item}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
+        behaviors.initialize()
         behaviors.expire()
         self.assertDictEqual(behaviors.raw, {})
 
@@ -77,6 +82,7 @@ class BehaviorsTest(unittest.TestCase):
     def test_add_1(self, time):
         items = {}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
+        behaviors.initialize()
         callback_id = "123"
         behavior_id = "test"
         text_preprocessing_result = {}
@@ -92,6 +98,7 @@ class BehaviorsTest(unittest.TestCase):
     def test_add_2(self, time):
         items = {}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
+        behaviors.initialize()
         callback_id = "123"
         behavior_id = "test"
         scenario_id = "test_scen"
@@ -110,6 +117,7 @@ class BehaviorsTest(unittest.TestCase):
         item = {"behavior_id": behavior_id, "expire_time": 1548079039, "scenario_id": None}
         items = {str(callback_id): item}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
+        behaviors.initialize()
         self.assertTrue(behaviors.check_got_saved_id(behavior_id))
 
     def test_check_2(self):
@@ -118,6 +126,7 @@ class BehaviorsTest(unittest.TestCase):
         item = {"behavior_id": behavior_id, "expire_time": 1548079039, "scenario_id": None}
         items = {str(callback_id): item}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
+        behaviors.initialize()
         with self.assertRaises(KeyError):
             behaviors.check_got_saved_id("test2")
 
@@ -130,6 +139,7 @@ class BehaviorsTest(unittest.TestCase):
         self.user.last_scenarios = Mock()
         self.user.last_scenarios.last_scenario_name = "test_scen2"
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
+        behaviors.initialize()
         self.assertTrue(behaviors.check_misstate(callback_id))
 
     def test_check_misstate_2(self):
@@ -141,6 +151,7 @@ class BehaviorsTest(unittest.TestCase):
         self.user.last_scenarios = Mock()
         self.user.last_scenarios.last_scenario_name = "test_scen"
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
+        behaviors.initialize()
         self.assertFalse(behaviors.check_misstate(callback_id))
 
     def test_raw(self):
@@ -154,6 +165,7 @@ class BehaviorsTest(unittest.TestCase):
 
         items = {str(callback_id): item}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
+        behaviors.initialize()
         expected = OrderedDict(behavior_id=behavior_id, expire_time=1548079039, scenario_id=scenario_id,
                                text_preprocessing_result=text_preprocessing_result, action_params={})
         self.assertEqual(behaviors.raw, {callback_id: expected})

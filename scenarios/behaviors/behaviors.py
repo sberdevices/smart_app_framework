@@ -17,7 +17,7 @@ class Behaviors:
     EXPIRATION_DELAY = 10
 
     def __init__(self, items, descriptions, user):
-        items = items or {}
+        self._items = items or {}
         self.descriptions = descriptions
         self._user = user
         self.Callback = namedtuple('Callback',
@@ -25,10 +25,20 @@ class Behaviors:
         self._callbacks = {}
         self._behavior_timeouts = []
         self._returned_callbacks = []
-        for key, callback in items.items():
+
+    def initialize(self):
+        """Should be invoked after __init__ """
+        for key, callback in self._items.items():
             callback.setdefault("text_preprocessing_result", {})
             callback.setdefault("action_params", {})
             self._callbacks[key] = self.Callback(**callback)
+
+        callback_id = self._user.message.callback_id
+        callback = self._get_callback(callback_id)
+        if callback:
+            callback_action_params = callback.action_params
+            for key, value in callback_action_params.get(LOCAL_VARS, {}).items():
+                self._user.local_vars.set(key, value)
 
     def _add_behavior_timeout(self, expire_time_us, callback_id):
         self._behavior_timeouts.append((expire_time_us, callback_id))
@@ -125,8 +135,6 @@ class Behaviors:
                 callback_action_params,
             )
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            for key, value in callback_action_params.get(LOCAL_VARS, {}).items():
-                self._user.local_vars.set(key, value)
             result = behavior.success_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
@@ -146,8 +154,6 @@ class Behaviors:
                                smart_kit_metrics.counter_behavior_fail, "fail",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            for key, value in callback_action_params.get(LOCAL_VARS, {}).items():
-                self._user.local_vars.set(key, value)
             result = behavior.fail_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
@@ -167,8 +173,6 @@ class Behaviors:
                                smart_kit_metrics.counter_behavior_timeout, "timeout",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            for key, value in callback_action_params.get(LOCAL_VARS, {}).items():
-                self._user.local_vars.set(key, value)
             result = behavior.timeout_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result

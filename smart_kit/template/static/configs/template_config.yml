@@ -6,7 +6,7 @@ health_check:
   port: 1234
   interface: 0.0.0.0
   debug_envs:
-    - dev
+    - local
 jaeger_config:
   logging: true
   enabled: false

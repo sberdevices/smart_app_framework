@@ -182,6 +182,7 @@ class SmartAppResources(BaseConfig):
 
     def init_scenarios(self):
         scenarios[None] = BaseScenario
+        scenarios["base"] = BaseScenario
         scenarios["form_filling"] = FormFillingScenario
         scenarios["tree"] = TreeScenario
 

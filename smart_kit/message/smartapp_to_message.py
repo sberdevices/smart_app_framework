@@ -22,23 +22,29 @@ class SmartAppToMessage:
     @lazy
     def payload(self):
         payload = copy(self.command.payload)
-        for field in self.forward_fields:
-            if field not in self.incoming_message.payload:
-                continue
-            if field in payload:
-                continue
-            payload[field] = self.incoming_message.payload[field]
+        if not self.incoming_message.error_message:
+            for field in self.forward_fields:
+                if field not in self.incoming_message.payload:
+                    continue
+                if field in payload:
+                    continue
+                payload[field] = self.incoming_message.payload[field]
         return payload
 
     @lazy
     def as_dict(self):
         fields = {
-            "messageId": self.incoming_message.incremental_id,
-            "sessionId": self.incoming_message.session_id,
             "messageName": self.command.name,
             "payload": self.payload,
-            "uuid": self.incoming_message.uuid
         }
+        if not self.incoming_message.error_message:
+            fields.update({
+                "messageId": self.incoming_message.incremental_id,
+                "sessionId": self.incoming_message.session_id,
+                "uuid": self.incoming_message.uuid,
+            })
+        else:
+            fields['error'] = self.incoming_message.error_message
         fields.update(self.root_nodes)
         return fields
 

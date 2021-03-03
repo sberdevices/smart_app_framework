@@ -1,4 +1,5 @@
 # coding=utf-8
+from typing import Optional
 from lazy import lazy
 import json
 import uuid
@@ -38,10 +39,11 @@ class SmartAppFromMessage:
     PAYLOAD = "payload"
     SESSION_ID = "sessionId"
 
-    payload: dict
-    uuid: dict
+    error_message: Optional[str]
     incremental_id: str
     message_name: str
+    payload: dict
+    uuid: dict
 
     def __init__(self, value: str, topic_key: str = None, creation_time=None, kafka_key: str = None, headers=None,
                  masking_fields=None, headers_required=True):
@@ -56,6 +58,7 @@ class SmartAppFromMessage:
         self.headers = Headers(headers)
         self._callback_id = None  # FIXME: by some reason it possibly to change callback_id
         self.masking_fields = masking_fields
+        self.error_message = None
 
     def validate(self):
         """
@@ -90,6 +93,7 @@ class SmartAppFromMessage:
                 exc_info=True,
                 level="ERROR",
             )
+            self.print_validation_error()
             return False
 
         return True
@@ -99,6 +103,7 @@ class SmartAppFromMessage:
             required_field=None,
             required_field_type=None,
     ):
+        params = {}
         if self._value:
             params = {
                 "value": str(self._value),
@@ -107,27 +112,21 @@ class SmartAppFromMessage:
                 log_const.KEY_NAME: log_const.EXCEPTION_VALUE
             }
             if required_field and required_field_type:
-                log(
+                template = (
                     "Message validation error: Expected '%(required_field)s'"
-                    " of type '%(required_field_type)s': %(value)s",
-                    params=params,
-                    level="ERROR",
+                    " of type '%(required_field_type)s': %(value)s"
                 )
             elif required_field:
-                log(
+                template = (
                     "Message validation error: Required field "
                     "'%(required_field)s' is missing: %(value)s",
-                    params=params,
-                    level="ERROR",
                 )
             else:
-                log(
-                    "Message validation error: Format is wrong: %(value)s",
-                    params=params,
-                    level="ERROR",
-                )
+                template = "Message validation error: Format is wrong: %(value)s"
         else:
-            log("Message validation error: Message is empty", level="ERROR")
+            template = "Message validation error: Message is empty"
+        log(template, params=params, level="ERROR")
+        self.error_message = template % params
 
     @property
     def _callback_id_header_name(self):

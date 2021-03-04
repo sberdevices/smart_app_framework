@@ -19,6 +19,7 @@ setup(
     license="sberpl-2",
     packages=find_packages(exclude=[]),
     include_package_data=True,
+    dependency_links=['git+https://github.com/sberdevices/ignite-python-thin-client.git@0.4.0-04.03.2021#egg=0.4.0-04.03.2021'],
     install_requires=[
         'h5py<3.0.0',
         'tatsu==4.4.0',
@@ -42,7 +43,7 @@ setup(
         'ics==0.6',
         'prometheus-client==0.7.1',
         'boto==2.49.0',
-        'pyignite==0.3.4',
+        'pyignite==0.4.0-04.03.2021',
         'python-json-logger==0.1.11',
         'PyYAML==5.3',
         'requests==2.22.0',

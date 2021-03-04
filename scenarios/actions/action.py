@@ -15,10 +15,9 @@ from core.logging.logger_utils import log
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from core.unified_template.unified_template import UnifiedTemplate
-from core.utils.pickle_copy import pickle_deepcopy
 
 import scenarios.logging.logger_constants as log_const
-from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, SAVED_MESSAGES, LOCAL_VARS
+from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, SAVED_MESSAGES
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User
 from scenarios.scenario_models.history import Event
@@ -460,7 +459,7 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
     def __init__(self, items, id=None):
         super().__init__(items, id)
         self.save_params_template_data = self._get_template_tree(items.get("save_params") or {})
-        self.rewrite_saved_params = items.get("rewrite_saved_params", False)
+        self.rewrite_saved_messages = items.get("rewrite_saved_messages", False)
         self._check_scenario: bool = items.get("check_scenario", True)
 
     def _run(self, user, text_preprocessing_result, params=None):
@@ -508,12 +507,11 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
     def _get_save_params(self, user, action_params, command_action_params):
         save_params = self._get_rendered_tree_recursive(self.save_params_template_data, action_params)
         save_params.update({SAVED_MESSAGES: action_params.get(SAVED_MESSAGES, {})})
-        save_params[LOCAL_VARS] = pickle_deepcopy(user.local_vars.values)
-        user.local_vars.clear()
 
-        saved_messages = save_params[SAVED_MESSAGES]
-        if user.message.message_name not in saved_messages or self.rewrite_saved_params:
-            saved_messages[user.message.type] = user.message.payload
+        if user.settings["template_settings"].get("self_service_with_state_save_messages", True):
+            saved_messages = save_params[SAVED_MESSAGES]
+            if user.message.message_name not in saved_messages or self.rewrite_saved_messages:
+                saved_messages[user.message.type] = user.message.payload
 
         save_params.update({TO_MESSAGE_PARAMS: command_action_params})
         save_params.update({TO_MESSAGE_NAME: self.command})

@@ -23,7 +23,7 @@ from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAc
 from core.basic_models.actions.external_actions import ExternalAction
 from core.basic_models.actions.counter_actions import CounterIncrementAction, CounterDecrementAction, \
     CounterClearAction, CounterSetAction, CounterCopyAction
-from core.basic_models.requirement.basic_requirements import requirement_factory
+from core.basic_models.requirement.basic_requirements import requirement_factory, IntersectionRequirement
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink, RawItem
 from core.basic_models.requirement.basic_requirements import requirements, Requirement, AndRequirement, \
@@ -182,6 +182,7 @@ class SmartAppResources(BaseConfig):
 
     def init_scenarios(self):
         scenarios[None] = BaseScenario
+        scenarios["base"] = BaseScenario
         scenarios["form_filling"] = FormFillingScenario
         scenarios["tree"] = TreeScenario
 
@@ -286,6 +287,7 @@ class SmartAppResources(BaseConfig):
         requirements["counter_value"] = CounterValueRequirement
         requirements["datetime"] = DateTimeRequirement
         requirements["external"] = ExternalRequirement
+        requirements["intersection"] = IntersectionRequirement
         requirements["not"] = NotRequirement
         requirements["or"] = OrRequirement
         requirements["platform_type"] = dr.PlatformTypeRequirement

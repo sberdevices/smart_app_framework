@@ -33,6 +33,9 @@ class BaseForm:
     def raw(self):
         raise NotImplementedError
 
+    def get_fields_values(self):
+        raise NotImplementedError
+
 
 class Form(BaseForm):
     def __init__(self, items, description, user):

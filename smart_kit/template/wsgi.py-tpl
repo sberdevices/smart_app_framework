@@ -27,7 +27,6 @@ def create_app():
     log("FINISHED MODEL CREATE", params={log_const.KEY_NAME: "timings"})
     log("START MAIN_LOOP CREATE", params={log_const.KEY_NAME: "timings"})
     loop = main_loop_cls(
-        app_name,
         model, user_cls, parametrizer_cls, settings
     )
     log("FINISHED MAIN_LOOP CREATE", params={log_const.KEY_NAME: "timings"})

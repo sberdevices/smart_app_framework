@@ -42,6 +42,7 @@ setup(
         'ics==0.6',
         'prometheus-client==0.7.1',
         'boto==2.49.0',
+        'pyignite>=0.3.4',
         'python-json-logger==0.1.11',
         'PyYAML==5.3',
         'requests==2.22.0',
@@ -59,7 +60,3 @@ setup(
         'Programming Language :: Python :: 3.7'
     ]
 )
-
-
-import os
-os.system('pip install git+https://github.com/sberdevices/ignite-python-thin-client.git@0.4.0-04.03.2021')

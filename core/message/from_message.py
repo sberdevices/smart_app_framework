@@ -1,5 +1,4 @@
 # coding=utf-8
-from typing import Optional
 from lazy import lazy
 import json
 import uuid
@@ -39,7 +38,6 @@ class SmartAppFromMessage:
     PAYLOAD = "payload"
     SESSION_ID = "sessionId"
 
-    error_message: Optional[str]
     incremental_id: str
     message_name: str
     payload: dict
@@ -58,7 +56,6 @@ class SmartAppFromMessage:
         self.headers = Headers(headers)
         self._callback_id = None  # FIXME: by some reason it possibly to change callback_id
         self.masking_fields = masking_fields
-        self.error_message = None
 
     def validate(self):
         """
@@ -103,7 +100,6 @@ class SmartAppFromMessage:
             required_field=None,
             required_field_type=None,
     ):
-        params = {}
         if self._value:
             params = {
                 "value": str(self._value),
@@ -112,21 +108,27 @@ class SmartAppFromMessage:
                 log_const.KEY_NAME: log_const.EXCEPTION_VALUE
             }
             if required_field and required_field_type:
-                template = (
+                log(
                     "Message validation error: Expected '%(required_field)s'"
-                    " of type '%(required_field_type)s': %(value)s"
+                    " of type '%(required_field_type)s': %(value)s",
+                    params=params,
+                    level="ERROR",
                 )
             elif required_field:
-                template = (
+                log(
                     "Message validation error: Required field "
                     "'%(required_field)s' is missing: %(value)s",
+                    params=params,
+                    level="ERROR",
                 )
             else:
-                template = "Message validation error: Format is wrong: %(value)s"
+                log(
+                    "Message validation error: Format is wrong: %(value)s",
+                    params=params,
+                    level="ERROR",
+                )
         else:
-            template = "Message validation error: Message is empty"
-        log(template, params=params, level="ERROR")
-        self.error_message = template % params
+            log("Message validation error: Message is empty", level="ERROR")
 
     @property
     def _callback_id_header_name(self):
@@ -239,3 +241,18 @@ class SmartAppFromMessage:
     @lazy
     def value(self):
         return self._value
+
+
+basic_error_message = SmartAppFromMessage(
+    '''
+    {
+        "messageName": "ERROR",
+        "messageId": -1,
+        "uuid": -1,
+        "payload": {},
+        "sessionId": -1
+    }
+    ''',
+    headers={},
+    headers_required=False,
+)

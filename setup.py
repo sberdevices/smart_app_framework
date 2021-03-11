@@ -42,7 +42,7 @@ setup(
         'ics==0.6',
         'prometheus-client==0.7.1',
         'boto==2.49.0',
-        'pyignite==0.3.4',
+        'pyignite>=0.3.4',
         'python-json-logger==0.1.11',
         'PyYAML==5.3',
         'requests==2.22.0',

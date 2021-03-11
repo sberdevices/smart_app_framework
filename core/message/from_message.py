@@ -15,8 +15,6 @@ from core.utils.pickle_copy import pickle_deepcopy
 from core.utils.utils import current_time_ms
 from core.message.msg_validator import MessageValidator
 
-from smart_kit.configs import get_app_config
-
 
 class Headers:
     def __init__(self, data):
@@ -247,6 +245,7 @@ class SmartAppFromMessage:
 
     @classmethod
     def _get_validators(cls) -> Iterable[MessageValidator]:
+        from smart_kit.configs import get_app_config
         return get_app_config().FROM_MSG_VALIDATORS
 
     def validate(self):

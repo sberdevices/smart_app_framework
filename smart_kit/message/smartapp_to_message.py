@@ -7,8 +7,6 @@ from core.utils.pickle_copy import pickle_deepcopy
 from core.utils.masking_message import masking
 from core.message.msg_validator import MessageValidator
 
-from smart_kit.configs import get_app_config
-
 
 class SmartAppToMessage:
     ROOT_NODES_KEY = "root_nodes"
@@ -58,6 +56,7 @@ class SmartAppToMessage:
 
     @classmethod
     def _get_validators(cls) -> Iterable[MessageValidator]:
+        from smart_kit.configs import get_app_config
         return get_app_config().TO_MSG_VALIDATORS
 
     def validate(self):

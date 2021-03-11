@@ -83,7 +83,7 @@ class Environment(TypeCastByAnnotation):
         self.character_appeal = "official"
         self.character_gender = "male"
         self.character_id = "sber"
-        self.character_name = "Сбербанк"
+        self.character_name = "Сбер"
         self.chat_id = "1"
         self.config = get_app_config()
         self.device_capabilities_misc = True

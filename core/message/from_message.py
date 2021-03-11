@@ -1,4 +1,5 @@
 # coding=utf-8
+from typing import Iterable
 from lazy import lazy
 import json
 import uuid
@@ -12,6 +13,9 @@ from core.logging.logger_utils import log
 from core.utils.masking_message import masking
 from core.utils.pickle_copy import pickle_deepcopy
 from core.utils.utils import current_time_ms
+from core.message.msg_validator import MessageValidator
+
+from smart_kit.configs import get_app_config
 
 
 class Headers:
@@ -240,3 +244,11 @@ class SmartAppFromMessage:
     @lazy
     def value(self):
         return self._value
+
+    @classmethod
+    def _get_validators(cls) -> Iterable[MessageValidator]:
+        return get_app_config().FROM_MSG_VALIDATORS
+
+    def validate(self):
+        for validator in self._get_validators():
+            validator.validate(self.message_name, self.payload)

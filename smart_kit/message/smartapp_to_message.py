@@ -1,9 +1,13 @@
+from typing import Iterable
 import json
 from lazy import lazy
 from copy import copy
 
 from core.utils.pickle_copy import pickle_deepcopy
 from core.utils.masking_message import masking
+from core.message.msg_validator import MessageValidator
+
+from smart_kit.configs import get_app_config
 
 
 class SmartAppToMessage:
@@ -51,3 +55,11 @@ class SmartAppToMessage:
     @lazy
     def value(self):
         return json.dumps(self.as_dict, ensure_ascii=False)
+
+    @classmethod
+    def _get_validators(cls) -> Iterable[MessageValidator]:
+        return get_app_config().TO_MSG_VALIDATORS
+
+    def validate(self):
+        for validator in self._get_validators():
+            validator.validate(self.command.name, self.payload)

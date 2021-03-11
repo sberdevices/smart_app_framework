@@ -22,18 +22,16 @@ class HandlerServerAction(HandlerBase):
         return payload[SERVER_ACTION].get("parameters", {})
 
     def run(self, payload, user):
-        params = {log_const.KEY_NAME: "handling_server_action"}
-        log("HandlerServerAction started", user, params)
+        params = {log_const.KEY_NAME: "handling_server_action",
+                  "server_action_params": str(self.get_action_params(payload)),
+                  "server_action_id": self.get_action_name(payload, user)}
+        log("HandlerServerAction %(server_action_id)s started", user, params)
+
         app_info = user.message.app_info
         smart_kit_metrics.counter_incoming(self.app_name, user.message.message_name, self.__class__.__name__,
                                            user, app_info=app_info)
-        text_preprocessing_result = TextPreprocessingResult(payload.get("message", {}))
-        params = {
-            log_const.KEY_NAME: log_const.NORMALIZED_TEXT_VALUE,
-            "normalized_text": str(text_preprocessing_result.raw),
-        }
-        log("text preprocessing result: '%(normalized_text)s'", user, params)
-        action_name = self.get_action_name(payload, user)
-        action = user.descriptions["external_actions"][action_name]
+
+        action_id = self.get_action_name(payload, user)
+        action = user.descriptions["external_actions"][action_id]
         action_params = self.get_action_params(payload)
-        return action.run(user, text_preprocessing_result, action_params)
+        return action.run(user, TextPreprocessingResult({}), action_params)

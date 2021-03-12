@@ -1,5 +1,6 @@
 import importlib
 import os
+from unittest.mock import Mock
 
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User
@@ -28,15 +29,13 @@ def get_static_path(app_config_path):
     return static_path
 
 
-def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
-    app_config = os.getenv(environment_variable)
-    app_config = importlib.import_module(app_config)
-
-    static_path = get_static_path(app_config.__file__)
-    set_default(app_config, "STATIC_PATH", static_path)
-    set_default(app_config, "CONFIGS_PATH", os.path.join(static_path, "./configs"))
-    set_default(app_config, "SECRET_PATH", os.path.join(static_path, "./configs"))
-    set_default(app_config, "REFERENCES_PATH", os.path.join(static_path, "./references"))
+def set_config_defaults(app_config):
+    if not isinstance(app_config, Mock):
+        static_path = get_static_path(app_config.__file__)
+        set_default(app_config, "STATIC_PATH", static_path)
+        set_default(app_config, "CONFIGS_PATH", os.path.join(static_path, "./configs"))
+        set_default(app_config, "SECRET_PATH", os.path.join(static_path, "./configs"))
+        set_default(app_config, "REFERENCES_PATH", os.path.join(static_path, "./references"))
 
     set_default(app_config, "LOCAL_TESTING", CLInterface)
     set_default(app_config, "NORMALIZER_ADDRESS", "http://127.0.0.1:9000")
@@ -58,4 +57,9 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
     set_default(app_config, "FROM_MSG_VALIDATORS", ())
     set_default(app_config, "AUTO_LISTENING", True)
 
+
+def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
+    app_config = os.getenv(environment_variable)
+    app_config = importlib.import_module(app_config)
+    set_config_defaults(app_config)
     return app_config

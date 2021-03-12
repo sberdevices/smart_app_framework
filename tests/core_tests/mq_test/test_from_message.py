@@ -1,8 +1,16 @@
 import json
 from unittest import TestCase
+from unittest.mock import Mock, patch
 
 from core.message.from_message import SmartAppFromMessage
 from core.utils.utils import current_time_ms
+from smart_kit.configs import set_config_defaults
+
+
+def patch_get_app_config(mock_get_app_config):
+    result = Mock(spec=[], name='app_config')
+    set_config_defaults(result)
+    mock_get_app_config.return_value = result
 
 
 class TestFromMessage(TestCase):
@@ -56,7 +64,9 @@ class TestFromMessage(TestCase):
         self.assertEqual(device["additionalInfo"], message.device.additional_info)
         self.assertEqual(topic, message.topic_key)
 
-    def test_valid_true(self):
+    @patch('smart_kit.configs.get_app_config')
+    def test_valid_true(self, mock_get_app_config):
+        patch_get_app_config(mock_get_app_config)
         input_msg = {
             "messageId": 2,
             "sessionId": 234,
@@ -69,7 +79,9 @@ class TestFromMessage(TestCase):
         message = SmartAppFromMessage(json_input_msg, headers=headers)
         self.assertTrue(message.validate())
 
-    def test_valid_false(self):
+    @patch('smart_kit.configs.get_app_config')
+    def test_valid_false(self, mock_get_app_config):
+        patch_get_app_config(mock_get_app_config)
         input_msg = {
             "uuid": {"userChannel": "web", "userId": 99, "chatId": 80},
             "payload": "some payload"

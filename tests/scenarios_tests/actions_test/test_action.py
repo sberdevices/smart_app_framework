@@ -1,8 +1,11 @@
-# coding: utf-8
 import unittest
+from typing import Dict, Any, Union
 from unittest.mock import MagicMock, Mock, ANY
+
 from core.basic_models.actions.basic_actions import Action, action_factory, actions
+from core.model.registered import registered_factories
 from scenarios.actions.action import (
+    ChoiceScenarioAction,
     ClearCurrentScenarioAction,
     ClearCurrentScenarioFormAction,
     ClearScenarioByIdAction,
@@ -18,10 +21,9 @@ from scenarios.actions.action import (
     RunLastScenarioAction,
     AddHistoryEventAction
 )
-from core.model.registered import registered_factories
-from scenarios.scenario_models.history import Event
 from scenarios.actions.action import ClearFormAction, ClearInnerFormAction, BreakScenarioAction, AskAgainAction, \
     RemoveFormFieldAction, RemoveCompositeFormFieldAction
+from scenarios.scenario_models.history import Event
 
 
 class MockAction:
@@ -411,6 +413,31 @@ class RunLastScenarioActionTest(unittest.TestCase):
         user.last_scenarios.last_scenario_name = last_scenario_name
         result = action.run(user, Mock())
         self.assertEqual(result, scen_result)
+
+
+class ChoiceScenarioActionTest(unittest.TestCase):
+
+    @staticmethod
+    def get_action_result(test_items: Dict[str, Any], expected_scen_result: Union[str, None]) -> Union[str, None]:
+        action = ChoiceScenarioAction(test_items)
+        user = Mock()
+        user.parametrizer = MockParametrizer(user, {})
+        scen = Mock()
+        scen.run.return_value = expected_scen_result
+        user.descriptions = {"scenarios": {"test": scen}}
+        return action.run(user, Mock())
+
+    def test_scenario_action_no_else_action(self):
+        test_items = {"scenarios": {}}
+        expected_scen_result = None
+        real_scen_result = self.get_action_result(test_items, expected_scen_result)
+        self.assertEqual(real_scen_result, expected_scen_result)
+
+    def test_scenario_action_no_scenarios(self):
+        test_items = {"scenarios": {}, "else_action": {"type": "test", "result": "done"}}
+        expected_scen_result = "done"
+        real_scen_result = self.get_action_result(test_items, expected_scen_result)
+        self.assertEqual(real_scen_result, expected_scen_result)
 
 
 class ClearCurrentScenarioActionTest(unittest.TestCase):

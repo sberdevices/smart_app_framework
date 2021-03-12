@@ -6,12 +6,13 @@ from lazy import lazy
 from jinja2 import exceptions as jexcept
 from typing import Optional, Dict, Any, Union, List
 
-from core.basic_models.actions.basic_actions import Action
+from core.basic_models.actions.basic_actions import Action, RequirementAction
 from core.basic_models.actions.command import Command
 from core.basic_models.actions.string_actions import StringAction
 from core.basic_models.parametrizers.parametrizer import BasicParametrizer
 from core.configs.global_constants import CALLBACK_ID_HEADER
 from core.logging.logger_utils import log
+from core.model.factory import factory, list_factory
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from core.unified_template.unified_template import UnifiedTemplate
@@ -314,6 +315,46 @@ class RunLastScenarioAction(Action):
         scenario = user.descriptions["scenarios"].get(last_scenario_id)
         if scenario:
             return scenario.run(text_preprocessing_result, user, params)
+
+
+class ChoiceScenarioAction(Action):
+
+    FIELD_SCENARIOS_KEY = "scenarios"
+    FIELD_ELSE_KEY = "else_action"
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(ChoiceScenarioAction, self).__init__(items, id)
+        self._scenarios = items[self.FIELD_SCENARIOS_KEY]
+        self._else_item = items.get(self.FIELD_ELSE_KEY)
+
+    @lazy
+    @factory(Action)
+    def else_item(self) -> Action:
+        return self._else_item
+
+    @staticmethod
+    @list_factory(RequirementAction)
+    def get_requirement_obj(requirement) -> RequirementAction:
+        return requirement
+
+    def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
+            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Union[None, str, List[Command]]:
+        result = None
+        choice_is_made = False
+
+        for scenario_id, scenario in self._scenarios.items():
+            scenario_requirement = self.get_requirement_obj(scenario["actions"])
+            checked = scenario_requirement.requirement.check(text_preprocessing_result, user, params)
+            if checked:
+                result = RunScenarioAction(items=scenario, id=str(scenario_id)).run(
+                    user, text_preprocessing_result, params)
+                choice_is_made = True
+                break
+
+        if not choice_is_made and self._else_item:
+            result = self.else_item.run(user, text_preprocessing_result, params)
+
+        return result
 
 
 class ClearCurrentScenarioAction(Action):

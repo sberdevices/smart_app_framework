@@ -59,10 +59,21 @@ class SmartAppFromMessage:
         self._callback_id = None  # FIXME: by some reason it possibly to change callback_id
         self.masking_fields = masking_fields
 
+    @classmethod
+    def _get_validators(cls) -> Iterable[MessageValidator]:
+        from smart_kit.configs import get_app_config
+        validators = get_app_config().FROM_MSG_VALIDATORS
+        print('validators:', validators)
+        return validators
+
     def validate(self):
         """
             Try to json.load message and check for all required fields
-         """
+        """
+
+        for validator in self._get_validators():
+            validator.validate(self.message_name, self.payload)
+
         if self._headers_required and not self.headers:
             log("Message headers is empty", level="ERROR")
             return False
@@ -242,12 +253,3 @@ class SmartAppFromMessage:
     @lazy
     def value(self):
         return self._value
-
-    @classmethod
-    def _get_validators(cls) -> Iterable[MessageValidator]:
-        from smart_kit.configs import get_app_config
-        return get_app_config().FROM_MSG_VALIDATORS
-
-    def validate(self):
-        for validator in self._get_validators():
-            validator.validate(self.message_name, self.payload)

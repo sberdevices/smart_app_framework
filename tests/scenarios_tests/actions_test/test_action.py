@@ -1,5 +1,5 @@
 import unittest
-from typing import Dict, Any, Union
+from typing import Dict, Any, Union, Optional
 from unittest.mock import MagicMock, Mock, ANY
 
 from core.basic_models.actions.basic_actions import Action, action_factory, actions
@@ -418,25 +418,54 @@ class RunLastScenarioActionTest(unittest.TestCase):
 class ChoiceScenarioActionTest(unittest.TestCase):
 
     @staticmethod
-    def get_action_result(test_items: Dict[str, Any], expected_scen_result: Union[str, None]) -> Union[str, None]:
+    def mock_and_perform_action(test_items: Dict[str, Any], user_test_params: Optional[Dict[str, Any]] = None,
+                                expected_scen_result: Optional[str] = None) -> Union[str, None]:
         action = ChoiceScenarioAction(test_items)
         user = Mock()
-        user.parametrizer = MockParametrizer(user, {})
+        user_test_params = {} if not user_test_params else user_test_params
+        user.parametrizer = Mock()
+        user.parametrizer.collect = Mock(return_value=user_test_params)
         scen = Mock()
         scen.run.return_value = expected_scen_result
         user.descriptions = {"scenarios": {"test": scen}}
         return action.run(user, Mock())
 
-    def test_scenario_action_no_else_action(self):
-        test_items = {"scenarios": {}}
-        expected_scen_result = None
-        real_scen_result = self.get_action_result(test_items, expected_scen_result)
+    def test_choice_scenario_action(self):
+        test_items = {
+            "scenarios": {
+                "test_scenario_id_1": {
+                    "requirement": {"type": "test", "result": "SCENARIO #1 IS RUN", "cond": True},
+                    "scenario": "test"
+                }
+            },
+            "else_action": {"type": "test", "result": "ELSE ACTION IS DONE"}
+        }
+        expected_scen_result = "SCENARIO #1 IS RUN"
+        real_scen_result = self.mock_and_perform_action(test_items, expected_scen_result=expected_scen_result)
         self.assertEqual(real_scen_result, expected_scen_result)
 
-    def test_scenario_action_no_scenarios(self):
-        test_items = {"scenarios": {}, "else_action": {"type": "test", "result": "done"}}
-        expected_scen_result = "done"
-        real_scen_result = self.get_action_result(test_items, expected_scen_result)
+    def test_choice_scenario_action_no_else_action(self):
+        test_items = {
+            "scenarios": {
+                "test_scenario_id_1": {
+                    "requirement": {"type": "test", "result": "SCENARIO #1 IS RUN", "cond": False},
+                    "scenario": "test"}
+            }
+        }
+        real_scen_result = self.mock_and_perform_action(test_items)
+        self.assertIsNone(real_scen_result)
+
+    def test_choice_scenario_action_with_else_action(self):
+        test_items = {
+            "scenarios": {
+                "test_scenario_id_1": {
+                    "requirement": {"type": "test", "result": "SCENARIO #1 IS RUN", "cond": False},
+                    "scenario": "test"}
+            },
+            "else_action": {"type": "test", "result": "ELSE ACTION IS DONE"}
+        }
+        expected_scen_result = "ELSE ACTION IS DONE"
+        real_scen_result = self.mock_and_perform_action(test_items, expected_scen_result=expected_scen_result)
         self.assertEqual(real_scen_result, expected_scen_result)
 
 

@@ -335,7 +335,6 @@ class ChoiceScenarioAction(Action):
     def else_item(self):
         return self._else_item
 
-    @lazy
     @factory(Requirement)
     def requirement_item(self):
         return self._requirement
@@ -347,7 +346,7 @@ class ChoiceScenarioAction(Action):
 
         for scenario_id, scenario in self._scenarios.items():
             self._requirement = scenario[self.FIELD_REQUIREMENT_KEY]
-            check_res = self.requirement_item.check(text_preprocessing_result, user, params)
+            check_res = self.requirement_item().check(text_preprocessing_result, user, params)
             if check_res:
                 result = RunScenarioAction(items=scenario, id=str(scenario_id)).run(
                     user, text_preprocessing_result, params)

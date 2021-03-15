@@ -434,13 +434,17 @@ class ChoiceScenarioActionTest(unittest.TestCase):
         test_items = {
             "scenarios": {
                 "test_scenario_id_1": {
-                    "requirement": {"type": "test", "result": "SCENARIO #1 IS RUN", "cond": True},
+                    "requirement": {"type": "test", "result": "SCENARIO #1 IS RUN", "cond": False},
+                    "scenario": "test"
+                },
+                "test_scenario_id_2": {
+                    "requirement": {"type": "test", "result": "SCENARIO #2 IS RUN", "cond": True},
                     "scenario": "test"
                 }
             },
             "else_action": {"type": "test", "result": "ELSE ACTION IS DONE"}
         }
-        expected_scen_result = "SCENARIO #1 IS RUN"
+        expected_scen_result = "SCENARIO #2 IS RUN"
         real_scen_result = self.mock_and_perform_action(test_items, expected_scen_result=expected_scen_result)
         self.assertEqual(real_scen_result, expected_scen_result)
 

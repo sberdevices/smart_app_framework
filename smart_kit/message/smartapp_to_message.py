@@ -61,4 +61,6 @@ class SmartAppToMessage:
 
     def validate(self):
         for validator in self._get_validators():
-            validator.validate(self.command.name, self.payload)
+            if not validator.validate(self.command.name, self.payload):
+                return False
+        return True

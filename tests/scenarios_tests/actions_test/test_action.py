@@ -431,40 +431,53 @@ class ChoiceScenarioActionTest(unittest.TestCase):
         return action.run(user, Mock())
 
     def test_choice_scenario_action(self):
+        # Проверяем, что запустили нужный сценарий, в случае если выполнился его requirement
         test_items = {
             "scenarios": {
                 "test_scenario_id_1": {
                     "requirement": {"type": "test", "result": "SCENARIO #1 IS RUN", "cond": False},
-                    "scenario": "test"
+                    "type": "unified_template",
+                    "template": "test",
+                    "actions": [{"type": "string", "command": "ANSWER_TO_USER", "nodes": {"pronounceText": "Привет #1"}}]
                 },
                 "test_scenario_id_2": {
                     "requirement": {"type": "test", "result": "SCENARIO #2 IS RUN", "cond": True},
-                    "scenario": "test"
+                    "type": "unified_template",
+                    "template": "test",
+                    "actions": [{"type": "string", "command": "ANSWER_TO_USER", "nodes": {"pronounceText": "Привет #2"}}]
                 }
             },
             "else_action": {"type": "test", "result": "ELSE ACTION IS DONE"}
         }
-        expected_scen_result = "SCENARIO #2 IS RUN"
+        expected_scen_result = "Привет #2"
         real_scen_result = self.mock_and_perform_action(test_items, expected_scen_result=expected_scen_result)
         self.assertEqual(real_scen_result, expected_scen_result)
 
     def test_choice_scenario_action_no_else_action(self):
+        # Проверяем, что вернули None в случае если ни один сценарий не запустился (requirement=False) и else_action нет
         test_items = {
             "scenarios": {
                 "test_scenario_id_1": {
                     "requirement": {"type": "test", "result": "SCENARIO #1 IS RUN", "cond": False},
-                    "scenario": "test"}
+                    "type": "unified_template",
+                    "template": "test",
+                    "actions": [{"type": "string", "command": "ANSWER_TO_USER", "nodes": {"pronounceText": "Привет!"}}]
+                }
             }
         }
         real_scen_result = self.mock_and_perform_action(test_items)
         self.assertIsNone(real_scen_result)
 
     def test_choice_scenario_action_with_else_action(self):
+        # Проверяем, что выполняется else_action в случае если ни один сценарий не запустился т.к их requirement=False
         test_items = {
             "scenarios": {
                 "test_scenario_id_1": {
                     "requirement": {"type": "test", "result": "SCENARIO #1 IS RUN", "cond": False},
-                    "scenario": "test"}
+                    "type": "unified_template",
+                    "template": "test",
+                    "actions": [{"type": "string", "command": "ANSWER_TO_USER", "nodes": {"pronounceText": "Привет!"}}]
+                }
             },
             "else_action": {"type": "test", "result": "ELSE ACTION IS DONE"}
         }

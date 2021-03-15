@@ -63,7 +63,6 @@ class SmartAppFromMessage:
     def _get_validators(cls) -> Iterable[MessageValidator]:
         from smart_kit.configs import get_app_config
         validators = get_app_config().FROM_MSG_VALIDATORS
-        print('validators:', validators)
         return validators
 
     def validate(self):
@@ -72,7 +71,8 @@ class SmartAppFromMessage:
         """
 
         for validator in self._get_validators():
-            validator.validate(self.message_name, self.payload)
+            if not validator.validate(self.message_name, self.payload):
+                return False
 
         if self._headers_required and not self.headers:
             log("Message headers is empty", level="ERROR")

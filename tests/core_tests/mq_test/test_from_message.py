@@ -4,12 +4,18 @@ from unittest.mock import Mock, patch
 
 from core.message.from_message import SmartAppFromMessage
 from core.utils.utils import current_time_ms
-from smart_kit.configs import set_config_defaults
+from core.message.msg_validator import MessageValidator
+
+
+class PieMessageValidator(MessageValidator):
+    def validate(self, message_name: str, data: dict):
+        return 3.14 < data.get("pi", 0) < 3.15
 
 
 def patch_get_app_config(mock_get_app_config):
     result = Mock(spec=[], name='app_config')
-    set_config_defaults(result)
+    result.TO_MSG_VALIDATORS = ()
+    result.FROM_MSG_VALIDATORS = ()
     mock_get_app_config.return_value = result
 
 
@@ -91,3 +97,22 @@ class TestFromMessage(TestCase):
 
         message = SmartAppFromMessage(json_input_msg, headers=headers)
         self.assertFalse(message.validate())
+
+    @patch('smart_kit.configs.get_app_config')
+    def test_validation(self, mock_get_app_config):
+        patch_get_app_config(mock_get_app_config)
+        mock_get_app_config.return_value.FROM_MSG_VALIDATORS = (PieMessageValidator(),)
+        input_msg = {
+            "uuid": {"userChannel": "web", "userId": 99, "chatId": 80},
+            "messageName": "some_name",
+            "messageId": "random_id",
+            "sessionId": "random_id",
+            "payload": {
+                "pi": 3.14159265358979,
+            }
+        }
+        headers = [('test_header', 'result')]
+        json_input_msg = json.dumps(input_msg, ensure_ascii=False)
+
+        message = SmartAppFromMessage(json_input_msg, headers=headers)
+        self.assertTrue(message.validate())

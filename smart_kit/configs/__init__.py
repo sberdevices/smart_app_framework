@@ -1,6 +1,5 @@
 import importlib
 import os
-from unittest.mock import Mock
 
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User

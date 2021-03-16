@@ -46,7 +46,7 @@ class SmartAppFromMessage:
     message_name: str
 
     def __init__(self, value: str, topic_key: str = None, creation_time=None, kafka_key: str = None, headers=None,
-                 masking_fields=None, headers_required=True):
+                 masking_fields=None, headers_required=True, validators: Iterable[MessageValidator] = ()):
         self.logging_uuid = str(uuid.uuid4())
         self._value = value
         self.topic_key = topic_key
@@ -58,19 +58,14 @@ class SmartAppFromMessage:
         self.headers = Headers(headers)
         self._callback_id = None  # FIXME: by some reason it possibly to change callback_id
         self.masking_fields = masking_fields
-
-    @classmethod
-    def _get_validators(cls) -> Iterable[MessageValidator]:
-        from smart_kit.configs import get_app_config
-        validators = get_app_config().FROM_MSG_VALIDATORS
-        return validators
+        self.validators = validators
 
     def validate(self):
         """
             Try to json.load message and check for all required fields
         """
 
-        for validator in self._get_validators():
+        for validator in self.validators:
             if not validator.validate(self.message_name, self.payload):
                 return False
 

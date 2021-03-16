@@ -1,6 +1,5 @@
 import json
 from unittest import TestCase
-from unittest.mock import Mock, patch
 
 from core.message.from_message import SmartAppFromMessage
 from core.utils.utils import current_time_ms
@@ -10,13 +9,6 @@ from core.message.msg_validator import MessageValidator
 class PieMessageValidator(MessageValidator):
     def validate(self, message_name: str, data: dict):
         return 3.14 < data.get("pi", 0) < 3.15
-
-
-def patch_get_app_config(mock_get_app_config):
-    result = Mock(spec=[], name='app_config')
-    result.TO_MSG_VALIDATORS = ()
-    result.FROM_MSG_VALIDATORS = ()
-    mock_get_app_config.return_value = result
 
 
 class TestFromMessage(TestCase):
@@ -70,9 +62,7 @@ class TestFromMessage(TestCase):
         self.assertEqual(device["additionalInfo"], message.device.additional_info)
         self.assertEqual(topic, message.topic_key)
 
-    @patch('smart_kit.configs.get_app_config')
-    def test_valid_true(self, mock_get_app_config):
-        patch_get_app_config(mock_get_app_config)
+    def test_valid_true(self):
         input_msg = {
             "messageId": 2,
             "sessionId": 234,
@@ -85,9 +75,7 @@ class TestFromMessage(TestCase):
         message = SmartAppFromMessage(json_input_msg, headers=headers)
         self.assertTrue(message.validate())
 
-    @patch('smart_kit.configs.get_app_config')
-    def test_valid_false(self, mock_get_app_config):
-        patch_get_app_config(mock_get_app_config)
+    def test_valid_false(self):
         input_msg = {
             "uuid": {"userChannel": "web", "userId": 99, "chatId": 80},
             "payload": "some payload"
@@ -98,10 +86,7 @@ class TestFromMessage(TestCase):
         message = SmartAppFromMessage(json_input_msg, headers=headers)
         self.assertFalse(message.validate())
 
-    @patch('smart_kit.configs.get_app_config')
-    def test_validation(self, mock_get_app_config):
-        patch_get_app_config(mock_get_app_config)
-        mock_get_app_config.return_value.FROM_MSG_VALIDATORS = (PieMessageValidator(),)
+    def test_validation(self):
         input_msg = {
             "uuid": {"userChannel": "web", "userId": 99, "chatId": 80},
             "messageName": "some_name",
@@ -112,7 +97,14 @@ class TestFromMessage(TestCase):
             }
         }
         headers = [('test_header', 'result')]
-        json_input_msg = json.dumps(input_msg, ensure_ascii=False)
 
-        message = SmartAppFromMessage(json_input_msg, headers=headers)
+        message = SmartAppFromMessage(
+            json.dumps(input_msg, ensure_ascii=False),
+            headers=headers, validators=(PieMessageValidator(),))
         self.assertTrue(message.validate())
+
+        input_msg["payload"]["pi"] = 2.7182818284
+        message = SmartAppFromMessage(
+            json.dumps(input_msg, ensure_ascii=False),
+            headers=headers, validators=(PieMessageValidator(),))
+        self.assertFalse(message.validate())

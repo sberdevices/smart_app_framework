@@ -14,6 +14,7 @@ from core.utils.stats_timer import StatsTimer
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.start_points.main_loop_http import BaseHttpMainLoop
 from smart_kit.utils.monitoring import smart_kit_metrics
+from smart_kit.configs import get_app_config
 
 
 class AIOHttpMainLoop(BaseHttpMainLoop):
@@ -139,7 +140,8 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
     async def iterate(self, request: aiohttp.web.Request):
         headers = self._get_headers(request.headers)
         body = await request.text()
-        message = SmartAppFromMessage(body, headers=headers, headers_required=False)
+        message = SmartAppFromMessage(body, headers=headers, headers_required=False,
+                                      validators=get_app_config().FROM_MSG_VALIDATORS)
 
         status, reason, answer = await self.handle_message(message)
 

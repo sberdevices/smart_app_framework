@@ -296,11 +296,15 @@ class CLInterface(cmd.Cmd):
         print("Текущий сценарий: ", self.environment.intent)
 
     def process_message(self, raw_message: str, headers: tuple = ()) -> typing.Tuple[typing.Any, list]:
+        from smart_kit.configs import get_app_config
         masking_fields = self.settings["template_settings"].get("masking_fields")
-        message = SmartAppFromMessage(raw_message, headers=headers, masking_fields=masking_fields)
+        message = SmartAppFromMessage(raw_message, headers=headers, masking_fields=masking_fields,
+                                      validators=get_app_config().FROM_MSG_VALIDATORS)
         user = self.__user_cls(self.environment.user_id, message, self.user_data, self.settings,
                                self.app_model.scenario_descriptions,
                                self.__parametrizer_cls, load_error=False)
+        if not message.validate():
+            print("Валидация сообщения прошла неудачно.")
         answers = self.app_model.answer(message, user)
         return user, answers or []
 

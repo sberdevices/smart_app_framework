@@ -12,7 +12,8 @@ class SmartAppToMessage:
     ROOT_NODES_KEY = "root_nodes"
     PAYLOAD = "payload"
 
-    def __init__(self, command, message, request, forward_fields=None, masking_fields=None):
+    def __init__(self, command, message, request, forward_fields=None, masking_fields=None,
+                 validators: Iterable[MessageValidator]=()):
         root_nodes = command.payload.pop(self.ROOT_NODES_KEY, None)
         self.command = command
         self.root_nodes = root_nodes or {}
@@ -20,6 +21,7 @@ class SmartAppToMessage:
         self.request = request
         self.forward_fields = forward_fields or ()
         self.masking_fields = masking_fields
+        self.validators = validators
 
     @lazy
     def payload(self):
@@ -54,13 +56,8 @@ class SmartAppToMessage:
     def value(self):
         return json.dumps(self.as_dict, ensure_ascii=False)
 
-    @classmethod
-    def _get_validators(cls) -> Iterable[MessageValidator]:
-        from smart_kit.configs import get_app_config
-        return get_app_config().TO_MSG_VALIDATORS
-
     def validate(self):
-        for validator in self._get_validators():
+        for validator in self.validators:
             if not validator.validate(self.command.name, self.payload):
                 return False
         return True

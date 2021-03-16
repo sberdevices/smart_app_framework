@@ -329,10 +329,10 @@ class ChoiceScenarioAction(Action):
         super(ChoiceScenarioAction, self).__init__(items, id)
         self._scenarios = items[self.FIELD_SCENARIOS_KEY]
         self._else_item = items.get(self.FIELD_ELSE_KEY)
-        self._requirements = {
-            scenario_id: scenario[self.FIELD_REQUIREMENT_KEY]
-            for scenario_id, scenario in self._scenarios.items()
-        }
+        self._requirements = {}
+        for scenario_id, scenario in self._scenarios.items():
+            scen_req = scenario.pop(self.FIELD_REQUIREMENT_KEY)
+            self._requirements[scenario_id] = scen_req
 
     @lazy
     @dict_factory(Requirement, has_id=False)

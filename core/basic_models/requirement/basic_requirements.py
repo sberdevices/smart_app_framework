@@ -1,23 +1,22 @@
-# coding: utf-8
 import hashlib
-
 from datetime import datetime, timezone
 from random import random
-from lazy import lazy
 from typing import List, Optional, Dict, Any
 
 from croniter import croniter
+from lazy import lazy
 
 import core.logging.logger_constants as log_const
+from core.basic_models.classifiers.basic_classifiers import ExternalClassifier
 from core.basic_models.operators.operators import Operator
-from core.logging.logger_utils import log
+from core.logging.logger_utils import log, log_classifier_result
 from core.model.base_user import BaseUser
 from core.model.factory import build_factory, list_factory, factory
 from core.model.registered import Registered
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from core.unified_template.unified_template import UnifiedTemplate
-
+from core.utils.stats_timer import StatsTimer
 from scenarios.scenario_models.field.field_filler_description import IntersectionFieldFiller
 from scenarios.user.user_model import User
 
@@ -238,3 +237,28 @@ class IntersectionRequirement(Requirement):
             self.filler.extract(text_preprocessing_result, user, params),
         )
         return result
+
+
+class ClassifierRequirement(Requirement):
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(ClassifierRequirement, self).__init__(items=items, id=id)
+
+    @lazy
+    def classifier(self):
+        return ExternalClassifier(self.items["classifier"])
+
+    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+              params: Dict[str, Any] = None) -> bool:
+        check_res = True
+        with StatsTimer() as timer:
+            # TODO: добавить vectorizers
+            classification_res = self.classifier.find_best_answer(
+                text_preprocessing_result, None, user.descriptions["external_classifiers"], vectorizers)
+
+        log_classifier_result(classification_res, user, self.classifier, timer)
+
+        if not classification_res or classification_res[0][self.classifier.class_other]:
+            check_res = False
+
+        return check_res

@@ -1,9 +1,15 @@
-import logging
 import inspect
-import core.logging.logger_constants as log_const
-from core.logging.masker import LogMasker
+import logging
+from typing import Dict, List, Union, Optional
+
 import timeout_decorator
 
+import core.basic_models.classifiers.classifiers_constants as cls_const
+import core.logging.logger_constants as log_const
+from core.basic_models.classifiers.basic_classifiers import Classifier
+from core.logging.masker import LogMasker
+from core.model.base_user import BaseUser
+from core.utils.stats_timer import StatsTimer
 
 MESSAGE_ID_STR = "message_id"
 UID_STR = "uid"
@@ -58,6 +64,23 @@ def log(message, user=None, params=None, level="INFO", exc_info=None):
     except:
         app_logger.log(logging.getLevelName("ERROR"), "Failed to write a log. Exception occurred",
                        params, exc_info=True)
+
+
+def log_classifier_result(classification_res: List[Dict[str, Union[str, float, bool]]], user: BaseUser,
+                          classifier: Classifier, timer: Optional[StatsTimer] = None) -> None:
+    classifier_name = classifier.items.get("classifier", "intent_recognizer")
+    score_key = cls_const.INTENT_RECOGNIZER_ANSWER_DISTANCE_KEY if classifier_name == "intent_recognizer" \
+        else cls_const.SCORE_KEY
+    params = {
+        log_const.KEY_NAME: log_const.CLASSIFIER_VALUE,
+        "classifier_name": classifier_name,
+        "result": [el[cls_const.ANSWER_KEY] for el in classification_res],
+        'score': [el[score_key] for el in classification_res]
+    }
+    if timer:
+        params["time"] = timer.msecs
+
+    log(log_const.CLASSIFIER_MESSAGE, user, params)
 
 
 # backward naming_compatibility

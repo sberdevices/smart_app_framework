@@ -28,7 +28,8 @@ from core.basic_models.requirement.basic_requirements import requirement_factory
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink, RawItem
 from core.basic_models.requirement.basic_requirements import requirements, Requirement, AndRequirement, \
-    OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement, TimeRequirement, DateTimeRequirement
+    OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement, TimeRequirement, DateTimeRequirement, \
+    ClassifierRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
@@ -286,6 +287,7 @@ class SmartAppResources(BaseConfig):
         requirements["ask_again_exist"] = AskAgainExistRequirement
         requirements["capabilities_property_available"] = dr.CapabilitiesPropertyAvailableRequirement
         requirements["channel"] = ChannelRequirement
+        requirements["classifier"] = ClassifierRequirement
         requirements["counter_time"] = CounterUpdateTimeRequirement
         requirements["counter_value"] = CounterValueRequirement
         requirements["datetime"] = DateTimeRequirement

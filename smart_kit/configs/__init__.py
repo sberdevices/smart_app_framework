@@ -7,7 +7,6 @@ from smart_kit.configs.settings import Settings
 from smart_kit.models.dialogue_manager import DialogueManager
 from smart_kit.models.smartapp_model import SmartAppModel
 from smart_kit.resources import SmartAppResources
-from smart_kit.start_points.main_loop_http import HttpMainLoop
 from smart_kit.testing.local import CLInterface
 from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
 from smart_kit.utils.cache import JSONCache
@@ -29,6 +28,7 @@ def get_static_path(app_config_path):
 
 
 def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
+    from smart_kit.start_points.main_loop_http import HttpMainLoop
     app_config = os.getenv(environment_variable)
     app_config = importlib.import_module(app_config)
 

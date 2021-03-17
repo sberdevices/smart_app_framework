@@ -27,11 +27,22 @@ class BaseHttpMainLoop(BaseMainLoop):
 
     def handle_message(self, message: SmartAppFromMessage) -> typing.Tuple[int, str, SmartAppToMessage]:
         if not message.validate():
-            return 400, "BAD REQUEST", SmartAppToMessage(
+            result = 400, "BAD REQUEST", SmartAppToMessage(
                 self.BAD_REQUEST_COMMAND,
                 message=message,
                 request=None,
             )
+            try:
+                result[2].as_dict
+            except (json.JSONDecodeError, KeyError):
+                result = 400, "BAD REQUEST", SmartAppToMessage(
+                        self.BAD_REQUEST_COMMAND,
+                        message=basic_error_message,
+                        request=None,
+                    )
+            finally:
+                return result
+
 
         answer, stats = self.process_message(message)
         if not answer:
@@ -107,20 +118,8 @@ class HttpMainLoop(BaseHttpMainLoop):
 
         status, reason, answer = self.handle_message(message)
 
-        try:
-            result = [answer.value.encode()]
-            start_response(f"{status} {reason}", self._get_outgoing_headers(headers, answer.command))
-            return result
-        except (json.JSONDecodeError, KeyError):
-            status, reason = 400, "BAD REQUEST"
-            start_response(f"{status} {reason}", self._get_outgoing_headers(headers, answer.command))
-            return [
-                SmartAppToMessage(
-                    self.BAD_REQUEST_COMMAND,
-                    message=basic_error_message,
-                    request=None,
-                ).value.encode()
-            ]
+        start_response(f"{status} {reason}", self._get_outgoing_headers(headers, answer.command))
+        return [answer.value.encode()]
 
     def run(self):
         self._server = make_server('localhost', 8000, self.iterate)

@@ -3,7 +3,13 @@ from typing import Any, Dict, Optional, Union
 from timeout_decorator import timeout_decorator
 
 import core.basic_models.classifiers.classifiers_constants as cls_const
+from core.model.factory import build_factory
+from core.model.registered import Registered
 from core.utils.exception_handlers import exc_handler
+
+classifiers = Registered()
+
+classifier_factory = build_factory(classifiers)
 
 
 class Classifier:

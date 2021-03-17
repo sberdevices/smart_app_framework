@@ -36,7 +36,8 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
     set_default(app_config, "STATIC_PATH", static_path)
     set_default(app_config, "CONFIGS_PATH", os.path.join(static_path, "./configs"))
     set_default(app_config, "SECRET_PATH", os.path.join(static_path, "./configs"))
-    set_default(app_config, "REFERENCES_PATH", os.path.join(static_path, "./references"))
+    references_path = os.path.join(static_path, "./references")
+    set_default(app_config, "REFERENCES_PATH", references_path)
 
     set_default(app_config, "LOCAL_TESTING", CLInterface)
     set_default(app_config, "NORMALIZER_ADDRESS", "http://127.0.0.1:9000")
@@ -55,5 +56,8 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
 
     set_default(app_config, "PLUGINS", ())
     set_default(app_config, "AUTO_LISTENING", True)
+
+    set_default(app_config, "STATIC_CLASSIFIERS_PATH", os.path.join(references_path, "./classifiers"))
+    set_default(app_config, "STATIC_CLASSIFIERS_DATA_PATH", os.path.join(references_path, "./classifiers_data"))
 
     return app_config

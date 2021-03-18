@@ -13,6 +13,3 @@ IR_STARTUP_VALUE = "intent_recognizer_startup"
 INTENT_ID_VALUE = "intent_id"
 APP_LOGGER_NAME = "app_logger"
 REQUEST_VALUE = "request"
-# Константы, используемые при логгирование результатов классификаторов
-CLASSIFIER_VALUE = "classifier"
-CLASSIFIER_MESSAGE = "classifier:%(classifier_name)s, result: %(result)s, weights: %(score)s, time: %(time)s ms"

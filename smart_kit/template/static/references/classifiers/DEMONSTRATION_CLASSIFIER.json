@@ -1,0 +1,6 @@
+{
+  "type": "external",
+  "channels": ["MESSENGER"],
+  "timeout": 0.1,
+  "classifier": "DEMONSTRATION_CLASSIFIER"
+}

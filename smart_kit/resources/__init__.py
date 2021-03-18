@@ -1,3 +1,5 @@
+import json
+
 import core.basic_models.operators.comparators as cmp
 import core.basic_models.operators.operators as op
 import core.basic_models.requirement.device_requirements as dr
@@ -15,7 +17,7 @@ from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAc
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink, RawItem
 from core.basic_models.classifiers.basic_classifiers import classifiers, classifier_factory, Classifier, \
-    ExternalClassifier
+    ExternalClassifier, SkipClassifier
 from core.basic_models.classifiers.external_classifiers import ExternalClassifiers
 from core.basic_models.requirement.basic_requirements import requirement_factory, IntersectionRequirement
 from core.basic_models.requirement.basic_requirements import requirements, Requirement, AndRequirement, \
@@ -38,6 +40,7 @@ from core.descriptions.descriptions import registered_description_factories
 from core.model.queued_objects.limited_queued_hashable_objects_description import \
     LimitedQueuedHashableObjectsDescriptions
 from core.model.registered import registered_factories
+from core.repositories.classifier_repository import ClassifierRepository
 from core.repositories.file_repository import FileRepository
 from core.repositories.folder_repository import FolderRepository
 from core.request.base_request import requests_registered
@@ -110,7 +113,14 @@ class SmartAppResources(BaseConfig):
             FileRepository(self.subfolder_path("last_action_ids.json"), loader=ordered_json,
                            source=source, key="last_action_ids"),
             FolderRepository(self.subfolder_path("bundles"), loader=ordered_json, source=source,
-                             key="bundles")
+                             key="bundles"),
+            ClassifierRepository(
+                description_path=self.subfolder_path("classifiers"),
+                data_path=self.subfolder_path("classifiers_data"),
+                loader=json.loads,
+                source=source,
+                key="external_classifiers"
+            )
         ]
 
         self.repositories = self.override_repositories(self.repositories)
@@ -356,3 +366,4 @@ class SmartAppResources(BaseConfig):
 
     def init_classifiers(self):
         classifiers["external"] = ExternalClassifier
+        classifiers["skip"] = SkipClassifier

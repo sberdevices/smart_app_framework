@@ -6,6 +6,7 @@ import timeout_decorator
 
 import core.basic_models.classifiers.classifiers_constants as cls_const
 import core.logging.logger_constants as log_const
+import scenarios.logging.logger_constants as scenarios_log_const
 from core.basic_models.classifiers.basic_classifiers import Classifier
 from core.logging.masker import LogMasker
 from core.model.base_user import BaseUser
@@ -72,7 +73,7 @@ def log_classifier_result(classification_res: List[Dict[str, Union[str, float, b
     score_key = cls_const.INTENT_RECOGNIZER_ANSWER_DISTANCE_KEY if classifier_name == "intent_recognizer" \
         else cls_const.SCORE_KEY
     params = {
-        log_const.KEY_NAME: log_const.CLASSIFIER_VALUE,
+        log_const.KEY_NAME: scenarios_log_const.CLASSIFIER_VALUE,
         "classifier_name": classifier_name,
         "result": [el[cls_const.ANSWER_KEY] for el in classification_res],
         'score': [el[score_key] for el in classification_res]
@@ -80,7 +81,7 @@ def log_classifier_result(classification_res: List[Dict[str, Union[str, float, b
     if timer:
         params["time"] = timer.msecs
 
-    log(log_const.CLASSIFIER_MESSAGE, user, params)
+    log(scenarios_log_const.CLASSIFIER_MESSAGE, user, params)
 
 
 # backward naming_compatibility

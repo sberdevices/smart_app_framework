@@ -54,6 +54,7 @@ setup(
         'aiohttp==3.7.3',
         'aioredis',
         'croniter',
+        'scikit-learn==0.24.1'
     ],
     classifiers=[
         'Programming Language :: Python :: 3.6',

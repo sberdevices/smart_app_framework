@@ -1,10 +1,11 @@
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, Optional, Union, List
 
 from timeout_decorator import timeout_decorator
 
 import core.basic_models.classifiers.classifiers_constants as cls_const
 from core.model.factory import build_factory
 from core.model.registered import Registered
+from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.utils.exception_handlers import exc_handler
 
 classifiers = Registered()
@@ -34,11 +35,50 @@ class Classifier:
         # шаблону: answer=классу, score=величине уверенности в ответе, other=булево значение (принадлежность к other).
         return {self.answer_key: intent, self.score_key: score, self.class_other: is_other}
 
-    def find_best_answer(self, text_preprocessing_result, mask, classifiers=None, vectorizers=None):
+    def find_best_answer(
+            self,
+            text_preprocessing_result: BaseTextPreprocessingResult,
+            mask: Optional[Dict[str, bool]] = None,
+            classifiers_param=None,
+            vectorizers_param=None
+    ) -> List[Dict[str, Union[str, float, bool]]]:
         raise NotImplementedError
 
-    def initial_launch(self, text_preprocessing_result, classifiers=None, vectorizers=None):
+    def initial_launch(
+            self,
+            text_preprocessing_result: BaseTextPreprocessingResult,
+            classifiers_param=None,
+            vectorizers_param=None
+    ):
         raise NotImplementedError
+
+
+class SkipClassifier(Classifier):
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(SkipClassifier, self).__init__(items, id)
+        self._intents = self.items["intents"]
+
+    def find_best_answer(
+            self,
+            text_preprocessing_result: BaseTextPreprocessingResult,
+            mask: Optional[Dict[str, bool]] = None,
+            classifiers_param=None,
+            vectorizers_param=None
+    ) -> List[Dict[str, Union[str, float, bool]]]:
+        return [self._answer_template(intent, 0, False) for intent in self._intents]
+
+    def initial_launch(
+            self,
+            text_preprocessing_result: BaseTextPreprocessingResult,
+            classifiers_param=None,
+            vectorizers_param=None
+    ):
+        pass
+
+    @staticmethod
+    def get_nothing() -> Dict[str, Any]:
+        return {"type": "skip", "intents": []}
 
 
 class ExternalClassifier(Classifier):
@@ -54,10 +94,22 @@ class ExternalClassifier(Classifier):
         self._timeout_wrap = timeout_decorator.timeout(self.items.get("timeout") or self.BLOCKING_TIMEOUT)
 
     @exc_handler(handled_exceptions=(timeout_decorator.TimeoutError,), on_error_return_res=[])
-    def find_best_answer(self, text_preprocessing_result, mask, classifiers=None, vectorizers=None):
-        classifier = classifiers[self._classifier_key]
-        return self._timeout_wrap(classifier.find_best_answer)(text_preprocessing_result, mask, classifiers, vectorizers)
+    def find_best_answer(
+            self,
+            text_preprocessing_result: BaseTextPreprocessingResult,
+            mask: Optional[Dict[str, bool]] = None,
+            classifiers_param=None,
+            vectorizers_param=None
+    ) -> List[Dict[str, Union[str, float, bool]]]:
+        classifier = classifiers_param[self._classifier_key]
+        return self._timeout_wrap(classifier.find_best_answer)(
+            text_preprocessing_result, mask, classifiers_param, vectorizers_param)
 
-    def initial_launch(self, text_preprocessing_result, classifiers=None, vectorizers=None):
-        classifier = classifiers[self._classifier_key]
-        return classifier.initial_launch(text_preprocessing_result, classifiers, vectorizers)
+    def initial_launch(
+            self,
+            text_preprocessing_result: BaseTextPreprocessingResult,
+            classifiers_param=None,
+            vectorizers_param=None
+    ):
+        classifier = classifiers_param[self._classifier_key]
+        return classifier.initial_launch(text_preprocessing_result, classifiers_param, vectorizers_param)

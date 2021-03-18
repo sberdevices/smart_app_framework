@@ -13,7 +13,7 @@ from core.basic_models.parametrizers.parametrizer import BasicParametrizer
 from core.basic_models.requirement.basic_requirements import Requirement
 from core.configs.global_constants import CALLBACK_ID_HEADER
 from core.logging.logger_utils import log
-from core.model.factory import factory, dict_factory
+from core.model.factory import factory, list_factory
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from core.unified_template.unified_template import UnifiedTemplate
@@ -322,20 +322,16 @@ class ChoiceScenarioAction(Action):
 
     FIELD_SCENARIOS_KEY = "scenarios"
     FIELD_ELSE_KEY = "else_action"
-    # TODO: решить как правильнее называть это поле в json: "requirement" или "availabe_requirement"
     FIELD_REQUIREMENT_KEY = "requirement"
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         super(ChoiceScenarioAction, self).__init__(items, id)
-        self._scenarios = items[self.FIELD_SCENARIOS_KEY]
         self._else_item = items.get(self.FIELD_ELSE_KEY)
-        self._requirements = {}
-        for scenario_id, scenario in self._scenarios.items():
-            scen_req = scenario.pop(self.FIELD_REQUIREMENT_KEY)
-            self._requirements[scenario_id] = scen_req
+        self._scenarios = items[self.FIELD_SCENARIOS_KEY]
+        self._requirements = [scenario.pop(self.FIELD_REQUIREMENT_KEY) for scenario in self._scenarios]
 
     @lazy
-    @dict_factory(Requirement, has_id=False)
+    @list_factory(Requirement)
     def requirement_items(self):
         return self._requirements
 
@@ -349,11 +345,10 @@ class ChoiceScenarioAction(Action):
         result = None
         choice_is_made = False
 
-        for scenario_id, scenario_requirement in self.requirement_items.items():
-            check_res = scenario_requirement.check(text_preprocessing_result, user, params)
+        for scenario, requirement in zip(self._scenarios, self.requirement_items):
+            check_res = requirement.check(text_preprocessing_result, user, params)
             if check_res:
-                result = RunScenarioAction(items={"scenario": self._scenarios[scenario_id]}, id=scenario_id).run(
-                    user, text_preprocessing_result, params)
+                result = RunScenarioAction(items=scenario).run(user, text_preprocessing_result, params)
                 choice_is_made = True
                 break
 

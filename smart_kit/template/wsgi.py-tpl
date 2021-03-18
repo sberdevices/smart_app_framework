@@ -1,4 +1,6 @@
 import os
+
+import scenarios.logging.logger_constants as log_const
 from core.logging.logger_utils import log
 from smart_kit.configs import get_app_config
 

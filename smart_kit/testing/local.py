@@ -303,8 +303,6 @@ class CLInterface(cmd.Cmd):
         user = self.__user_cls(self.environment.user_id, message, self.user_data, self.settings,
                                self.app_model.scenario_descriptions,
                                self.__parametrizer_cls, load_error=False)
-        if not message.validate():
-            print("Валидация сообщения прошла неудачно.")
         answers = self.app_model.answer(message, user)
         return user, answers or []
 

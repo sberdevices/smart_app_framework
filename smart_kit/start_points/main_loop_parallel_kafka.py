@@ -31,7 +31,7 @@ class ParallelKafkaMainLoop(KafkaMainLoop):
     def pre_handle(self):
         super().pre_handle()
 
-        free_slots = self.max_workers <= len(self._tasks)
+        free_slots = self.max_workers > len(self._tasks)
         while not free_slots and self.is_work:
             free_slots = self.max_workers <= len(self._tasks)
             for task in list(self._tasks):

@@ -112,6 +112,7 @@
       },
       "book_is_read": {
         "required": true,
+        "available": false,
         "questions": [
           {
             "type": "string",
@@ -131,8 +132,8 @@
         "filler": {
           "type": "classifier",
           "intents": [
-            1,
-            0
+            "да",
+            "нет"
           ],
           "classifier": {
             "type": "external",
@@ -144,7 +145,7 @@
             "type": "else",
             "requirement": {
               "type": "template",
-              "template": "{{main_form.book_is_read == 1}}"
+              "template": "{{main_form.book_is_read == 'да'}}"
             },
             "action": {
               "type": "string",

@@ -4,7 +4,7 @@
     "channels": [],
     "threshold": 0.2,
     "path": "ReadBookOrNotClassifier.pkl",
-    "intents": []
+    "intents": ["да", "нет"]
   },
   "hello_scenario_classifier": {
     "type": "external",

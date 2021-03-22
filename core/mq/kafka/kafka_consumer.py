@@ -100,7 +100,7 @@ class KafkaConsumer(BaseKafkaConsumer):
             "error": str(err),
             log_const.KEY_NAME: log_const.EXCEPTION_VALUE
         }
-        log("KafkaConsumer: Error: %(error)s", params=params, level="ERROR")
+        log("KafkaConsumer: Error: %(error)s", params=params, level="WARNING")
         monitoring.got_counter("kafka_consumer_exception")
 
     def close(self):

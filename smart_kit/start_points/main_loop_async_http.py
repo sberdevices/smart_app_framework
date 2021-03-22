@@ -154,6 +154,9 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         log(stats, params={log_const.KEY_NAME: "timings"})
         return answer, stats
 
+    async def get_answer_in_thread(self, message, user):
+        return await self.app.loop.run_in_executor(self.pool, self.model.answer, message, user)
+
     async def iterate(self, request: aiohttp.web.Request):
         headers = self._get_headers(request.headers)
         body = await request.text()

@@ -15,6 +15,7 @@ from core.model.heapq.heapq_storage import HeapqKV
 from core.mq.kafka.kafka_consumer import KafkaConsumer
 from core.mq.kafka.kafka_publisher import KafkaPublisher
 from core.utils.stats_timer import StatsTimer
+from core.basic_models.actions.command import Command
 from smart_kit.compatibility.commands import combine_commands
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.names import message_names
@@ -33,6 +34,7 @@ def _enrich_config_from_secret(kafka_config, secret_config):
 
 
 class MainLoop(BaseMainLoop):
+    BAD_ANSWER_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Answer Message"})
 
     def __init__(self, model, user_cls, parametrizer_cls, settings, *args, **kwargs):
         super().__init__(model, user_cls, parametrizer_cls, settings, *args, **kwargs)
@@ -112,7 +114,10 @@ class MainLoop(BaseMainLoop):
             answer = SmartAppToMessage(command=command, message=message, request=request,
                                        masking_fields=self.masking_fields,
                                        validators=get_app_config().TO_MSG_VALIDATORS)
-            answers.append(answer)
+            if answer.validate():
+                answers.append(answer)
+            else:
+                answers.append(SmartAppToMessage(self.BAD_ANSWER_COMMAND, message=message, request=None))
 
             smart_kit_metrics.counter_outgoing(self.app_name, command.name, answer, user)
 

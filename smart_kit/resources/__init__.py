@@ -6,6 +6,7 @@ from core.db_adapter.aioredis_adapter import AIORedisAdapter
 
 from core.db_adapter.db_adapter import db_adapters
 from core.db_adapter.ignite_adapter import IgniteAdapter
+from core.db_adapter.ignite_thread_adapter import IgniteThreadAdapter
 from core.db_adapter.redis_adapter import RedisAdapter
 from core.repositories.file_repository import FileRepository
 from core.repositories.folder_repository import FolderRepository
@@ -342,6 +343,7 @@ class SmartAppResources(BaseConfig):
     def init_db_adapters(self):
         db_adapters[None] = MemoryAdapter
         db_adapters["ignite"] = IgniteAdapter
+        db_adapters["ignite_thread"] = IgniteThreadAdapter
         db_adapters["memory"] = MemoryAdapter
         db_adapters["redis"] = RedisAdapter
         db_adapters["aioredis"] = AIORedisAdapter

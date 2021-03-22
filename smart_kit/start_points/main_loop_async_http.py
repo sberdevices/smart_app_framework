@@ -103,16 +103,19 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
 
     async def handle_message(self, message: SmartAppFromMessage) -> typing.Tuple[int, str, SmartAppToMessage]:
         if not message.validate():
-            return 400, "BAD REQUEST", SmartAppToMessage(self.BAD_REQUEST_COMMAND, message=message, request=None,
-                                                         validators=get_app_config().TO_MSG_VALIDATORS)
+            return 400, "BAD REQUEST", SmartAppToMessage(self.BAD_REQUEST_COMMAND, message=message, request=None)
 
         answer, stats = await self.process_message(message)
         if not answer:
-            return 204, "NO CONTENT", SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None,
-                                                        validators=get_app_config().TO_MSG_VALIDATORS)
+            return 204, "NO CONTENT", SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None)
 
-        return 200, "OK", SmartAppToMessage(answer, message, request=None,
-                                            validators=get_app_config().TO_MSG_VALIDATORS)
+        answer_message = SmartAppToMessage(
+            answer, message, request=None,
+            validators=get_app_config().TO_MSG_VALIDATORS)
+        if answer_message.validate():
+            return 200, "OK", answer_message
+        else:
+            return 500, "BAD ANSWER", SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None)
 
     async def process_message(self, message: SmartAppFromMessage, *args, **kwargs):
         stats = ""

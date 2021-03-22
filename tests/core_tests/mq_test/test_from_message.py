@@ -7,8 +7,8 @@ from core.message.msg_validator import MessageValidator
 
 
 class PieMessageValidator(MessageValidator):
-    def validate(self, message_name: str, data: dict):
-        return 3.14 < data.get("pi", 0) < 3.15
+    def validate(self, message_name: str, payload: dict):
+        return 3.14 < payload.get("pi", 0) < 3.15
 
 
 class TestFromMessage(TestCase):

@@ -54,6 +54,7 @@ setup(
         'aiohttp==3.7.3',
         'aioredis',
         'croniter',
+        'numpy==1.20.1',
         'scikit-learn==0.24.1'
     ],
     classifiers=[

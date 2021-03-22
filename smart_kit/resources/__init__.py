@@ -17,7 +17,7 @@ from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAc
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink, RawItem
 from core.basic_models.classifiers.basic_classifiers import classifiers, classifier_factory, Classifier, \
-    ExternalClassifier, SkipClassifier
+    ExternalClassifier, SciKitClassifier, SkipClassifier
 from core.basic_models.classifiers.external_classifiers import ExternalClassifiers
 from core.basic_models.requirement.basic_requirements import requirement_factory, IntersectionRequirement
 from core.basic_models.requirement.basic_requirements import requirements, Requirement, AndRequirement, \
@@ -177,6 +177,8 @@ class SmartAppResources(BaseConfig):
         ffd.field_filler_description["approve_strictly"] = ffd.ApproveRawTextFiller
         ffd.field_filler_description["available_info_filler"] = ffd.AvailableInfoFiller
         ffd.field_filler_description["choice"] = cffd.ChoiceFiller
+        ffd.field_filler_description["classifier"] = ffd.ClassifierFiller
+        ffd.field_filler_description["classifier_meta"] = ffd.ClassifierFillerMeta
         ffd.field_filler_description["composite"] = ffd.CompositeFiller
         ffd.field_filler_description["currency_first"] = ffd.FirstCurrencyFiller
         ffd.field_filler_description["else"] = cffd.ElseFiller
@@ -365,5 +367,7 @@ class SmartAppResources(BaseConfig):
         db_adapters["aioredis"] = AIORedisAdapter
 
     def init_classifiers(self):
+        classifiers[None] = Classifier
         classifiers["external"] = ExternalClassifier
+        classifiers["meta"] = SciKitClassifier
         classifiers["skip"] = SkipClassifier

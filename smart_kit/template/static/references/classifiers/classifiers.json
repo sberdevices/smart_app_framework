@@ -1,0 +1,15 @@
+{
+  "custom_classifier": {
+    "type": "meta",
+    "channels": [],
+    "threshold": 0.2,
+    "path": "custom_classifier.pkl",
+    "intents": []
+  },
+  "hello_scenario_classifier": {
+    "type": "external",
+    "channels": [],
+    "timeout": 0.1,
+    "classifier": "custom_classifier"
+  }
+}

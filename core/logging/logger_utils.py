@@ -9,7 +9,6 @@ import core.logging.logger_constants as log_const
 import scenarios.logging.logger_constants as scenarios_log_const
 from core.basic_models.classifiers.basic_classifiers import Classifier
 from core.logging.masker import LogMasker
-from core.model.base_user import BaseUser
 from core.utils.stats_timer import StatsTimer
 
 MESSAGE_ID_STR = "message_id"
@@ -67,7 +66,7 @@ def log(message, user=None, params=None, level="INFO", exc_info=None):
                        params, exc_info=True)
 
 
-def log_classifier_result(classification_res: List[Dict[str, Union[str, float, bool]]], user: BaseUser,
+def log_classifier_result(classification_res: List[Dict[str, Union[str, float, bool]]], user,
                           classifier: Classifier, timer: Optional[StatsTimer] = None) -> None:
     classifier_name = classifier.items.get("classifier", "intent_recognizer")
     score_key = cls_const.INTENT_RECOGNIZER_ANSWER_DISTANCE_KEY if classifier_name == "intent_recognizer" \

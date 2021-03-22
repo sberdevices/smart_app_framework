@@ -28,15 +28,15 @@ class BaseHttpMainLoop(BaseMainLoop):
     def handle_message(self, message: SmartAppFromMessage) -> typing.Tuple[int, str, SmartAppToMessage]:
         if not message.validate():
             return 400, "BAD REQUEST", SmartAppToMessage(self.BAD_REQUEST_COMMAND, message=message, request=None,
-                                                         validators=get_app_config().FROM_MSG_VALIDATOR)
+                                                         validators=get_app_config().TO_MSG_VALIDATORS)
 
         answer, stats = self.process_message(message)
         if not answer:
             return 204, "NO CONTENT", SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None,
-                                                        validators=get_app_config().FROM_MSG_VALIDATOR)
+                                                        validators=get_app_config().TO_MSG_VALIDATORS)
 
         return 200, "OK", SmartAppToMessage(answer, message, request=None,
-                                            validators=get_app_config().FROM_MSG_VALIDATOR)
+                                            validators=get_app_config().TO_MSG_VALIDATORS)
 
     def process_message(self, message: SmartAppFromMessage, *args, **kwargs):
         stats = ""

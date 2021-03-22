@@ -111,7 +111,7 @@ class MainLoop(BaseMainLoop):
             request.update_empty_items({"topic_key": topic_key, "kafka_key": kafka_key})
             answer = SmartAppToMessage(command=command, message=message, request=request,
                                        masking_fields=self.masking_fields,
-                                       validators=get_app_config().FROM_MSG_VALIDATOR)
+                                       validators=get_app_config().TO_MSG_VALIDATORS)
             answers.append(answer)
 
             smart_kit_metrics.counter_outgoing(self.app_name, command.name, answer, user)

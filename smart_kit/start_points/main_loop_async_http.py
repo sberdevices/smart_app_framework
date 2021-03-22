@@ -115,7 +115,7 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         if answer_message.validate():
             return 200, "OK", answer_message
         else:
-            return 500, "BAD ANSWER", SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None)
+            return 500, "BAD ANSWER", SmartAppToMessage(self.BAD_ANSWER_COMMAND, message=message, request=None)
 
     async def process_message(self, message: SmartAppFromMessage, *args, **kwargs):
         stats = ""

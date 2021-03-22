@@ -16,8 +16,9 @@ from smart_kit.configs import get_app_config
 
 class BaseHttpMainLoop(BaseMainLoop):
     HEADER_START_WITH = "HTTP_SMART_APP_"
-    BAD_REQUEST_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Message"})
+    BAD_REQUEST_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Request Message"})
     NO_ANSWER_COMMAND = Command(message_names.NOTHING_FOUND)
+    BAD_ANSWER_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Answer Message"})
 
     def run(self):
         raise NotImplementedError
@@ -39,7 +40,7 @@ class BaseHttpMainLoop(BaseMainLoop):
         if answer_message.validate():
             return 200, "OK", answer_message
         else:
-            return 500, "BAD ANSWER", SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None)
+            return 500, "BAD ANSWER", SmartAppToMessage(self.BAD_ANSWER_COMMAND, message=message, request=None)
 
     def process_message(self, message: SmartAppFromMessage, *args, **kwargs):
         stats = ""

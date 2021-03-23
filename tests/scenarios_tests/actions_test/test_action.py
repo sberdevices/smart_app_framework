@@ -189,7 +189,7 @@ class SelfServiceActionWithStateTest(unittest.TestCase):
         behavior.check_got_saved_id.assert_called_once()
         behavior.add.assert_called_once()
         self.assertEqual(result[0].name, "cmd_id")
-        self.assertEqual(result[0].raw, {'message_name': 'cmd_id', 'payload': {}})
+        self.assertEqual(result[0].raw, {'messageName': 'cmd_id', 'payload': {}})
 
     def test_action_2(self):
         data = {"behavior": "test", "check_scenario": False, "command_action": {"command": "cmd_id", "nodes": {}}}
@@ -234,7 +234,7 @@ class SelfServiceActionWithStateTest(unittest.TestCase):
         behavior.check_got_saved_id.assert_called_once()
         behavior.add.assert_called_once()
         self.assertEqual(result[0].name, "cmd_id")
-        self.assertEqual(result[0].raw, {'message_name': 'cmd_id', 'payload': {}})
+        self.assertEqual(result[0].raw, {'messageName': 'cmd_id', 'payload': {}})
         behavior.add.assert_called_once_with(
             self.user.message.generate_new_callback_id(), "test", scenarios_names[-1], text_preprocessing_result_raw, ANY
         )

@@ -66,9 +66,10 @@ from scenarios.scenario_models.forms.forms_description import FormsDescription
 from scenarios.user.last_scenarios.last_scenarios_descriptions import LastScenariosDescriptions
 from scenarios.scenario_models.field.external_field_filler_descriptions import ExternalFieldFillerDescriptions
 from scenarios.actions.action import (
-    AskAgainAction, BreakScenarioAction, ClearCurrentScenarioAction, ClearCurrentScenarioFormAction, ClearFormAction,
-    ClearInnerFormAction, ClearScenarioByIdAction, ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction,
-    FillFieldAction, RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
+    AskAgainAction, BreakScenarioAction, ChoiceScenarioAction, ClearCurrentScenarioAction,
+    ClearCurrentScenarioFormAction, ClearFormAction, ClearInnerFormAction, ClearScenarioByIdAction,
+    ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction, FillFieldAction,
+    RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
     ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction
 )
 from scenarios.requirements.requirements import AskAgainExistRequirement, TemplateInArrayRequirement, \
@@ -241,6 +242,7 @@ class SmartAppResources(BaseConfig):
         actions["ask_again"] = AskAgainAction
         actions["break_scenario"] = BreakScenarioAction
         actions["choice"] = ChoiceAction
+        actions["choice_scenario"] = ChoiceScenarioAction
         actions["clear_current_scenario"] = ClearCurrentScenarioAction
         actions["clear_current_scenario_form"] = ClearCurrentScenarioFormAction
         actions["clear_form_by_id"] = ClearFormAction

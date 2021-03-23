@@ -1,8 +1,11 @@
-# coding: utf-8
 import unittest
+from typing import Dict, Any, Union, Optional
 from unittest.mock import MagicMock, Mock, ANY
+
 from core.basic_models.actions.basic_actions import Action, action_factory, actions
+from core.model.registered import registered_factories
 from scenarios.actions.action import (
+    ChoiceScenarioAction,
     ClearCurrentScenarioAction,
     ClearCurrentScenarioFormAction,
     ClearScenarioByIdAction,
@@ -18,10 +21,9 @@ from scenarios.actions.action import (
     RunLastScenarioAction,
     AddHistoryEventAction
 )
-from core.model.registered import registered_factories
-from scenarios.scenario_models.history import Event
 from scenarios.actions.action import ClearFormAction, ClearInnerFormAction, BreakScenarioAction, AskAgainAction, \
     RemoveFormFieldAction, RemoveCompositeFormFieldAction
+from scenarios.scenario_models.history import Event
 
 
 class MockAction:
@@ -411,6 +413,81 @@ class RunLastScenarioActionTest(unittest.TestCase):
         user.last_scenarios.last_scenario_name = last_scenario_name
         result = action.run(user, Mock())
         self.assertEqual(result, scen_result)
+
+
+class ChoiceScenarioActionTest(unittest.TestCase):
+
+    @staticmethod
+    def mock_and_perform_action(test_items: Dict[str, Any], expected_result: Optional[str] = None,
+                                expected_scen: Optional[str] = None) -> Union[str, None]:
+        action = ChoiceScenarioAction(test_items)
+        user = Mock()
+        user.parametrizer = MockParametrizer(user, {})
+        scen = Mock()
+        scen.run.return_value = expected_result
+        if expected_scen:
+            user.descriptions = {"scenarios": {expected_scen: scen}}
+        return action.run(user, Mock())
+
+    def test_choice_scenario_action(self):
+        # Проверяем, что запустили нужный сценарий, в случае если выполнился его requirement
+        test_items = {
+            "scenarios": [
+                {
+                    "scenario": "test_1",
+                    "requirement": {"cond": False}
+                },
+                {
+                    "scenario": "test_2",
+                    "requirement": {"cond": False}
+                },
+                {
+                    "scenario": "test_N",
+                    "requirement": {"cond": True}
+                }
+            ],
+            "else_action": {"type": "test", "result": "ELSE ACTION IS DONE"}
+        }
+        expected_scen_result = "test_N_done"
+        real_scen_result = self.mock_and_perform_action(
+            test_items, expected_result=expected_scen_result, expected_scen="test_N")
+        self.assertEqual(real_scen_result, expected_scen_result)
+
+    def test_choice_scenario_action_no_else_action(self):
+        # Проверяем, что вернули None в случае если ни один сценарий не запустился (requirement=False) и else_action нет
+        test_items = {
+            "scenarios": [
+                {
+                    "scenario": "test_1",
+                    "requirement": {"cond": False}
+                },
+                {
+                    "scenario": "test_2",
+                    "requirement": {"cond": False}
+                }
+            ]
+        }
+        real_scen_result = self.mock_and_perform_action(test_items)
+        self.assertIsNone(real_scen_result)
+
+    def test_choice_scenario_action_with_else_action(self):
+        # Проверяем, что выполняется else_action в случае если ни один сценарий не запустился т.к их requirement=False
+        test_items = {
+            "scenarios": [
+                {
+                    "scenario": "test_1",
+                    "requirement": {"cond": False}
+                },
+                {
+                    "scenario": "test_2",
+                    "requirement": {"cond": False}
+                }
+            ],
+            "else_action": {"type": "test", "result": "ELSE ACTION IS DONE"}
+        }
+        expected_scen_result = "ELSE ACTION IS DONE"
+        real_scen_result = self.mock_and_perform_action(test_items, expected_result=expected_scen_result)
+        self.assertEqual(real_scen_result, expected_scen_result)
 
 
 class ClearCurrentScenarioActionTest(unittest.TestCase):

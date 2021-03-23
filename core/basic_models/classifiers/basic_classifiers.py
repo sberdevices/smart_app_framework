@@ -48,8 +48,7 @@ class Classifier:
             self,
             text_preprocessing_result: BaseTextPreprocessingResult,
             mask: Optional[Dict[str, bool]] = None,
-            scenario_classifiers=None,
-            vectorizers=None
+            scenario_classifiers: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Union[str, float, bool]]]:
         # Формируется отсортированный список наиболее вероятных вариантов
         raise NotImplementedError
@@ -57,8 +56,7 @@ class Classifier:
     def initial_launch(
             self,
             text_preprocessing_result: BaseTextPreprocessingResult,
-            scenario_classifiers=None,
-            vectorizers=None
+            scenario_classifiers: Optional[Dict[str, Any]] = None
     ) -> Union[List[Dict[str, Union[str, float, bool]]], None]:
         # Первоначальный запуск модели классификатора
         raise NotImplementedError
@@ -80,16 +78,14 @@ class SkipClassifier(Classifier):
             self,
             text_preprocessing_result: BaseTextPreprocessingResult,
             mask: Optional[Dict[str, bool]] = None,
-            scenario_classifiers=None,
-            vectorizers=None
+            scenario_classifiers: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Union[str, float, bool]]]:
         return [self._answer_template(intent, 0, False) for intent in self.intents]
 
     def initial_launch(
             self,
             text_preprocessing_result: BaseTextPreprocessingResult,
-            scenario_classifiers=None,
-            vectorizers=None
+            scenario_classifiers: Optional[Dict[str, Any]] = None
     ) -> Union[List[Dict[str, Union[str, float, bool]]], None]:
         pass
 
@@ -119,21 +115,18 @@ class ExternalClassifier(Classifier):
             self,
             text_preprocessing_result: BaseTextPreprocessingResult,
             mask: Optional[Dict[str, bool]] = None,
-            scenario_classifiers=None,
-            vectorizers=None
+            scenario_classifiers: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Union[str, float, bool]]]:
         classifier = scenario_classifiers[self._classifier_key]
-        return self._timeout_wrap(classifier.find_best_answer)(
-            text_preprocessing_result, mask, scenario_classifiers, vectorizers)
+        return self._timeout_wrap(classifier.find_best_answer)(text_preprocessing_result, mask, scenario_classifiers)
 
     def initial_launch(
             self,
             text_preprocessing_result: BaseTextPreprocessingResult,
-            classifiers_param=None,
-            vectorizers=None
+            scenario_classifiers: Optional[Dict[str, Any]] = None
     ):
-        classifier = classifiers_param[self._classifier_key]
-        return classifier.initial_launch(text_preprocessing_result, classifiers_param, vectorizers)
+        classifier = scenario_classifiers[self._classifier_key]
+        return classifier.initial_launch(text_preprocessing_result, scenario_classifiers)
 
 
 class ExtendedClassifier(Classifier):
@@ -157,10 +150,12 @@ class ExtendedClassifier(Classifier):
             self,
             text_preprocessing_result: BaseTextPreprocessingResult,
             mask: Optional[Dict[str, bool]] = None,
-            scenario_classifiers=None,
-            vectorizers=None
+            scenario_classifiers: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Union[str, float, bool]]]:
-        vector = vectorizers[self._vectorizer].vectorize(text_preprocessing_result) if self._vectorizer else np.array([])
+        # TODO: позже здесь будут добавлены vectorizers, и возможность указывать способ векторизации в конфиге класси-ра
+        # vector = vectorizers[self._vectorizer].vectorize(text_preprocessing_result)
+        # if self._vectorizer else np.array([])
+        vector = np.array([])
         weights = sorted(self._get_weights(text_preprocessing_result, vector).items(), key=lambda x: x[1], reverse=True)
         answers = []
         for weight in weights:
@@ -195,14 +190,15 @@ class ExtendedClassifier(Classifier):
     def initial_launch(
             self,
             text_preprocessing_result: BaseTextPreprocessingResult,
-            scenario_classifiers=None,
-            vectorizers=None
+            scenario_classifiers: Optional[Dict[str, Any]] = None
     ) -> Union[List[Dict[str, Union[str, float, bool]]], None]:
         return self.find_best_answer(text_preprocessing_result, None, classifiers)
 
 
 class SciKitClassifier(ExtendedClassifier):
-    """Класс для загрузки и инфера моделей обученных с помощью библиотеки sklearn."""
+    """Класс для загрузки и инфера моделей обученных с помощью библиотеки sklearn и имеющих тип meta.
+    У сохраненного класса обученной модели предполагается обязательное наличие метода predict_proba.
+    """
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         super(SciKitClassifier, self).__init__(items, id)

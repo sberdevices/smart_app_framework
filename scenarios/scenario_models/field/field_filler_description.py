@@ -491,12 +491,8 @@ class ClassifierFiller(FieldFillerDescription):
         result = None
         classifier = self.classifier
         with StatsTimer() as timer:
-            # TODO: добавить vectorizers
             classification_res = classifier.find_best_answer(
-                text_preprocessing_result,
-                scenario_classifiers=user.descriptions["external_classifiers"],
-                vectorizers=None
-            )
+                text_preprocessing_result, scenario_classifiers=user.descriptions["external_classifiers"])
 
         log_classifier_result(classification_res, user, classifier, timer)
 

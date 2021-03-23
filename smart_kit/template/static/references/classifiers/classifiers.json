@@ -2,14 +2,14 @@
   "read_book_or_not_classifier": {
     "type": "meta",
     "channels": [],
-    "threshold": 0.2,
+    "threshold": 0.5,
     "path": "ReadBookOrNotClassifier.pkl",
     "intents": ["да", "нет"]
   },
   "hello_scenario_classifier": {
     "type": "external",
     "channels": [],
-    "timeout": 0.4,
+    "timeout": 0.2,
     "classifier": "read_book_or_not_classifier"
   }
 }

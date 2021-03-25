@@ -1,4 +1,5 @@
 import pickle
+from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional, Union, List
 
 import numpy as np
@@ -16,7 +17,7 @@ classifiers = Registered()
 classifier_factory = build_factory(classifiers)
 
 
-class Classifier:
+class Classifier(ABC):
     """Базовый класс для сущности Классификатор."""
 
     SCORE_KEY = cls_const.SCORE_KEY
@@ -45,6 +46,7 @@ class Classifier:
         if classifier_type != self.CLASSIFIER_TYPE:
             raise Exception(f"Inappropriate classifier type: {classifier_type}, it should be {self.CLASSIFIER_TYPE}")
 
+    @abstractmethod
     def find_best_answer(
             self,
             text_preprocessing_result: BaseTextPreprocessingResult,
@@ -54,6 +56,7 @@ class Classifier:
         # Формируется отсортированный список наиболее вероятных вариантов
         raise NotImplementedError
 
+    @abstractmethod
     def initial_launch(
             self,
             text_preprocessing_result: BaseTextPreprocessingResult,
@@ -179,6 +182,7 @@ class ExtendedClassifier(Classifier):
         tuple_weights = tuple_weights[:numb]  # берем numb наибольших значений весов
         return {t[0]: t[1] for t in tuple_weights}
 
+    @abstractmethod
     def _prediction(
             self,
             text_preprocessing_result: BaseTextPreprocessingResult,

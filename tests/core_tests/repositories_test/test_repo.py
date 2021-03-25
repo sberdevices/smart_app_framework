@@ -1,12 +1,12 @@
+import json
 import pickle
 import tempfile
 import unittest
-from unittest.mock import Mock
-
-import json
+from unittest.mock import Mock, patch, PropertyMock
 
 from core.model.registered import Registered
 from core.repositories.base_repository import BaseRepository
+from core.repositories.classifier_repository import ClassifierRepository
 from core.repositories.dill_repository import DillRepository
 from core.repositories.folder_repository import FolderRepository
 from core.repositories.shard_repository import ShardRepository
@@ -143,6 +143,46 @@ class TestDillRepository(unittest.TestCase):
         rep = DillRepository(filename=file.name)
         rep.load()
         self.assertEqual(expected, rep.data)
+
+
+class TestClassifierRepository(unittest.TestCase):
+
+    def test_load_meta_classifier(self):
+        """Тест кейз на проверку загрузки моделей meta классификаторов."""
+        classifier_data = {"tests": "success"}
+        model_file = tempfile.NamedTemporaryFile(suffix=".pkl")
+        with open(model_file.name, "wb") as f:
+            pickle.dump(classifier_data, f)
+
+        splitted_file_name = model_file.name.split('/')
+        data_path = '/'.join(splitted_file_name[:-1])
+        model_file_name = splitted_file_name[-1]
+
+        with patch("core.repositories.folder_repository.FolderRepository.data", new_callable=PropertyMock,
+                   return_value={"test_classifier": {"type": "meta", "channels": [], "path": model_file_name}}) as mock:
+            classifier_repo = ClassifierRepository("", data_path, json.loads, "")
+            classifier_repo.load()
+            expected_result = {
+                "test_classifier": {
+                    "channels": [],
+                    "classifier": {"tests": "success"},
+                    "path": model_file_name,
+                    "type": "meta"
+                }
+            }
+            self.assertEqual(expected_result, classifier_repo.data)
+
+    def test_load_skip_external_and_default_classifiers(self):
+        """Тест кейз на проверку загрузки skip, external и default классификаторов: для этих типов классификаторов сам
+        файл модели не предусматривается."""
+        for test_cl_type in ["skip", "external", "default"]:
+            expected_return_obj = {"test_cls": {"type": test_cl_type, "channels": [], "path": ""}}
+
+            with patch("core.repositories.folder_repository.FolderRepository.data", new_callable=PropertyMock,
+                       return_value=expected_return_obj) as mock_folder_data:
+                classifier_repo = ClassifierRepository("", "", json.loads, "")
+                classifier_repo.load()
+                self.assertEqual(expected_return_obj, classifier_repo.data)
 
 
 if __name__ == '__main__':

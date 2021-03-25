@@ -22,9 +22,9 @@ class Classifier:
     SCORE_KEY = cls_const.SCORE_KEY
     ANSWER_KEY = cls_const.ANSWER_KEY
     CLASS_OTHER = cls_const.OTHER_KEY
+    CLASSIFIER_TYPE = None
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
-        self._classifier_type = None
         self.id = id
         self.items = items if items else {}
         self.version = items.get("version", -1)
@@ -33,6 +33,7 @@ class Classifier:
         self.score_key = self.SCORE_KEY
         self.answer_key = self.ANSWER_KEY
         self.class_other = self.CLASS_OTHER
+        self._check_classifier_type(items["type"])
 
     def _answer_template(self, intent: str, score: float, is_other: bool) -> Dict[str, Union[str, float, bool]]:
         # Любой классификатор должен возвращать отсортированный список наиболее вероятных вариантов из заданного
@@ -41,8 +42,8 @@ class Classifier:
         return {self.answer_key: intent, self.score_key: score, self.class_other: is_other}
 
     def _check_classifier_type(self, classifier_type: str) -> None:
-        if classifier_type != self._classifier_type:
-            raise Exception(f"Inappropriate classifier type: {classifier_type}, it should be {self._classifier_type}")
+        if classifier_type != self.CLASSIFIER_TYPE:
+            raise Exception(f"Inappropriate classifier type: {classifier_type}, it should be {self.CLASSIFIER_TYPE}")
 
     def find_best_answer(
             self,
@@ -68,11 +69,11 @@ class SkipClassifier(Classifier):
     Используется, когда необходимо по формату указать классификатор, но использовать конкретное значение-результат.
     """
 
+    CLASSIFIER_TYPE = "skip"
+
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         super(SkipClassifier, self).__init__(items, id)
         self.intents = self.items["intents"]
-        self._classifier_type = "skip"
-        self._check_classifier_type(items["type"])
 
     def find_best_answer(
             self,
@@ -101,12 +102,10 @@ class ExternalClassifier(Classifier):
 
     # Дефолтное значение таймаута, время за которое должен прийти ответ от внешнего классификатора
     BLOCKING_TIMEOUT = cls_const.EXTERNAL_CLASSIFIER_BLOCKING_TIMEOUT
+    CLASSIFIER_TYPE = "external"
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         super(ExternalClassifier, self).__init__(items, id)
-        self._classifier_type = "external"
-        self._check_classifier_type(items["type"])
-
         self._classifier_key = items["classifier"]
         self._timeout_wrap = timeout_decorator.timeout(self.items.get("timeout") or self.BLOCKING_TIMEOUT)
 
@@ -200,10 +199,10 @@ class SciKitClassifier(ExtendedClassifier):
     У сохраненного класса обученной модели предполагается обязательное наличие метода predict_proba.
     """
 
+    CLASSIFIER_TYPE = "meta"
+
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         super(SciKitClassifier, self).__init__(items, id)
-        self._classifier_type = "meta"
-        self._check_classifier_type(items["type"])
 
     @staticmethod
     def prepared(text_preprocessing_result: BaseTextPreprocessingResult):

@@ -1,8 +1,10 @@
 import concurrent.futures
 import os
 import time
+import threading
 
 from confluent_kafka.cimpl import KafkaException
+from core.message.from_message import SmartAppFromMessage
 
 import scenarios.logging.logger_constants as log_const
 from core.logging.logger_utils import log
@@ -17,6 +19,7 @@ class ParallelKafkaMainLoop(KafkaMainLoop):
         self.pool = self.get_pool()
         self._tasks = []
         self._step = self.settings["template_settings"].get("ml_step", 0.05)  # seconds
+        self._locks = {}
         log(
             "%(class_name)s started with %(workers)s workers.",
             params={
@@ -42,6 +45,26 @@ class ParallelKafkaMainLoop(KafkaMainLoop):
     def run(self):
         super().run()
         self.pool.shutdown()
+
+    def process_message(self, mq_message, consumer, kafka_key, stats):
+        # ну тут чутка копипасты
+        mutex = None
+        try:
+            message_value = mq_message.value()
+            message = SmartAppFromMessage(message_value,
+                                          headers=mq_message.headers(),
+                                          masking_fields=self.masking_fields)
+            if message.validate():
+                mutex = self._locks.setdefault(message.db_uid, threading.Lock())
+                mutex.acquire()
+
+            super().process_message(mq_message, consumer, kafka_key, stats)
+        except Exception:
+            if mutex and mutex.locked():
+                mutex.release()
+            raise
+        if mutex and mutex.locked():
+            mutex.release()
 
     def iterate(self, kafka_key):
         consumer = self.consumers[kafka_key]

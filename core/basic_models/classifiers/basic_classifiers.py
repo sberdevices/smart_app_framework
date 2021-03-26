@@ -25,16 +25,16 @@ class Classifier(ABC):
     CLASS_OTHER = cls_const.OTHER_KEY
     CLASSIFIER_TYPE = None
 
-    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+    def __init__(self, settings: Dict[str, Any], id: Optional[str] = None) -> None:
         self.id = id
-        self.items = items if items else {}
-        self.version = items.get("version", -1)
-        self.threshold = self.items.get("threshold", 0)
-        self.intents = self.items.get("intents", [])
+        self.settings = settings if settings else {}
+        self.version = settings.get("version", -1)
+        self.threshold = self.settings.get("threshold", 0)
+        self.intents = self.settings.get("intents", [])
         self.score_key = self.SCORE_KEY
         self.answer_key = self.ANSWER_KEY
         self.class_other = self.CLASS_OTHER
-        self._check_classifier_type(items["type"])
+        self._check_classifier_type(settings["type"])
 
     def _answer_template(self, intent: str, score: float, is_other: bool) -> Dict[str, Union[str, float, bool]]:
         # Любой классификатор должен возвращать отсортированный список наиболее вероятных вариантов из заданного
@@ -74,9 +74,9 @@ class SkipClassifier(Classifier):
 
     CLASSIFIER_TYPE = "skip"
 
-    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
-        super(SkipClassifier, self).__init__(items, id)
-        self.intents = self.items["intents"]
+    def __init__(self, settings: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(SkipClassifier, self).__init__(settings, id)
+        self.intents = self.settings["intents"]
 
     def find_best_answer(
             self,
@@ -107,10 +107,10 @@ class ExternalClassifier(Classifier):
     BLOCKING_TIMEOUT = cls_const.EXTERNAL_CLASSIFIER_BLOCKING_TIMEOUT
     CLASSIFIER_TYPE = "external"
 
-    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
-        super(ExternalClassifier, self).__init__(items, id)
-        self._classifier_key = items["classifier"]
-        self._timeout_wrap = timeout_decorator.timeout(self.items.get("timeout") or self.BLOCKING_TIMEOUT)
+    def __init__(self, settings: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(ExternalClassifier, self).__init__(settings, id)
+        self._classifier_key = settings["classifier"]
+        self._timeout_wrap = timeout_decorator.timeout(self.settings.get("timeout") or self.BLOCKING_TIMEOUT)
 
     @exc_handler(handled_exceptions=(timeout_decorator.TimeoutError,), on_error_return_res=[])
     def find_best_answer(
@@ -134,12 +134,12 @@ class ExternalClassifier(Classifier):
 class ExtendedClassifier(Classifier):
     """Класс не является самостоятельным типом классификатора. Расширяет функционал базового класса."""
 
-    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
-        super(ExtendedClassifier, self).__init__(items, id)
-        self._intents = self.items["intents"]
-        self._path = self.items["path"]
-        self._classifier = self.items.get("classifier")
-        self._vectorizer = self.items.get("vectorizer")
+    def __init__(self, settings: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(ExtendedClassifier, self).__init__(settings, id)
+        self._intents = self.settings["intents"]
+        self._path = self.settings["path"]
+        self._classifier = self.settings.get("classifier")
+        self._vectorizer = self.settings.get("vectorizer")
 
     def set_classifier(self, clsf: Classifier) -> None:
         self._classifier = clsf
@@ -205,8 +205,8 @@ class SciKitClassifier(ExtendedClassifier):
 
     CLASSIFIER_TYPE = "meta"
 
-    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
-        super(SciKitClassifier, self).__init__(items, id)
+    def __init__(self, settings: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(SciKitClassifier, self).__init__(settings, id)
 
     @staticmethod
     def prepared(text_preprocessing_result: BaseTextPreprocessingResult):

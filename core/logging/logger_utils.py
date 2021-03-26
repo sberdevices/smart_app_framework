@@ -68,14 +68,14 @@ def log(message, user=None, params=None, level="INFO", exc_info=None):
 
 def log_classifier_result(classification_res: List[Dict[str, Union[str, float, bool]]], user,
                           classifier: Classifier, timer: Optional[StatsTimer] = None) -> None:
-    classifier_name = classifier.items.get("classifier", "intent_recognizer")
+    classifier_name = classifier.settings.get("classifier", "intent_recognizer")
     score_key = cls_const.INTENT_RECOGNIZER_ANSWER_DISTANCE_KEY if classifier_name == "intent_recognizer" \
         else cls_const.SCORE_KEY
     params = {
         log_const.KEY_NAME: scenarios_log_const.CLASSIFIER_VALUE,
         "classifier_name": classifier_name,
         "result": [el[cls_const.ANSWER_KEY] for el in classification_res],
-        'score': [el[score_key] for el in classification_res]
+        "score": [el[score_key] for el in classification_res]
     }
     if timer:
         params["time"] = timer.msecs

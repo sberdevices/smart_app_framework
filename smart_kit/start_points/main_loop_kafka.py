@@ -22,7 +22,6 @@ from smart_kit.names import message_names
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
 from smart_kit.start_points.base_main_loop import BaseMainLoop
 from smart_kit.utils.monitoring import smart_kit_metrics
-from smart_kit.configs import get_app_config
 
 
 def _enrich_config_from_secret(kafka_config, secret_config):
@@ -113,7 +112,7 @@ class MainLoop(BaseMainLoop):
             request.update_empty_items({"topic_key": topic_key, "kafka_key": kafka_key})
             answer = SmartAppToMessage(command=command, message=message, request=request,
                                        masking_fields=self.masking_fields,
-                                       validators=get_app_config().TO_MSG_VALIDATORS)
+                                       validators=self.to_msg_validators)
             if answer.validate():
                 answers.append(answer)
             else:
@@ -127,7 +126,7 @@ class MainLoop(BaseMainLoop):
         orig_message_raw = json.dumps(orig_message_raw)
         timeout_from_message = SmartAppFromMessage(orig_message_raw, headers=headers,
                                                    masking_fields=self.masking_fields,
-                                                   validators=get_app_config().FROM_MSG_VALIDATORS)
+                                                   validators=self.from_msg_validators)
         timeout_from_message.callback_id = callback_id
         return timeout_from_message
 
@@ -222,7 +221,7 @@ class MainLoop(BaseMainLoop):
                     message = SmartAppFromMessage(message_value,
                                                   headers=mq_message.headers(),
                                                   masking_fields=self.masking_fields,
-                                                  validators=get_app_config().FROM_MSG_VALIDATORS)
+                                                  validators=self.from_msg_validators)
 
                     # TODO вернуть проверку ключа!!!
                     if message.validate():  # and self.check_message_key(message, mq_message.key()):

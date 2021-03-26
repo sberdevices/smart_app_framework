@@ -15,7 +15,11 @@ from smart_kit.utils.monitoring import smart_kit_metrics
 
 class BaseMainLoop:
 
-    def __init__(self, model, user_cls, parametrizer_cls, settings, *args, **kwargs):
+    def __init__(
+            self, model, user_cls, parametrizer_cls, settings,
+            to_msg_validators=(), from_msg_validators=(),
+            *args, **kwargs
+    ):
         log("%(class_name)s.__init__ started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                                   "class_name": self.__class__.__name__})
         try:
@@ -28,6 +32,8 @@ class BaseMainLoop:
             self.parametrizer_cls = parametrizer_cls
             self.db_adapter = self.get_db()
             self.is_work = True
+            self.to_msg_validators = to_msg_validators
+            self.from_msg_validators = from_msg_validators
 
             template_settings = self.settings["template_settings"]
 

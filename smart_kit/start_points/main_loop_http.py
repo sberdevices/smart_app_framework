@@ -11,7 +11,6 @@ from smart_kit.compatibility.commands import combine_commands
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.names import message_names
 from smart_kit.start_points.base_main_loop import BaseMainLoop
-from smart_kit.configs import get_app_config
 
 
 class BaseHttpMainLoop(BaseMainLoop):
@@ -36,7 +35,7 @@ class BaseHttpMainLoop(BaseMainLoop):
 
         answer_message = SmartAppToMessage(
             answer, message, request=None,
-            validators=get_app_config().TO_MSG_VALIDATORS)
+            validators=self.to_msg_validators)
         if answer_message.validate():
             return 200, "OK", answer_message
         else:
@@ -107,7 +106,7 @@ class HttpMainLoop(BaseHttpMainLoop):
             raise Exception("Error in request data")
 
         message = SmartAppFromMessage(body, headers=headers, headers_required=False,
-                                      validators=get_app_config().FROM_MSG_VALIDATORS)
+                                      validators=self.from_msg_validators)
 
         status, reason, answer = self.handle_message(message)
 

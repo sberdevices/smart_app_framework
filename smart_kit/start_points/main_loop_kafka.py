@@ -35,13 +35,13 @@ def _enrich_config_from_secret(kafka_config, secret_config):
 class MainLoop(BaseMainLoop):
     BAD_ANSWER_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Answer Message"})
 
-    def __init__(self, model, user_cls, parametrizer_cls, settings, *args, **kwargs):
-        super().__init__(model, user_cls, parametrizer_cls, settings, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         log("%(class_name)s.__init__ started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                         "class_name": self.__class__.__name__})
         try:
             kafka_config = _enrich_config_from_secret(
-                settings["kafka"]["template-engine"], settings.get("secret_kafka", {})
+                self.settings["kafka"]["template-engine"], self.settings.get("secret_kafka", {})
             )
 
             consumers = {}
@@ -60,11 +60,7 @@ class MainLoop(BaseMainLoop):
                 params={"class_name": self.__class__.__name__}, level="WARNING"
             )
 
-            self.settings = settings
             self.app_name = self.settings.app_name
-            self.model = model
-            self.user_cls = user_cls
-            self.parametrizer_cls = parametrizer_cls
             self.consumers = consumers
             for key in self.consumers:
                 self.consumers[key].subscribe()

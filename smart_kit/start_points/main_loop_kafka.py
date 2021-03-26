@@ -117,7 +117,7 @@ class MainLoop(BaseMainLoop):
             if answer.validate():
                 answers.append(answer)
             else:
-                answers.append(SmartAppToMessage(self.BAD_ANSWER_COMMAND, message=message, request=None))
+                answers.append(SmartAppToMessage(self.BAD_ANSWER_COMMAND, message=message, request=request))
 
             smart_kit_metrics.counter_outgoing(self.app_name, command.name, answer, user)
 

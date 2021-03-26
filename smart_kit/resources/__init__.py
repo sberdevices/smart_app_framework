@@ -369,5 +369,5 @@ class SmartAppResources(BaseConfig):
     def init_classifiers(self):
         classifiers[None] = Classifier
         classifiers["external"] = ExternalClassifier
-        classifiers["meta"] = SciKitClassifier
+        classifiers["scikit"] = SciKitClassifier
         classifiers["skip"] = SkipClassifier

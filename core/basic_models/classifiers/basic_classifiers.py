@@ -199,11 +199,11 @@ class ExtendedClassifier(Classifier):
 
 
 class SciKitClassifier(ExtendedClassifier):
-    """Класс для загрузки и инфера моделей обученных с помощью библиотеки sklearn и имеющих тип meta.
+    """Класс для загрузки и инфера моделей обученных с помощью библиотеки sklearn и имеющих тип scikit.
     У сохраненного класса обученной модели предполагается обязательное наличие метода predict_proba.
     """
 
-    CLASSIFIER_TYPE = "meta"
+    CLASSIFIER_TYPE = "scikit"
 
     def __init__(self, settings: Dict[str, Any], id: Optional[str] = None) -> None:
         super(SciKitClassifier, self).__init__(settings, id)

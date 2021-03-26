@@ -1,6 +1,6 @@
 {
   "read_book_or_not_classifier": {
-    "type": "meta",
+    "type": "scikit",
     "channels": [],
     "threshold": 0.5,
     "path": "ReadBookOrNotClassifier.pkl",

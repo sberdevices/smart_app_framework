@@ -147,8 +147,8 @@ class TestDillRepository(unittest.TestCase):
 
 class TestClassifierRepository(unittest.TestCase):
 
-    def test_load_meta_classifier(self):
-        """Тест кейз на проверку загрузки моделей meta классификаторов."""
+    def test_load_scikit_classifier(self):
+        """Тест кейз на проверку загрузки моделей scikit классификаторов."""
         classifier_data = {"tests": "success"}
         model_file = tempfile.NamedTemporaryFile(suffix=".pkl")
         with open(model_file.name, "wb") as f:
@@ -159,7 +159,7 @@ class TestClassifierRepository(unittest.TestCase):
         model_file_name = splitted_file_name[-1]
 
         with patch("core.repositories.folder_repository.FolderRepository.data", new_callable=PropertyMock,
-                   return_value={"test_classifier": {"type": "meta", "channels": [], "path": model_file_name}}) as mock:
+                   return_value={"test_classifier": {"type": "scikit", "channels": [], "path": model_file_name}}) as mock:
             classifier_repo = ClassifierRepository("", data_path, json.loads, "")
             classifier_repo.load()
             expected_result = {
@@ -167,7 +167,7 @@ class TestClassifierRepository(unittest.TestCase):
                     "channels": [],
                     "classifier": {"tests": "success"},
                     "path": model_file_name,
-                    "type": "meta"
+                    "type": "scikit"
                 }
             }
             self.assertEqual(expected_result, classifier_repo.data)

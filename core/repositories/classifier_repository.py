@@ -92,7 +92,7 @@ class ClassifierRepository(BaseRepository):
                     classifiers_dict[classifier_key] = SkipClassifier.get_nothing()
                     continue
 
-            if classifier_type in ["meta"]:
+            if classifier_type in ["scikit"]:
                 repository = DillRepository(self._subfolder_data_path(classifier_params["path"]), self.source)
 
             log(

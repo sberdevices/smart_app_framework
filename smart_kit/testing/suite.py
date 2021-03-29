@@ -5,7 +5,7 @@ from lazy import lazy
 from core.configs.global_constants import LINK_BEHAVIOR_FLAG, CALLBACK_ID_HEADER
 from core.message.from_message import SmartAppFromMessage
 
-from smart_kit.testing.local import Environment
+from smart_kit.testing.utils import Environment
 from smart_kit.utils.diff import partial_diff
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
@@ -17,6 +17,28 @@ def create_message(data, headers=None):
     defaults.update(data)
 
     return SmartAppFromMessage(json.dumps(defaults), headers=headers)
+
+
+def run_testfile(path, file, app_model, settings, user_cls, parametrizer_cls):
+    test_file_path = os.path.join(path, file)
+    if not os.path.isfile(test_file_path) or not test_file_path.endswith('.json'):
+        raise FileNotFoundError
+    with open(test_file_path, "r") as test_file:
+        json_obj = json.load(test_file)
+        success = 0
+        for test_case in json_obj:
+            print(f"[+] Processing test case {test_case} from {test_file_path}")
+            if TestCase(
+                app_model,
+                settings,
+                user_cls,
+                parametrizer_cls,
+                **json_obj[test_case],
+            ).run():
+                print(f"[+] {test_case} OK")
+                success += 1
+        print(f"[+] {file} {success}/{len(json_obj)}")
+    return len(json_obj), success
 
 
 class TestSuite:
@@ -51,27 +73,36 @@ class TestSuite:
             for file in files:
                 if not file.endswith(".json"):
                     continue
-                test_file_path = os.path.join(path, file)
-                with open(test_file_path, "r") as test_file:
-                    json_obj = json.load(test_file)
-                    success = 0
-                    for test_case in json_obj:
-                        print(f"[+] Processing test case {test_case} from {test_file_path}")
-                        if self.process_test_case(json_obj[test_case]):
-                            print(f"[+] {test_case} OK")
-                            success += 1
-                    print(f"[+] {file} {success}/{len(json_obj)}")
-                    total += len(json_obj)
-                    total_success += success
+                file_total, file_success = run_testfile(
+                    path,
+                    file,
+                    self.app_model,
+                    self.settings,
+                    self.app_config.USER,
+                    self.app_config.PARAMETRIZER,
+                )
+                total += file_total
+                total_success += file_success
+
         print(f"[+] Total: {total_success}/{total}")
 
-    def process_test_case(self, test_case: dict):
-        success = True
-        messages = test_case["messages"]
 
-        user_state = json.dumps(test_case.get("user"))
+class TestCase:
+    def __init__(self, app_model, settings, user_cls, parametrizer_cls, messages, user=None):
+        self.messages = messages
+        self.user_state = json.dumps(user)
+
+        self.app_model = app_model
+        self.settings = settings
+
+        self.__parametrizer_cls = parametrizer_cls
+        self.__user_cls = user_cls
+
+    def run(self) -> bool:
+        success = True
+
         app_callback_id = None
-        for message in messages:
+        for message in self.messages:
 
             request = message["request"]
             response = message["response"]
@@ -84,10 +115,10 @@ class TestSuite:
                 headers = [('kafka_correlationId', 'test_123')]
             message = create_message(request, headers=headers)
 
-            user = self.app_config.USER(
-                id=message.uid, message=message, db_data=user_state, settings=self.settings,
+            user = self.__user_cls(
+                id=message.uid, message=message, db_data=self.user_state, settings=self.settings,
                 descriptions=self.app_model.scenario_descriptions,
-                parametrizer_cls=self.app_config.PARAMETRIZER
+                parametrizer_cls=self.__parametrizer_cls
             )
 
             commands = self.app_model.answer(message, user) or []
@@ -120,11 +151,10 @@ class TestSuite:
             if user_diff:
                 success = False
                 print(user_diff)
-            user_state = user.raw_str
+            self.user_state = user.raw_str
         return success
 
     def _generate_answers(self, user, commands, message):
-
         answers = []
         commands = commands or []
 

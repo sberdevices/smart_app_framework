@@ -40,6 +40,8 @@ class Action:
 
 class CommandAction(Action):
     DEFAULT_REQUEST_TYPE = "kafka"
+    DEFAULT_KAFKA_KEY = "main"
+    DEFAULT_TOPIC_KEY = "dialog_policy"
     version: Optional[int]
     command: str
     request_type: Optional[str]
@@ -50,7 +52,8 @@ class CommandAction(Action):
         items = items or {}
         self.command = items.get("command")
         self.request_type = items.get("request_type") or self.DEFAULT_REQUEST_TYPE
-        self.request_data = items.get("request_data")
+        self.request_data = items.get("request_data") or {"topic_key": self.DEFAULT_TOPIC_KEY,
+                                                          "kafka_key": self.DEFAULT_KAFKA_KEY}
 
     def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:

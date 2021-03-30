@@ -10,15 +10,16 @@ from core.basic_models.actions.basic_actions import Action
 from core.basic_models.actions.command import Command
 from core.basic_models.actions.string_actions import StringAction
 from core.basic_models.parametrizers.parametrizer import BasicParametrizer
+from core.basic_models.requirement.basic_requirements import Requirement
 from core.configs.global_constants import CALLBACK_ID_HEADER
 from core.logging.logger_utils import log
+from core.model.factory import factory, list_factory
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from core.unified_template.unified_template import UnifiedTemplate
-from core.utils.pickle_copy import pickle_deepcopy
 
 import scenarios.logging.logger_constants as log_const
-from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, SAVED_MESSAGES, LOCAL_VARS
+from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, SAVED_MESSAGES
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User
 from scenarios.scenario_models.history import Event
@@ -317,6 +318,46 @@ class RunLastScenarioAction(Action):
             return scenario.run(text_preprocessing_result, user, params)
 
 
+class ChoiceScenarioAction(Action):
+
+    FIELD_SCENARIOS_KEY = "scenarios"
+    FIELD_ELSE_KEY = "else_action"
+    FIELD_REQUIREMENT_KEY = "requirement"
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(ChoiceScenarioAction, self).__init__(items, id)
+        self._else_item = items.get(self.FIELD_ELSE_KEY)
+        self._scenarios = items[self.FIELD_SCENARIOS_KEY]
+        self._requirements = [scenario.pop(self.FIELD_REQUIREMENT_KEY) for scenario in self._scenarios]
+
+    @lazy
+    @list_factory(Requirement)
+    def requirement_items(self):
+        return self._requirements
+
+    @lazy
+    @factory(Action)
+    def else_item(self):
+        return self._else_item
+
+    def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
+            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Union[None, str, List[Command]]:
+        result = None
+        choice_is_made = False
+
+        for scenario, requirement in zip(self._scenarios, self.requirement_items):
+            check_res = requirement.check(text_preprocessing_result, user, params)
+            if check_res:
+                result = RunScenarioAction(items=scenario).run(user, text_preprocessing_result, params)
+                choice_is_made = True
+                break
+
+        if not choice_is_made and self._else_item:
+            result = self.else_item.run(user, text_preprocessing_result, params)
+
+        return result
+
+
 class ClearCurrentScenarioAction(Action):
 
     def _clear_scenario(self, user, scenario_id):
@@ -460,7 +501,7 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
     def __init__(self, items, id=None):
         super().__init__(items, id)
         self.save_params_template_data = self._get_template_tree(items.get("save_params") or {})
-        self.rewrite_saved_params = items.get("rewrite_saved_params", False)
+        self.rewrite_saved_messages = items.get("rewrite_saved_messages", False)
         self._check_scenario: bool = items.get("check_scenario", True)
 
     def _run(self, user, text_preprocessing_result, params=None):
@@ -508,12 +549,11 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
     def _get_save_params(self, user, action_params, command_action_params):
         save_params = self._get_rendered_tree_recursive(self.save_params_template_data, action_params)
         save_params.update({SAVED_MESSAGES: action_params.get(SAVED_MESSAGES, {})})
-        save_params[LOCAL_VARS] = pickle_deepcopy(user.local_vars.values)
-        user.local_vars.clear()
 
-        saved_messages = save_params[SAVED_MESSAGES]
-        if user.message.message_name not in saved_messages or self.rewrite_saved_params:
-            saved_messages[user.message.type] = user.message.payload
+        if user.settings["template_settings"].get("self_service_with_state_save_messages", True):
+            saved_messages = save_params[SAVED_MESSAGES]
+            if user.message.message_name not in saved_messages or self.rewrite_saved_messages:
+                saved_messages[user.message.type] = user.message.payload
 
         save_params.update({TO_MESSAGE_PARAMS: command_action_params})
         save_params.update({TO_MESSAGE_NAME: self.command})

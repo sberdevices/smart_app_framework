@@ -83,7 +83,7 @@ class Environment(TypeCastByAnnotation):
         self.character_appeal = "official"
         self.character_gender = "male"
         self.character_id = "sber"
-        self.character_name = "Сбербанк"
+        self.character_name = "Сбер"
         self.chat_id = "1"
         self.config = get_app_config()
         self.device_capabilities_misc = True
@@ -242,7 +242,7 @@ class CLInterface(cmd.Cmd):
     @staticmethod
     def format_answer_value(ans):
         resp = ""
-        if ans["message_name"] == "ANSWER_TO_USER":
+        if ans["messageName"] == "ANSWER_TO_USER":
             params = ans["payload"]
             for k in CLInterface.VPS_KEYS:
                 if params.get(k):
@@ -331,7 +331,7 @@ class CLInterface(cmd.Cmd):
         for answer in answers:
             ans = answer.raw
             print("{}\nrequest type: {}\n".format(self.format_answer_value(ans), answer.request_type))
-            if ans["message_name"] == "ANSWER_TO_USER":
+            if ans["messageName"] == "ANSWER_TO_USER":
                 params = ans["payload"]
                 intent = params.get("intent")
                 if intent:

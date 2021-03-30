@@ -250,7 +250,15 @@ class SDKAnswer(NodeAction):
         for j in self.RANDOM_PATH:
             self.random_by_path(rendered, j)
         if rendered or not self.no_empty_nodes:
-            result = [Command(self.command, rendered, self.id)]
+            result = [
+                Command(
+                    self.command,
+                    rendered,
+                    self.id,
+                    request_type=self.request_type,
+                    request_data=self.request_data,
+                )
+            ]
         return result
 
 
@@ -400,14 +408,15 @@ class SDKAnswerToUser(NodeAction):
             rendered.update(rendered_random)
         out = {}
         for item in self.items:
-            if item.requirement.check(text_preprocessing_result, user):
+            if item.requirement.check(text_preprocessing_result, user, params):
                 out.setdefault(self.ITEMS, []).append(item.render(rendered))
 
         if self._suggests_template is not None:
-            out[self.SUGGESTIONS] = self._get_rendered_tree(self.nodes[self.SUGGESTIONS_TEMPLATE], params, self.no_empty_nodes)
+            out[self.SUGGESTIONS] = self._get_rendered_tree(self.nodes[self.SUGGESTIONS_TEMPLATE], params,
+                                                            self.no_empty_nodes)
         else:
             for suggest in self.suggests:
-                if suggest.requirement.check(text_preprocessing_result, user):
+                if suggest.requirement.check(text_preprocessing_result, user, params):
                     data_dict = out.setdefault(self.SUGGESTIONS, {self.BUTTONS: []})
                     buttons = data_dict[self.BUTTONS]
                     rendered_text = suggest.render(rendered)
@@ -416,5 +425,13 @@ class SDKAnswerToUser(NodeAction):
             if part.requirement.check(text_preprocessing_result, user):
                 out.update(part.render(rendered))
         if rendered or not self.no_empty_nodes:
-            result = [Command(self.command, out, self.id)]
+            result = [
+                Command(
+                    self.command,
+                    out,
+                    self.id,
+                    request_type=self.request_type,
+                    request_data=self.request_data,
+                )
+            ]
         return result

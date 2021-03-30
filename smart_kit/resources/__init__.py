@@ -6,6 +6,7 @@ from core.db_adapter.aioredis_adapter import AIORedisAdapter
 
 from core.db_adapter.db_adapter import db_adapters
 from core.db_adapter.ignite_adapter import IgniteAdapter
+from core.db_adapter.ignite_thread_adapter import IgniteThreadAdapter
 from core.db_adapter.redis_adapter import RedisAdapter
 from core.repositories.file_repository import FileRepository
 from core.repositories.folder_repository import FolderRepository
@@ -23,7 +24,7 @@ from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAc
 from core.basic_models.actions.external_actions import ExternalAction
 from core.basic_models.actions.counter_actions import CounterIncrementAction, CounterDecrementAction, \
     CounterClearAction, CounterSetAction, CounterCopyAction
-from core.basic_models.requirement.basic_requirements import requirement_factory
+from core.basic_models.requirement.basic_requirements import requirement_factory, IntersectionRequirement
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink, RawItem
 from core.basic_models.requirement.basic_requirements import requirements, Requirement, AndRequirement, \
@@ -65,9 +66,10 @@ from scenarios.scenario_models.forms.forms_description import FormsDescription
 from scenarios.user.last_scenarios.last_scenarios_descriptions import LastScenariosDescriptions
 from scenarios.scenario_models.field.external_field_filler_descriptions import ExternalFieldFillerDescriptions
 from scenarios.actions.action import (
-    AskAgainAction, BreakScenarioAction, ClearCurrentScenarioAction, ClearCurrentScenarioFormAction, ClearFormAction,
-    ClearInnerFormAction, ClearScenarioByIdAction, ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction,
-    FillFieldAction, RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
+    AskAgainAction, BreakScenarioAction, ChoiceScenarioAction, ClearCurrentScenarioAction,
+    ClearCurrentScenarioFormAction, ClearFormAction, ClearInnerFormAction, ClearScenarioByIdAction,
+    ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction, FillFieldAction,
+    RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
     ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction
 )
 from scenarios.requirements.requirements import AskAgainExistRequirement, TemplateInArrayRequirement, \
@@ -182,6 +184,7 @@ class SmartAppResources(BaseConfig):
 
     def init_scenarios(self):
         scenarios[None] = BaseScenario
+        scenarios["base"] = BaseScenario
         scenarios["form_filling"] = FormFillingScenario
         scenarios["tree"] = TreeScenario
 
@@ -239,6 +242,7 @@ class SmartAppResources(BaseConfig):
         actions["ask_again"] = AskAgainAction
         actions["break_scenario"] = BreakScenarioAction
         actions["choice"] = ChoiceAction
+        actions["choice_scenario"] = ChoiceScenarioAction
         actions["clear_current_scenario"] = ClearCurrentScenarioAction
         actions["clear_current_scenario_form"] = ClearCurrentScenarioFormAction
         actions["clear_form_by_id"] = ClearFormAction
@@ -286,6 +290,7 @@ class SmartAppResources(BaseConfig):
         requirements["counter_value"] = CounterValueRequirement
         requirements["datetime"] = DateTimeRequirement
         requirements["external"] = ExternalRequirement
+        requirements["intersection"] = IntersectionRequirement
         requirements["not"] = NotRequirement
         requirements["or"] = OrRequirement
         requirements["platform_type"] = dr.PlatformTypeRequirement
@@ -340,6 +345,7 @@ class SmartAppResources(BaseConfig):
     def init_db_adapters(self):
         db_adapters[None] = MemoryAdapter
         db_adapters["ignite"] = IgniteAdapter
+        db_adapters["ignite_thread"] = IgniteThreadAdapter
         db_adapters["memory"] = MemoryAdapter
         db_adapters["redis"] = RedisAdapter
         db_adapters["aioredis"] = AIORedisAdapter

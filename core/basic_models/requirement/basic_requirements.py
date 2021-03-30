@@ -1,6 +1,7 @@
 # coding: utf-8
 import hashlib
-from datetime import datetime
+
+from datetime import datetime, timezone
 from random import random
 from lazy import lazy
 from typing import List, Optional, Dict, Any
@@ -14,7 +15,11 @@ from core.model.base_user import BaseUser
 from core.model.factory import build_factory, list_factory, factory
 from core.model.registered import Registered
 from core.text_preprocessing.base import BaseTextPreprocessingResult
+from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from core.unified_template.unified_template import UnifiedTemplate
+
+from scenarios.scenario_models.field.field_filler_description import IntersectionFieldFiller
+from scenarios.user.user_model import User
 
 requirements = Registered()
 
@@ -177,7 +182,7 @@ class TimeRequirement(ComparisonRequirement):
     ) -> bool:
         message_time_dict = user.message.payload['meta']['time']
         message_timestamp_sec = message_time_dict['timestamp'] // 1000
-        message_time = datetime.fromtimestamp(message_timestamp_sec).time()
+        message_time = datetime.fromtimestamp(message_timestamp_sec, tz=timezone.utc).time()
         return self.operator.compare(message_time)
 
     @lazy
@@ -206,3 +211,30 @@ class DateTimeRequirement(Requirement):
         message_timestamp_sec = message_time_dict['timestamp'] // 1000
         message_datetime = datetime.fromtimestamp(message_timestamp_sec)
         return croniter.match(self.match_cron, message_datetime)
+
+
+class IntersectionRequirement(Requirement):
+    phrases: Optional[List]
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super().__init__(items, id)
+        self.filler = IntersectionFieldFiller(
+            {
+                'cases': {
+                    True: items.get('phrases', []),
+                },
+                'default': False,
+            },
+            id,
+        )
+
+    def check(
+            self,
+            text_preprocessing_result: TextPreprocessingResult,
+            user: User,
+            params: Dict[str, Any] = None
+    ) -> bool:
+        result = bool(
+            self.filler.extract(text_preprocessing_result, user, params),
+        )
+        return result

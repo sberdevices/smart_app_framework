@@ -2,6 +2,7 @@
 import json
 import time
 from collections import namedtuple
+from functools import lru_cache
 
 from confluent_kafka.cimpl import KafkaException
 from lazy import lazy
@@ -146,7 +147,7 @@ class MainLoop(BaseMainLoop):
 
                     user = self.load_user(db_uid, timeout_from_message)
                     commands = self.model.answer(timeout_from_message, user)
-                    topic_key = self._get_topic_key(mq_message)
+                    topic_key = self._get_topic_key(mq_message, kafka_key)
                     answers = self._generate_answers(user=user, commands=commands, message=timeout_from_message,
                                                      topic_key=topic_key,
                                                      kafka_key=kafka_key)
@@ -190,11 +191,12 @@ class MainLoop(BaseMainLoop):
                                                      log_const.REQUEST_VALUE: str(mq_message.value())},
                     level="ERROR", exc_info=True)
 
-    def _get_topic_key(self, mq_message):
-        return self.default_topic_key or self._topic_names[mq_message.topic()]
+    def _get_topic_key(self, mq_message, kafka_key):
+        topic_names_2_key = self._topic_names_2_key(kafka_key)
+        return self.default_topic_key(kafka_key) or topic_names_2_key[mq_message.topic()]
 
     def process_message(self, mq_message, consumer, kafka_key, stats):
-        topic_key = self._get_topic_key(mq_message)
+        topic_key = self._get_topic_key(mq_message, kafka_key)
 
         save_tries = 0
         user_save_no_collisions = False
@@ -378,14 +380,13 @@ class MainLoop(BaseMainLoop):
                     "topic_key": request.topic_key,
                     "data": answer.masked_value}, user=user)
 
-    @lazy
-    def _topic_names(self):
-        topics = self.settings["kafka"]["template-engine"]["main"]["consumer"]["topics"]
+    @lru_cache()
+    def _topic_names_2_key(self, kafka_key):
+        topics = self.settings["kafka"]["template-engine"][kafka_key]["consumer"]["topics"]
         return {name: key for key, name in topics.items()}
 
-    @lazy
-    def default_topic_key(self):
-        return self.settings["kafka"]["template-engine"]["main"].get("default_topic_key")
+    def default_topic_key(self, kafka_key):
+        return self.settings["kafka"]["template-engine"][kafka_key].get("default_topic_key")
 
     @lazy
     def masking_fields(self):

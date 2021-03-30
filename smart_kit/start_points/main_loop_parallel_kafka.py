@@ -35,8 +35,7 @@ class ParallelKafkaMainLoop(KafkaMainLoop):
         super().pre_handle()
 
         free_slots = self.max_workers > len(self._tasks)
-        while not free_slots and self.is_work:
-            free_slots = self.max_workers > len(self._tasks)
+        if not free_slots:
             for task in list(self._tasks):
                 if task.done():
                     self._tasks.remove(task)

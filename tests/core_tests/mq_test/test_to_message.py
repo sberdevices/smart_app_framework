@@ -13,7 +13,7 @@ class Command:
 
     @property
     def raw(self):
-        message = {"message_name": self.name, "payload": self.payload}
+        message = {"messageName": self.name, "payload": self.payload}
         if self.action_id is not None:
             message["action_id"] = self.action_id
         return message
@@ -33,7 +33,7 @@ class TestToMessage(TestCase):
             "ai_version": "",
             "messages": [
                 {
-                    "message_name": "cmd_name",
+                    "messageName": "cmd_name",
                     "payload": {
                         "e": "f",
                         "a": "b",
@@ -41,7 +41,7 @@ class TestToMessage(TestCase):
                     }
                 },
                 {
-                    "message_name": "cmd_name",
+                    "messageName": "cmd_name",
                     "payload": {
                         "e": "f",
                         "a": "b",

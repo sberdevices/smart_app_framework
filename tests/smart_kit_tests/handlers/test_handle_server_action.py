@@ -7,8 +7,7 @@ from smart_kit.handlers import handle_server_action
 class HandlersTest3(unittest.TestCase):
     def setUp(self):
         self.app_name = "TestAppName"
-        self.test_payload_1 = {"server_action": {}}  # в коде нет предпосылок по содержанию, но работает только в
-        # этом случае
+        self.test_payload_1 = {"server_action": {}}
         self.test_payload_2 = {"server_action": {"action_id": 1, "parameters": 1}}
         self.test_user = Mock('user')
 

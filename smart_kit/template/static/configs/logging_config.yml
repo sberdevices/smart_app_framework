@@ -18,7 +18,7 @@ handlers:
     encoding: utf-8
     filename: "./app.log"
     formatter: file_json_formatter
-    class: logging.handlers.RotatingFileHandler
+    class: core.logging.logger_handlers.RotatingFilePidHandler
     maxBytes: 15728640
   console_app_handler:
     formatter: console_app_formatter
@@ -29,7 +29,7 @@ handlers:
     encoding: utf-8
     filename: "./system.log"
     formatter: file_json_formatter
-    class: logging.handlers.RotatingFileHandler
+    class: core.logging.logger_handlers.RotatingFilePidHandler
     maxBytes: 15728640
   console_handler:
     formatter: console_simple_formatter

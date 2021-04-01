@@ -38,17 +38,11 @@ class ClassifierRepository(BaseRepository):
         classifiers_dict = self._folder_repository.data
 
         gpu_available = tf.test.is_gpu_available()
-        channel = os.environ.get("CHANNEL")
         repository = None
 
         for classifier_key in classifiers_dict:
             classifier_params = classifiers_dict[classifier_key]
             self._check_classifier_config(classifier_key, classifier_params)
-
-            permitted_channels = classifier_params["channels"]
-            # Не грузить модель если текущий канал не в списке релевантных каналов классификатора
-            if channel and permitted_channels and channel not in permitted_channels:
-                continue
 
             # Не грузить модель если она для gpu, но доступных gpu нет
             if classifier_params.get("is_gpu") and gpu_available is False:

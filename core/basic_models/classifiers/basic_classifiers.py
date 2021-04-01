@@ -20,9 +20,6 @@ classifier_factory = build_factory(classifiers)
 class Classifier(ABC):
     """Базовый класс для сущности Классификатор."""
 
-    SCORE_KEY = cls_const.SCORE_KEY
-    ANSWER_KEY = cls_const.ANSWER_KEY
-    CLASS_OTHER = cls_const.OTHER_KEY
     CLASSIFIER_TYPE = None
 
     def __init__(self, settings: Dict[str, Any], id: Optional[str] = None) -> None:
@@ -31,9 +28,9 @@ class Classifier(ABC):
         self.version = settings.get("version", -1)
         self.threshold = self.settings.get("threshold", 0)
         self.intents = self.settings.get("intents", [])
-        self.score_key = self.SCORE_KEY
-        self.answer_key = self.ANSWER_KEY
-        self.class_other = self.CLASS_OTHER
+        self.score_key = cls_const.SCORE_KEY
+        self.answer_key = cls_const.ANSWER_KEY
+        self.class_other = cls_const.OTHER_KEY
         self._check_classifier_type(settings["type"])
 
     def _answer_template(self, intent: str, score: float, is_other: bool) -> Dict[str, Union[str, float, bool]]:
@@ -112,7 +109,7 @@ class ExternalClassifier(Classifier):
         self._classifier_key = settings["classifier"]
         self._timeout_wrap = timeout_decorator.timeout(self.settings.get("timeout") or self.BLOCKING_TIMEOUT)
 
-    @exc_handler(handled_exceptions=(timeout_decorator.TimeoutError,), on_error_return_res=[])
+    @exc_handler(on_error_obj_method_name="on_timeout_error", handled_exceptions=(timeout_decorator.TimeoutError,))
     def find_best_answer(
             self,
             text_preprocessing_result: BaseTextPreprocessingResult,
@@ -121,6 +118,10 @@ class ExternalClassifier(Classifier):
     ) -> List[Dict[str, Union[str, float, bool]]]:
         classifier = scenario_classifiers[self._classifier_key]
         return self._timeout_wrap(classifier.find_best_answer)(text_preprocessing_result, mask, scenario_classifiers)
+
+    @staticmethod
+    def on_timeout_error(*args, **kwarg):
+        return list()
 
     def initial_launch(
             self,
@@ -180,7 +181,7 @@ class ExtendedClassifier(Classifier):
             reverse=True
         )
         tuple_weights = tuple_weights[:numb]  # берем numb наибольших значений весов
-        return {t[0]: t[1] for t in tuple_weights}
+        return dict(tuple_weights)
 
     @abstractmethod
     def _prediction(

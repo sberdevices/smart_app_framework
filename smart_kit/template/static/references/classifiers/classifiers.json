@@ -1,14 +1,12 @@
 {
   "read_book_or_not_classifier": {
     "type": "scikit",
-    "channels": [],
     "threshold": 0.5,
     "path": "ReadBookOrNotClassifier.pkl",
     "intents": ["да", "нет"]
   },
   "hello_scenario_classifier": {
     "type": "external",
-    "channels": [],
     "timeout": 0.2,
     "classifier": "read_book_or_not_classifier"
   }

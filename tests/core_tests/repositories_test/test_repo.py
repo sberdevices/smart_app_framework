@@ -159,12 +159,11 @@ class TestClassifierRepository(unittest.TestCase):
         model_file_name = splitted_file_name[-1]
 
         with patch("core.repositories.folder_repository.FolderRepository.data", new_callable=PropertyMock,
-                   return_value={"test_classifier": {"type": "scikit", "channels": [], "path": model_file_name}}) as mock:
+                   return_value={"test_classifier": {"type": "scikit", "path": model_file_name}}) as mock:
             classifier_repo = ClassifierRepository("", data_path, json.loads, "")
             classifier_repo.load()
             expected_result = {
                 "test_classifier": {
-                    "channels": [],
                     "classifier": {"tests": "success"},
                     "path": model_file_name,
                     "type": "scikit"
@@ -176,7 +175,7 @@ class TestClassifierRepository(unittest.TestCase):
         """Тест кейз на проверку загрузки skip, external и default классификаторов: для этих типов классификаторов сам
         файл модели не предусматривается."""
         for test_cl_type in ["skip", "external", "default"]:
-            expected_return_obj = {"test_cls": {"type": test_cl_type, "channels": [], "path": ""}}
+            expected_return_obj = {"test_cls": {"type": test_cl_type, "path": ""}}
 
             with patch("core.repositories.folder_repository.FolderRepository.data", new_callable=PropertyMock,
                        return_value=expected_return_obj) as mock_folder_data:

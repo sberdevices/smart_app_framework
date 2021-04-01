@@ -14,7 +14,7 @@ INTENT_RECOGNIZER_ANSWER_KEY = "answer"
 INTENT_RECOGNIZER_OTHER_KEY = "other"
 
 # Параметры, наличие которых обязательно в конфиге любого классификатора
-REQUIRED_CONFIG_PARAMS = frozenset(["type", "channels"])
+REQUIRED_CONFIG_PARAMS = frozenset(["type"])
 
 # Реализованные на данный момент типы классификаторов
 SUPPORTED_CLASSIFIERS_TYPES = frozenset(["scikit", "skip", "external", "default"])

@@ -17,4 +17,4 @@ INTENT_RECOGNIZER_OTHER_KEY = "other"
 REQUIRED_CONFIG_PARAMS = frozenset(["type"])
 
 # Реализованные на данный момент типы классификаторов
-SUPPORTED_CLASSIFIERS_TYPES = frozenset(["scikit", "skip", "external", "default"])
+SUPPORTED_CLASSIFIERS_TYPES = frozenset(["external", "scikit", "skip"])

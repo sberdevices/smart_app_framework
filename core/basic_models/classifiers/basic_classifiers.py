@@ -28,8 +28,6 @@ class Classifier(ABC):
         self.version = settings.get("version", -1)
         self.threshold = self.settings.get("threshold", 0)
         self.intents = self.settings.get("intents", [])
-        self.score_key = cls_const.SCORE_KEY
-        self.answer_key = cls_const.ANSWER_KEY
         self.class_other = cls_const.OTHER_KEY
         self._check_classifier_type(settings["type"])
 
@@ -37,7 +35,7 @@ class Classifier(ABC):
         # Любой классификатор должен возвращать отсортированный список наиболее вероятных вариантов из заданного
         # множества, прошедших определенный порог уверенности. Каждый вариант из списка должен соответвовать общему
         # шаблону: answer=классу, score=величине уверенности в ответе, other=булево значение (принадлежность к other).
-        return {self.answer_key: intent, self.score_key: score, self.class_other: is_other}
+        return {cls_const.ANSWER_KEY: intent, cls_const.SCORE_KEY: score, self.class_other: is_other}
 
     def _check_classifier_type(self, classifier_type: str) -> None:
         if classifier_type != self.CLASSIFIER_TYPE:
@@ -137,7 +135,7 @@ class ExtendedClassifier(Classifier):
 
     def __init__(self, settings: Dict[str, Any], id: Optional[str] = None) -> None:
         super(ExtendedClassifier, self).__init__(settings, id)
-        self._intents = self.settings["intents"]
+        self.intents = self.settings["intents"]
         self._path = self.settings["path"]
         self._classifier = self.settings.get("classifier")
         self._vectorizer = self.settings.get("vectorizer")
@@ -162,8 +160,8 @@ class ExtendedClassifier(Classifier):
         weights = sorted(self._get_weights(text_preprocessing_result, vector).items(), key=lambda x: x[1], reverse=True)
         answers = []
         for weight in weights:
-            if weight[0] < len(self._intents):
-                cls_name = self._intents[weight[0]]
+            if weight[0] < len(self.intents):
+                cls_name = self.intents[weight[0]]
                 cls_prob = weight[1]
                 answers.append(self._answer_template(cls_name, cls_prob, cls_name == self.class_other))
         return answers

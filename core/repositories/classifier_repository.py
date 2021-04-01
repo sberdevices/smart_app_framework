@@ -1,16 +1,33 @@
 import os
+from collections import OrderedDict
 from typing import Callable, Any, Dict
 
 import tensorflow as tf
 from keras.utils import CustomObjectScope
 
 import scenarios.logging.logger_constants as scenarios_log_const
-from core.basic_models.classifiers.basic_classifiers import SkipClassifier
+from core.basic_models.classifiers.basic_classifiers import SkipClassifier, SciKitClassifier, ExternalClassifier
 from core.basic_models.classifiers.classifiers_constants import REQUIRED_CONFIG_PARAMS, SUPPORTED_CLASSIFIERS_TYPES
 from core.logging.logger_utils import log
 from core.repositories.base_repository import BaseRepository
 from core.repositories.dill_repository import DillRepository
 from core.repositories.folder_repository import FolderRepository
+from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
+
+
+CLASSIFIER_TYPES_MAP = OrderedDict({"scikit": SciKitClassifier, "skip": SkipClassifier, "external": ExternalClassifier})
+
+
+def classifiers_initial_launch(classifiers: Dict[str, Any]) -> None:
+    # external классификаторы должны запускаться последними
+    type_order = [_type for _type in CLASSIFIER_TYPES_MAP]
+    sorted_cls_by_type_order = OrderedDict(sorted(classifiers.items(), key=lambda i: type_order.index(i[1]["type"])))
+
+    text_preprocessing_result = TextPreprocessingResult({})
+    for cls_name, cls_settings in sorted_cls_by_type_order.items():
+        cls = CLASSIFIER_TYPES_MAP[cls_settings["type"]](cls_settings)
+        cls.initial_launch(text_preprocessing_result, sorted_cls_by_type_order)
+        sorted_cls_by_type_order[cls_name] = cls
 
 
 class ClassifierRepository(BaseRepository):
@@ -64,9 +81,6 @@ class ClassifierRepository(BaseRepository):
             if classifier_type in ["skip", "external"]:
                 continue
 
-            if classifier_type == "default" and "text_normalizer" not in classifier_params:
-                continue
-
             custom_layers = classifier_params.get("custom_layers", dict())
             if custom_layers:
                 # Загрузка кастомных слоев, нужных для keras моделей
@@ -110,6 +124,7 @@ class ClassifierRepository(BaseRepository):
                 classifiers_dict[classifier_key] = SkipClassifier.get_nothing()
 
         super(ClassifierRepository, self).fill(classifiers_dict)
+        classifiers_initial_launch(classifiers_dict)
 
     def save(self, save_parameters: Any) -> None:
         pass

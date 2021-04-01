@@ -250,7 +250,15 @@ class SDKAnswer(NodeAction):
         for j in self.RANDOM_PATH:
             self.random_by_path(rendered, j)
         if rendered or not self.no_empty_nodes:
-            result = [Command(self.command, rendered, self.id)]
+            result = [
+                Command(
+                    self.command,
+                    rendered,
+                    self.id,
+                    request_type=self.request_type,
+                    request_data=self.request_data,
+                )
+            ]
         return result
 
 
@@ -417,5 +425,13 @@ class SDKAnswerToUser(NodeAction):
             if part.requirement.check(text_preprocessing_result, user):
                 out.update(part.render(rendered))
         if rendered or not self.no_empty_nodes:
-            result = [Command(self.command, out, self.id)]
+            result = [
+                Command(
+                    self.command,
+                    out,
+                    self.id,
+                    request_type=self.request_type,
+                    request_data=self.request_data,
+                )
+            ]
         return result

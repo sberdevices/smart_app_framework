@@ -9,7 +9,7 @@ from core.db_adapter.db_adapter import db_adapter_factory
 from core.jaeger_custom_client.jaeger_config import ExtendedConfig
 from core.logging.logger_utils import log
 from core.monitoring.monitoring import monitoring
-from core.monitoring.prometheus_web_handler import RootResource
+from core.monitoring.healthcheck_handler import RootResource
 from core.monitoring.twisted_server import TwistedServer
 from core.model.base_user import BaseUser
 from core.basic_models.parametrizers.parametrizer import BasicParametrizer
@@ -83,7 +83,7 @@ class BaseMainLoop:
     def _create_health_check_server(self, settings):
         health_check_server = None
         if settings["health_check"].get("enabled"):
-            log("Init health_check monitoring started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE})
+            log("Init health_check started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE})
             health_check = settings["health_check"]
             health_check_server = TwistedServer(
                 health_check["port"],

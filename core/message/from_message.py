@@ -40,10 +40,10 @@ class SmartAppFromMessage:
     PAYLOAD = "payload"
     SESSION_ID = "sessionId"
 
-    payload: dict
-    uuid: dict
     incremental_id: str
     message_name: str
+    payload: dict
+    uuid: dict
 
     def __init__(self, value: str, topic_key: str = None, creation_time=None, kafka_key: str = None, headers=None,
                  masking_fields=None, headers_required=True, validators: Iterable[MessageValidator] = ()):
@@ -98,6 +98,7 @@ class SmartAppFromMessage:
                 exc_info=True,
                 level="ERROR",
             )
+            self.print_validation_error()
             return False
 
         return True
@@ -248,3 +249,18 @@ class SmartAppFromMessage:
     @lazy
     def value(self):
         return self._value
+
+
+basic_error_message = SmartAppFromMessage(
+    '''
+    {
+        "messageName": "ERROR",
+        "messageId": -1,
+        "uuid": -1,
+        "payload": {},
+        "sessionId": -1
+    }
+    ''',
+    headers={},
+    headers_required=False,
+)

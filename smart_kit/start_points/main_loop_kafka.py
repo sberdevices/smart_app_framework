@@ -2,6 +2,7 @@
 import json
 import time
 from collections import namedtuple
+from functools import lru_cache
 
 from confluent_kafka.cimpl import KafkaException
 from lazy import lazy
@@ -76,11 +77,14 @@ class MainLoop(BaseMainLoop):
                 level="ERROR", exc_info=True)
             raise
 
+    def pre_handle(self):
+        self.iterate_behavior_timeouts()
+
     def run(self):
         log("%(class_name)s.run started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                   "class_name": self.__class__.__name__})
         while self.is_work:
-            self.iterate_behavior_timeouts()
+            self.pre_handle()
             for kafka_key in self.consumers:
                 self.iterate(kafka_key)
 
@@ -146,7 +150,7 @@ class MainLoop(BaseMainLoop):
 
                     user = self.load_user(db_uid, timeout_from_message)
                     commands = self.model.answer(timeout_from_message, user)
-                    topic_key = self._get_topic_key(mq_message)
+                    topic_key = self._get_topic_key(mq_message, kafka_key)
                     answers = self._generate_answers(user=user, commands=commands, message=timeout_from_message,
                                                      topic_key=topic_key,
                                                      kafka_key=kafka_key)
@@ -190,8 +194,116 @@ class MainLoop(BaseMainLoop):
                                                      log_const.REQUEST_VALUE: str(mq_message.value())},
                     level="ERROR", exc_info=True)
 
-    def _get_topic_key(self, mq_message):
-        return self.default_topic_key or self._topic_names[mq_message.topic()]
+    def _get_topic_key(self, mq_message, kafka_key):
+        topic_names_2_key = self._topic_names_2_key(kafka_key)
+        return self.default_topic_key(kafka_key) or topic_names_2_key[mq_message.topic()]
+
+    def process_message(self, mq_message, consumer, kafka_key, stats):
+        topic_key = self._get_topic_key(mq_message, kafka_key)
+
+        save_tries = 0
+        user_save_no_collisions = False
+        user = None
+        db_uid = None
+        while save_tries < self.user_save_collisions_tries and not user_save_no_collisions:
+            save_tries += 1
+            message_value = mq_message.value()
+            message = SmartAppFromMessage(message_value,
+                                          headers=mq_message.headers(),
+                                          masking_fields=self.masking_fields)
+
+            # TODO вернуть проверку ключа!!!
+            if message.validate():  # and self.check_message_key(message, mq_message.key()):
+                log(
+                    "INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %(incoming_data)s",
+                    params={log_const.KEY_NAME: "incoming_message",
+                            "topic": mq_message.topic(),
+                            "message_partition": mq_message.partition(),
+                            "message_key": mq_message.key(),
+                            "kafka_key": kafka_key,
+                            "incoming_data": str(message.masked_value),
+                            "headers": str(mq_message.headers()),
+                            MESSAGE_ID_STR: message.incremental_id})
+
+                db_uid = message.db_uid
+
+                span = jaeger_utils.get_incoming_spam(self.tracer, message, mq_message)
+
+                with self.tracer.scope_manager.activate(span, True) as scope:
+                    with StatsTimer() as load_timer:
+                        user = self.load_user(db_uid, message)
+
+                with self.tracer.scope_manager.activate(span, True) as scope:
+                    with self.tracer.start_span('Loading time', child_of=scope.span) as span:
+                        smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
+                        stats += "Loading time: {} msecs\n".format(load_timer.msecs)
+                        with StatsTimer() as script_timer:
+                            commands = self.model.answer(message, user)
+
+                    with self.tracer.start_span('Script time', child_of=scope.span) as span:
+                        answers = self._generate_answers(user=user, commands=commands, message=message,
+                                                         topic_key=topic_key,
+                                                         kafka_key=kafka_key)
+                        smart_kit_metrics.sampling_script_time(self.app_name, script_timer.secs)
+                        stats += "Script time: {} msecs\n".format(script_timer.msecs)
+
+                    with self.tracer.start_span('Saving time', child_of=scope.span) as span:
+                        with StatsTimer() as save_timer:
+                            user_save_no_collisions = self.save_user(db_uid, user, message)
+
+                    smart_kit_metrics.sampling_save_time(self.app_name, save_timer.secs)
+                    stats += "Saving time: {} msecs\n".format(save_timer.msecs)
+                    if not user_save_no_collisions:
+                        log(
+                            "MainLoop.iterate: save user got collision on uid %(uid)s db_version %(db_version)s.",
+                            user=user,
+                            params={log_const.KEY_NAME: "ignite_collision",
+                                    "db_uid": db_uid,
+                                    "message_key": mq_message.key(),
+                                    "message_partition": mq_message.partition(),
+                                    "kafka_key": kafka_key,
+                                    "uid": user.id,
+                                    "db_version": str(user.variables.get(user.USER_DB_VERSION))},
+                            level="WARNING")
+                        continue
+
+                    self.save_behavior_timeouts(user, mq_message, kafka_key)
+
+                if mq_message.headers() is None:
+                    mq_message.set_headers([])
+                self.tracer.inject(span_context=span.context, format=jaeger_kafka_codec.KAFKA_MAP,
+                                   carrier=mq_message.headers())
+
+                if answers:
+                    for answer in answers:
+                        with StatsTimer() as publish_timer:
+                            self._send_request(user, answer, mq_message)
+                        stats += "Publishing time: {} msecs".format(publish_timer.msecs)
+                        log(stats)
+            else:
+                try:
+                    data = message.masked_value
+                except:
+                    data = "<DATA FORMAT ERROR>"
+                log(f"Message validation failed, skip message handling.",
+                    params={log_const.KEY_NAME: "invalid_message",
+                            "data": data}, level="ERROR")
+                smart_kit_metrics.counter_invalid_message(self.app_name)
+        if user and not user_save_no_collisions:
+            log(
+                "MainLoop.iterate: db_save collision all tries left on uid %(uid)s db_version %(db_version)s.",
+                user=user,
+                params={log_const.KEY_NAME: "ignite_collision",
+                        "db_uid": db_uid,
+                        "message_key": mq_message.key(),
+                        "message_partition": mq_message.partition(),
+                        "kafka_key": kafka_key,
+                        "uid": user.id,
+                        "db_version": str(user.variables.get(user.USER_DB_VERSION))},
+                level="WARNING")
+
+            smart_kit_metrics.counter_save_collision_tries_left(self.app_name)
+        consumer.commit_offset(mq_message)
 
     def iterate(self, kafka_key):
         consumer = self.consumers[kafka_key]
@@ -200,12 +312,8 @@ class MainLoop(BaseMainLoop):
         try:
             mq_message = None
             message_value = None
-            stats = ""
             with StatsTimer() as poll_timer:
                 mq_message = consumer.poll()
-            if mq_message:
-                stats += "Polling time: {} msecs\n".format(poll_timer.msecs)
-                topic_key = self._get_topic_key(mq_message)
 
                 save_tries = 0
                 user_save_no_collisions = False
@@ -307,9 +415,11 @@ class MainLoop(BaseMainLoop):
                                 "uid": user.id,
                                 "db_version": str(user.variables.get(user.USER_DB_VERSION))},
                         level="WARNING")
+            if mq_message:
+                stats = "Polling time: {} msecs\n".format(poll_timer.msecs)
+                message_value = mq_message.value()  # DRY!
+                self.process_message(mq_message, consumer, kafka_key, stats)
 
-                    smart_kit_metrics.counter_save_collision_tries_left(self.app_name)
-                consumer.commit_offset(mq_message)
         except KafkaException as kafka_exp:
             log("kafka error: %(kafka_exp)s. MESSAGE: {}.".format(message_value),
                 params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
@@ -326,7 +436,6 @@ class MainLoop(BaseMainLoop):
             except Exception:
                 log("Error handling worker fail exception.",
                     level="ERROR", exc_info=True)
-
 
     def check_message_key(self, from_message, message_key):
         message_key = message_key or b""
@@ -355,8 +464,8 @@ class MainLoop(BaseMainLoop):
 
         for kb_setting in kafka_broker_settings:
             if (
-                kb_setting["from_channel"] == answer.incoming_message.channel
-                and kb_setting["to_topic"] == request.topic_key
+                    kb_setting["from_channel"] == answer.incoming_message.channel
+                    and kb_setting["to_topic"] == request.topic_key
             ):
                 request.kafka_key = kb_setting["route_to_broker"]
 
@@ -370,18 +479,17 @@ class MainLoop(BaseMainLoop):
 
     def _log_request(self, user, request, answer, original_mq_message):
         log("OUTGOING TO TOPIC_KEY: %(topic_key)s",
-                      params={log_const.KEY_NAME: "outgoing_message",
-                              "topic_key": request.topic_key,
-                              "data": answer.masked_value}, user=user)
+            params={log_const.KEY_NAME: "outgoing_message",
+                    "topic_key": request.topic_key,
+                    "data": answer.masked_value}, user=user)
 
-    @lazy
-    def _topic_names(self):
-        topics = self.settings["kafka"]["template-engine"]["main"]["consumer"]["topics"]
+    @lru_cache()
+    def _topic_names_2_key(self, kafka_key):
+        topics = self.settings["kafka"]["template-engine"][kafka_key]["consumer"]["topics"]
         return {name: key for key, name in topics.items()}
 
-    @lazy
-    def default_topic_key(self):
-        return self.settings["kafka"]["template-engine"]["main"].get("default_topic_key")
+    def default_topic_key(self, kafka_key):
+        return self.settings["kafka"]["template-engine"][kafka_key].get("default_topic_key")
 
     @lazy
     def masking_fields(self):

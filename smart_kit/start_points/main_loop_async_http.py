@@ -129,7 +129,13 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         if not answer:
             return 204, "NO CONTENT", SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None)
 
-        return 200, "OK", SmartAppToMessage(answer, message, request=None)
+        answer_message = SmartAppToMessage(
+            answer, message, request=None,
+            validators=self.to_msg_validators)
+        if answer_message.validate():
+            return 200, "OK", answer_message
+        else:
+            return 500, "BAD ANSWER", SmartAppToMessage(self.BAD_ANSWER_COMMAND, message=message, request=None)
 
     async def process_message(self, message: SmartAppFromMessage, *args, **kwargs):
         stats = ""
@@ -160,7 +166,8 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
     async def iterate(self, request: aiohttp.web.Request):
         headers = self._get_headers(request.headers)
         body = await request.text()
-        message = SmartAppFromMessage(body, headers=headers, headers_required=False)
+        message = SmartAppFromMessage(body, headers=headers, headers_required=False,
+                                      validators=self.from_msg_validators)
 
         status, reason, answer = await self.handle_message(message)
 

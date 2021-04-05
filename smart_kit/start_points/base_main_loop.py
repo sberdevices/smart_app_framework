@@ -1,5 +1,6 @@
 # coding=utf-8
 
+from typing import Type, Iterable
 import signal
 
 import scenarios.logging.logger_constants as log_const
@@ -10,24 +11,40 @@ from core.logging.logger_utils import log
 from core.monitoring.monitoring import monitoring
 from core.monitoring.healthcheck_handler import RootResource
 from core.monitoring.twisted_server import TwistedServer
+from core.model.base_user import BaseUser
+from core.basic_models.parametrizers.parametrizer import BasicParametrizer
+from core.message.msg_validator import MessageValidator
 from smart_kit.utils.monitoring import smart_kit_metrics
+from smart_kit.models.smartapp_model import SmartAppModel
 
 
 class BaseMainLoop:
 
-    def __init__(self, model, user_cls, parametrizer_cls, settings, *args, **kwargs):
-        log("%(class_name)s.__init__ started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                                                                  "class_name": self.__class__.__name__})
+    def __init__(
+            self, model: SmartAppModel,
+            user_cls: Type[BaseUser],
+            parametrizer_cls: Type[BasicParametrizer],
+            settings,
+            to_msg_validators: Iterable[MessageValidator] = (),
+            from_msg_validators: Iterable[MessageValidator] = (),
+            *args, **kwargs
+    ):
+        log("%(class_name)s.__init__ started.", params={
+            log_const.KEY_NAME: log_const.STARTUP_VALUE,
+            "class_name": self.__class__.__name__
+        })
         try:
             signal.signal(signal.SIGINT, self.stop)
             signal.signal(signal.SIGTERM, self.stop)
             self.settings = settings
             self.app_name = self.settings.app_name
-            self.model = model
+            self.model: SmartAppModel = model
             self.user_cls = user_cls
             self.parametrizer_cls = parametrizer_cls
             self.db_adapter = self.get_db()
             self.is_work = True
+            self.to_msg_validators: Iterable[MessageValidator] = to_msg_validators
+            self.from_msg_validators: Iterable[MessageValidator] = from_msg_validators
 
             template_settings = self.settings["template_settings"]
 

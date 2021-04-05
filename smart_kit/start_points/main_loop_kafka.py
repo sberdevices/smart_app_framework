@@ -17,6 +17,7 @@ from core.model.heapq.heapq_storage import HeapqKV
 from core.mq.kafka.kafka_consumer import KafkaConsumer
 from core.mq.kafka.kafka_publisher import KafkaPublisher
 from core.utils.stats_timer import StatsTimer
+from core.basic_models.actions.command import Command
 from smart_kit.compatibility.commands import combine_commands
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.names import message_names
@@ -34,14 +35,15 @@ def _enrich_config_from_secret(kafka_config, secret_config):
 
 
 class MainLoop(BaseMainLoop):
+    BAD_ANSWER_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Answer Message"})
 
-    def __init__(self, model, user_cls, parametrizer_cls, settings, *args, **kwargs):
-        super().__init__(model, user_cls, parametrizer_cls, settings, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         log("%(class_name)s.__init__ started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                         "class_name": self.__class__.__name__})
         try:
             kafka_config = _enrich_config_from_secret(
-                settings["kafka"]["template-engine"], settings.get("secret_kafka", {})
+                self.settings["kafka"]["template-engine"], self.settings.get("secret_kafka", {})
             )
 
             consumers = {}
@@ -60,11 +62,7 @@ class MainLoop(BaseMainLoop):
                 params={"class_name": self.__class__.__name__}, level="WARNING"
             )
 
-            self.settings = settings
             self.app_name = self.settings.app_name
-            self.model = model
-            self.user_cls = user_cls
-            self.parametrizer_cls = parametrizer_cls
             self.consumers = consumers
             for key in self.consumers:
                 self.consumers[key].subscribe()
@@ -114,8 +112,12 @@ class MainLoop(BaseMainLoop):
             request = SmartKitKafkaRequest(id=None, items=command.request_data)
             request.update_empty_items({"topic_key": topic_key, "kafka_key": kafka_key})
             answer = SmartAppToMessage(command=command, message=message, request=request,
-                                       masking_fields=self.masking_fields)
-            answers.append(answer)
+                                       masking_fields=self.masking_fields,
+                                       validators=self.to_msg_validators)
+            if answer.validate():
+                answers.append(answer)
+            else:
+                answers.append(SmartAppToMessage(self.BAD_ANSWER_COMMAND, message=message, request=request))
 
             smart_kit_metrics.counter_outgoing(self.app_name, command.name, answer, user)
 
@@ -124,7 +126,8 @@ class MainLoop(BaseMainLoop):
     def _get_timeout_from_message(self, orig_message_raw, callback_id, headers):
         orig_message_raw = json.dumps(orig_message_raw)
         timeout_from_message = SmartAppFromMessage(orig_message_raw, headers=headers,
-                                                   masking_fields=self.masking_fields)
+                                                   masking_fields=self.masking_fields,
+                                                   validators=self.from_msg_validators)
         timeout_from_message.callback_id = callback_id
         return timeout_from_message
 

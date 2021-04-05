@@ -1,16 +1,19 @@
+from typing import Iterable
 import json
 from lazy import lazy
 from copy import copy
 
 from core.utils.pickle_copy import pickle_deepcopy
 from core.utils.masking_message import masking
+from core.message.msg_validator import MessageValidator
 
 
 class SmartAppToMessage:
     ROOT_NODES_KEY = "root_nodes"
     PAYLOAD = "payload"
 
-    def __init__(self, command, message, request, forward_fields=None, masking_fields=None):
+    def __init__(self, command, message, request, forward_fields=None, masking_fields=None,
+                 validators: Iterable[MessageValidator] = ()):
         root_nodes = command.payload.pop(self.ROOT_NODES_KEY, None)
         self.command = command
         self.root_nodes = root_nodes or {}
@@ -18,6 +21,7 @@ class SmartAppToMessage:
         self.request = request
         self.forward_fields = forward_fields or ()
         self.masking_fields = masking_fields
+        self.validators = validators
 
     @lazy
     def payload(self):
@@ -51,3 +55,9 @@ class SmartAppToMessage:
     @lazy
     def value(self):
         return json.dumps(self.as_dict, ensure_ascii=False)
+
+    def validate(self):
+        for validator in self.validators:
+            if not validator.validate(self.command.name, self.payload):
+                return False
+        return True

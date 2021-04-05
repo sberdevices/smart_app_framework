@@ -3,6 +3,12 @@ from unittest import TestCase
 
 from core.message.from_message import SmartAppFromMessage
 from core.utils.utils import current_time_ms
+from core.message.msg_validator import MessageValidator
+
+
+class PieMessageValidator(MessageValidator):
+    def validate(self, message_name: str, payload: dict):
+        return 3.14 < payload.get("pi", 0) < 3.15
 
 
 class TestFromMessage(TestCase):
@@ -78,4 +84,27 @@ class TestFromMessage(TestCase):
         json_input_msg = json.dumps(input_msg, ensure_ascii=False)
 
         message = SmartAppFromMessage(json_input_msg, headers=headers)
+        self.assertFalse(message.validate())
+
+    def test_validation(self):
+        input_msg = {
+            "uuid": {"userChannel": "web", "userId": 99, "chatId": 80},
+            "messageName": "some_name",
+            "messageId": "random_id",
+            "sessionId": "random_id",
+            "payload": {
+                "pi": 3.14159265358979,
+            }
+        }
+        headers = [('test_header', 'result')]
+
+        message = SmartAppFromMessage(
+            json.dumps(input_msg, ensure_ascii=False),
+            headers=headers, validators=(PieMessageValidator(),))
+        self.assertTrue(message.validate())
+
+        input_msg["payload"]["pi"] = 2.7182818284
+        message = SmartAppFromMessage(
+            json.dumps(input_msg, ensure_ascii=False),
+            headers=headers, validators=(PieMessageValidator(),))
         self.assertFalse(message.validate())

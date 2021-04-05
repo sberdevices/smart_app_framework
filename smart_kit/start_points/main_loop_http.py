@@ -16,8 +16,9 @@ from smart_kit.start_points.base_main_loop import BaseMainLoop
 
 class BaseHttpMainLoop(BaseMainLoop):
     HEADER_START_WITH = "HTTP_SMART_APP_"
-    BAD_REQUEST_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Message"})
+    BAD_REQUEST_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Request Message"})
     NO_ANSWER_COMMAND = Command(message_names.NOTHING_FOUND)
+    BAD_ANSWER_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Answer Message"})
 
     def run(self):
         raise NotImplementedError
@@ -48,7 +49,13 @@ class BaseHttpMainLoop(BaseMainLoop):
         if not answer:
             return 204, "NO CONTENT", SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None)
 
-        return 200, "OK", SmartAppToMessage(answer, message, request=None)
+        answer_message = SmartAppToMessage(
+            answer, message, request=None,
+            validators=self.to_msg_validators)
+        if answer_message.validate():
+            return 200, "OK", answer_message
+        else:
+            return 500, "BAD ANSWER", SmartAppToMessage(self.BAD_ANSWER_COMMAND, message=message, request=None)
 
     def process_message(self, message: SmartAppFromMessage, *args, **kwargs):
         stats = ""
@@ -114,7 +121,8 @@ class HttpMainLoop(BaseHttpMainLoop):
             log("Error in request data", level="ERROR")
             raise Exception("Error in request data")
 
-        message = SmartAppFromMessage(body, headers=headers, headers_required=False)
+        message = SmartAppFromMessage(body, headers=headers, headers_required=False,
+                                      validators=self.from_msg_validators)
 
         status, reason, answer = self.handle_message(message)
 

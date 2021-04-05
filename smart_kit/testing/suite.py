@@ -15,15 +15,8 @@ from smart_kit.testing.utils import Environment
 from smart_kit.utils.diff import partial_diff
 
 
-def create_message(data, headers=None):
-    defaults = Environment().as_dict
-    defaults.update(data)
-
-    return SmartAppFromMessage(json.dumps(defaults), headers=headers)
-
-
 def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings: Settings, user_cls: type,
-                 parametrizer_cls: type):
+                 parametrizer_cls: type, mock_storage_file):
     test_file_path = os.path.join(path, file)
     if not os.path.isfile(test_file_path) or not test_file_path.endswith('.json'):
         raise FileNotFoundError
@@ -31,13 +24,17 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
         json_obj = json.load(test_file)
         success = 0
         for test_case in json_obj:
+            test_params = json_obj[test_case]
+            if isinstance(test_params, list):
+                test_params = {"messages": test_params, "user": {}}
             print(f"[+] Processing test case {test_case} from {test_file_path}")
             if TestCase(
                     app_model,
                     settings,
                     user_cls,
                     parametrizer_cls,
-                    **json_obj[test_case],
+                    **test_params,
+                    mock_storage_file=mock_storage_file
             ).run():
                 print(f"[+] {test_case} OK")
                 success += 1
@@ -46,9 +43,11 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
 
 
 class TestSuite:
-    def __init__(self, path, app_config):
+    def __init__(self, path, app_config, mock_storage_file):
         self.path = path
         self.app_config = app_config
+        with open(mock_storage_file, "r") as mock_storage:
+            self.mock_storage_file = json.load(mock_storage)
 
     @lazy
     def app_model(self):
@@ -84,6 +83,7 @@ class TestSuite:
                     self.settings,
                     self.app_config.USER,
                     self.app_config.PARAMETRIZER,
+                    self.mock_storage_file
                 )
                 total += file_total
                 total_success += file_success
@@ -93,12 +93,13 @@ class TestSuite:
 
 class TestCase:
     def __init__(self, app_model: SmartAppModel, settings: Settings, user_cls: type, parametrizer_cls: type,
-                 messages: dict, user: Optional[dict] = None):
+                 messages: dict, mock_storage_file, user: Optional[dict] = None):
         self.messages = messages
         self.user_state = json.dumps(user)
 
         self.app_model = app_model
         self.settings = settings
+        self.mock_storage_file = mock_storage_file
 
         self.__parametrizer_cls = parametrizer_cls
         self.__user_cls = user_cls
@@ -118,7 +119,7 @@ class TestCase:
                 headers = [(CALLBACK_ID_HEADER, app_callback_id.encode())]
             else:
                 headers = [('kafka_correlationId', 'test_123')]
-            message = create_message(request, headers=headers)
+            message = self.create_message(request, headers=headers)
 
             user = self.__user_cls(
                 id=message.uid, message=message, db_data=self.user_state, settings=self.settings,
@@ -131,6 +132,10 @@ class TestCase:
             answers = self._generate_answers(
                 user=user, commands=commands, message=message
             )
+
+            mock_resp = response.get("mock")
+            if mock_resp:
+                response = self.handle_mock_response(mock_resp, response)
             expected_answers = response["messages"]
             expected_user = response["user"]
 
@@ -170,3 +175,37 @@ class TestCase:
             answer = SmartAppToMessage(command=command, message=message, request=request)
             answers.append(answer)
         return answers
+
+    def create_message(self, data, headers=None):
+        defaults = Environment().as_dict
+
+        mock = data.get("mock")
+        is_payload_field = data.get("payload")
+        if mock:
+            mock_data = self.mock_storage_file[mock]
+            if not is_payload_field and not mock_data.get("payload"):
+                mock_data = {"payload": mock_data}
+            if is_payload_field and mock_data.get("payload"):
+                raise Exception("Payload field is in test case and in mock object, check it!")
+            defaults.update(mock_data)
+            del data["mock"]
+
+        message = data.get("message")
+        if message:
+            defaults["payload"].update({"message": message})
+
+        defaults.update(data)
+        return SmartAppFromMessage(json.dumps(defaults), headers=headers)
+
+    def handle_mock_response(self, mock_resp, response):
+        mock_resp_data = self.mock_storage_file[mock_resp]
+        response.update(mock_resp_data)
+        del response["mock"]
+
+        pronounce_texts = response.get("pronounce_texts", [])
+        if pronounce_texts:
+            for text, msg_dict in zip(pronounce_texts, response["messages"]):
+                msg_dict["payload"]["pronounceText"] = text
+            del response["pronounce_texts"]
+
+        return response

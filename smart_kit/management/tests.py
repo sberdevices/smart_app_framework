@@ -26,6 +26,8 @@ class TestsCommand(AppCommand):
         self.app_config = app_config
         self.parser = argparse.ArgumentParser(description="Tests creating and running.")
         self.parser.add_argument("path", metavar="PATH", type=str, help="Path to directory with tests", action="store")
+        self.parser.add_argument("mock_storage_file", metavar="MOCK_STORAGE_FILE", type=str,
+                                 help="Path to json file with stored mocks", action="store")
         self.commands = self.parser.add_mutually_exclusive_group(required=True)
         self.commands.add_argument("--run", dest="run", help="Runs Tests", action="store_true")
         self.commands.add_argument(
@@ -42,7 +44,7 @@ class TestsCommand(AppCommand):
         if namespace.gen:
             self.generate_tests_folder(namespace.path, namespace.update)
         elif namespace.run:
-            self.run_tests(namespace.path)
+            self.run_tests(namespace.path, namespace.mock_storage_file)
         else:
             raise Exception("Something going wrong due parsing the args")
 
@@ -75,13 +77,17 @@ class TestsCommand(AppCommand):
                     if not update:
                         raise
 
-    def run_tests(self, path):
+    def run_tests(self, path, mock_storage_file):
         path = define_path(path)
+        mock_storage_file = define_path(mock_storage_file)
         if not os.path.exists(path):
             print(f"[!] Tests folder does not found at {path}")
             return
-
-        TestSuite(path, self.app_config).run()
+        elif not os.path.exists(mock_storage_file):
+            print(f"[!] Mock storage file does not found, check file path: {mock_storage_file}")
+            return
+        else:
+            TestSuite(path, self.app_config, mock_storage_file).run()
 
     def get_test_template_path(self):
         path = os.path.join(self.app_config.REFERENCES_PATH, self.TEST_TEMPLATE_PATH)

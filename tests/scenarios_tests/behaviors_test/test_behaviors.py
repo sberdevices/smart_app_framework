@@ -22,6 +22,7 @@ class BehaviorsTest3(unittest.TestCase):
 
     def test_behaviors_init(self):
         obj = behaviors.Behaviors(self.test_items1, self.test_descriptions, self.test_user)
+        obj.initialize()
         self.assertTrue(hasattr(obj, 'timeout'))
         self.assertTrue(hasattr(obj, '_delete'))
         self.assertTrue(list(obj._callbacks.keys()) == ['123-ASDF'])
@@ -38,9 +39,10 @@ class BehaviorsTest3(unittest.TestCase):
 
     def test_behaviors_has_callback(self):
         obj1 = behaviors.Behaviors(self.test_items1, self.test_descriptions, self.test_user)
+        obj1.initialize()
         self.assertTrue(obj1.has_callback('123-ASDF'))
 
     def test_behavoirs_log_const(self):
         self.assertIsNotNone(behaviors.log_const.KEY_NAME)
-        self.assertIsNotNone(behaviors.log_const.BEHAVIOUR_CALLBACK_ID_VALUE)
-        self.assertIsNotNone(behaviors.log_const.BEHAVIOUR_DATA_VALUE)
+        self.assertIsNotNone(behaviors.log_const.BEHAVIOR_CALLBACK_ID_VALUE)
+        self.assertIsNotNone(behaviors.log_const.BEHAVIOR_DATA_VALUE)

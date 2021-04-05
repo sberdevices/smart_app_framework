@@ -14,10 +14,10 @@ class ReplySelector:
 
     def __init__(self, items: Dict[str, Any], user: User):
         self._bundles: dict = user.descriptions["bundles"]
-        self._user_gender: str = user.message.payload.get("client_profile", {}).get("gender", "") or ""
+        self._user_gender: str = str(user.message.payload.get("client_profile", {}).get("gender") or "")
         self.user_gender: str = self.get_user_gender()
-        self.character_gender: str = user.message.payload.get("character", {}).get("gender", "") or ""
-        self.character_key: str = user.message.payload.get("character", {}).get("name", "") or ""
+        self.character_gender: str = str(user.message.payload.get("character", {}).get("gender") or "")
+        self.character_key: str = str(user.message.payload.get("character", {}).get("name") or "")
         self.__suffix = [
             f".{self.character_key}.{self.character_gender}_to_{self.user_gender}",
             f".{self.character_gender}_to_{self.user_gender}",

@@ -1,6 +1,8 @@
 import typing
+import os
 
 import asyncio
+import concurrent.futures
 import aiohttp
 import aiohttp.web
 
@@ -14,23 +16,30 @@ from smart_kit.start_points.main_loop_http import BaseHttpMainLoop
 from smart_kit.utils.monitoring import smart_kit_metrics
 
 
+def run_in_loop(corofn, *args):
+    loop = asyncio.new_event_loop()
+    try:
+        coro = corofn(*args)
+        asyncio.set_event_loop(loop)
+        return loop.run_until_complete(coro)
+    finally:
+        loop.close()
+
+
 class AIOHttpMainLoop(BaseHttpMainLoop):
     def __init__(self, *args, **kwargs):
         self.app = aiohttp.web.Application()
         self.app.add_routes([aiohttp.web.route('*', '/{tail:.*}', self.iterate)])
         super().__init__(*args, **kwargs)
+        max_workers = self.settings["template_settings"].get("max_workers", (os.cpu_count() or 1) * 5)
+        self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
 
     async def async_init(self):
         await self.db_adapter.connect()
 
     def get_db(self):
         db_adapter = db_adapter_factory(self.settings["template_settings"].get("db_adapter", {}))
-        if not db_adapter.IS_ASYNC:
-            raise Exception(
-                f"Sync adapter {db_adapter.__class__.__name__} doesnt compare with {self.__class__.__name__}"
-            )
         self.app.on_cleanup.append(self.close_db)
-
         return db_adapter
 
     # noinspection PyMethodMayBeStatic
@@ -42,7 +51,10 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         db_data = None
         load_error = False
         try:
-            db_data = await self.db_adapter.get(db_uid)
+            if self.db_adapter.IS_ASYNC:
+                db_data = await self.db_adapter.get(db_uid)
+            else:
+                db_data = self.db_adapter.get(db_uid)
         except (DBAdapterException, ValueError):
             log("Failed to get user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                    log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")
@@ -72,12 +84,25 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
                     params={"uid": user.id,
                             log_const.KEY_NAME: "user_save",
                             "user_length": len(str_data)})
-                if user.initial_db_data and self.user_save_check_for_collisions:
-                    no_collisions = await self.db_adapter.replace_if_equals(db_uid,
-                                                                            sample=user.initial_db_data,
-                                                                            data=str_data)
+
+                if self.db_adapter.IS_ASYNC:
+                    if user.initial_db_data and self.user_save_check_for_collisions:
+                        no_collisions = await self.db_adapter.replace_if_equals(
+                            db_uid,
+                            sample=user.initial_db_data,
+                            data=str_data
+                        )
+                    else:
+                        await self.db_adapter.save(db_uid, str_data)
                 else:
-                    await self.db_adapter.save(db_uid, str_data)
+                    if user.initial_db_data and self.user_save_check_for_collisions:
+                        no_collisions = self.db_adapter.replace_if_equals(
+                            db_uid,
+                            sample=user.initial_db_data,
+                            data=str_data
+                        )
+                    else:
+                        self.db_adapter.save(db_uid, str_data)
             except (DBAdapterException, ValueError):
                 log("Failed to set user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                        log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")
@@ -100,11 +125,17 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         if not message.validate():
             return 400, "BAD REQUEST", SmartAppToMessage(self.BAD_REQUEST_COMMAND, message=message, request=None)
 
-        answer, stats = await self.process_message(message)
+        answer, stats = await self.app.loop.run_in_executor(self.pool, run_in_loop, self.process_message, message)
         if not answer:
             return 204, "NO CONTENT", SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None)
 
-        return 200, "OK", SmartAppToMessage(answer, message, request=None)
+        answer_message = SmartAppToMessage(
+            answer, message, request=None,
+            validators=self.to_msg_validators)
+        if answer_message.validate():
+            return 200, "OK", answer_message
+        else:
+            return 500, "BAD ANSWER", SmartAppToMessage(self.BAD_ANSWER_COMMAND, message=message, request=None)
 
     async def process_message(self, message: SmartAppFromMessage, *args, **kwargs):
         stats = ""
@@ -116,7 +147,7 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
             user = await self.load_user(db_uid, message)
         stats += "Loading time: {} msecs\n".format(load_timer.msecs)
         with StatsTimer() as script_timer:
-            commands = await self.get_answer_in_thread(message, user)
+            commands = self.model.answer(message, user)
             if commands:
                 answer = self._generate_answers(user, commands, message)
             else:
@@ -130,12 +161,13 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         return answer, stats
 
     async def get_answer_in_thread(self, message, user):
-        return await self.app.loop.run_in_executor(None, self.model.answer, message, user)
+        return await self.app.loop.run_in_executor(self.pool, self.model.answer, message, user)
 
     async def iterate(self, request: aiohttp.web.Request):
         headers = self._get_headers(request.headers)
         body = await request.text()
-        message = SmartAppFromMessage(body, headers=headers, headers_required=False)
+        message = SmartAppFromMessage(body, headers=headers, headers_required=False,
+                                      validators=self.from_msg_validators)
 
         status, reason, answer = await self.handle_message(message)
 

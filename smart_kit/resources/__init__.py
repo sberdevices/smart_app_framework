@@ -6,6 +6,7 @@ from core.db_adapter.aioredis_adapter import AIORedisAdapter
 
 from core.db_adapter.db_adapter import db_adapters
 from core.db_adapter.ignite_adapter import IgniteAdapter
+from core.db_adapter.ignite_thread_adapter import IgniteThreadAdapter
 from core.db_adapter.redis_adapter import RedisAdapter
 from core.repositories.file_repository import FileRepository
 from core.repositories.folder_repository import FolderRepository
@@ -23,11 +24,11 @@ from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAc
 from core.basic_models.actions.external_actions import ExternalAction
 from core.basic_models.actions.counter_actions import CounterIncrementAction, CounterDecrementAction, \
     CounterClearAction, CounterSetAction, CounterCopyAction
-from core.basic_models.requirement.basic_requirements import requirement_factory
+from core.basic_models.requirement.basic_requirements import requirement_factory, IntersectionRequirement
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink, RawItem
 from core.basic_models.requirement.basic_requirements import requirements, Requirement, AndRequirement, \
-    OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement, TimeRequirement
+    OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement, TimeRequirement, DateTimeRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
@@ -67,9 +68,10 @@ from scenarios.scenario_models.forms.forms_description import FormsDescription
 from scenarios.user.last_scenarios.last_scenarios_descriptions import LastScenariosDescriptions
 from scenarios.scenario_models.field.external_field_filler_descriptions import ExternalFieldFillerDescriptions
 from scenarios.actions.action import (
-    AskAgainAction, BreakScenarioAction, ClearCurrentScenarioAction, ClearCurrentScenarioFormAction, ClearFormAction,
-    ClearInnerFormAction, ClearScenarioByIdAction, ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction,
-    FillFieldAction, RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
+    AskAgainAction, BreakScenarioAction, ChoiceScenarioAction, ClearCurrentScenarioAction,
+    ClearCurrentScenarioFormAction, ClearFormAction, ClearInnerFormAction, ClearScenarioByIdAction,
+    ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction, FillFieldAction,
+    RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
     ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction
 )
 from scenarios.requirements.requirements import AskAgainExistRequirement, TemplateInArrayRequirement, \
@@ -183,6 +185,7 @@ class SmartAppResources(BaseConfig):
 
     def init_scenarios(self):
         scenarios[None] = BaseScenario
+        scenarios["base"] = BaseScenario
         scenarios["form_filling"] = FormFillingScenario
         scenarios["tree"] = TreeScenario
 
@@ -252,6 +255,7 @@ class SmartAppResources(BaseConfig):
         actions["do_nothing"] = DoingNothingAction
         actions["requirement"] = RequirementAction
         actions["choice"] = ChoiceAction
+        actions["choice_scenario"] = ChoiceScenarioAction
         actions["else"] = ElseAction
         actions["composite"] = CompositeAction
         actions["counter_increment"] = CounterIncrementAction
@@ -293,7 +297,11 @@ class SmartAppResources(BaseConfig):
         requirements["counter_value"] = CounterValueRequirement
         requirements["counter_time"] = CounterUpdateTimeRequirement
         requirements["channel"] = ChannelRequirement
+        requirements["datetime"] = DateTimeRequirement
         requirements["external"] = ExternalRequirement
+        requirements["intersection"] = IntersectionRequirement
+        requirements["not"] = NotRequirement
+        requirements["or"] = OrRequirement
         requirements["platform_type"] = dr.PlatformTypeRequirement
         requirements["platform_version"] = dr.PlatformVersionRequirement
         requirements["surface"] = dr.SurfaceRequirement
@@ -346,6 +354,7 @@ class SmartAppResources(BaseConfig):
     def init_db_adapters(self):
         db_adapters[None] = MemoryAdapter
         db_adapters["ignite"] = IgniteAdapter
+        db_adapters["ignite_thread"] = IgniteThreadAdapter
         db_adapters["memory"] = MemoryAdapter
         db_adapters["redis"] = RedisAdapter
         db_adapters["aioredis"] = AIORedisAdapter

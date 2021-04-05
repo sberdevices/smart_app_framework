@@ -6,8 +6,9 @@ health_check:
   port: 1234
   interface: 0.0.0.0
   debug_envs:
-    - dev
+    - local
 jaeger_config:
+  service_name: template-service-name
   logging: true
   enabled: false
   trace_id_header: template-app-trace-id
@@ -22,5 +23,5 @@ masking_fields:
   - refresh_token
   - epkId
   - profileId
-user_save_check_for_collisions: false
 user_save_collisions_tries: 2
+self_service_with_state_save_messages: true

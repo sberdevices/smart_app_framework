@@ -39,11 +39,13 @@ class User(BaseUser):
         self.do_not_save = False
         self.initial_db_data = db_data
 
+    def _initialize(self):
         db_version = self.variables.get(self.USER_DB_VERSION, default=0)
         self.variables.set(self.USER_DB_VERSION, db_version + 1)
         log("%(class_name)s.__init__ USER %(uid)s LOAD db_version = %(db_version)s.", self,
-                      {"db_version": str(db_version),
-                       "uid": str(self.id)})
+            {"db_version": str(db_version),
+             "uid": str(self.id)})
+        self.behaviors.initialize()
 
     @property
     def fields(self):

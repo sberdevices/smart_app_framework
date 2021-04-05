@@ -57,7 +57,7 @@ class MockRequirement:
     def __init__(self, items):
         self.result = items.get("result")
 
-    def check(self, text_preprocessing_result, user):
+    def check(self, text_preprocessing_result, user, params):
         return self.result
 
 
@@ -382,7 +382,7 @@ class AfinaAnswerActionTest(unittest.TestCase):
     def test_typical_answer(self):
         user = Mock()
         user.parametrizer = MockParametrizer(user, {})
-        expected = [MagicMock(_name="ANSWER_TO_USER", raw={'message_name': 'ANSWER_TO_USER',
+        expected = [MagicMock(_name="ANSWER_TO_USER", raw={'messageName': 'ANSWER_TO_USER',
                                                            'payload': {'answer': 'a1'}})]
         items = {
             "nodes": {
@@ -398,7 +398,7 @@ class AfinaAnswerActionTest(unittest.TestCase):
     def test_typical_answer_with_other(self):
         user = Mock()
         user.parametrizer = MockParametrizer(user, {})
-        expected = [MagicMock(_name="ANSWER_TO_USER", raw={'message_name': 'ANSWER_TO_USER',
+        expected = [MagicMock(_name="ANSWER_TO_USER", raw={'messageName': 'ANSWER_TO_USER',
                                                            'payload': {'answer': 'a1',
                                                                        "pronounce_text": 'pt2',
                                                                        "picture": "1.jpg"}})]
@@ -416,7 +416,7 @@ class AfinaAnswerActionTest(unittest.TestCase):
         self.assertEqual(expected[0].raw, result[0].raw)
 
     def test_typical_answer_with_pers_info(self):
-        expected = [MagicMock(_name="ANSWER_TO_USER", raw={'message_name': 'ANSWER_TO_USER',
+        expected = [MagicMock(_name="ANSWER_TO_USER", raw={'messageName': 'ANSWER_TO_USER',
                                                            'payload': {'answer': 'Ivan Ivanov'}})]
         user = Mock()
         user.parametrizer = MockParametrizer(user, {})
@@ -496,10 +496,10 @@ class CardAnswerActionTest(unittest.TestCase):
                 }
             }
         }
-        exp1 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'Ivan Ivanov', 'items': [{'bubble': {'text': 'Text1'}}, {'card': {'type': 'simple_list', 'header': '1 доллар США ', 'items': [{'title': 'Купить', 'body': '67.73 RUR'}, {'title': 'Продать', 'body': '64.56 RUR'}], 'footer': 'Ivan Ivanov Сбербанк Онлайн на сегодня 17:53 при обмене до 1000 USD'}}], 'suggestions': {'buttons': [{'title': 'Отделения', 'action': {'text': 'Где ближайщие отделения сбера?', 'type': 'text'}}]}}}"
-        exp2 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'Ivan Ivanov', 'items': [{'bubble': {'text': 'Text2'}}, {'card': {'type': 'simple_list', 'header': '1 доллар США ', 'items': [{'title': 'Купить', 'body': '67.73 RUR'}, {'title': 'Продать', 'body': '64.56 RUR'}], 'footer': 'Ivan Ivanov Сбербанк Онлайн на сегодня 17:53 при обмене до 1000 USD'}}], 'suggestions': {'buttons': [{'title': 'Отделения', 'action': {'text': 'Где ближайщие отделения сбера?', 'type': 'text'}}]}}}"
-        exp3 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'items': [{'bubble': {'text': 'Text1'}}, {'card': {'type': 'simple_list', 'header': '1 доллар США ', 'items': [{'title': 'Купить', 'body': '67.73 RUR'}, {'title': 'Продать', 'body': '64.56 RUR'}], 'footer': 'Ivan Ivanov Сбербанк Онлайн на сегодня 17:53 при обмене до 1000 USD'}}], 'suggestions': {'buttons': [{'title': 'Отделения', 'action': {'text': 'Где ближайщие отделения сбера?', 'type': 'text'}}]}}}"
-        exp4 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'items': [{'bubble': {'text': 'Text2'}}, {'card': {'type': 'simple_list', 'header': '1 доллар США ', 'items': [{'title': 'Купить', 'body': '67.73 RUR'}, {'title': 'Продать', 'body': '64.56 RUR'}], 'footer': 'Ivan Ivanov Сбербанк Онлайн на сегодня 17:53 при обмене до 1000 USD'}}], 'suggestions': {'buttons': [{'title': 'Отделения', 'action': {'text': 'Где ближайщие отделения сбера?', 'type': 'text'}}]}}}"
+        exp1 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'Ivan Ivanov', 'items': [{'bubble': {'text': 'Text1'}}, {'card': {'type': 'simple_list', 'header': '1 доллар США ', 'items': [{'title': 'Купить', 'body': '67.73 RUR'}, {'title': 'Продать', 'body': '64.56 RUR'}], 'footer': 'Ivan Ivanov Сбербанк Онлайн на сегодня 17:53 при обмене до 1000 USD'}}], 'suggestions': {'buttons': [{'title': 'Отделения', 'action': {'text': 'Где ближайщие отделения сбера?', 'type': 'text'}}]}}}"
+        exp2 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'Ivan Ivanov', 'items': [{'bubble': {'text': 'Text2'}}, {'card': {'type': 'simple_list', 'header': '1 доллар США ', 'items': [{'title': 'Купить', 'body': '67.73 RUR'}, {'title': 'Продать', 'body': '64.56 RUR'}], 'footer': 'Ivan Ivanov Сбербанк Онлайн на сегодня 17:53 при обмене до 1000 USD'}}], 'suggestions': {'buttons': [{'title': 'Отделения', 'action': {'text': 'Где ближайщие отделения сбера?', 'type': 'text'}}]}}}"
+        exp3 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'items': [{'bubble': {'text': 'Text1'}}, {'card': {'type': 'simple_list', 'header': '1 доллар США ', 'items': [{'title': 'Купить', 'body': '67.73 RUR'}, {'title': 'Продать', 'body': '64.56 RUR'}], 'footer': 'Ivan Ivanov Сбербанк Онлайн на сегодня 17:53 при обмене до 1000 USD'}}], 'suggestions': {'buttons': [{'title': 'Отделения', 'action': {'text': 'Где ближайщие отделения сбера?', 'type': 'text'}}]}}}"
+        exp4 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'items': [{'bubble': {'text': 'Text2'}}, {'card': {'type': 'simple_list', 'header': '1 доллар США ', 'items': [{'title': 'Купить', 'body': '67.73 RUR'}, {'title': 'Продать', 'body': '64.56 RUR'}], 'footer': 'Ivan Ivanov Сбербанк Онлайн на сегодня 17:53 при обмене до 1000 USD'}}], 'suggestions': {'buttons': [{'title': 'Отделения', 'action': {'text': 'Где ближайщие отделения сбера?', 'type': 'text'}}]}}}"
         expect_arr = [exp1, exp2, exp3, exp4]
         for i in range(10):
             action = SDKAnswer(items)
@@ -519,10 +519,10 @@ class CardAnswerActionTest(unittest.TestCase):
                 "pronounceText": ["pronounceText1", "pronounceText2"],
             }
         }
-        exp1 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1'}}"
-        exp2 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1'}}"
-        exp3 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText2'}}"
-        exp4 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText2'}}"
+        exp1 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1'}}"
+        exp2 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1'}}"
+        exp3 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText2'}}"
+        exp4 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText2'}}"
         exp_list = [exp1, exp2, exp3, exp4]
         for i in range(10):
             action = SDKAnswer(items)
@@ -557,10 +557,10 @@ class CardAnswerActionTest(unittest.TestCase):
                     ]
                 }
         }
-        exp1 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'suggestions': {'buttons': [{'title': 'Ivan Ivanov', 'action': {'text': 'отделения', 'type': 'text'}}, {'title': 'кредит1', 'action': {'text': 'кредит', 'type': 'text'}}]}}}"
-        exp2 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'suggestions': {'buttons': [{'title': 'Ivan Ivanov', 'action': {'text': 'отделения', 'type': 'text'}}, {'title': 'кредит2', 'action': {'text': 'кредит', 'type': 'text'}}]}}}"
-        exp3 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'suggestions': {'buttons': [{'title': 'отделения2', 'action': {'text': 'отделения', 'type': 'text'}}, {'title': 'кредит1', 'action': {'text': 'кредит', 'type': 'text'}}]}}}"
-        exp4 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'suggestions': {'buttons': [{'title': 'отделения2', 'action': {'text': 'отделения', 'type': 'text'}}, {'title': 'кредит2', 'action': {'text': 'кредит', 'type': 'text'}}]}}}"
+        exp1 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'suggestions': {'buttons': [{'title': 'Ivan Ivanov', 'action': {'text': 'отделения', 'type': 'text'}}, {'title': 'кредит1', 'action': {'text': 'кредит', 'type': 'text'}}]}}}"
+        exp2 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'suggestions': {'buttons': [{'title': 'Ivan Ivanov', 'action': {'text': 'отделения', 'type': 'text'}}, {'title': 'кредит2', 'action': {'text': 'кредит', 'type': 'text'}}]}}}"
+        exp3 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'suggestions': {'buttons': [{'title': 'отделения2', 'action': {'text': 'отделения', 'type': 'text'}}, {'title': 'кредит1', 'action': {'text': 'кредит', 'type': 'text'}}]}}}"
+        exp4 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'suggestions': {'buttons': [{'title': 'отделения2', 'action': {'text': 'отделения', 'type': 'text'}}, {'title': 'кредит2', 'action': {'text': 'кредит', 'type': 'text'}}]}}}"
         expect_arr = [exp1, exp2, exp3, exp4]
         for i in range(10):
             action = SDKAnswer(items)
@@ -651,8 +651,8 @@ class SDKRandomAnswer(unittest.TestCase):
                     }
                 ]
         }
-        exp1 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'items': [{'bubble': {'text': 't2', 'markdown': False}}, {'card': {'cards_params': 'a lot of params'}}], 'suggestions': {'buttons': [{'title': 'p2', 'action': {'text': 't2', 'type': 'text'}}, {'title': 'p2', 'action': {'text': 't2', 'type': 'text'}}, {'title': 'p2', 'action': {'deep_link': 'www.ww.w', 'type': 'deep_link'}}]}, 'pronounceText': 'p2'}}"
-        exp2 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'items': [{'bubble': {'text': 'Ivan Ivanov', 'markdown': False}}, {'card': {'cards_params': 'a lot of params'}}], 'suggestions': {'buttons': [{'title': 'p1', 'action': {'text': 'Ivan Ivanov', 'type': 'text'}}, {'title': 'p1', 'action': {'text': 'Ivan Ivanov', 'type': 'text'}}, {'title': 'p1', 'action': {'deep_link': 'www.ww.w', 'type': 'deep_link'}}]}, 'pronounceText': 'p1'}}"
+        exp1 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'items': [{'bubble': {'text': 't2', 'markdown': False}}, {'card': {'cards_params': 'a lot of params'}}], 'suggestions': {'buttons': [{'title': 'p2', 'action': {'text': 't2', 'type': 'text'}}, {'title': 'p2', 'action': {'text': 't2', 'type': 'text'}}, {'title': 'p2', 'action': {'deep_link': 'www.ww.w', 'type': 'deep_link'}}]}, 'pronounceText': 'p2'}}"
+        exp2 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'items': [{'bubble': {'text': 'Ivan Ivanov', 'markdown': False}}, {'card': {'cards_params': 'a lot of params'}}], 'suggestions': {'buttons': [{'title': 'p1', 'action': {'text': 'Ivan Ivanov', 'type': 'text'}}, {'title': 'p1', 'action': {'text': 'Ivan Ivanov', 'type': 'text'}}, {'title': 'p1', 'action': {'deep_link': 'www.ww.w', 'type': 'deep_link'}}]}, 'pronounceText': 'p1'}}"
 
         action = SDKAnswerToUser(items)
         for i in range(3):
@@ -700,8 +700,8 @@ class SDKRandomAnswer(unittest.TestCase):
                     },
                 ]
         }
-        exp1 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'p1'}}"
-        exp2 = "{'message_name': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'p2'}}"
+        exp1 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'p1'}}"
+        exp2 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'p2'}}"
 
         action = SDKAnswerToUser(items)
         for i in range(3):
@@ -727,7 +727,7 @@ class SDKRandomAnswer(unittest.TestCase):
         }
         action = SDKAnswerToUser(items)
         result = action.run(user, None)
-        self.assertDictEqual(result[0].raw, {'message_name': 'ANSWER_TO_USER', 'payload': {'items': [{'bubble': {'text': '42', 'markdown': True}}]}})
+        self.assertDictEqual(result[0].raw, {'messageName': 'ANSWER_TO_USER', 'payload': {'items': [{'bubble': {'text': '42', 'markdown': True}}]}})
 
     def test_SDKItemAnswer_suggestions_template(self):
 
@@ -752,7 +752,7 @@ class SDKRandomAnswer(unittest.TestCase):
         self.assertDictEqual(
             result[0].raw,
             {
-                'message_name': 'ANSWER_TO_USER',
+                'messageName': 'ANSWER_TO_USER',
                 'payload': {
                     'suggestions': {
                         'buttons': [

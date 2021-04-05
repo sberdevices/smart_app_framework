@@ -40,11 +40,11 @@
             "type": "string",
             "command": "ANSWER_TO_USER",
             "nodes": {
-              "pronounceText": "Привет, {% if main_form.person.name is defined %}{{main_form.person.name}}{% else %}{{main_form.person}}{% endif %}!",
+              "pronounceText": "Привет, {% if main_form.person.name is defined %}{{main_form.person.name}}{% else %}{{main_form.person}}{% endif %}!  {{ gender_sensitive_text('bundle_hello_scenario', 'key_answer') }}",
               "items": [
                 {
                   "bubble": {
-                    "text": "Привет, {% if main_form.person.name is defined %}{{main_form.person.name|title}}{% else %}{{main_form.person|title}}{% endif %}!"
+                    "text": "Привет, {% if main_form.person.name is defined %}{{main_form.person.name|title}}{% else %}{{main_form.person|title}}{% endif %}!  {{ gender_sensitive_text('bundle_hello_scenario', 'key_answer') }}"
                   }
                 }
               ]

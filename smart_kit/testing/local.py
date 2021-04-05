@@ -83,7 +83,7 @@ class Environment(TypeCastByAnnotation):
         self.character_appeal = "official"
         self.character_gender = "male"
         self.character_id = "sber"
-        self.character_name = "Сбербанк"
+        self.character_name = "Сбер"
         self.chat_id = "1"
         self.config = get_app_config()
         self.device_capabilities_misc = True
@@ -242,7 +242,7 @@ class CLInterface(cmd.Cmd):
     @staticmethod
     def format_answer_value(ans):
         resp = ""
-        if ans["message_name"] == "ANSWER_TO_USER":
+        if ans["messageName"] == "ANSWER_TO_USER":
             params = ans["payload"]
             for k in CLInterface.VPS_KEYS:
                 if params.get(k):
@@ -296,8 +296,10 @@ class CLInterface(cmd.Cmd):
         print("Текущий сценарий: ", self.environment.intent)
 
     def process_message(self, raw_message: str, headers: tuple = ()) -> typing.Tuple[typing.Any, list]:
+        from smart_kit.configs import get_app_config
         masking_fields = self.settings["template_settings"].get("masking_fields")
-        message = SmartAppFromMessage(raw_message, headers=headers, masking_fields=masking_fields)
+        message = SmartAppFromMessage(raw_message, headers=headers, masking_fields=masking_fields,
+                                      validators=get_app_config().FROM_MSG_VALIDATORS)
         user = self.__user_cls(self.environment.user_id, message, self.user_data, self.settings,
                                self.app_model.scenario_descriptions,
                                self.__parametrizer_cls, load_error=False)
@@ -331,7 +333,7 @@ class CLInterface(cmd.Cmd):
         for answer in answers:
             ans = answer.raw
             print("{}\nrequest type: {}\n".format(self.format_answer_value(ans), answer.request_type))
-            if ans["message_name"] == "ANSWER_TO_USER":
+            if ans["messageName"] == "ANSWER_TO_USER":
                 params = ans["payload"]
                 intent = params.get("intent")
                 if intent:

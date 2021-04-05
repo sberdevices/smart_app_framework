@@ -1,4 +1,6 @@
+import inspect
 import pickle
+import sys
 from abc import ABC, abstractmethod
 from typing import Any, Dict, Optional, Union, List
 
@@ -227,3 +229,11 @@ class SciKitClassifier(ExtendedClassifier):
             pass
 
         return prediction_result
+
+
+# Реализованные на данный момент типы классификаторов
+SUPPORTED_CLASSIFIERS_TYPES = frozenset([
+    class_tuple[1].CLASSIFIER_TYPE
+    for class_tuple in inspect.getmembers(sys.modules[__name__], inspect.isclass)
+    if hasattr(class_tuple[1], "CLASSIFIER_TYPE") and class_tuple[1].CLASSIFIER_TYPE
+])

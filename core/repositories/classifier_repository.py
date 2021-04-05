@@ -6,14 +6,14 @@ import tensorflow as tf
 from keras.utils import CustomObjectScope
 
 import scenarios.logging.logger_constants as scenarios_log_const
-from core.basic_models.classifiers.basic_classifiers import SkipClassifier, SciKitClassifier, ExternalClassifier
-from core.basic_models.classifiers.classifiers_constants import REQUIRED_CONFIG_PARAMS, SUPPORTED_CLASSIFIERS_TYPES
+from core.basic_models.classifiers.basic_classifiers import SkipClassifier, SciKitClassifier, ExternalClassifier, \
+    SUPPORTED_CLASSIFIERS_TYPES
+from core.basic_models.classifiers.classifiers_constants import REQUIRED_CONFIG_PARAMS
 from core.logging.logger_utils import log
 from core.repositories.base_repository import BaseRepository
 from core.repositories.dill_repository import DillRepository
 from core.repositories.folder_repository import FolderRepository
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
-
 
 CLASSIFIER_TYPES_MAP = OrderedDict({"scikit": SciKitClassifier, "skip": SkipClassifier, "external": ExternalClassifier})
 

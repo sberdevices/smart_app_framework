@@ -1,5 +1,6 @@
 """Константы классификаторов."""
 
+
 # Константы любого классификатора, формирующие шаблон ответа
 SCORE_KEY = "score"
 ANSWER_KEY = "answer"
@@ -15,6 +16,3 @@ INTENT_RECOGNIZER_OTHER_KEY = "other"
 
 # Параметры, наличие которых обязательно в конфиге любого классификатора
 REQUIRED_CONFIG_PARAMS = frozenset(["type"])
-
-# Реализованные на данный момент типы классификаторов
-SUPPORTED_CLASSIFIERS_TYPES = frozenset(["external", "scikit", "skip"])

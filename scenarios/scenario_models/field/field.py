@@ -86,6 +86,10 @@ class QuestionField(BasicField):
         super(QuestionField, self).__init__(description, items, user, lifetime)
 
     @property
+    def value(self):
+        return self._value if self._value is not None else self.default_value
+
+    @property
     def default_value(self):
         if self.description.need_load_context:
             prev_value = self._user.last_fields[self.description.id].value

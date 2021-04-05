@@ -1,15 +1,18 @@
-import os
+from typing import AnyStr, Optional
 import json
+import os
+
 from lazy import lazy
 
 from core.configs.global_constants import LINK_BEHAVIOR_FLAG, CALLBACK_ID_HEADER
 from core.message.from_message import SmartAppFromMessage
-
+from smart_kit.compatibility.commands import combine_commands
+from smart_kit.configs import Settings
+from smart_kit.message.smartapp_to_message import SmartAppToMessage
+from smart_kit.models.smartapp_model import SmartAppModel
+from smart_kit.request.kafka_request import SmartKitKafkaRequest
 from smart_kit.testing.utils import Environment
 from smart_kit.utils.diff import partial_diff
-from smart_kit.request.kafka_request import SmartKitKafkaRequest
-from smart_kit.message.smartapp_to_message import SmartAppToMessage
-from smart_kit.compatibility.commands import combine_commands
 
 
 def create_message(data, headers=None):
@@ -19,7 +22,8 @@ def create_message(data, headers=None):
     return SmartAppFromMessage(json.dumps(defaults), headers=headers)
 
 
-def run_testfile(path, file, app_model, settings, user_cls, parametrizer_cls):
+def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings: Settings, user_cls: type,
+                 parametrizer_cls: type):
     test_file_path = os.path.join(path, file)
     if not os.path.isfile(test_file_path) or not test_file_path.endswith('.json'):
         raise FileNotFoundError
@@ -29,11 +33,11 @@ def run_testfile(path, file, app_model, settings, user_cls, parametrizer_cls):
         for test_case in json_obj:
             print(f"[+] Processing test case {test_case} from {test_file_path}")
             if TestCase(
-                app_model,
-                settings,
-                user_cls,
-                parametrizer_cls,
-                **json_obj[test_case],
+                    app_model,
+                    settings,
+                    user_cls,
+                    parametrizer_cls,
+                    **json_obj[test_case],
             ).run():
                 print(f"[+] {test_case} OK")
                 success += 1
@@ -88,7 +92,8 @@ class TestSuite:
 
 
 class TestCase:
-    def __init__(self, app_model, settings, user_cls, parametrizer_cls, messages, user=None):
+    def __init__(self, app_model: SmartAppModel, settings: Settings, user_cls: type, parametrizer_cls: type,
+                 messages: dict, user: Optional[dict] = None):
         self.messages = messages
         self.user_state = json.dumps(user)
 

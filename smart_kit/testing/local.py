@@ -1,16 +1,16 @@
 import cmd
+import json
 import os
 import pprint
 import typing
 
-import json
-from core.descriptions.descriptions import Descriptions
-from core.message.from_message import SmartAppFromMessage
 from lazy import lazy
 
+from core.descriptions.descriptions import Descriptions
+from core.message.from_message import SmartAppFromMessage
 from smart_kit.compatibility.commands import combine_commands
-from smart_kit.testing import utils
 from smart_kit.testing import suite
+from smart_kit.testing import utils
 
 
 class CLInterface(cmd.Cmd):
@@ -98,11 +98,11 @@ class CLInterface(cmd.Cmd):
 
         print(f"{var} = {value}")
 
-    def do_run(self, _input: str):
+    def do_run(self, file_name: str):
         try:
             suite.run_testfile(
                 os.getcwd(),
-                _input,
+                file_name,
                 self.app_model,
                 self.settings,
                 self.__user_cls,

@@ -1,6 +1,7 @@
 import concurrent.futures
 import os
 import threading
+from time import sleep
 
 from confluent_kafka.cimpl import KafkaException
 
@@ -14,6 +15,7 @@ class ParallelKafkaMainLoop(KafkaMainLoop):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.max_workers = self.settings["template_settings"].get("max_workers", (os.cpu_count() or 1) * 5)
+        self.no_workers_sleep_time = self.settings["template_settings"].get("no_workers_sleep_time", 0.05)
         self.pool = self.get_pool()
         self._tasks = []
         self._locks = {}
@@ -66,12 +68,15 @@ class ParallelKafkaMainLoop(KafkaMainLoop):
         message_value = None
 
         try:
-            for mq_message in consumer.consume(self.max_workers - len(self._tasks)):
-                if not mq_message:
-                    continue
-                message_value = mq_message.value()
-                task = self.pool.submit(self.process_message, mq_message, consumer, kafka_key, "")
-                self._tasks.append(task)
+            available_workers_count = self.max_workers - len(self._tasks)
+            if available_workers_count:
+                for mq_message in consumer.consume(self.max_workers - len(self._tasks)):
+                    if mq_message:
+                        message_value = mq_message.value()
+                        task = self.pool.submit(self.process_message, mq_message, consumer, kafka_key, "")
+                        self._tasks.append(task)
+            else:
+                sleep(self.no_workers_sleep_time)
 
         except KafkaException as kafka_exp:
             log("kafka error: %(kafka_exp)s. MESSAGE: {}.".format(message_value),

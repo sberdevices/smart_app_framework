@@ -10,7 +10,8 @@ from lazy import lazy
 import scenarios.logging.logger_constants as log_const
 from core.jaeger_custom_client import jaeger_utils
 from core.jaeger_custom_client import kafka_codec as jaeger_kafka_codec
-from core.logging.logger_utils import log, MESSAGE_ID_STR
+from core.logging.logger_utils import log, UID_STR, MESSAGE_ID_STR
+
 from core.message.from_message import SmartAppFromMessage
 from core.model.heapq.heapq_storage import HeapqKV
 from core.mq.kafka.kafka_consumer import KafkaConsumer
@@ -213,7 +214,8 @@ class MainLoop(BaseMainLoop):
                                           masking_fields=self.masking_fields)
 
             # TODO вернуть проверку ключа!!!
-            if message.validate():  # and self.check_message_key(message, mq_message.key()):
+            if message.validate():
+                self.check_message_key(message, mq_message.key())
                 log(
                     "INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %(incoming_data)s",
                     params={log_const.KEY_NAME: "incoming_message",
@@ -338,22 +340,36 @@ class MainLoop(BaseMainLoop):
                     level="ERROR", exc_info=True)
 
     def check_message_key(self, from_message, message_key):
-        message_key = message_key or b""
         sub = from_message.sub
         channel = from_message.channel
         uid = from_message.uid
-        if sub:
-            valid_key = "{}_{}_{}".format(channel, sub, uid)
-        else:
-            valid_key = "{}_{}".format(channel, uid)
-        key_str = message_key.decode()
+        message_key = message_key or b""
+        try:
+            params = [channel, sub, uid]
+            valid_key = ""
+            for value in params:
+                if value:
+                    valid_key = "{}{}{}".format(valid_key, "_", value) if valid_key else "{}".format(value)
+            key_str = message_key.decode()
 
-        message_key_is_valid = key_str == valid_key
-        if not message_key_is_valid:
-            log("Failed to check Kafka message key %(message_key)s !=  %(valid_key)s",
-                params={"message_key": key_str, "valid_key": valid_key},
-                level="ERROR", exc_info=True)
-        return message_key_is_valid
+            message_key_is_valid = key_str == valid_key
+            if not message_key_is_valid:
+                log(f"Failed to check Kafka message key {message_key} !=  {valid_key}",
+                    params={
+                        log_const.KEY_NAME: "check_kafka_key_validation",
+                        MESSAGE_ID_STR: from_message.incremental_id,
+                        UID_STR: uid
+                    },
+                    level="WARNING")
+            return message_key_is_valid
+        except:
+            log(f"Exception to check Kafka message key {message_key}",
+                params={log_const.KEY_NAME: "check_kafka_key_error",
+                        MESSAGE_ID_STR: from_message.incremental_id,
+                        UID_STR: uid
+                        }, level="ERROR")
+            return False
+
 
     def _send_request(self, user, answer, mq_message):
         kafka_broker_settings = self.settings["template_settings"].get(

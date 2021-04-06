@@ -3,10 +3,10 @@
     {
       "request": {
         "message": {},
-        "mock": "default_request_params"
+        "predefined_fields": "default_request_params"
       },
       "response": {
-        "mock": "default_response_scheme",
+        "predefined_fields": "default_response_scheme",
         "pronounce_texts": [
           "Как тебя зовут?"
         ]
@@ -48,10 +48,10 @@
             }
           ]
         },
-        "mock": "default_request_params"
+        "predefined_fields": "default_request_params"
       },
       "response": {
-        "mock": "default_response_scheme",
+        "predefined_fields": "default_response_scheme",
         "pronounce_texts": [
           "Привет, Олег!  Меня зовут Сбер. Прошу любить и не жаловаться! Простите за глупую шутку, волнуюсь Сколько лет ты программируешь на Python?"
         ]
@@ -116,10 +116,10 @@
             }
           ]
         },
-        "mock": "default_request_params"
+        "predefined_fields": "default_request_params"
       },
       "response": {
-        "mock": "default_response_scheme",
+        "predefined_fields": "default_response_scheme",
         "pronounce_texts": [
           "Ах, приятно знать что ты в опытных руках! Хочешь я тебе расскажу о том, что умею?"
         ]
@@ -162,10 +162,10 @@
             }
           ]
         },
-        "mock": "default_request_params"
+        "predefined_fields": "default_request_params"
       },
       "response": {
-        "mock": "default_response_scheme",
+        "predefined_fields": "default_response_scheme",
         "pronounce_texts": [
           "Что ж, было приятно познакомиться!"
         ]

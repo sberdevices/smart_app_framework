@@ -16,7 +16,7 @@ from smart_kit.utils.diff import partial_diff
 
 
 def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings: Settings, user_cls: type,
-                 parametrizer_cls: type, storaged_mocks: Dict[str, Any]) -> Tuple[int, int]:
+                 parametrizer_cls: type, storaged_predefined_fields: Dict[str, Any]) -> Tuple[int, int]:
     test_file_path = os.path.join(path, file)
     if not os.path.isfile(test_file_path) or not test_file_path.endswith('.json'):
         raise FileNotFoundError
@@ -34,7 +34,7 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
                     user_cls,
                     parametrizer_cls,
                     **test_params,
-                    storaged_mocks=storaged_mocks
+                    storaged_predefined_fields=storaged_predefined_fields
             ).run():
                 print(f"[+] {test_case} OK")
                 success += 1
@@ -43,11 +43,11 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
 
 
 class TestSuite:
-    def __init__(self, path: AnyStr, app_config: Any, mock_storage_file: AnyStr):
+    def __init__(self, path: AnyStr, app_config: Any, predefined_fields_storage: AnyStr):
         self.path = path
         self.app_config = app_config
-        with open(mock_storage_file, "r") as f:
-            self.storaged_mocks = json.load(f)
+        with open(predefined_fields_storage, "r") as f:
+            self.storaged_predefined_fields = json.load(f)
 
     @lazy
     def app_model(self):
@@ -83,7 +83,7 @@ class TestSuite:
                     self.settings,
                     self.app_config.USER,
                     self.app_config.PARAMETRIZER,
-                    self.storaged_mocks
+                    self.storaged_predefined_fields
                 )
                 total += file_total
                 total_success += file_success
@@ -93,13 +93,13 @@ class TestSuite:
 
 class TestCase:
     def __init__(self, app_model: SmartAppModel, settings: Settings, user_cls: type, parametrizer_cls: type,
-                 messages: dict, storaged_mocks: Dict[str, Any], user: Optional[dict] = None):
+                 messages: dict, storaged_predefined_fields: Dict[str, Any], user: Optional[dict] = None):
         self.messages = messages
         self.user_state = json.dumps(user)
 
         self.app_model = app_model
         self.settings = settings
-        self.storaged_mocks = storaged_mocks
+        self.storaged_predefined_fields = storaged_predefined_fields
 
         self.__parametrizer_cls = parametrizer_cls
         self.__user_cls = user_cls
@@ -133,9 +133,9 @@ class TestCase:
                 user=user, commands=commands, message=message
             )
 
-            mock_resp = response.get("mock")
-            if mock_resp:
-                response = self.handle_mock_response(mock_resp, response)
+            predefined_fields_resp = response.get("predefined_fields")
+            if predefined_fields_resp:
+                response = self.handle_predefined_fields_response(predefined_fields_resp, response)
             expected_answers = response["messages"]
             expected_user = response["user"]
 
@@ -179,16 +179,16 @@ class TestCase:
     def create_message(self, data, headers=None):
         defaults = Environment().as_dict
 
-        mock = data.get("mock")
+        predefined_fields = data.get("predefined_fields")
         is_payload_field = data.get("payload")
-        if mock:
-            mock_data = self.storaged_mocks[mock]
-            if not is_payload_field and not mock_data.get("payload"):
-                mock_data = {"payload": mock_data}
-            if is_payload_field and mock_data.get("payload"):
-                raise Exception("Payload field is in test case and in mock object, check it!")
-            defaults.update(mock_data)
-            del data["mock"]
+        if predefined_fields:
+            predefined_fields_data = self.storaged_predefined_fields[predefined_fields]
+            if not is_payload_field and not predefined_fields_data.get("payload"):
+                predefined_fields_data = {"payload": predefined_fields_data}
+            if is_payload_field and predefined_fields_data.get("payload"):
+                raise Exception("Payload field is in test case and in predefined_fields object, check it!")
+            defaults.update(predefined_fields_data)
+            del data["predefined_fields"]
 
         message = data.get("message")
         if message:
@@ -197,10 +197,10 @@ class TestCase:
         defaults.update(data)
         return SmartAppFromMessage(json.dumps(defaults), headers=headers)
 
-    def handle_mock_response(self, mock_resp, response):
-        mock_resp_data = self.storaged_mocks[mock_resp]
-        response.update(mock_resp_data)
-        del response["mock"]
+    def handle_predefined_fields_response(self, predefined_fields_resp, response):
+        predefined_fields_resp_data = self.storaged_predefined_fields[predefined_fields_resp]
+        response.update(predefined_fields_resp_data)
+        del response["predefined_fields"]
 
         pronounce_texts = response.get("pronounce_texts", [])
         if pronounce_texts:

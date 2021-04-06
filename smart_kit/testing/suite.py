@@ -1,6 +1,6 @@
-from typing import AnyStr, Optional
 import json
 import os
+from typing import AnyStr, Optional, Tuple, Any, Dict
 
 from lazy import lazy
 
@@ -16,7 +16,7 @@ from smart_kit.utils.diff import partial_diff
 
 
 def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings: Settings, user_cls: type,
-                 parametrizer_cls: type, mock_storage_file):
+                 parametrizer_cls: type, storaged_mocks: Dict[str, Any]) -> Tuple[int, int]:
     test_file_path = os.path.join(path, file)
     if not os.path.isfile(test_file_path) or not test_file_path.endswith('.json'):
         raise FileNotFoundError
@@ -34,7 +34,7 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
                     user_cls,
                     parametrizer_cls,
                     **test_params,
-                    mock_storage_file=mock_storage_file
+                    storaged_mocks=storaged_mocks
             ).run():
                 print(f"[+] {test_case} OK")
                 success += 1
@@ -43,11 +43,11 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
 
 
 class TestSuite:
-    def __init__(self, path, app_config, mock_storage_file):
+    def __init__(self, path: AnyStr, app_config: Any, mock_storage_file: AnyStr):
         self.path = path
         self.app_config = app_config
-        with open(mock_storage_file, "r") as mock_storage:
-            self.mock_storage_file = json.load(mock_storage)
+        with open(mock_storage_file, "r") as f:
+            self.storaged_mocks = json.load(f)
 
     @lazy
     def app_model(self):
@@ -83,7 +83,7 @@ class TestSuite:
                     self.settings,
                     self.app_config.USER,
                     self.app_config.PARAMETRIZER,
-                    self.mock_storage_file
+                    self.storaged_mocks
                 )
                 total += file_total
                 total_success += file_success
@@ -93,13 +93,13 @@ class TestSuite:
 
 class TestCase:
     def __init__(self, app_model: SmartAppModel, settings: Settings, user_cls: type, parametrizer_cls: type,
-                 messages: dict, mock_storage_file, user: Optional[dict] = None):
+                 messages: dict, storaged_mocks: Dict[str, Any], user: Optional[dict] = None):
         self.messages = messages
         self.user_state = json.dumps(user)
 
         self.app_model = app_model
         self.settings = settings
-        self.mock_storage_file = mock_storage_file
+        self.storaged_mocks = storaged_mocks
 
         self.__parametrizer_cls = parametrizer_cls
         self.__user_cls = user_cls
@@ -182,7 +182,7 @@ class TestCase:
         mock = data.get("mock")
         is_payload_field = data.get("payload")
         if mock:
-            mock_data = self.mock_storage_file[mock]
+            mock_data = self.storaged_mocks[mock]
             if not is_payload_field and not mock_data.get("payload"):
                 mock_data = {"payload": mock_data}
             if is_payload_field and mock_data.get("payload"):
@@ -198,7 +198,7 @@ class TestCase:
         return SmartAppFromMessage(json.dumps(defaults), headers=headers)
 
     def handle_mock_response(self, mock_resp, response):
-        mock_resp_data = self.mock_storage_file[mock_resp]
+        mock_resp_data = self.storaged_mocks[mock_resp]
         response.update(mock_resp_data)
         del response["mock"]
 

@@ -1,11 +1,10 @@
 import argparse
-import sys
 import os
 import shutil
+import sys
+
 import smart_kit
-
 from core.descriptions.descriptions import Descriptions
-
 from smart_kit.management.base import AppCommand
 from smart_kit.testing.suite import TestSuite
 

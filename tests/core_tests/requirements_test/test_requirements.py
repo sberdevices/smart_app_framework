@@ -1,18 +1,17 @@
-# coding: utf-8
 import os
 import unittest
 from time import time
 from unittest.mock import Mock, patch
 
 import smart_kit
-from core.model.registered import registered_factories
+from core.basic_models.classifiers.basic_classifiers import ExternalClassifier
 from core.basic_models.operators.operators import Operator
-
 from core.basic_models.requirement.basic_requirements import Requirement, CompositeRequirement, AndRequirement, \
     OrRequirement, NotRequirement, RandomRequirement, TopicRequirement, TemplateRequirement, RollingRequirement, \
-    TimeRequirement, DateTimeRequirement, IntersectionRequirement
-from core.basic_models.requirement.device_requirements import ChannelRequirement
+    TimeRequirement, DateTimeRequirement, IntersectionRequirement, ClassifierRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
+from core.basic_models.requirement.device_requirements import ChannelRequirement
+from core.model.registered import registered_factories
 from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
 
 
@@ -352,6 +351,38 @@ class RequirementTest(unittest.TestCase):
             {'lemma': 'что'},
         ]
         self.assertFalse(requirement.check(text_normalization_result, user))
+
+    @patch.object(ExternalClassifier, "find_best_answer", return_value=[{"answer": "нет", "score": 1.0, "other": False}])
+    def test_classifier_requirement_true(self, mock_classifier_model):
+        """Тест кейз проверяет что условие возвращает True, если результат классификации запроса относится к одной
+        из указанных категорий, прошедших порог, но не равной классу other.
+        """
+        test_items = {"type": "classifier", "classifier": {"type": "external", "classifier": "hello_scenario_classifier"}}
+        classifier_requirement = ClassifierRequirement(test_items)
+        mock_user = Mock()
+        mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
+        result = classifier_requirement.check(Mock(), mock_user)
+        self.assertTrue(result)
+
+    @patch.object(ExternalClassifier, "find_best_answer", return_value=[])
+    def test_classifier_requirement_false(self, mock_classifier_model):
+        """Тест кейз проверяет что условие возвращает False, если модель классификации не вернула ответ."""
+        test_items = {"type": "classifier", "classifier": {"type": "external", "classifier": "hello_scenario_classifier"}}
+        classifier_requirement = ClassifierRequirement(test_items)
+        mock_user = Mock()
+        mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
+        result = classifier_requirement.check(Mock(), mock_user)
+        self.assertFalse(result)
+
+    @patch.object(ExternalClassifier, "find_best_answer", return_value=[{"answer": "other", "score": 1.0, "other": True}])
+    def test_classifier_requirement_false_if_class_other(self, mock_classifier_model):
+        """Тест кейз проверяет что условие возвращает False, если наиболее вероятный вариант есть класс other."""
+        test_items = {"type": "classifier", "classifier": {"type": "external", "classifier": "hello_scenario_classifier"}}
+        classifier_requirement = ClassifierRequirement(test_items)
+        mock_user = Mock()
+        mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
+        result = classifier_requirement.check(Mock(), mock_user)
+        self.assertFalse(result)
 
 
 if __name__ == '__main__':

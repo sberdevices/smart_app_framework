@@ -110,6 +110,74 @@
           }
         ]
       },
+      "book_is_read": {
+        "required": true,
+        "available": false,
+        "questions": [
+          {
+            "type": "string",
+            "command": "ANSWER_TO_USER",
+            "nodes": {
+              "pronounceText": "А книгу Марка Лутца 'Изучаем Python' знаешь?",
+              "items": [
+                {
+                  "bubble": {
+                    "text": "А книгу Марка Лутца 'Изучаем Python' знаешь?"
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "filler": {
+          "type": "classifier",
+          "intents": [
+            "да",
+            "нет"
+          ],
+          "classifier": {
+            "type": "external",
+            "classifier": "hello_scenario_classifier"
+          }
+        },
+        "on_filled_actions": [
+          {
+            "type": "else",
+            "requirement": {
+              "type": "template",
+              "template": "{{main_form.book_is_read == 'да'}}"
+            },
+            "action": {
+              "type": "string",
+              "command": "ANSWER_TO_USER",
+              "nodes": {
+                "pronounceText": "Здорово, а я вот как раз по ней учусь!",
+                "items": [
+                  {
+                    "bubble": {
+                      "text": "Здорово, а я вот как раз по ней учусь!"
+                    }
+                  }
+                ]
+              }
+            },
+            "else_action": {
+              "type": "string",
+              "command": "ANSWER_TO_USER",
+              "nodes": {
+                "pronounceText": "Говорят, что эта книга полезна, посмотри если будет время.",
+                "items": [
+                  {
+                    "bubble": {
+                      "text": "Говорят, что эта книга полезна, посмотри если будет время."
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        ]
+      },
       "tell_me_more": {
         "required": true,
         "questions": [

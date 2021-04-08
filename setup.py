@@ -34,7 +34,7 @@ setup(
         "keras==2.3.1",
         "lazy",
         "nltk==3.5",
-        "numpy==1.20.1",
+        "numpy",
         "objgraph==3.4.1",
         "prometheus-client==0.7.1",
         "psutil==5.8.0",

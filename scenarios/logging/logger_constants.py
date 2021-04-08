@@ -68,7 +68,7 @@ DIALOG_SCENARIO_MESSAGE = "Dialog manager run last scenario info: %(key_name)s=%
                           "distance=%(distance)s, scenario_description=%(scenario_description)s, " \
                           "root_id=%(root_id)s"
 INVALID_INTENT_MESSAGE = 'Invalid intent, intent=%(intent_id)s'
-CLASSIFIER_MESSAGE = "classifier:%(classifier_name)s, result: %(result)s, " \
+CLASSIFIER_MESSAGE = "classifier: %(classifier_name)s, result: %(result)s, " \
                      "weights: %(score)s, time: %(time)s ms"
 CHOSEN_SCENARIO_MESSAGE = "%(key_name)s=%(chosen_scenario)s"
 CHOSEN_ACTION_MESSAGE = "%(key_name)s=%(chosen_action)s"

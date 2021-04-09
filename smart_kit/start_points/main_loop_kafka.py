@@ -225,7 +225,8 @@ class MainLoop(BaseMainLoop):
                                               "kafka_key": kafka_key,
                                               "incoming_data": str(message.masked_value),
                                               "headers": str(mq_message.headers()),
-                                              MESSAGE_ID_STR: message.incremental_id})
+                                              "surface": str(message.payload.get("surface") or ""),
+                                              MESSAGE_ID_STR: message.incremental_id}, user=user,)
 
                         db_uid = message.db_uid
 

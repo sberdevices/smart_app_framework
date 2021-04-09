@@ -1,11 +1,10 @@
 import argparse
-import sys
 import os
 import shutil
+import sys
+
 import smart_kit
-
 from core.descriptions.descriptions import Descriptions
-
 from smart_kit.management.base import AppCommand
 from smart_kit.testing.suite import TestSuite
 
@@ -26,6 +25,8 @@ class TestsCommand(AppCommand):
         self.app_config = app_config
         self.parser = argparse.ArgumentParser(description="Tests creating and running.")
         self.parser.add_argument("path", metavar="PATH", type=str, help="Path to directory with tests", action="store")
+        self.parser.add_argument("predefined_fields_storage", metavar="PREDEFINED_FIELDS_STORAGE", type=str,
+                                 help="Path to json file with stored predefined fields", action="store")
         self.commands = self.parser.add_mutually_exclusive_group(required=True)
         self.commands.add_argument("--run", dest="run", help="Runs Tests", action="store_true")
         self.commands.add_argument(
@@ -42,7 +43,7 @@ class TestsCommand(AppCommand):
         if namespace.gen:
             self.generate_tests_folder(namespace.path, namespace.update)
         elif namespace.run:
-            self.run_tests(namespace.path)
+            self.run_tests(namespace.path, namespace.predefined_fields_storage)
         else:
             raise Exception("Something going wrong due parsing the args")
 
@@ -75,13 +76,17 @@ class TestsCommand(AppCommand):
                     if not update:
                         raise
 
-    def run_tests(self, path):
+    def run_tests(self, path, predefined_fields_storage):
         path = define_path(path)
+        predefined_fields_storage = define_path(predefined_fields_storage)
         if not os.path.exists(path):
             print(f"[!] Tests folder does not found at {path}")
             return
-
-        TestSuite(path, self.app_config).run()
+        elif not os.path.exists(predefined_fields_storage):
+            print(f"[!] Predefined fields storage file does not found, check file path: {predefined_fields_storage}")
+            return
+        else:
+            TestSuite(path, self.app_config, predefined_fields_storage).run()
 
     def get_test_template_path(self):
         path = os.path.join(self.app_config.REFERENCES_PATH, self.TEST_TEMPLATE_PATH)

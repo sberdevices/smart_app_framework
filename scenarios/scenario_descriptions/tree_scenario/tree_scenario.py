@@ -1,6 +1,7 @@
 # coding: utf-8
 from lazy import lazy
 from typing import Dict, Any
+
 from scenarios.scenario_descriptions.form_filling_scenario import FormFillingScenario
 from scenarios.scenario_descriptions.tree_scenario.tree_scenario_node import TreeScenarioNode
 from core.model.factory import dict_factory
@@ -23,10 +24,10 @@ class TreeScenario(FormFillingScenario):
     def scenario_nodes(self):
         return self._scenario_nodes
 
-    def _question_field(self, form, text_preprocessing_result, user, params):
+    def _field(self, form, text_preprocessing_result, user, params):
         current_node = self.get_current_node(user)
         internal_form = self._get_internal_form(form.forms, current_node.form_key)
-        return self._find_question_field(internal_form, text_preprocessing_result, user, params)
+        return self._find_field(internal_form, text_preprocessing_result, user, params)
 
     def _set_current_node_id(self, user, node_id):
         user.scenario_models[self.id].current_node = node_id
@@ -91,7 +92,7 @@ class TreeScenario(FormFillingScenario):
         current_node = self.get_current_node(user)
         new_node = current_node
         self._add_loop_count(user, new_node.id)
-        internal_form, question_form = None, None
+        internal_form, form = None, None
         fill_other = True
         on_filled_actions = []
 
@@ -123,7 +124,7 @@ class TreeScenario(FormFillingScenario):
                     if extracted is not None and fill_other:
                         fill_other = fill_other and field_descr.fill_other
                         field_data = {field_key: extracted}
-                        _validation_error_msg = self._get_validation_error_msg(user, text_preprocessing_result,
+                        _validation_error_msg = self._validate_extracted_data(user, text_preprocessing_result,
                                                                                internal_form, field_data, params)
                         if _validation_error_msg:
                             # return only first validation message in form
@@ -140,7 +141,7 @@ class TreeScenario(FormFillingScenario):
                 return validation_error_msg
 
             if internal_form.is_valid():
-                if not current_node.available_nodes and not question_form:
+                if not current_node.available_nodes and not form:
                     # end node found
                     main_form.set_valid()
                     self._remove_current_node_id(user)
@@ -153,22 +154,23 @@ class TreeScenario(FormFillingScenario):
                     user.history.add_event(event)
                     break
 
-            elif not question_form:
-                question_form = internal_form
+            elif not form:
+                form = internal_form
                 self._set_current_node_id(user, current_node.id)
             new_node = self.get_next_node(user, current_node, text_preprocessing_result, params)
 
-        question_field = self._find_question_field(question_form, text_preprocessing_result,
-                                                   user, params) if question_form else None
+        field = self._find_field(form, text_preprocessing_result,
+                                                   user, params) if form else None
+
         reply_commands = on_filled_actions
-        if question_field:
+        if field:
             event = Event(type=HistoryConstants.types.FIELD_EVENT,
                           scenario=self.root_id,
                           node=current_node.id,
-                          content={HistoryConstants.content_fields.FIELD: question_field.description.id},
+                          content={HistoryConstants.content_fields.FIELD: field.description.id},
                           results=HistoryConstants.event_results.ASK_QUESTION)
             user.history.add_event(event)
-        _command = self.get_reply(user, text_preprocessing_result, current_node.actions, question_field, main_form)
+        _command = self.get_reply(user, text_preprocessing_result, current_node.actions, field, main_form)
         reply_commands.extend(_command)
 
         if not reply_commands:

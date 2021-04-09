@@ -38,6 +38,3 @@ class HeapqKV:
             self._to_remove.remove(key)
             return False
         return True
-
-
-

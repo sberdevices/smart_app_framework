@@ -13,36 +13,31 @@ field_descriptions = Registered()
 field_description_factory = build_factory(field_descriptions)
 
 
-class FieldDescription:
+class BasicFieldDescription:
     DEFAULT_AVAILABLE_VALUE = True
 
     def __init__(self, items, id):
         self.id = id
         self.name = id
-        self.required = items.get("required", False)
+        self.type = items.get("type")
+        self._required = items.get("required", False)
         self._filler = items.get("filler")
         self.default_value = items.get("default_value")
-        self.need_save_context = items.get("need_save_context", False)
-        self.need_load_context = items.get("need_load_context", False)
         self.available = items.get("available", self.DEFAULT_AVAILABLE_VALUE)
-        self._questions = items.get("questions", [])
+        self._requests = items.get("requests", [])
         self._on_filled_actions = items.get("on_filled_actions", [])
-        self.is_comment = items.get("is_comment", False)
-        self.fill_other = items.get("fill_other", True)
         self._requirement = items.get("requirement")
         self._field_validator = items.get("field_validator")
+        self.need_save_context = items.get("need_save_context", False)
+        self.need_load_context = items.get("need_load_context", False)
+        self.fill_other = items.get("fill_other", True)
         self._ask_again_question = items.get("ask_again_question")
         self.has_again_question = bool(self._ask_again_question)
 
     @lazy
     @list_factory(Action)
-    def questions(self):
-        return self._questions
-
-    @lazy
-    @factory(Action)
-    def ask_again_question(self):
-        return self._ask_again_question
+    def requests(self):
+        return self._requests
 
     @lazy
     @list_factory(Action)
@@ -50,8 +45,11 @@ class FieldDescription:
         return self._on_filled_actions
 
     @property
-    def has_questions(self):
-        return True if self._questions else False
+    def has_requests(self):
+        return True if self._requests else False
+
+    def required(self):
+        return self._required
 
     @lazy
     @factory(Requirement)

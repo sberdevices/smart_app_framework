@@ -1,7 +1,7 @@
 from unittest import TestCase
 from unittest.mock import Mock, MagicMock
 
-from scenarios.scenario_models.field.field import Field
+from scenarios.scenario_models.field.field import QuestionField
 
 
 class TestField(TestCase):
@@ -11,7 +11,7 @@ class TestField(TestCase):
         description = Mock()
         lifetime = 10
         items = {"value": expected, "available": False}
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
 
         result = field.value
         self.assertEqual(expected, result)
@@ -26,7 +26,7 @@ class TestField(TestCase):
 
         lifetime = 10
         items = None
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
 
         result = field.value
         self.assertEqual(expected, result)
@@ -45,7 +45,7 @@ class TestField(TestCase):
 
         lifetime = 10
         items = None
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
 
         result = field.value
         self.assertEqual(expected, result)
@@ -65,7 +65,7 @@ class TestField(TestCase):
 
         lifetime = 10
         items = None
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
 
         result = field.value
         self.assertEqual(expected, result)
@@ -75,7 +75,7 @@ class TestField(TestCase):
         description = Mock()
         lifetime = 10
         items = {"value": "my_value", "available": True}
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
 
         self.assertTrue(field.valid)
 
@@ -89,7 +89,7 @@ class TestField(TestCase):
         description.required = False
         lifetime = 10
         items = {"available": True}
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
 
         self.assertTrue(field.valid)
 
@@ -101,7 +101,7 @@ class TestField(TestCase):
         mock_user.last_fields = {description.id: Mock(value=None)}
         lifetime = 10
         items = {"available": True}
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
 
         self.assertFalse(field.valid)
 
@@ -114,7 +114,7 @@ class TestField(TestCase):
         description.available = False
         lifetime = 10
         items = {"value": "my_value", "available": True}
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
 
         result = field.raw
         self.assertDictEqual(expected, result)
@@ -128,7 +128,7 @@ class TestField(TestCase):
         description.available = True
         lifetime = 10
         items = {"value": "my_value", "available": True}
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
 
         result = field.raw
         self.assertDictEqual(expected, result)
@@ -141,7 +141,7 @@ class TestField(TestCase):
         description.available = True
         lifetime = 10
         items = {"value": None, "available": True}
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
 
         result = field.raw
         self.assertEqual(result, expected)
@@ -154,7 +154,7 @@ class TestField(TestCase):
         description.available = False
         lifetime = 10
         items = {"value": expected, "available": False}
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
         field.fill("some_value")
         result = field.value
         self.assertEqual(expected, result)
@@ -170,7 +170,7 @@ class TestField(TestCase):
 
         lifetime = 10
         items = {"value": "my_value", "available": True}
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
         field.fill("some_value")
         result = field.value
         self.assertEqual(expected, result)
@@ -194,7 +194,7 @@ class TestField(TestCase):
 
         lifetime = 10
         items = {"value": "my_value", "available": True}
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
         field.fill(expected)
         result = field.value
 
@@ -212,7 +212,7 @@ class TestField(TestCase):
 
         lifetime = 10
         items = {"value": "my_value", "available": True}
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
         field.fill(None)
         result = field.value
         self.assertEqual(expected, result)
@@ -225,7 +225,7 @@ class TestField(TestCase):
         description.available = True
         lifetime = 10
         items = {"value": None, "available": False}
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
         field.set_available()
         self.assertTrue(field.available)
 
@@ -236,6 +236,6 @@ class TestField(TestCase):
         description.available = False
         lifetime = 10
         items = {"value": None, "available": True}
-        field = Field(description, items, mock_user, lifetime)
+        field = QuestionField(description, items, mock_user, lifetime)
         field.reset_available()
         self.assertFalse(field.available)

@@ -60,13 +60,15 @@ from scenarios.requirements.requirements import AskAgainExistRequirement, Templa
 from scenarios.scenario_descriptions.form_filling_scenario import FormFillingScenario
 from scenarios.scenario_descriptions.scenarios_description import ScenariosDescriptions
 from scenarios.scenario_descriptions.tree_scenario.tree_scenario import TreeScenario
-from scenarios.scenario_models.field.composite_field import CompositeField
 from scenarios.scenario_models.field.external_field_filler_descriptions import ExternalFieldFillerDescriptions
-from scenarios.scenario_models.field.field import field_models, Field, field_model_factory
 from scenarios.scenario_models.field.field_descriptions.composite_field_description import CompositeFieldDescription
-from scenarios.scenario_models.field.field_descriptions.field_description import field_descriptions, \
-    field_description_factory, \
-    FieldDescription
+from scenarios.scenario_models.field.field_descriptions.basic_field_description import field_descriptions, \
+    field_description_factory, BasicFieldDescription
+from scenarios.scenario_models.field.field_descriptions.question_field_description import QuestionFieldDescription
+from scenarios.scenario_models.field.field_descriptions.integration_field_description import IntegrationFieldDescription
+from scenarios.scenario_models.field.field import field_models, field_model_factory, BasicField, IntegrationField, \
+    QuestionField
+from scenarios.scenario_models.field.composite_field import CompositeField
 from scenarios.scenario_models.forms.composite_forms import CompositeForm
 from scenarios.scenario_models.forms.form import BaseForm, form_models, form_model_factory, Form
 from scenarios.scenario_models.forms.form_description import form_descriptions, form_description_factory, \
@@ -211,12 +213,16 @@ class SmartAppResources(BaseConfig):
         form_models[CompositeFormDescription] = CompositeForm
 
     def init_field_descriptions(self):
-        field_descriptions[None] = FieldDescription
+        field_descriptions[None] = QuestionFieldDescription
+        field_descriptions["question"] = QuestionFieldDescription
         field_descriptions["composite"] = CompositeFieldDescription
+        field_descriptions["integration"] = IntegrationFieldDescription
 
     def init_field_model(self):
-        field_models[FieldDescription] = Field
+        field_models[BasicFieldDescription] = BasicField
         field_models[CompositeFieldDescription] = CompositeField
+        field_models[QuestionFieldDescription] = QuestionField
+        field_models[IntegrationFieldDescription] = IntegrationField
 
     def init_scenario_models(self):
         scenario_models[FormFillingScenario] = FormFillingScenarioModel
@@ -229,8 +235,8 @@ class SmartAppResources(BaseConfig):
         registered_factories[BaseScenarioModel] = scenario_model_factory
         registered_factories[BaseFormDescription] = form_description_factory
         registered_factories[BaseForm] = form_model_factory
-        registered_factories[FieldDescription] = field_description_factory
-        registered_factories[Field] = field_model_factory
+        registered_factories[BasicFieldDescription] = field_description_factory
+        registered_factories[BasicField] = field_model_factory
         registered_factories[op.Operator] = op.operator_factory
         registered_factories[cmp.Comparator] = cmp.comparator_factory
         registered_factories[Requirement] = requirement_factory

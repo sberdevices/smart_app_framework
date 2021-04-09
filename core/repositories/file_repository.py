@@ -29,4 +29,3 @@ class FileRepository(ItemsRepository):
     def save(self, save_parameters):
         with self.source.open(self.save_target, 'wb') as stream:
             stream.write(self.saver(self.data, **save_parameters).encode())
-

@@ -60,9 +60,6 @@ class BaseScenario:
     def text_fits(self, text_preprocessing_result, user):
         return False
 
-    def check_comment_field(self, text_preprocessing_result, user):
-        return False
-
     def get_no_commands_action(self, user, text_preprocessing_result, params: Dict[str, Any] = None):
         log_params = {log_const.KEY_NAME: scenarios_log_const.CHOSEN_ACTION_VALUE,
                   scenarios_log_const.CHOSEN_ACTION_VALUE: self._empty_answer}

@@ -147,7 +147,8 @@ class SaveBehaviorActionTest(unittest.TestCase):
         tpr_raw = tpr.raw
         action.run(self.user, tpr)
         self.user.behaviors.add.assert_called_once_with(self.user.message.generate_new_callback_id(), "test",
-                                                        self.user.last_scenarios.last_scenario_name, tpr_raw)
+                                                        self.user.last_scenarios.last_scenario_name, tpr_raw,
+                                                        action_params=None)
 
     def test_save_behavior_without_scenario_name(self):
         data = {"behavior": "test", "check_scenario": False}
@@ -159,7 +160,7 @@ class SaveBehaviorActionTest(unittest.TestCase):
         text_preprocessing_result = Mock(raw=text_preprocessing_result_raw)
         action.run(self.user, text_preprocessing_result, None)
         self.user.behaviors.add.assert_called_once_with(self.user.message.generate_new_callback_id(), "test", None,
-                                                        text_preprocessing_result_raw)
+                                                        text_preprocessing_result_raw, action_params=None)
 
 
 class SelfServiceActionWithStateTest(unittest.TestCase):

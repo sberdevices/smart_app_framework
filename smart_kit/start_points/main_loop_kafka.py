@@ -217,6 +217,7 @@ class MainLoop(BaseMainLoop):
 
                     # TODO вернуть проверку ключа!!!
                     if message.validate():  # and self.check_message_key(message, mq_message.key()):
+                        _surface = str((message.payload.get("device") or {}).get("surface") or "")
                         log("INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %(incoming_data)s",
                                       params={log_const.KEY_NAME: "incoming_message",
                                               "topic": mq_message.topic(),
@@ -225,7 +226,7 @@ class MainLoop(BaseMainLoop):
                                               "kafka_key": kafka_key,
                                               "incoming_data": str(message.masked_value),
                                               "headers": str(mq_message.headers()),
-                                              "surface": str(message.payload.get("surface") or ""),
+                                              "surface": _surface,
                                               MESSAGE_ID_STR: message.incremental_id}, user=user,)
 
                         db_uid = message.db_uid

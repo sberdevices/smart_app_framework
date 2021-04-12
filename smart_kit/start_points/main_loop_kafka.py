@@ -218,16 +218,19 @@ class MainLoop(BaseMainLoop):
                     # TODO вернуть проверку ключа!!!
                     if message.validate():  # and self.check_message_key(message, mq_message.key()):
                         _surface = str((message.payload.get("device") or {}).get("surface") or "")
-                        log("INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %(incoming_data)s",
-                                      params={log_const.KEY_NAME: "incoming_message",
-                                              "topic": mq_message.topic(),
-                                              "message_partition": mq_message.partition(),
-                                              "message_key": mq_message.key(),
-                                              "kafka_key": kafka_key,
-                                              "incoming_data": str(message.masked_value),
-                                              "headers": str(mq_message.headers()),
-                                              "surface": _surface,
-                                              MESSAGE_ID_STR: message.incremental_id}, user=user,)
+                        log(
+                            "INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %(incoming_data)s",
+                            params={log_const.KEY_NAME: "incoming_message",
+                                    "topic": mq_message.topic(),
+                                    "message_partition": mq_message.partition(),
+                                    "message_key": mq_message.key(),
+                                    "kafka_key": kafka_key,
+                                    "incoming_data": str(message.masked_value),
+                                    "headers": str(mq_message.headers()),
+                                    "surface": _surface,
+                                    MESSAGE_ID_STR: message.incremental_id},
+                            user=user
+                        )
 
                         db_uid = message.db_uid
 

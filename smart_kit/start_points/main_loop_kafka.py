@@ -215,6 +215,14 @@ class MainLoop(BaseMainLoop):
 
             # TODO вернуть проверку ключа!!!
             if message.validate():
+                waiting_message_time = 0
+                if message.creation_time:
+                    waiting_message_time = time.time() * 1000 - message.creation_time
+                    stats += "Waiting message: {} msecs\n".format(waiting_message_time)
+
+                stats += "Mid: {}\n".format(message.incremental_id)
+                smart_kit_metrics.sampling_mq_waiting_time(self.app_name, waiting_message_time / 1000)
+
                 self.check_message_key(message, mq_message.key())
                 log(
                     "INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %(incoming_data)s",

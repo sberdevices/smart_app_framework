@@ -211,7 +211,8 @@ class MainLoop(BaseMainLoop):
             message_value = mq_message.value()
             message = SmartAppFromMessage(message_value,
                                           headers=mq_message.headers(),
-                                          masking_fields=self.masking_fields)
+                                          masking_fields=self.masking_fields,
+                                          creation_time=consumer.get_msg_create_time(mq_message))
 
             # TODO вернуть проверку ключа!!!
             if message.validate():

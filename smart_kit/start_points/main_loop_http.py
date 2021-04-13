@@ -1,3 +1,4 @@
+import json
 import typing
 from wsgiref.simple_server import make_server
 
@@ -5,7 +6,7 @@ import scenarios.logging.logger_constants as log_const
 from core.basic_models.actions.command import Command
 from core.configs.global_constants import CALLBACK_ID_HEADER
 from core.logging.logger_utils import log
-from core.message.from_message import SmartAppFromMessage
+from core.message.from_message import SmartAppFromMessage, basic_error_message
 from core.utils.stats_timer import StatsTimer
 from smart_kit.compatibility.commands import combine_commands
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
@@ -15,8 +16,9 @@ from smart_kit.start_points.base_main_loop import BaseMainLoop
 
 class BaseHttpMainLoop(BaseMainLoop):
     HEADER_START_WITH = "HTTP_SMART_APP_"
-    BAD_REQUEST_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Message"})
+    BAD_REQUEST_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Request Message"})
     NO_ANSWER_COMMAND = Command(message_names.NOTHING_FOUND)
+    BAD_ANSWER_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Answer Message"})
 
     def run(self):
         raise NotImplementedError
@@ -26,13 +28,34 @@ class BaseHttpMainLoop(BaseMainLoop):
 
     def handle_message(self, message: SmartAppFromMessage) -> typing.Tuple[int, str, SmartAppToMessage]:
         if not message.validate():
-            return 400, "BAD REQUEST", SmartAppToMessage(self.BAD_REQUEST_COMMAND, message=message, request=None)
+            result = 400, "BAD REQUEST", SmartAppToMessage(
+                self.BAD_REQUEST_COMMAND,
+                message=message,
+                request=None,
+            )
+            try:
+                result[2].as_dict
+            except (json.JSONDecodeError, KeyError):
+                result = 400, "BAD REQUEST", SmartAppToMessage(
+                        self.BAD_REQUEST_COMMAND,
+                        message=basic_error_message,
+                        request=None,
+                    )
+            finally:
+                return result
+
 
         answer, stats = self.process_message(message)
         if not answer:
             return 204, "NO CONTENT", SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None)
 
-        return 200, "OK", SmartAppToMessage(answer, message, request=None)
+        answer_message = SmartAppToMessage(
+            answer, message, request=None,
+            validators=self.to_msg_validators)
+        if answer_message.validate():
+            return 200, "OK", answer_message
+        else:
+            return 500, "BAD ANSWER", SmartAppToMessage(self.BAD_ANSWER_COMMAND, message=message, request=None)
 
     def process_message(self, message: SmartAppFromMessage, *args, **kwargs):
         stats = ""
@@ -98,7 +121,8 @@ class HttpMainLoop(BaseHttpMainLoop):
             log("Error in request data", level="ERROR")
             raise Exception("Error in request data")
 
-        message = SmartAppFromMessage(body, headers=headers, headers_required=False)
+        message = SmartAppFromMessage(body, headers=headers, headers_required=False,
+                                      validators=self.from_msg_validators)
 
         status, reason, answer = self.handle_message(message)
 

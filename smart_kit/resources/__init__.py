@@ -1,82 +1,89 @@
-from core.configs.base_config import BaseConfig
+import json
 
-import core.basic_models.operators.operators as op
 import core.basic_models.operators.comparators as cmp
-from core.db_adapter.aioredis_adapter import AIORedisAdapter
-
-from core.db_adapter.db_adapter import db_adapters
-from core.db_adapter.ignite_adapter import IgniteAdapter
-from core.db_adapter.redis_adapter import RedisAdapter
-from core.repositories.file_repository import FileRepository
-from core.repositories.folder_repository import FolderRepository
-from core.utils.loader import ordered_json
-from core.request.base_request import requests_registered
-from core.request.rest_request import RestRequest
-from core.descriptions.descriptions import registered_description_factories
-from core.basic_models.scenarios.base_scenario import scenarios
-from core.model.registered import registered_factories
+import core.basic_models.operators.operators as op
+import core.basic_models.requirement.device_requirements as dr
+import scenarios.scenario_models.field.composite_fillers as cffd
+import scenarios.scenario_models.field.field_filler_description as ffd
+import scenarios.scenario_models.field_requirements.field_requirements as frd
 from core.basic_models.actions.basic_actions import actions, action_factory, Action, \
     DoingNothingAction, RequirementAction, ChoiceAction, ElseAction, CompositeAction
-from core.basic_models.scenarios.base_scenario import BaseScenario
-from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAction, SDKAnswer, \
-    SDKAnswerToUser
-from core.basic_models.actions.external_actions import ExternalAction
 from core.basic_models.actions.counter_actions import CounterIncrementAction, CounterDecrementAction, \
     CounterClearAction, CounterSetAction, CounterCopyAction
-from core.basic_models.requirement.basic_requirements import requirement_factory
+from core.basic_models.actions.external_actions import ExternalAction
+from core.basic_models.actions.external_actions import ExternalActions
+from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAction, SDKAnswer, \
+    SDKAnswerToUser
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink, RawItem
+from core.basic_models.classifiers.basic_classifiers import classifiers, classifier_factory, Classifier, \
+    ExternalClassifier, SciKitClassifier, SkipClassifier
+from core.basic_models.classifiers.external_classifiers import ExternalClassifiers
+from core.basic_models.requirement.basic_requirements import requirement_factory, IntersectionRequirement
 from core.basic_models.requirement.basic_requirements import requirements, Requirement, AndRequirement, \
-    OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement, TimeRequirement, DateTimeRequirement
+    OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement, TimeRequirement, DateTimeRequirement, \
+    ClassifierRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
-from core.basic_models.actions.external_actions import ExternalActions
 from core.basic_models.requirement.external_requirements import ExternalRequirements
+from core.basic_models.scenarios.base_scenario import BaseScenario
+from core.basic_models.scenarios.base_scenario import scenarios
+from core.configs.base_config import BaseConfig
+from core.db_adapter.aioredis_adapter import AIORedisAdapter
+from core.db_adapter.db_adapter import db_adapters
+from core.db_adapter.ignite_adapter import IgniteAdapter
+from core.db_adapter.ignite_thread_adapter import IgniteThreadAdapter
+from core.db_adapter.memory_adapter import MemoryAdapter
+from core.db_adapter.redis_adapter import RedisAdapter
+from core.descriptions.descriptions import registered_description_factories
 from core.model.queued_objects.limited_queued_hashable_objects_description import \
     LimitedQueuedHashableObjectsDescriptions
-from core.db_adapter.memory_adapter import MemoryAdapter
-import core.basic_models.requirement.device_requirements as dr
-
-import scenarios.scenario_models.field_requirements.field_requirements as frd
-import scenarios.scenario_models.field.field_filler_description as ffd
-import scenarios.scenario_models.field.composite_fillers as cffd
+from core.model.registered import registered_factories
+from core.repositories.classifier_repository import ClassifierRepository
+from core.repositories.file_repository import FileRepository
+from core.repositories.folder_repository import FolderRepository
+from core.request.base_request import requests_registered
+from core.request.rest_request import RestRequest
+from core.utils.loader import ordered_json
+from scenarios.actions.action import (
+    AskAgainAction, BreakScenarioAction, ChoiceScenarioAction, ClearCurrentScenarioAction,
+    ClearCurrentScenarioFormAction, ClearFormAction, ClearInnerFormAction, ClearScenarioByIdAction,
+    ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction, FillFieldAction,
+    RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
+    ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction
+)
+from scenarios.actions.action import ProcessBehaviorAction, SelfServiceActionWithState, EmptyAction
+from scenarios.behaviors.behavior_descriptions import BehaviorDescriptions
+from scenarios.requirements.requirements import AskAgainExistRequirement, TemplateInArrayRequirement, \
+    ArrayItemInTemplateRequirement, RegexpInTemplateRequirement
 from scenarios.scenario_descriptions.form_filling_scenario import FormFillingScenario
+from scenarios.scenario_descriptions.scenarios_description import ScenariosDescriptions
 from scenarios.scenario_descriptions.tree_scenario.tree_scenario import TreeScenario
+from scenarios.scenario_models.field.external_field_filler_descriptions import ExternalFieldFillerDescriptions
+from scenarios.scenario_models.field.field_descriptions.composite_field_description import CompositeFieldDescription
+from scenarios.scenario_models.field.field_descriptions.basic_field_description import field_descriptions, \
+    field_description_factory, BasicFieldDescription
+from scenarios.scenario_models.field.field_descriptions.question_field_description import QuestionFieldDescription
+from scenarios.scenario_models.field.field_descriptions.integration_field_description import IntegrationFieldDescription
+from scenarios.scenario_models.field.field import field_models, field_model_factory, BasicField, IntegrationField, \
+    QuestionField
+from scenarios.scenario_models.field.composite_field import CompositeField
+from scenarios.scenario_models.forms.composite_forms import CompositeForm
+from scenarios.scenario_models.forms.form import BaseForm, form_models, form_model_factory, Form
 from scenarios.scenario_models.forms.form_description import form_descriptions, form_description_factory, \
     BaseFormDescription, \
     FormDescription, CompositeFormDescription
-from scenarios.scenario_models.forms.form import BaseForm, form_models, form_model_factory, Form
-from scenarios.scenario_models.forms.composite_forms import CompositeForm
-from scenarios.scenario_models.field.field_descriptions.composite_field_description import CompositeFieldDescription
-from scenarios.scenario_models.field.field_descriptions.field_description import field_descriptions, \
-    field_description_factory, \
-    FieldDescription
-from scenarios.scenario_models.field.field import field_models, Field, field_model_factory
-from scenarios.scenario_models.field.composite_field import CompositeField
-from scenarios.scenario_models.scenario_models import scenario_models, scenario_model_factory, BaseScenarioModel, \
-    TreeScenarioModel, FormFillingScenarioModel
+from scenarios.scenario_models.forms.forms_description import FormsDescription
 from scenarios.scenario_models.history import HistoryDescription, \
     EventFormatter, formatters, formatters_factory, HistoryEventFormatter
-from scenarios.scenario_descriptions.scenarios_description import ScenariosDescriptions
+from scenarios.scenario_models.scenario_models import scenario_models, scenario_model_factory, BaseScenarioModel, \
+    TreeScenarioModel, FormFillingScenarioModel
+from scenarios.user.last_scenarios.last_scenarios_descriptions import LastScenariosDescriptions
 from scenarios.user.preprocessing_messages.preprocessing_messages_description import \
     PreprocessingMessagesDescription
-from scenarios.scenario_models.forms.forms_description import FormsDescription
-from scenarios.user.last_scenarios.last_scenarios_descriptions import LastScenariosDescriptions
-from scenarios.scenario_models.field.external_field_filler_descriptions import ExternalFieldFillerDescriptions
-from scenarios.actions.action import (
-    AskAgainAction, BreakScenarioAction, ClearCurrentScenarioAction, ClearCurrentScenarioFormAction, ClearFormAction,
-    ClearInnerFormAction, ClearScenarioByIdAction, ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction,
-    FillFieldAction, RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
-    ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction
-)
-from scenarios.requirements.requirements import AskAgainExistRequirement, TemplateInArrayRequirement, \
-    ArrayItemInTemplateRequirement, RegexpInTemplateRequirement
-from scenarios.actions.action import ProcessBehaviorAction, SelfServiceActionWithState, EmptyAction
-from scenarios.behaviors.behavior_descriptions import BehaviorDescriptions
-
-from smart_kit.request.kafka_request import SmartKitKafkaRequest
 from smart_kit.action.http import HTTPRequestAction
+from smart_kit.request.kafka_request import SmartKitKafkaRequest
 
 
 class SmartAppResources(BaseConfig):
@@ -108,7 +115,14 @@ class SmartAppResources(BaseConfig):
             FileRepository(self.subfolder_path("last_action_ids.json"), loader=ordered_json,
                            source=source, key="last_action_ids"),
             FolderRepository(self.subfolder_path("bundles"), loader=ordered_json, source=source,
-                             key="bundles")
+                             key="bundles"),
+            ClassifierRepository(
+                description_path=self.subfolder_path("classifiers"),
+                data_path=self.subfolder_path("classifiers_data"),
+                loader=json.loads,
+                source=source,
+                key="external_classifiers"
+            )
         ]
 
         self.repositories = self.override_repositories(self.repositories)
@@ -145,6 +159,7 @@ class SmartAppResources(BaseConfig):
         self.init_sdk_items()
         self.init_history_formatters()
         self.init_db_adapters()
+        self.init_classifiers()
 
     def init_field_requirements(self):
         frd.field_requirements[None] = frd.FieldRequirement
@@ -164,6 +179,8 @@ class SmartAppResources(BaseConfig):
         ffd.field_filler_description["approve_strictly"] = ffd.ApproveRawTextFiller
         ffd.field_filler_description["available_info_filler"] = ffd.AvailableInfoFiller
         ffd.field_filler_description["choice"] = cffd.ChoiceFiller
+        ffd.field_filler_description["classifier"] = ffd.ClassifierFiller
+        ffd.field_filler_description["classifier_meta"] = ffd.ClassifierFillerMeta
         ffd.field_filler_description["composite"] = ffd.CompositeFiller
         ffd.field_filler_description["currency_first"] = ffd.FirstCurrencyFiller
         ffd.field_filler_description["else"] = cffd.ElseFiller
@@ -182,6 +199,7 @@ class SmartAppResources(BaseConfig):
 
     def init_scenarios(self):
         scenarios[None] = BaseScenario
+        scenarios["base"] = BaseScenario
         scenarios["form_filling"] = FormFillingScenario
         scenarios["tree"] = TreeScenario
 
@@ -195,12 +213,16 @@ class SmartAppResources(BaseConfig):
         form_models[CompositeFormDescription] = CompositeForm
 
     def init_field_descriptions(self):
-        field_descriptions[None] = FieldDescription
+        field_descriptions[None] = QuestionFieldDescription
+        field_descriptions["question"] = QuestionFieldDescription
         field_descriptions["composite"] = CompositeFieldDescription
+        field_descriptions["integration"] = IntegrationFieldDescription
 
     def init_field_model(self):
-        field_models[FieldDescription] = Field
+        field_models[BasicFieldDescription] = BasicField
         field_models[CompositeFieldDescription] = CompositeField
+        field_models[QuestionFieldDescription] = QuestionField
+        field_models[IntegrationFieldDescription] = IntegrationField
 
     def init_scenario_models(self):
         scenario_models[FormFillingScenario] = FormFillingScenarioModel
@@ -213,13 +235,14 @@ class SmartAppResources(BaseConfig):
         registered_factories[BaseScenarioModel] = scenario_model_factory
         registered_factories[BaseFormDescription] = form_description_factory
         registered_factories[BaseForm] = form_model_factory
-        registered_factories[FieldDescription] = field_description_factory
-        registered_factories[Field] = field_model_factory
+        registered_factories[BasicFieldDescription] = field_description_factory
+        registered_factories[BasicField] = field_model_factory
         registered_factories[op.Operator] = op.operator_factory
         registered_factories[cmp.Comparator] = cmp.comparator_factory
         registered_factories[Requirement] = requirement_factory
         registered_factories[SdkAnswerItem] = items_factory
         registered_factories[EventFormatter] = formatters_factory
+        registered_factories[Classifier] = classifier_factory
 
     def init_repo_factories(self):
         registered_description_factories["forms"] = FormsDescription
@@ -232,6 +255,7 @@ class SmartAppResources(BaseConfig):
         registered_description_factories["external_requirements"] = ExternalRequirements
         registered_description_factories["external_field_fillers"] = ExternalFieldFillerDescriptions
         registered_description_factories["last_action_ids"] = LimitedQueuedHashableObjectsDescriptions
+        registered_description_factories["external_classifiers"] = ExternalClassifiers
 
     def init_actions(self):
         actions[None] = EmptyAction
@@ -239,6 +263,7 @@ class SmartAppResources(BaseConfig):
         actions["ask_again"] = AskAgainAction
         actions["break_scenario"] = BreakScenarioAction
         actions["choice"] = ChoiceAction
+        actions["choice_scenario"] = ChoiceScenarioAction
         actions["clear_current_scenario"] = ClearCurrentScenarioAction
         actions["clear_current_scenario_form"] = ClearCurrentScenarioFormAction
         actions["clear_form_by_id"] = ClearFormAction
@@ -282,10 +307,12 @@ class SmartAppResources(BaseConfig):
         requirements["ask_again_exist"] = AskAgainExistRequirement
         requirements["capabilities_property_available"] = dr.CapabilitiesPropertyAvailableRequirement
         requirements["channel"] = ChannelRequirement
+        requirements["classifier"] = ClassifierRequirement
         requirements["counter_time"] = CounterUpdateTimeRequirement
         requirements["counter_value"] = CounterValueRequirement
         requirements["datetime"] = DateTimeRequirement
         requirements["external"] = ExternalRequirement
+        requirements["intersection"] = IntersectionRequirement
         requirements["not"] = NotRequirement
         requirements["or"] = OrRequirement
         requirements["platform_type"] = dr.PlatformTypeRequirement
@@ -340,6 +367,13 @@ class SmartAppResources(BaseConfig):
     def init_db_adapters(self):
         db_adapters[None] = MemoryAdapter
         db_adapters["ignite"] = IgniteAdapter
+        db_adapters["ignite_thread"] = IgniteThreadAdapter
         db_adapters["memory"] = MemoryAdapter
         db_adapters["redis"] = RedisAdapter
         db_adapters["aioredis"] = AIORedisAdapter
+
+    def init_classifiers(self):
+        classifiers[None] = Classifier
+        classifiers["external"] = ExternalClassifier
+        classifiers["scikit"] = SciKitClassifier
+        classifiers["skip"] = SkipClassifier

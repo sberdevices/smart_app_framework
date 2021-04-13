@@ -11,7 +11,7 @@ class Command:
 
     @property
     def raw(self):
-        message = {"message_name": self.name, "payload": self.payload}
+        message = {"messageName": self.name, "payload": self.payload}
         if self.action_id is not None:
             message["action_id"] = self.action_id
         return message

@@ -1,26 +1,27 @@
-# coding: utf-8
 import collections
 import json
 import re
-from lazy import lazy
-from jinja2 import exceptions as jexcept
-from typing import Dict, List, Union, Optional, Any, Callable, Pattern, Set
 from itertools import islice
+from typing import Dict, List, Union, Optional, Any, Callable, Pattern, Set
 
+from jinja2 import exceptions as jexcept
+from lazy import lazy
+
+import core.basic_models.classifiers.classifiers_constants as cls_const
 import core.logging.logger_constants as core_log_const
-from core.text_preprocessing.base import BaseTextPreprocessingResult
-from core.basic_models.actions.basic_actions import Action
+import scenarios.logging.logger_constants as log_const
+from core.basic_models.classifiers.basic_classifiers import Classifier, ExternalClassifier
+from core.logging.logger_utils import log, log_classifier_result
 from core.model.factory import build_factory
+from core.model.factory import factory
 from core.model.factory import list_factory
 from core.model.registered import Registered
-from core.utils.pickle_copy import pickle_deepcopy
-from core.unified_template.unified_template import UnifiedTemplate
+from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
-from core.model.factory import factory
-from core.logging.logger_utils import log
+from core.unified_template.unified_template import UnifiedTemplate
 from core.utils.exception_handlers import exc_handler
-
-import scenarios.logging.logger_constants as log_const
+from core.utils.pickle_copy import pickle_deepcopy
+from core.utils.stats_timer import StatsTimer
 from scenarios.user.user_model import User
 
 field_filler_description = Registered()
@@ -28,10 +29,12 @@ field_filler_description = Registered()
 field_filler_factory = build_factory(field_filler_description)
 
 
-class FieldFillerDescription(Action):
+class FieldFillerDescription:
 
-    def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str]=None) -> None:
-        super().__init__(items, id)
+    def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str] = None) -> None:
+        items = items or {}
+        self.id = id
+        self.version = items.get("version", -1)
 
     def _log_params(self):
         return {
@@ -43,13 +46,13 @@ class FieldFillerDescription(Action):
                 params: Dict[str, Any] = None) -> None:
         return None
 
-    def on_extract_error(self, text_preprocessing_result, user):
+    def on_extract_error(self, text_preprocessing_result, user, params=None):
         log("exc_handler: Filler failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value), user,
-                      {log_const.KEY_NAME: core_log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)
+            {log_const.KEY_NAME: core_log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)
         return None
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Any]]=None) -> None:
+            params: Optional[Dict[str, Any]] = None) -> None:
         return self.extract(text_preprocessing_result, user, params)
 
     def _postprocessing(self, user: User, item: str) -> None:
@@ -64,7 +67,7 @@ class ExternalFieldFillerDescription(FieldFillerDescription):
         super(ExternalFieldFillerDescription, self).__init__(items, id)
         self.filler = items.get("filler")
 
-    @exc_handler(on_error_obj_method_name="on_extract_error")
+    # @exc_handler(on_error_obj_method_name="on_extract_error")
     def extract(self, text_preprocessing_result: BaseTextPreprocessingResult,
                 user: User, params: Dict[str, Any] = None) -> Optional[Union[int, float, str, bool, List, Dict]]:
         filler = user.descriptions["external_field_fillers"][self.filler]
@@ -441,7 +444,9 @@ class ApproveFiller(FieldFillerDescription):
 
 class ApproveRawTextFiller(ApproveFiller):
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User) -> Optional[bool]:
+    def extract(
+            self, text_preprocessing_result: TextPreprocessingResult, user: User, params: Dict[str, Any] = None
+    ) -> Optional[bool]:
         original_text = ' '.join(text_preprocessing_result.original_text.split()).lower().rstrip('!.)')
         if original_text in self.set_yes_words:
             params = self._log_params()
@@ -460,3 +465,48 @@ class ApproveRawTextFiller(ApproveFiller):
         else:
             response = None
         return response
+
+
+class ClassifierFiller(FieldFillerDescription):
+    """Заполняет поле одним из возможных значений, которое выдает модель классификации.
+    Запрос клиента проходит классификацию на основе внешнего классификатора, после чего в качестве ответа
+    берётся класс с максимальной вероятностью.
+    """
+
+    def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str] = None) -> None:
+        super(ClassifierFiller, self).__init__(items, id)
+        self._classifier = items["classifier"]
+        self._cls_const_answer_key = cls_const.ANSWER_KEY
+
+    @lazy
+    def classifier(self) -> Classifier:
+        return ExternalClassifier(self._classifier)
+
+    def _get_result(self, answers: List[Dict[str, Union[str, float, bool]]]) -> str:
+        return answers[0][self._cls_const_answer_key]
+
+    @exc_handler(on_error_obj_method_name="on_extract_error")
+    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                params: Dict[str, Any] = None) -> Union[str, None, List[Dict[str, Union[str, float, bool]]]]:
+        result = None
+        classifier = self.classifier
+        with StatsTimer() as timer:
+            classification_res = classifier.find_best_answer(
+                text_preprocessing_result, scenario_classifiers=user.descriptions["external_classifiers"])
+
+        log_classifier_result(classification_res, user, classifier, timer)
+
+        if classification_res:
+            params = self._log_params()
+            params["answers"] = classification_res
+            message = "Filler: %(filler)s, answers: %(answers)s, "
+            log(message, user, params)
+            result = self._get_result(classification_res)
+
+        return result
+
+
+class ClassifierFillerMeta(ClassifierFiller):
+
+    def _get_result(self, answers: List[Dict[str, Union[str, float, bool]]]) -> List[Dict[str, Union[str, float, bool]]]:
+        return answers

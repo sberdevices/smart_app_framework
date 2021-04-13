@@ -1,4 +1,6 @@
 import os
+
+import scenarios.logging.logger_constants as log_const
 from core.logging.logger_utils import log
 from smart_kit.configs import get_app_config
 
@@ -27,7 +29,6 @@ def create_app():
     log("FINISHED MODEL CREATE", params={log_const.KEY_NAME: "timings"})
     log("START MAIN_LOOP CREATE", params={log_const.KEY_NAME: "timings"})
     loop = main_loop_cls(
-        app_name,
         model, user_cls, parametrizer_cls, settings
     )
     log("FINISHED MAIN_LOOP CREATE", params={log_const.KEY_NAME: "timings"})

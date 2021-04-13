@@ -32,7 +32,7 @@ class UnifiedTemplate:
         elif isinstance(input, dict):
             if input.get("type") != UNIFIED_TEMPLATE_TYPE_NAME:
                 raise Exception("template must be string or dict with type='{}'".format(UNIFIED_TEMPLATE_TYPE_NAME))
-            self.template = jinja2.Template(input["template"])
+            self.template = jinja2.Template(input["template"], extensions=input.get("extensions", ()))
             self.loader = UnifiedTemplate.loaders[input.get("loader", "str")]
             self.support_templates = {k: UnifiedTemplate(t) for k, t in input.get("support_templates", dict()).items()}
         else:

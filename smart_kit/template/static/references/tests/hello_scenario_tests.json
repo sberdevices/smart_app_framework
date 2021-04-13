@@ -1,0 +1,175 @@
+{
+  "hello_oleg_5years_programm_no": [
+    {
+      "request": {
+        "message": {},
+        "predefined_fields": "default_request_params"
+      },
+      "response": {
+        "predefined_fields": "default_response_scheme",
+        "pronounce_texts": [
+          "Как тебя зовут?"
+        ]
+      }
+    },
+    {
+      "request": {
+        "message": {
+          "original_text": "Олег",
+          "normalized_text": "Олег .",
+          "tokenized_elements_list": [
+            {
+              "text": "Олег",
+              "grammem_info": {
+                "animacy": "anim",
+                "case": "nom",
+                "gender": "masc",
+                "number": "sing",
+                "raw_gram_info": "animacy=anim|case=nom|gender=masc|number=sing",
+                "part_of_speech": "NOUN"
+              },
+              "lemma": "Олег"
+            },
+            {
+              "text": ".",
+              "lemma": ".",
+              "token_type": "SENTENCE_ENDPOINT_TOKEN",
+              "token_value": {
+                "value": "."
+              },
+              "list_of_token_types_data": [
+                {
+                  "token_type": "SENTENCE_ENDPOINT_TOKEN",
+                  "token_value": {
+                    "value": "."
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "predefined_fields": "default_request_params"
+      },
+      "response": {
+        "predefined_fields": "default_response_scheme",
+        "pronounce_texts": [
+          "Привет, Олег!  Меня зовут Сбер. Прошу любить и не жаловаться! Простите за глупую шутку, волнуюсь Сколько лет ты программируешь на Python?"
+        ]
+      }
+    },
+    {
+      "request": {
+        "message": {
+          "original_text": "5 лет",
+          "normalized_text": "NUM_TOKEN год .",
+          "tokenized_elements_list": [
+            {
+              "text": "5",
+              "lemma": "5",
+              "token_type": "NUM_TOKEN",
+              "token_value": {
+                "value": 5,
+                "adjectival_number": false
+              },
+              "list_of_token_types_data": [
+                {
+                  "token_type": "NUM_TOKEN",
+                  "token_value": {
+                    "value": 5,
+                    "adjectival_number": false
+                  }
+                }
+              ],
+              "grammem_info": {
+                "numform": "digit",
+                "raw_gram_info": "numform=digit",
+                "part_of_speech": "NUM"
+              }
+            },
+            {
+              "text": "лет",
+              "grammem_info": {
+                "animacy": "inan",
+                "case": "gen",
+                "gender": "masc",
+                "number": "plur",
+                "raw_gram_info": "animacy=inan|case=gen|gender=masc|number=plur",
+                "part_of_speech": "NOUN"
+              },
+              "lemma": "год"
+            },
+            {
+              "text": ".",
+              "lemma": ".",
+              "token_type": "SENTENCE_ENDPOINT_TOKEN",
+              "token_value": {
+                "value": "."
+              },
+              "list_of_token_types_data": [
+                {
+                  "token_type": "SENTENCE_ENDPOINT_TOKEN",
+                  "token_value": {
+                    "value": "."
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "predefined_fields": "default_request_params"
+      },
+      "response": {
+        "predefined_fields": "default_response_scheme",
+        "pronounce_texts": [
+          "Ах, приятно знать что ты в опытных руках! Хочешь я тебе расскажу о том, что умею?"
+        ]
+      }
+    },
+    {
+      "request": {
+        "message": {
+          "original_text": "нет",
+          "normalized_text": "нет .",
+          "tokenized_elements_list": [
+            {
+              "text": "нет",
+              "grammem_info": {
+                "mood": "ind",
+                "number": "sing",
+                "person": "3",
+                "tense": "notpast",
+                "verbform": "fin",
+                "raw_gram_info": "mood=ind|number=sing|person=3|tense=notpast|verbform=fin",
+                "part_of_speech": "VERB"
+              },
+              "lemma": "нет"
+            },
+            {
+              "text": ".",
+              "lemma": ".",
+              "token_type": "SENTENCE_ENDPOINT_TOKEN",
+              "token_value": {
+                "value": "."
+              },
+              "list_of_token_types_data": [
+                {
+                  "token_type": "SENTENCE_ENDPOINT_TOKEN",
+                  "token_value": {
+                    "value": "."
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "predefined_fields": "default_request_params"
+      },
+      "response": {
+        "predefined_fields": "default_response_scheme",
+        "pronounce_texts": [
+          "Что ж, было приятно познакомиться!"
+        ]
+      }
+    }
+  ]
+}

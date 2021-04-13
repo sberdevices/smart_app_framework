@@ -3,7 +3,7 @@ from lazy import lazy
 
 from core.model.factory import ordered_dict_factory, build_factory
 from core.model.registered import Registered
-from scenarios.scenario_models.field.field_descriptions.field_description import FieldDescription
+from scenarios.scenario_models.field.field_descriptions.basic_field_description import BasicFieldDescription
 
 form_descriptions = Registered()
 
@@ -27,7 +27,7 @@ class FormDescription(BaseFormDescription):
         self._fields = items["fields"]
 
     @lazy
-    @ordered_dict_factory(FieldDescription)
+    @ordered_dict_factory(BasicFieldDescription)
     def fields(self):
         return self._fields
 

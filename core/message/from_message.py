@@ -1,4 +1,5 @@
 # coding=utf-8
+from typing import Iterable
 from lazy import lazy
 import json
 import uuid
@@ -12,6 +13,7 @@ from core.logging.logger_utils import log
 from core.utils.masking_message import masking
 from core.utils.pickle_copy import pickle_deepcopy
 from core.utils.utils import current_time_ms
+from core.message.msg_validator import MessageValidator
 
 
 class Headers:
@@ -38,13 +40,13 @@ class SmartAppFromMessage:
     PAYLOAD = "payload"
     SESSION_ID = "sessionId"
 
-    payload: dict
-    uuid: dict
     incremental_id: str
     message_name: str
+    payload: dict
+    uuid: dict
 
     def __init__(self, value: str, topic_key: str = None, creation_time=None, kafka_key: str = None, headers=None,
-                 masking_fields=None, headers_required=True):
+                 masking_fields=None, headers_required=True, validators: Iterable[MessageValidator] = ()):
         self.logging_uuid = str(uuid.uuid4())
         self._value = value
         self.topic_key = topic_key
@@ -56,11 +58,17 @@ class SmartAppFromMessage:
         self.headers = Headers(headers)
         self._callback_id = None  # FIXME: by some reason it possibly to change callback_id
         self.masking_fields = masking_fields
+        self.validators = validators
 
     def validate(self):
         """
             Try to json.load message and check for all required fields
-         """
+        """
+
+        for validator in self.validators:
+            if not validator.validate(self.message_name, self.payload):
+                return False
+
         if self._headers_required and not self.headers:
             log("Message headers is empty", level="ERROR")
             return False
@@ -90,6 +98,7 @@ class SmartAppFromMessage:
                 exc_info=True,
                 level="ERROR",
             )
+            self.print_validation_error()
             return False
 
         return True
@@ -240,3 +249,18 @@ class SmartAppFromMessage:
     @lazy
     def value(self):
         return self._value
+
+
+basic_error_message = SmartAppFromMessage(
+    '''
+    {
+        "messageName": "ERROR",
+        "messageId": -1,
+        "uuid": -1,
+        "payload": {},
+        "sessionId": -1
+    }
+    ''',
+    headers={},
+    headers_required=False,
+)

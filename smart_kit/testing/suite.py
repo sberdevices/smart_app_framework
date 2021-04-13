@@ -1,28 +1,53 @@
-import os
 import json
+import os
+from typing import AnyStr, Optional, Tuple, Any, Dict
+
 from lazy import lazy
 
 from core.configs.global_constants import LINK_BEHAVIOR_FLAG, CALLBACK_ID_HEADER
 from core.message.from_message import SmartAppFromMessage
-
-from smart_kit.testing.local import Environment
-from smart_kit.utils.diff import partial_diff
-from smart_kit.request.kafka_request import SmartKitKafkaRequest
-from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.compatibility.commands import combine_commands
+from smart_kit.configs import Settings
+from smart_kit.message.smartapp_to_message import SmartAppToMessage
+from smart_kit.models.smartapp_model import SmartAppModel
+from smart_kit.request.kafka_request import SmartKitKafkaRequest
+from smart_kit.testing.utils import Environment
+from smart_kit.utils.diff import partial_diff
 
 
-def create_message(data, headers=None):
-    defaults = Environment().as_dict
-    defaults.update(data)
-
-    return SmartAppFromMessage(json.dumps(defaults), headers=headers)
+def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings: Settings, user_cls: type,
+                 parametrizer_cls: type, storaged_predefined_fields: Dict[str, Any]) -> Tuple[int, int]:
+    test_file_path = os.path.join(path, file)
+    if not os.path.isfile(test_file_path) or not test_file_path.endswith('.json'):
+        raise FileNotFoundError
+    with open(test_file_path, "r") as test_file:
+        json_obj = json.load(test_file)
+        success = 0
+        for test_case in json_obj:
+            test_params = json_obj[test_case]
+            if isinstance(test_params, list):
+                test_params = {"messages": test_params, "user": {}}
+            print(f"[+] Processing test case {test_case} from {test_file_path}")
+            if TestCase(
+                    app_model,
+                    settings,
+                    user_cls,
+                    parametrizer_cls,
+                    **test_params,
+                    storaged_predefined_fields=storaged_predefined_fields
+            ).run():
+                print(f"[+] {test_case} OK")
+                success += 1
+        print(f"[+] {file} {success}/{len(json_obj)}")
+    return len(json_obj), success
 
 
 class TestSuite:
-    def __init__(self, path, app_config):
+    def __init__(self, path: AnyStr, app_config: Any, predefined_fields_storage: AnyStr):
         self.path = path
         self.app_config = app_config
+        with open(predefined_fields_storage, "r") as f:
+            self.storaged_predefined_fields = json.load(f)
 
     @lazy
     def app_model(self):
@@ -51,27 +76,39 @@ class TestSuite:
             for file in files:
                 if not file.endswith(".json"):
                     continue
-                test_file_path = os.path.join(path, file)
-                with open(test_file_path, "r") as test_file:
-                    json_obj = json.load(test_file)
-                    success = 0
-                    for test_case in json_obj:
-                        print(f"[+] Processing test case {test_case} from {test_file_path}")
-                        if self.process_test_case(json_obj[test_case]):
-                            print(f"[+] {test_case} OK")
-                            success += 1
-                    print(f"[+] {file} {success}/{len(json_obj)}")
-                    total += len(json_obj)
-                    total_success += success
+                file_total, file_success = run_testfile(
+                    path,
+                    file,
+                    self.app_model,
+                    self.settings,
+                    self.app_config.USER,
+                    self.app_config.PARAMETRIZER,
+                    self.storaged_predefined_fields
+                )
+                total += file_total
+                total_success += file_success
+
         print(f"[+] Total: {total_success}/{total}")
 
-    def process_test_case(self, test_case: dict):
-        success = True
-        messages = test_case["messages"]
 
-        user_state = json.dumps(test_case.get("user"))
+class TestCase:
+    def __init__(self, app_model: SmartAppModel, settings: Settings, user_cls: type, parametrizer_cls: type,
+                 messages: dict, storaged_predefined_fields: Dict[str, Any], user: Optional[dict] = None):
+        self.messages = messages
+        self.user_state = json.dumps(user)
+
+        self.app_model = app_model
+        self.settings = settings
+        self.storaged_predefined_fields = storaged_predefined_fields
+
+        self.__parametrizer_cls = parametrizer_cls
+        self.__user_cls = user_cls
+
+    def run(self) -> bool:
+        success = True
+
         app_callback_id = None
-        for message in messages:
+        for message in self.messages:
 
             request = message["request"]
             response = message["response"]
@@ -82,12 +119,12 @@ class TestSuite:
                 headers = [(CALLBACK_ID_HEADER, app_callback_id.encode())]
             else:
                 headers = [('kafka_correlationId', 'test_123')]
-            message = create_message(request, headers=headers)
+            message = self.create_message(request, headers=headers)
 
-            user = self.app_config.USER(
-                id=message.uid, message=message, db_data=user_state, settings=self.settings,
+            user = self.__user_cls(
+                id=message.uid, message=message, db_data=self.user_state, settings=self.settings,
                 descriptions=self.app_model.scenario_descriptions,
-                parametrizer_cls=self.app_config.PARAMETRIZER
+                parametrizer_cls=self.__parametrizer_cls
             )
 
             commands = self.app_model.answer(message, user) or []
@@ -95,6 +132,10 @@ class TestSuite:
             answers = self._generate_answers(
                 user=user, commands=commands, message=message
             )
+
+            predefined_fields_resp = response.get("predefined_fields")
+            if predefined_fields_resp:
+                response = self.handle_predefined_fields_response(predefined_fields_resp, response)
             expected_answers = response["messages"]
             expected_user = response["user"]
 
@@ -120,11 +161,10 @@ class TestSuite:
             if user_diff:
                 success = False
                 print(user_diff)
-            user_state = user.raw_str
+            self.user_state = user.raw_str
         return success
 
     def _generate_answers(self, user, commands, message):
-
         answers = []
         commands = commands or []
 
@@ -135,3 +175,37 @@ class TestSuite:
             answer = SmartAppToMessage(command=command, message=message, request=request)
             answers.append(answer)
         return answers
+
+    def create_message(self, data, headers=None):
+        defaults = Environment().as_dict
+
+        predefined_fields = data.get("predefined_fields")
+        is_payload_field = data.get("payload")
+        if predefined_fields:
+            predefined_fields_data = self.storaged_predefined_fields[predefined_fields]
+            if not is_payload_field and not predefined_fields_data.get("payload"):
+                predefined_fields_data = {"payload": predefined_fields_data}
+            if is_payload_field and predefined_fields_data.get("payload"):
+                raise Exception("Payload field is in test case and in predefined_fields object, check it!")
+            defaults.update(predefined_fields_data)
+            del data["predefined_fields"]
+
+        message = data.get("message")
+        if message:
+            defaults["payload"].update({"message": message})
+
+        defaults.update(data)
+        return SmartAppFromMessage(json.dumps(defaults), headers=headers)
+
+    def handle_predefined_fields_response(self, predefined_fields_resp, response):
+        predefined_fields_resp_data = self.storaged_predefined_fields[predefined_fields_resp]
+        response.update(predefined_fields_resp_data)
+        del response["predefined_fields"]
+
+        pronounce_texts = response.get("pronounce_texts", [])
+        if pronounce_texts:
+            for text, msg_dict in zip(pronounce_texts, response["messages"]):
+                msg_dict["payload"]["pronounceText"] = text
+            del response["pronounce_texts"]
+
+        return response

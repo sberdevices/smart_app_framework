@@ -1,0 +1,51 @@
+{
+  "default_request_params": {
+    "messageName": "MESSAGE_TO_SKILL",
+    "uuid": {
+      "userChannel": "None",
+      "chatId": "1",
+      "userId": "local_testing_1"
+    },
+    "payload": {
+      "character": {
+        "id": "sber",
+        "name": "Сбер",
+        "gender": "male",
+        "appeal": "official"
+      },
+      "device": {
+        "platformType": "IOS",
+        "platformVersion": "11.1",
+        "surface": "SBOL",
+        "surfaceVersion": "testSurfaceVersion",
+        "features": {
+          "appTypes": [
+            "DIALOG",
+            "WEB_APP"
+          ]
+        }
+      },
+      "intent": "hello_scenario",
+      "meta": {
+        "time": {
+          "timezone_id": "Europe/Moscow",
+          "timezone_offset_sec": 10800,
+          "timestamp": 1432233446145000
+        }
+      },
+      "personInfo": {},
+      "projectName": "test_project_name"
+    }
+  },
+  "default_response_scheme": {
+    "user": {},
+    "messages": [
+      {
+        "messageName": "ANSWER_TO_USER",
+        "payload": {
+          "pronounceText": null
+        }
+      }
+    ]
+  }
+}

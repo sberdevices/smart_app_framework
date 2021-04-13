@@ -14,7 +14,7 @@ class CustomAction(Action):
     """
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
-        super(SamlpeAction, self).__init__(items, id)
+        super(CustomAction, self).__init__(items, id)
         items = items or {}
         self.test_param = items.get("test_param")
 

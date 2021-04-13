@@ -1,16 +1,27 @@
-# coding: utf-8
+import os
 import unittest
 from time import time
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
-from core.model.registered import registered_factories
+import smart_kit
+from core.basic_models.classifiers.basic_classifiers import ExternalClassifier
 from core.basic_models.operators.operators import Operator
-
 from core.basic_models.requirement.basic_requirements import Requirement, CompositeRequirement, AndRequirement, \
     OrRequirement, NotRequirement, RandomRequirement, TopicRequirement, TemplateRequirement, RollingRequirement, \
-    TimeRequirement, DateTimeRequirement
-from core.basic_models.requirement.device_requirements import ChannelRequirement
+    TimeRequirement, DateTimeRequirement, IntersectionRequirement, ClassifierRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
+from core.basic_models.requirement.device_requirements import ChannelRequirement
+from core.model.registered import registered_factories
+from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
+
+
+def patch_get_app_config(mock_get_app_config):
+    result = Mock()
+    sk_path = os.path.dirname(smart_kit.__file__)
+    result.STATIC_PATH = os.path.join(sk_path, 'template/static')
+    mock_get_app_config.return_value = result
+    result.NORMALIZER = LocalTextNormalizer()
+    mock_get_app_config.return_value = result
 
 
 class MockRequirement:
@@ -224,7 +235,7 @@ class RequirementTest(unittest.TestCase):
         user.message.payload = {
             "meta": {
                 "time": {
-                    "timestamp": 1610979455663,  # ~ 2021-01-18 17:17:35
+                    "timestamp": 1610990255000,  # ~ 2021-01-18 17:17:35
                     "timezone_offset_sec": 1000000000,  # shouldn't affect
                 }
             }
@@ -299,6 +310,79 @@ class RequirementTest(unittest.TestCase):
         )
         text_normalization_result = None
         self.assertFalse(requirement.check(text_normalization_result, user))
+
+    @patch('smart_kit.configs.get_app_config')
+    def test_intersection_requirement_true(self, mock_get_app_config):
+        patch_get_app_config(mock_get_app_config)
+        user = Mock()
+        requirement = IntersectionRequirement(
+            {
+                "phrases": [
+                    'да',
+                    'давай',
+                    'хочу',
+                ]
+            }
+        )
+        text_normalization_result = Mock()
+        text_normalization_result.tokenized_elements_list = [
+            {'lemma': 'я'},
+            {'lemma': 'хотеть'},
+        ]
+        self.assertTrue(requirement.check(text_normalization_result, user))
+
+    @patch('smart_kit.configs.get_app_config')
+    def test_intersection_requirement_false(self, mock_get_app_config):
+        patch_get_app_config(mock_get_app_config)
+        user = Mock()
+        requirement = IntersectionRequirement(
+            {
+                "phrases": [
+                    'да',
+                    'давай',
+                    'хочу',
+                ]
+            }
+        )
+        text_normalization_result = Mock()
+        text_normalization_result.tokenized_elements_list = [
+            {'lemma': 'ни'},
+            {'lemma': 'за'},
+            {'lemma': 'что'},
+        ]
+        self.assertFalse(requirement.check(text_normalization_result, user))
+
+    @patch.object(ExternalClassifier, "find_best_answer", return_value=[{"answer": "нет", "score": 1.0, "other": False}])
+    def test_classifier_requirement_true(self, mock_classifier_model):
+        """Тест кейз проверяет что условие возвращает True, если результат классификации запроса относится к одной
+        из указанных категорий, прошедших порог, но не равной классу other.
+        """
+        test_items = {"type": "classifier", "classifier": {"type": "external", "classifier": "hello_scenario_classifier"}}
+        classifier_requirement = ClassifierRequirement(test_items)
+        mock_user = Mock()
+        mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
+        result = classifier_requirement.check(Mock(), mock_user)
+        self.assertTrue(result)
+
+    @patch.object(ExternalClassifier, "find_best_answer", return_value=[])
+    def test_classifier_requirement_false(self, mock_classifier_model):
+        """Тест кейз проверяет что условие возвращает False, если модель классификации не вернула ответ."""
+        test_items = {"type": "classifier", "classifier": {"type": "external", "classifier": "hello_scenario_classifier"}}
+        classifier_requirement = ClassifierRequirement(test_items)
+        mock_user = Mock()
+        mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
+        result = classifier_requirement.check(Mock(), mock_user)
+        self.assertFalse(result)
+
+    @patch.object(ExternalClassifier, "find_best_answer", return_value=[{"answer": "other", "score": 1.0, "other": True}])
+    def test_classifier_requirement_false_if_class_other(self, mock_classifier_model):
+        """Тест кейз проверяет что условие возвращает False, если наиболее вероятный вариант есть класс other."""
+        test_items = {"type": "classifier", "classifier": {"type": "external", "classifier": "hello_scenario_classifier"}}
+        classifier_requirement = ClassifierRequirement(test_items)
+        mock_user = Mock()
+        mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
+        result = classifier_requirement.check(Mock(), mock_user)
+        self.assertFalse(result)
 
 
 if __name__ == '__main__':

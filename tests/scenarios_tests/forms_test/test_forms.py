@@ -4,7 +4,7 @@ import time
 from unittest import TestCase
 from unittest.mock import Mock
 
-from scenarios.scenario_models.field.field import field_models, Field
+from scenarios.scenario_models.field.field import field_models, QuestionField
 from scenarios.scenario_models.forms.form import form_models, Form
 from scenarios.scenario_models.forms.forms import Forms
 
@@ -145,7 +145,7 @@ class FormsTest(TestCase):
     def test_collect_form_fields(self):
         user = Mock()
         form_models[MockDescription] = Form
-        field_models[MockField] = Field
+        field_models[MockField] = QuestionField
         field1 = MockField("amount")
         field2 = MockField("currency")
         fields_descriptions = {"amount": field1, "currency": field2}

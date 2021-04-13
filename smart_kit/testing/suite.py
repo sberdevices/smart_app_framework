@@ -16,7 +16,8 @@ from smart_kit.utils.diff import partial_diff
 
 
 def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings: Settings, user_cls: type,
-                 parametrizer_cls: type, storaged_predefined_fields: Dict[str, Any]) -> Tuple[int, int]:
+                 parametrizer_cls: type, storaged_predefined_fields: Dict[str, Any],
+                 interactive: bool = False) -> Tuple[int, int]:
     test_file_path = os.path.join(path, file)
     if not os.path.isfile(test_file_path) or not test_file_path.endswith('.json'):
         raise FileNotFoundError
@@ -34,7 +35,8 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
                     user_cls,
                     parametrizer_cls,
                     **test_params,
-                    storaged_predefined_fields=storaged_predefined_fields
+                    storaged_predefined_fields=storaged_predefined_fields,
+                    interactive=interactive,
             ).run():
                 print(f"[+] {test_case} OK")
                 success += 1
@@ -93,9 +95,11 @@ class TestSuite:
 
 class TestCase:
     def __init__(self, app_model: SmartAppModel, settings: Settings, user_cls: type, parametrizer_cls: type,
-                 messages: dict, storaged_predefined_fields: Dict[str, Any], user: Optional[dict] = None):
+                 messages: dict, storaged_predefined_fields: Dict[str, Any], interactive: bool,
+                 user: Optional[dict] = None):
         self.messages = messages
         self.user_state = json.dumps(user)
+        self.interactive = interactive
 
         self.app_model = app_model
         self.settings = settings
@@ -108,7 +112,10 @@ class TestCase:
         success = True
 
         app_callback_id = None
-        for message in self.messages:
+        for index, message in enumerate(self.messages):
+            if index and self.interactive:
+                print("Нажмите ENTER, чтобы продолжить...")
+                input()
 
             request = message["request"]
             response = message["response"]

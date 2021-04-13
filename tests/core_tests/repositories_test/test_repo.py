@@ -147,30 +147,36 @@ class TestDillRepository(unittest.TestCase):
 
 class TestClassifierRepository(unittest.TestCase):
 
+    def setUp(self):
+        self.temp_directory = tempfile.TemporaryDirectory()
+        self.temp_directory_path = self.temp_directory.name
+
+        self.temp_classifier_data = {"tests": "success"}
+        self.temp_model_file = tempfile.NamedTemporaryFile(suffix=".pkl", dir=self.temp_directory_path)
+        with open(self.temp_model_file.name, "wb") as f:
+            pickle.dump(self.temp_classifier_data, f)
+        self.temp_model_file_name = self.temp_model_file.name.split('/')[-1]
+
     def test_load_scikit_classifier(self):
         """Тест кейз на проверку загрузки моделей scikit классификаторов."""
-        classifier_data = {"tests": "success"}
-        model_file = tempfile.NamedTemporaryFile(suffix=".pkl")
-        with open(model_file.name, "wb") as f:
-            pickle.dump(classifier_data, f)
-
-        splitted_file_name = model_file.name.split('/')
-        data_path = '/'.join(splitted_file_name[:-1])
-        model_file_name = splitted_file_name[-1]
-
-        with patch("core.repositories.folder_repository.FolderRepository.data", new_callable=PropertyMock,
-                   return_value={"test_classifier": {"type": "scikit", "path": model_file_name, "intents": []}}) as mock:
-            classifier_repo = ClassifierRepository("", data_path, json.loads, "")
-            classifier_repo.load()
-            expected_result = {
-                "test_classifier": {
-                    "classifier": {"tests": "success"},
-                    "path": model_file_name,
-                    "type": "scikit",
-                    "intents": []
+        with patch(
+                "core.repositories.folder_repository.FolderRepository.data",
+                new_callable=PropertyMock,
+                return_value={"test_classifier": {"type": "scikit", "path": self.temp_model_file_name, "intents": []}}
+        ) as mock:
+            with patch("core.repositories.folder_repository.FolderRepository.load") as load_mock:
+                classifier_repo = ClassifierRepository(
+                    self.temp_directory_path, self.temp_directory_path, json.loads, "")
+                classifier_repo.load()
+                expected_result = {
+                    "test_classifier": {
+                        "classifier": {"tests": "success"},
+                        "path": self.temp_model_file_name,
+                        "type": "scikit",
+                        "intents": []
+                    }
                 }
-            }
-            self.assertEqual(expected_result, classifier_repo.data)
+                self.assertEqual(expected_result, classifier_repo.data)
 
     def test_load_skip_classifier(self):
         """Тест кейз на проверку загрузки skip классификатора, для этого типа классификаторов сам
@@ -179,28 +185,42 @@ class TestClassifierRepository(unittest.TestCase):
 
         with patch("core.repositories.folder_repository.FolderRepository.data", new_callable=PropertyMock,
                    return_value=expected_return_obj) as mock_folder_data:
-            classifier_repo = ClassifierRepository("", "", json.loads, "")
-            classifier_repo.load()
-            self.assertEqual(expected_return_obj, classifier_repo.data)
+            with patch("core.repositories.folder_repository.FolderRepository.load") as load_mock:
+                classifier_repo = ClassifierRepository(
+                    self.temp_directory_path, self.temp_directory_path, json.loads, "")
+                classifier_repo.load()
+                self.assertEqual(expected_return_obj, classifier_repo.data)
 
     def test_load_external_classifier(self):
         """Тест кейз на проверку загрузки external классификатора."""
-        model_file = tempfile.NamedTemporaryFile(suffix=".pkl")
-        with open(model_file.name, "wb") as f:
-            pickle.dump({"tests": "success"}, f)
-
-        splitted_file_name = model_file.name.split('/')
-        model_file_name = splitted_file_name[-1]
         expected_return_obj = {
             "test_classifier": {"type": "external", "classifier": "another_test_classifier"},
-            "another_test_classifier": {"type": "scikit", "path": model_file_name, "intents": []}
+            "another_test_classifier": {"type": "scikit", "path": self.temp_model_file_name, "intents": []}
         }
 
         with patch("core.repositories.folder_repository.FolderRepository.data", new_callable=PropertyMock,
                    return_value=expected_return_obj) as mock_folder_data:
-            classifier_repo = ClassifierRepository("", "", json.loads, "")
-            classifier_repo.load()
-            self.assertEqual(expected_return_obj, classifier_repo.data)
+            with patch("core.repositories.folder_repository.FolderRepository.load") as load_mock:
+                classifier_repo = ClassifierRepository(
+                    self.temp_directory_path, self.temp_directory_path, json.loads, "")
+                classifier_repo.load()
+                self.assertEqual(expected_return_obj, classifier_repo.data)
+
+    def test_load_if_not_classifiers_paths(self):
+        classifier_repo = ClassifierRepository("./nonexistent_path", "./another_nonexistent_path", json.loads, "")
+        classifier_repo.load()
+        self.assertIsNone(classifier_repo.data)
+
+    def test_load_if_classifiers_directories_are_empty(self):
+        new_empty_temp_directory = tempfile.TemporaryDirectory()
+        empty_temp_directory_name = new_empty_temp_directory.name
+        classifier_repo = ClassifierRepository(empty_temp_directory_name, empty_temp_directory_name, json.loads, "")
+        classifier_repo.load()
+        new_empty_temp_directory.cleanup()
+        self.assertIsNone(classifier_repo.data)
+
+    def tearDown(self):
+        self.temp_directory.cleanup()
 
 
 if __name__ == '__main__':

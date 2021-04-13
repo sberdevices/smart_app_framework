@@ -36,12 +36,22 @@ class ClassifierRepository(BaseRepository):
         super(ClassifierRepository, self).__init__(source=source, *args, **kwargs)
         self._description_path = description_path
         self._data_path = data_path
-        self._folder_repository = FolderRepository(self._description_path, loader, source, *args, **kwargs)
         self._required_classifier_config_params = REQUIRED_CONFIG_PARAMS
         self._supported_classifiers_types = SUPPORTED_CLASSIFIERS_TYPES
+        self._folder_repository = FolderRepository(
+            self._description_path, loader, source, *args, **kwargs) if self._check_paths_existence() else None
 
     def _subfolder_data_path(self, filename: str) -> str:
         return os.path.join(self._data_path, filename)
+
+    def _check_paths_existence(self) -> bool:
+        res = False
+        # Проверяем что существуют обе директории: с конфигами классификаторов и чекпоинтами моделей,
+        # также проверяем что эти обе директории не пустые
+        if (os.path.exists(self._description_path) and len(os.listdir(self._description_path))
+                and os.path.exists(self._data_path) and len(os.listdir(self._data_path))):
+            res = True
+        return res
 
     def _check_classifier_config(self, classifier_key: str, classifier_params: Dict[str, Any]) -> None:
         for req_param in self._required_classifier_config_params:
@@ -51,6 +61,9 @@ class ClassifierRepository(BaseRepository):
                 raise Exception(f"Missing field: '{req_param}' for classifier {classifier_key} in classifiers.json")
 
     def load(self) -> None:
+        if not self._folder_repository:
+            return None
+
         self._folder_repository.load()
         classifiers_dict = self._folder_repository.data
 

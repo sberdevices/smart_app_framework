@@ -224,7 +224,7 @@ class MainLoop(BaseMainLoop):
                 stats += "Mid: {}\n".format(message.incremental_id)
                 smart_kit_metrics.sampling_mq_waiting_time(self.app_name, waiting_message_time / 1000)
 
-                self.check_message_key(message, mq_message.key())
+                self.check_message_key(message, mq_message.key(), user)
                 log(
                     "INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %(incoming_data)s",
                     params={log_const.KEY_NAME: "incoming_message",
@@ -349,7 +349,7 @@ class MainLoop(BaseMainLoop):
                 log("Error handling worker fail exception.",
                     level="ERROR", exc_info=True)
 
-    def check_message_key(self, from_message, message_key):
+    def check_message_key(self, from_message, message_key, user):
         sub = from_message.sub
         channel = from_message.channel
         uid = from_message.uid
@@ -369,17 +369,14 @@ class MainLoop(BaseMainLoop):
                         log_const.KEY_NAME: "check_kafka_key_validation",
                         MESSAGE_ID_STR: from_message.incremental_id,
                         UID_STR: uid
-                    },
+                    }, user=user,
                     level="WARNING")
-            return message_key_is_valid
         except:
             log(f"Exception to check Kafka message key {message_key}",
                 params={log_const.KEY_NAME: "check_kafka_key_error",
                         MESSAGE_ID_STR: from_message.incremental_id,
                         UID_STR: uid
-                        }, level="ERROR")
-            return False
-
+                        }, user=user, level="ERROR")
 
     def _send_request(self, user, answer, mq_message):
         kafka_broker_settings = self.settings["template_settings"].get(

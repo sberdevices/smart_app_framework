@@ -225,7 +225,6 @@ class MainLoop(BaseMainLoop):
                 smart_kit_metrics.sampling_mq_waiting_time(self.app_name, waiting_message_time / 1000)
 
                 self.check_message_key(message, mq_message.key(), user)
-                _surface = str((message.payload.get("device") or {}).get("surface") or "")
                 log(
                     "INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %(incoming_data)s",
                     params={log_const.KEY_NAME: "incoming_message",
@@ -236,7 +235,7 @@ class MainLoop(BaseMainLoop):
                             "incoming_data": str(message.masked_value),
                             "headers": str(mq_message.headers()),
                             "waiting_message": waiting_message_time,
-                            "surface": _surface,
+                            "surface": message.device.surface,
                             MESSAGE_ID_STR: message.incremental_id},
                     user=user
                 )

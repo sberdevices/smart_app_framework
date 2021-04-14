@@ -110,7 +110,8 @@ class CLInterface(cmd.Cmd):
                 self.settings,
                 self.__user_cls,
                 self.__parametrizer_cls,
-                self.storaged_predefined_fields
+                self.storaged_predefined_fields,
+                interactive=True,
             )
         except FileNotFoundError:
             print("Нужно указать относительный путь до json файла.")

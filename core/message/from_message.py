@@ -39,6 +39,7 @@ class SmartAppFromMessage:
     UUID = "uuid"
     PAYLOAD = "payload"
     SESSION_ID = "sessionId"
+    CALLBACK_ID_HEADER_NAME = CALLBACK_ID_HEADER
 
     incremental_id: str
     message_name: str

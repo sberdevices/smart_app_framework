@@ -1,6 +1,7 @@
 import io
 import time
 from prometheus_client import CONTENT_TYPE_LATEST
+from prometheus_client.twisted import MetricsResource
 from twisted.web.resource import Resource
 from core.monitoring.twisted_server import TwistedServer
 from core.utils.memstats import get_meminfo, show_growth, show_most_common_types, get_leaking_objects
@@ -16,6 +17,8 @@ class RootResource(Resource):
     def __init__(self, debug=False):
         super(RootResource, self).__init__()
         self.putChild(b'health', HealthcheckResource())
+        self.putChild(b'metrics', MetricsResource())
+
         if debug:
             self.putChild(b'meminfo', MemInfoResource())
             self.putChild(b'objgrowth', ObjGrowthResource())

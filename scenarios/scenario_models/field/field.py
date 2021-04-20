@@ -97,10 +97,6 @@ class QuestionField(BasicField):
                 return prev_value
         return self.description.default_value
 
-    @property
-    def can_be_updated(self):
-        return self.value is not None
-
     def fill(self, origin_value):
         filled = False
         value = origin_value if origin_value is not None else self.default_value

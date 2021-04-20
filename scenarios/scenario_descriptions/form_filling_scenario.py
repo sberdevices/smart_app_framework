@@ -8,7 +8,7 @@ from core.logging.logger_utils import log
 import scenarios.logging.logger_constants as log_const
 from scenarios.scenario_models.field.field import QuestionField
 from scenarios.scenario_models.history import Event, HistoryConstants
-from scenarios.actions.action_params_names import INTEGRATION_FIELD
+from scenarios.actions.action_params_names import REQUEST_FIELD
 
 FORM_FIELD_DELIMETER = "__"
 
@@ -90,7 +90,7 @@ class FormFillingScenario(BaseScenario):
 
         callback_id = user.message.callback_id
         action_params = user.behaviors.get_callback_action_params(callback_id) or {}
-        request_field = action_params.get(INTEGRATION_FIELD)
+        request_field = action_params.get(REQUEST_FIELD)
         if request_field and request_field["type"] == "integration":
             field = form.fields[request_field["id"]]
             field_descr = form.description.fields[request_field["id"]]
@@ -151,7 +151,7 @@ class FormFillingScenario(BaseScenario):
             }
             message = "Ask question on field: %(field)s"
             log(message, user, params)
-            action_params[INTEGRATION_FIELD] = {"type": field.description.type, "id": field.description.id}
+            action_params[REQUEST_FIELD] = {"type": field.description.type, "id": field.description.id}
             action_messages = self.get_action_results(user, text_preprocessing_result, actions, action_params)
         else:
             actions = reply_actions

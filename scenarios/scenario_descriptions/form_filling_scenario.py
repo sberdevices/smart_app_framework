@@ -6,6 +6,7 @@ from core.monitoring.monitoring import monitoring
 from core.logging.logger_utils import log
 
 import scenarios.logging.logger_constants as log_const
+from scenarios.scenario_models.field.field import QuestionField
 from scenarios.scenario_models.history import Event, HistoryConstants
 from scenarios.actions.action_params_names import INTEGRATION_FIELD
 
@@ -66,9 +67,6 @@ class FormFillingScenario(BaseScenario):
     def _clean_key(self, key: str):
         return key.replace(" ", "")
 
-    def _check_field_type(self, field, check_type):
-        return field.description.type == check_type
-
     def _extract_by_field_filler(self, field_key, field_descr, text_normalization_result, user, params):
         result = {}
         check = field_descr.requirement.check(text_normalization_result, user, params)
@@ -102,7 +100,7 @@ class FormFillingScenario(BaseScenario):
         else:
             for field_key, field_descr in form.description.fields.items():
                 field = form.fields[field_key]
-                if field.available and self._check_field_type(field, "question"):
+                if field.available and isinstance(field, QuestionField):
                     result.update(self._extract_by_field_filler(field_key, field_descr,
                                                                 text_normalization_result, user, params))
         return result

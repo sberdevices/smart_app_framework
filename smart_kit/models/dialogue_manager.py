@@ -20,7 +20,7 @@ class DialogueManager:
         self.scenario_keys = set(self.scenarios.get_keys())
         self.actions = scenario_descriptions["external_actions"]
         self.app_name = app_name
-        log("DialogueManager.__init__ finished.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE})
+        log(f"{self.__class__.__name__}.__init__ finished.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE})
 
     @lazy
     def _nothing_found_action(self):

@@ -729,6 +729,22 @@ class SDKRandomAnswer(unittest.TestCase):
         result = action.run(user, None)
         self.assertDictEqual(result[0].raw, {'messageName': 'ANSWER_TO_USER', 'payload': {'items': [{'bubble': {'text': '42', 'markdown': True}}]}})
 
+    def test_SDKItemAnswer_pronounce_text(self):
+
+        registered_factories[SdkAnswerItem] = items_factory
+
+        user = Mock()
+        user.parametrizer = MockParametrizer(user, {})
+        a = "Привет!"
+        items = {
+            "type": "sdk_answer",
+            "pronounceText": ["{{a}}"]
+        }
+        action = SDKAnswer(items)
+        result = action.run(user, None)
+        self.assertDictEqual(result[0].raw, {'messageName': 'ANSWER_TO_USER',
+                                             'payload': {'pronounceText': 'Привет!'}})
+
     def test_SDKItemAnswer_suggestions_template(self):
 
         registered_factories[SdkAnswerItem] = items_factory

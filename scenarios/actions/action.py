@@ -21,7 +21,7 @@ from core.utils.pickle_copy import pickle_deepcopy
 
 import scenarios.logging.logger_constants as log_const
 from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, SAVED_MESSAGES, \
-    INTEGRATION_FIELD, LOCAL_VARS
+    REQUEST_FIELD, LOCAL_VARS
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User
 from scenarios.scenario_models.history import Event
@@ -551,7 +551,7 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
     def _get_save_params(self, user, action_params, command_action_params):
         save_params = self._get_rendered_tree_recursive(self.save_params_template_data, action_params)
         save_params.update({SAVED_MESSAGES: action_params.get(SAVED_MESSAGES, {})})
-        save_params.update({INTEGRATION_FIELD: action_params.get(INTEGRATION_FIELD, {})})
+        save_params.update({REQUEST_FIELD: action_params.get(REQUEST_FIELD, {})})
 
         if user.settings["template_settings"].get("self_service_with_state_save_messages", True):
             saved_messages = save_params[SAVED_MESSAGES]

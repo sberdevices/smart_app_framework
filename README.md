@@ -41,7 +41,7 @@ ____
 
 * Linux, Mac OS или Windows (необходима установка [Conda](https://docs.conda.io/en/latest/)).
 * 512 МБ свободной памяти.
-* Python 3.6.8 - 3.7.9.
+* Python 3.6.8 - 3.7.8.
 
 ____
 

@@ -48,6 +48,7 @@ class BasicFieldDescription:
     def has_requests(self):
         return True if self._requests else False
 
+    @property
     def required(self):
         return self._required
 

@@ -163,6 +163,7 @@ class FormFillingScenario(BaseScenario):
             log(message, user, params)
             user.preprocessing_messages_for_scenarios.clear()
             action_messages = self.get_action_results(user, text_preprocessing_result, actions, action_params)
+            user.last_scenarios.delete(self.id)
         return action_messages
 
     @monitoring.got_histogram("scenario_time")

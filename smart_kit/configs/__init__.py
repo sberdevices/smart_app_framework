@@ -1,6 +1,7 @@
 import importlib
 import os
 
+from core.message.from_message import SmartAppFromMessage
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User
 from smart_kit.configs.settings import Settings
@@ -50,6 +51,7 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
     set_default(app_config, "DIALOGUE_MANAGER", DialogueManager)
     set_default(app_config, "SETTINGS", Settings)
     set_default(app_config, "RESOURCES", SmartAppResources)
+    set_default(app_config, "FROM_MSG", SmartAppFromMessage)
 
     set_default(app_config, "NORMALIZATION_CACHE_TTL", 0)
     set_default(app_config, "NORMALIZATION_CACHE", JSONCache)

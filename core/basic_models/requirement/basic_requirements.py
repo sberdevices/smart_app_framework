@@ -26,7 +26,6 @@ requirement_factory = build_factory(requirements)
 
 
 class Requirement:
-    # should_process_message compatible
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         items = items or {}
         self.items = items

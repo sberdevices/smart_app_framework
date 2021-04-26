@@ -4,8 +4,7 @@ from typing import AnyStr, Optional, Tuple, Any, Dict
 
 from lazy import lazy
 
-from core.configs.global_constants import LINK_BEHAVIOR_FLAG, CALLBACK_ID_HEADER
-from core.message.from_message import SmartAppFromMessage
+from core.configs.global_constants import LINK_BEHAVIOR_FLAG
 from smart_kit.compatibility.commands import combine_commands
 from smart_kit.configs import Settings
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
@@ -16,7 +15,7 @@ from smart_kit.utils.diff import partial_diff
 
 
 def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings: Settings, user_cls: type,
-                 parametrizer_cls: type, storaged_predefined_fields: Dict[str, Any],
+                 parametrizer_cls: type, from_msg_cls: type, storaged_predefined_fields: Dict[str, Any],
                  interactive: bool = False) -> Tuple[int, int]:
     test_file_path = os.path.join(path, file)
     if not os.path.isfile(test_file_path) or not test_file_path.endswith('.json'):
@@ -34,6 +33,7 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
                     settings,
                     user_cls,
                     parametrizer_cls,
+                    from_msg_cls,
                     **test_params,
                     storaged_predefined_fields=storaged_predefined_fields,
                     interactive=interactive,
@@ -85,6 +85,7 @@ class TestSuite:
                     self.settings,
                     self.app_config.USER,
                     self.app_config.PARAMETRIZER,
+                    self.app_config.FROM_MSG,
                     self.storaged_predefined_fields
                 )
                 total += file_total
@@ -95,7 +96,7 @@ class TestSuite:
 
 class TestCase:
     def __init__(self, app_model: SmartAppModel, settings: Settings, user_cls: type, parametrizer_cls: type,
-                 messages: dict, storaged_predefined_fields: Dict[str, Any], interactive: bool,
+                 from_msg_cls: type, messages: dict, storaged_predefined_fields: Dict[str, Any], interactive: bool,
                  user: Optional[dict] = None):
         self.messages = messages
         self.user_state = json.dumps(user)
@@ -107,6 +108,7 @@ class TestCase:
 
         self.__parametrizer_cls = parametrizer_cls
         self.__user_cls = user_cls
+        self.__from_msg_cls = from_msg_cls
 
     def run(self) -> bool:
         success = True
@@ -123,7 +125,7 @@ class TestCase:
             # Если использован флаг linkPreviousByCallbackId и после предыдущего сообщения был сохранен app_callback_id,
             # сообщению добавляются заголовки. Таким образом, сработает behavior, созданный предыдущим запросом
             if message.get(LINK_BEHAVIOR_FLAG) and app_callback_id:
-                headers = [(CALLBACK_ID_HEADER, app_callback_id.encode())]
+                headers = [(self.__from_msg_cls.CALLBACK_ID_HEADER_NAME, app_callback_id.encode())]
             else:
                 headers = [('kafka_correlationId', 'test_123')]
             message = self.create_message(request, headers=headers)
@@ -162,7 +164,7 @@ class TestCase:
                     success = False
                     print(diff)
                 # Последний app_callback_id в answers, испольуется в заголовках следующего сообщения
-                app_callback_id = actual.request.values.get(CALLBACK_ID_HEADER, app_callback_id)
+                app_callback_id = actual.request.values.get(self.__from_msg_cls.CALLBACK_ID_HEADER_NAME, app_callback_id)
 
             user_diff = partial_diff(expected_user, user.raw)
             if user_diff:
@@ -202,7 +204,7 @@ class TestCase:
             defaults["payload"].update({"message": message})
 
         defaults.update(data)
-        return SmartAppFromMessage(json.dumps(defaults), headers=headers)
+        return self.__from_msg_cls(json.dumps(defaults), headers=headers)
 
     def handle_predefined_fields_response(self, predefined_fields_resp, response):
         predefined_fields_resp_data = self.storaged_predefined_fields[predefined_fields_resp]

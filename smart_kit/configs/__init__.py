@@ -64,4 +64,8 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
     set_default(app_config, "STATIC_CLASSIFIERS_PATH", os.path.join(references_path, "./classifiers"))
     set_default(app_config, "STATIC_CLASSIFIERS_DATA_PATH", os.path.join(references_path, "./classifiers_data"))
 
+    # Переменной можно присвоить значение среды, где запускается апп,
+    # например: ift, uat, pt, prod (это ИФТ, ПСИ, НТ, ПРОМ)
+    set_default(app_config, "ENVIRONMENT", None)
+
     return app_config

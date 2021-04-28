@@ -22,11 +22,13 @@ from core.basic_models.classifiers.external_classifiers import ExternalClassifie
 from core.basic_models.requirement.basic_requirements import requirement_factory, IntersectionRequirement
 from core.basic_models.requirement.basic_requirements import requirements, Requirement, AndRequirement, \
     OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement, TimeRequirement, DateTimeRequirement, \
-    ClassifierRequirement
+    ClassifierRequirement, FormFieldValue, EnvironmentRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirements
+from core.basic_models.requirement.user_text_requirements import AnySubstringInLoweredTextRequirement, \
+    TokensNumRequirement, IntersectionWithTokensSetRequirement
 from core.basic_models.scenarios.base_scenario import BaseScenario
 from core.basic_models.scenarios.base_scenario import scenarios
 from core.configs.base_config import BaseConfig
@@ -302,6 +304,7 @@ class SmartAppResources(BaseConfig):
     def init_requirements(self):
         requirements[None] = Requirement
         requirements["and"] = AndRequirement
+        requirements["any_substring_in_lowered_text"] = AnySubstringInLoweredTextRequirement
         requirements["app_type"] = dr.AppTypeRequirement
         requirements["array_item_in_template"] = ArrayItemInTemplateRequirement
         requirements["ask_again_exist"] = AskAgainExistRequirement
@@ -311,9 +314,13 @@ class SmartAppResources(BaseConfig):
         requirements["counter_time"] = CounterUpdateTimeRequirement
         requirements["counter_value"] = CounterValueRequirement
         requirements["datetime"] = DateTimeRequirement
+        requirements["environment"] = EnvironmentRequirement
         requirements["external"] = ExternalRequirement
+        requirements["form_field_value"] = FormFieldValue
         requirements["intersection"] = IntersectionRequirement
+        requirements["intersection_with_tokens"] = IntersectionWithTokensSetRequirement
         requirements["not"] = NotRequirement
+        requirements["tokens_len"] = TokensNumRequirement
         requirements["or"] = OrRequirement
         requirements["platform_type"] = dr.PlatformTypeRequirement
         requirements["platform_version"] = dr.PlatformVersionRequirement

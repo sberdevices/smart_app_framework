@@ -56,7 +56,7 @@ from scenarios.actions.action import (
 from scenarios.actions.action import ProcessBehaviorAction, SelfServiceActionWithState, EmptyAction
 from scenarios.behaviors.behavior_descriptions import BehaviorDescriptions
 from scenarios.requirements.requirements import AskAgainExistRequirement, TemplateInArrayRequirement, \
-    ArrayItemInTemplateRequirement, RegexpInTemplateRequirement
+    ArrayItemInTemplateRequirement, RegexpInTemplateRequirement, CurrentScenarioRequirement
 from scenarios.scenario_descriptions.form_filling_scenario import FormFillingScenario
 from scenarios.scenario_descriptions.scenarios_description import ScenariosDescriptions
 from scenarios.scenario_descriptions.tree_scenario.tree_scenario import TreeScenario
@@ -310,6 +310,7 @@ class SmartAppResources(BaseConfig):
         requirements["classifier"] = ClassifierRequirement
         requirements["counter_time"] = CounterUpdateTimeRequirement
         requirements["counter_value"] = CounterValueRequirement
+        requirements["current_scenario"] = CurrentScenarioRequirement
         requirements["datetime"] = DateTimeRequirement
         requirements["external"] = ExternalRequirement
         requirements["intersection"] = IntersectionRequirement

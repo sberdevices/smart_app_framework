@@ -17,6 +17,16 @@ class AskAgainExistRequirement(Requirement):
         return scenario.check_ask_again_question(text_preprocessing_result, user, params)
 
 
+class CurrentScenarioRequirement(Requirement):
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(CurrentScenarioRequirement, self).__init__(items, id)
+        self.scenario = items["scenario"]
+
+    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+              params: Dict[str, Any] = None) -> bool:
+        return self.scenario == user.last_scenarios.last_scenario_name
+
+
 class TemplateInArrayRequirement(Requirement):
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         super(TemplateInArrayRequirement, self).__init__(items, id)

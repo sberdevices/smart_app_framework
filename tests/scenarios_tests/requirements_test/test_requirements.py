@@ -2,7 +2,8 @@
 import unittest
 from unittest.mock import Mock
 
-from scenarios.requirements.requirements import TemplateInArrayRequirement, ArrayItemInTemplateRequirement, RegexpInTemplateRequirement
+from scenarios.requirements.requirements import TemplateInArrayRequirement, ArrayItemInTemplateRequirement, \
+    RegexpInTemplateRequirement, CurrentScenarioRequirement
 
 
 class MockRequirement:
@@ -201,6 +202,24 @@ class RequirementTest(unittest.TestCase):
         user.parametrizer = Mock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertFalse(requirement.check(None, user))
+
+    def test_current_scenario_req_false(self):
+        items = {
+            "scenario": "my_scenario",
+        }
+        requirement = CurrentScenarioRequirement(items)
+        user = Mock()
+        user.last_scenarios.last_scenario_name = "not_my_scenario"
+        self.assertFalse(requirement.check(None, user))
+
+    def test_current_scenario_req_true(self):
+        items = {
+            "scenario": "my_scenario",
+        }
+        requirement = CurrentScenarioRequirement(items)
+        user = Mock()
+        user.last_scenarios.last_scenario_name = "my_scenario"
+        self.assertTrue(requirement.check(None, user))
 
 
 if __name__ == '__main__':

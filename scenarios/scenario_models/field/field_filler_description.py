@@ -1,5 +1,6 @@
 import collections
 import json
+import operator
 import re
 from itertools import islice
 from typing import Dict, List, Union, Optional, Any, Callable, Pattern, Set
@@ -333,6 +334,11 @@ class IntersectionFieldFiller(FieldFillerDescription):
         super(IntersectionFieldFiller, self).__init__(items, id)
         self.cases = items.get("cases") or {}
         self.default = items.get("default")
+        if items.get("strict"):
+            self.operator = operator.eq
+        else:
+            self.operator = operator.gt
+
         from smart_kit.configs import get_app_config
         app_config = get_app_config()
 
@@ -354,7 +360,7 @@ class IntersectionFieldFiller(FieldFillerDescription):
                              norm.get("token_type") != "SENTENCE_ENDPOINT_TOKEN"}
         for key, tokens_list in self.normalized_cases:
             for tokens in tokens_list:
-                if tpr_tokenized_set >= tokens:
+                if self.operator(tpr_tokenized_set, tokens):
                     log_params = self._log_params()
                     log_params["words_tokenized_set"] = str(tpr_tokenized_set)
                     log_params["tokens"] = str(tokens)

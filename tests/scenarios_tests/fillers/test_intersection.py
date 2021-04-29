@@ -53,6 +53,61 @@ class TestIntersectionFieldFiller(TestCase):
     @patch('smart_kit.configs.get_app_config')
     def test_2(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
+        items = {
+            'strict': True,
+            'cases': {
+                'лосось': [
+                    'хорошая рыба'
+                ],
+                'килька': [
+                    'консервы'
+                ]
+            }
+        }
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.tokenized_elements_list = [
+            {'lemma': 'весь'},
+            {'lemma': 'хороший'},
+            {'lemma': 'и'},
+            {'lemma': 'спасибо'},
+            {'lemma': 'за'},
+            {'lemma': 'рыба'},
+        ]
+
+        filler = IntersectionFieldFiller(items)
+        result = filler.extract(text_preprocessing_result, None)
+
+        self.assertIsNone(result)
+
+    @patch('smart_kit.configs.get_app_config')
+    def test_3(self, mock_get_app_config):
+        patch_get_app_config(mock_get_app_config)
+        expected = 'лосось'
+        items = {
+            'strict': True,
+            'cases': {
+                'лосось': [
+                    'хорошая рыба'
+                ],
+                'килька': [
+                    'консервы'
+                ]
+            }
+        }
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.tokenized_elements_list = [
+            {'lemma': 'хороший'},
+            {'lemma': 'рыба'},
+        ]
+
+        filler = IntersectionFieldFiller(items)
+        result = filler.extract(text_preprocessing_result, None)
+
+        self.assertEqual(expected, result)
+
+    @patch('smart_kit.configs.get_app_config')
+    def test_4(self, mock_get_app_config):
+        patch_get_app_config(mock_get_app_config)
         items = {}
         text_preprocessing_result = Mock()
         text_preprocessing_result.tokenized_elements_list = []
@@ -63,7 +118,7 @@ class TestIntersectionFieldFiller(TestCase):
         self.assertIsNone(result)
 
     @patch('smart_kit.configs.get_app_config')
-    def test_3(self, mock_get_app_config):
+    def test_5(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
         expected = 'дефолтный тунец'
         items = {

@@ -28,7 +28,8 @@ from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirements
 from core.basic_models.requirement.user_text_requirements import AnySubstringInLoweredTextRequirement, \
-    TokensNumRequirement, IntersectionWithTokensSetRequirement
+    TokensNumRequirement, IntersectionWithTokensSetRequirement, NormalizedTextInSet, NumberOfNumbers, \
+    PhoneNumberNumberRequirement, NumInRange
 from core.basic_models.scenarios.base_scenario import BaseScenario
 from core.basic_models.scenarios.base_scenario import scenarios
 from core.configs.base_config import BaseConfig
@@ -62,20 +63,19 @@ from scenarios.requirements.requirements import AskAgainExistRequirement, Templa
 from scenarios.scenario_descriptions.form_filling_scenario import FormFillingScenario
 from scenarios.scenario_descriptions.scenarios_description import ScenariosDescriptions
 from scenarios.scenario_descriptions.tree_scenario.tree_scenario import TreeScenario
+from scenarios.scenario_models.field.composite_field import CompositeField
 from scenarios.scenario_models.field.external_field_filler_descriptions import ExternalFieldFillerDescriptions
-from scenarios.scenario_models.field.field_descriptions.composite_field_description import CompositeFieldDescription
-from scenarios.scenario_models.field.field_descriptions.basic_field_description import field_descriptions, \
-    field_description_factory, BasicFieldDescription
-from scenarios.scenario_models.field.field_descriptions.question_field_description import QuestionFieldDescription
-from scenarios.scenario_models.field.field_descriptions.integration_field_description import IntegrationFieldDescription
 from scenarios.scenario_models.field.field import field_models, field_model_factory, BasicField, IntegrationField, \
     QuestionField
-from scenarios.scenario_models.field.composite_field import CompositeField
+from scenarios.scenario_models.field.field_descriptions.basic_field_description import field_descriptions, \
+    field_description_factory, BasicFieldDescription
+from scenarios.scenario_models.field.field_descriptions.composite_field_description import CompositeFieldDescription
+from scenarios.scenario_models.field.field_descriptions.integration_field_description import IntegrationFieldDescription
+from scenarios.scenario_models.field.field_descriptions.question_field_description import QuestionFieldDescription
 from scenarios.scenario_models.forms.composite_forms import CompositeForm
 from scenarios.scenario_models.forms.form import BaseForm, form_models, form_model_factory, Form
 from scenarios.scenario_models.forms.form_description import form_descriptions, form_description_factory, \
-    BaseFormDescription, \
-    FormDescription, CompositeFormDescription
+    BaseFormDescription, FormDescription, CompositeFormDescription
 from scenarios.scenario_models.forms.forms_description import FormsDescription
 from scenarios.scenario_models.history import HistoryDescription, \
     EventFormatter, formatters, formatters_factory, HistoryEventFormatter
@@ -319,9 +319,12 @@ class SmartAppResources(BaseConfig):
         requirements["form_field_value"] = FormFieldValue
         requirements["intersection"] = IntersectionRequirement
         requirements["intersection_with_tokens"] = IntersectionWithTokensSetRequirement
+        requirements["normalized_text_in_set"] = NormalizedTextInSet
         requirements["not"] = NotRequirement
-        requirements["tokens_len"] = TokensNumRequirement
+        requirements["number_of_numbers"] = NumberOfNumbers
+        requirements["num_in_range"] = NumInRange
         requirements["or"] = OrRequirement
+        requirements["phone_number_number"] = PhoneNumberNumberRequirement
         requirements["platform_type"] = dr.PlatformTypeRequirement
         requirements["platform_version"] = dr.PlatformVersionRequirement
         requirements["random"] = RandomRequirement
@@ -331,6 +334,7 @@ class SmartAppResources(BaseConfig):
         requirements["template"] = TemplateRequirement
         requirements["template_in_array"] = TemplateInArrayRequirement
         requirements["time"] = TimeRequirement
+        requirements["tokens_len"] = TokensNumRequirement
 
     def init_sdk_items(self):
         answer_items["bubble_text"] = BubbleText

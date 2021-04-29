@@ -298,8 +298,8 @@ class EnvironmentRequirement(Requirement):
         app_config = get_app_config()
         self.environment = app_config.ENVIRONMENT
         # Если среда исполнения задана, то проверям, что среда в списке возможных значений для сценария, иначе - False
-        self.result = self.environment in self.values if self.environment else False
+        self.check_result = self.environment in self.values if self.environment else False
 
     def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
               params: Dict[str, Any] = None) -> bool:
-        return self.result
+        return self.check_result

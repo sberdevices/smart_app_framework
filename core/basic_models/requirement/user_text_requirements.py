@@ -72,7 +72,7 @@ class IntersectionWithTokensSetRequirement(NormalizedInputWordsRequirement):
               params: Dict[str, Any] = None) -> bool:
         words_normalized_set = set([
             token["lemma"] for token in text_preprocessing_result.raw["tokenized_elements_list"]
-            if not token["token_type"] == "SENTENCE_ENDPOINT_TOKEN"
+            if not token.get("token_type") == "SENTENCE_ENDPOINT_TOKEN"
         ])
         result = bool(self.normalized_input_words.intersection(words_normalized_set))
         if result:
@@ -85,7 +85,7 @@ class IntersectionWithTokensSetRequirement(NormalizedInputWordsRequirement):
         return result
 
 
-class NormalizedTextInSet(NormalizedInputWordsRequirement):
+class NormalizedTextInSetRequirement(NormalizedInputWordsRequirement):
     """Условие возвращает True, если в нормализованном представлении запрос полностью совпадает с одной из
     нормализованных строк из input_words, иначе - False.
     """
@@ -105,7 +105,7 @@ class NormalizedTextInSet(NormalizedInputWordsRequirement):
         return result
 
 
-class NumberOfNumbers(ComparisonRequirement):
+class NumberOfNumbersRequirement(ComparisonRequirement):
     """Условие возвращает True, если кол-во чисел больше/меньше/.. X, иначе - False.
     Сюда не включаются номера телефонов, карт и другие сущности.x
     Строго говоря, считается кол-во токенов, имеющих token_type = "NUM_TOKEN".
@@ -146,11 +146,11 @@ class PhoneNumberNumberRequirement(ComparisonRequirement):
         return result
 
 
-class NumInRange(Requirement):
+class NumInRangeRequirement(Requirement):
     """Условие возвращает True, если число находится в заданном диапазоне, иначе - False."""
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
-        super(NumInRange, self).__init__(items, id)
+        super(NumInRangeRequirement, self).__init__(items, id)
         self.min_num = float(items["min_num"])
         self.max_num = float(items["max_num"])
 

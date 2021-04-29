@@ -268,13 +268,13 @@ class ClassifierRequirement(Requirement):
         return check_res
 
 
-class FormFieldValue(Requirement):
+class FormFieldValueRequirement(Requirement):
     """Условие возвращает True, если в форме form_name в поле field_name значение совпадает с переданным value,
     иначе - False. Данное условие предназначено только для плоских форм.
     """
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
-        super(FormFieldValue, self).__init__(items, id)
+        super(FormFieldValueRequirement, self).__init__(items, id)
         self.form_name = items["form_name"]
         self.field_name = items["field_name"]
         self.value = items["value"]

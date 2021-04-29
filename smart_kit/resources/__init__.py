@@ -22,14 +22,14 @@ from core.basic_models.classifiers.external_classifiers import ExternalClassifie
 from core.basic_models.requirement.basic_requirements import requirement_factory, IntersectionRequirement
 from core.basic_models.requirement.basic_requirements import requirements, Requirement, AndRequirement, \
     OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement, TimeRequirement, DateTimeRequirement, \
-    ClassifierRequirement, FormFieldValue, EnvironmentRequirement
+    ClassifierRequirement, FormFieldValueRequirement, EnvironmentRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirements
 from core.basic_models.requirement.user_text_requirements import AnySubstringInLoweredTextRequirement, \
-    TokensNumRequirement, IntersectionWithTokensSetRequirement, NormalizedTextInSet, NumberOfNumbers, \
-    PhoneNumberNumberRequirement, NumInRange
+    TokensNumRequirement, IntersectionWithTokensSetRequirement, NormalizedTextInSetRequirement, \
+    NumberOfNumbersRequirement, PhoneNumberNumberRequirement, NumInRangeRequirement
 from core.basic_models.scenarios.base_scenario import BaseScenario
 from core.basic_models.scenarios.base_scenario import scenarios
 from core.configs.base_config import BaseConfig
@@ -316,13 +316,13 @@ class SmartAppResources(BaseConfig):
         requirements["datetime"] = DateTimeRequirement
         requirements["environment"] = EnvironmentRequirement
         requirements["external"] = ExternalRequirement
-        requirements["form_field_value"] = FormFieldValue
+        requirements["form_field_value"] = FormFieldValueRequirement
         requirements["intersection"] = IntersectionRequirement
         requirements["intersection_with_tokens"] = IntersectionWithTokensSetRequirement
-        requirements["normalized_text_in_set"] = NormalizedTextInSet
+        requirements["normalized_text_in_set"] = NormalizedTextInSetRequirement
         requirements["not"] = NotRequirement
-        requirements["number_of_numbers"] = NumberOfNumbers
-        requirements["num_in_range"] = NumInRange
+        requirements["number_of_numbers"] = NumberOfNumbersRequirement
+        requirements["num_in_range"] = NumInRangeRequirement
         requirements["or"] = OrRequirement
         requirements["phone_number_number"] = PhoneNumberNumberRequirement
         requirements["platform_type"] = dr.PlatformTypeRequirement

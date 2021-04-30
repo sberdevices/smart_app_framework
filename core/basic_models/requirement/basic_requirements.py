@@ -266,3 +266,40 @@ class ClassifierRequirement(Requirement):
             check_res = False
 
         return check_res
+
+
+class FormFieldValueRequirement(Requirement):
+    """Условие возвращает True, если в форме form_name в поле field_name значение совпадает с переданным value,
+    иначе - False. Данное условие предназначено только для плоских форм.
+    """
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(FormFieldValueRequirement, self).__init__(items, id)
+        self.form_name = items["form_name"]
+        self.field_name = items["field_name"]
+        self.value = items["value"]
+
+    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+              params: Dict[str, Any] = None) -> bool:
+        return user.forms[self.form_name].fields[self.field_name].value == self.value
+
+
+class EnvironmentRequirement(Requirement):
+    """Условие возвращает True, если сценарий исполняется на стенде из числа values, иначе - False.
+    Так, например, можно ограничить сценарий для исполнения только на тестовых средах.
+    Возможные значения в values: ift, uat, pt, prod (это ИФТ, ПСИ, НТ, ПРОМ).
+    """
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(EnvironmentRequirement, self).__init__(items, id)
+        self.values = items.get("values", [])
+        # Из конфига получаем среду исполнения
+        from smart_kit.configs import get_app_config
+        app_config = get_app_config()
+        self.environment = app_config.ENVIRONMENT
+        # Если среда исполнения задана, то проверям, что среда в списке возможных значений для сценария, иначе - False
+        self.check_result = self.environment in self.values if self.environment else False
+
+    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+              params: Dict[str, Any] = None) -> bool:
+        return self.check_result

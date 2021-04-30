@@ -8,9 +8,13 @@ from core.basic_models.classifiers.basic_classifiers import ExternalClassifier
 from core.basic_models.operators.operators import Operator
 from core.basic_models.requirement.basic_requirements import Requirement, CompositeRequirement, AndRequirement, \
     OrRequirement, NotRequirement, RandomRequirement, TopicRequirement, TemplateRequirement, RollingRequirement, \
-    TimeRequirement, DateTimeRequirement, IntersectionRequirement, ClassifierRequirement
+    TimeRequirement, DateTimeRequirement, IntersectionRequirement, ClassifierRequirement, FormFieldValueRequirement, \
+    EnvironmentRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
+from core.basic_models.requirement.user_text_requirements import AnySubstringInLoweredTextRequirement, \
+    TokensNumRequirement, PhoneNumberNumberRequirement, NumInRangeRequirement, NumberOfNumbersRequirement, \
+    IntersectionWithTokensSetRequirement, NormalizedTextInSetRequirement
 from core.model.registered import registered_factories
 from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
 
@@ -21,6 +25,7 @@ def patch_get_app_config(mock_get_app_config):
     result.STATIC_PATH = os.path.join(sk_path, 'template/static')
     mock_get_app_config.return_value = result
     result.NORMALIZER = LocalTextNormalizer()
+    result.ENVIRONMENT = "ift"
     mock_get_app_config.return_value = result
 
 
@@ -383,6 +388,233 @@ class RequirementTest(unittest.TestCase):
         mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
         result = classifier_requirement.check(Mock(), mock_user)
         self.assertFalse(result)
+
+    def test_form_field_value_requirement_true(self):
+        """Тест кейз проверяет что условие возвращает True, т.к в
+        форме form_name в поле form_field значение совпадает с переданным field_value.
+        """
+        form_name = "test_form"
+        form_field = "test_field"
+        field_value = "test_value"
+
+        test_itmes = {"form_name": form_name, "field_name": form_field, "value": field_value}
+        req_form_field_value = FormFieldValueRequirement(test_itmes)
+
+        user = Mock()
+        user.forms = {form_name: Mock()}
+        user.forms[form_name].fields = {form_field: Mock(), "value": field_value}
+        user.forms[form_name].fields[form_field].value = field_value
+
+        result = req_form_field_value.check(Mock(), user)
+        self.assertTrue(result)
+
+    def test_form_field_value_requirement_false(self):
+        """Тест кейз проверяет что условие возвращает False, т.к в
+        форме form_name в поле form_field значение НЕ совпадает с переданным field_value.
+        """
+        form_name = "test_form"
+        form_field = "test_field"
+        field_value = "test_value"
+
+        test_itmes = {"form_name": form_name, "field_name": form_field, "value": field_value}
+        req_form_field_value = FormFieldValueRequirement(test_itmes)
+
+        user = Mock()
+        user.forms = {form_name: Mock()}
+        user.forms[form_name].fields = {form_field: Mock(), "value": "OTHER_TEST_VAL"}
+        user.forms[form_name].fields[form_field].value = "OTHER_TEST_VAL"
+
+        result = req_form_field_value.check(Mock(), user)
+        self.assertFalse(result)
+
+    @patch("smart_kit.configs.get_app_config")
+    def test_environment_requirement_true(self, mock_get_app_config):
+        """Тест кейз проверяет что условие возвращает True, т.к среда исполнения из числа values."""
+        patch_get_app_config(mock_get_app_config)
+        environment_req = EnvironmentRequirement({"values": ["ift", "uat"]})
+        self.assertTrue(environment_req.check(Mock(), Mock()))
+
+    @patch("smart_kit.configs.get_app_config")
+    def test_environment_requirement_false(self, mock_get_app_config):
+        """Тест кейз проверяет что условие возвращает False, т.к среда исполнения НЕ из числа values."""
+        patch_get_app_config(mock_get_app_config)
+        environment_req = EnvironmentRequirement({"values": ["uat", "pt"]})
+        self.assertFalse(environment_req.check(Mock(), Mock()))
+
+    def test_any_substring_in_lowered_text_requirement_true(self):
+        """Тест кейз проверяет что условие возвращает True, т.к нашлась подстрока из списка substrings, которая
+        встречается в оригинальном тексте в нижнем регистре.
+        """
+        req = AnySubstringInLoweredTextRequirement({"substrings": ["искомая подстрока", "другое знанчение"]})
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.raw = {"original_text": "КАКОЙ-ТО ТЕКСТ С ИСКОМАЯ ПОДСТРОКА"}
+        result = req.check(text_preprocessing_result, Mock())
+        self.assertTrue(result)
+
+    def test_any_substring_in_lowered_text_requirement_false(self):
+        """Тест кейз проверяет что условие возвращает False, т.к НЕ нашлась ни одна подстрока из списка substrings,
+        которая бы встречалась в оригинальном тексте в нижнем регистре.
+        """
+        req = AnySubstringInLoweredTextRequirement({"substrings": ["искомая подстрока", "другая подстрока"]})
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.raw = {"original_text": "КАКОЙ-ТО ТЕКСТ"}
+        result = req.check(text_preprocessing_result, Mock())
+        self.assertFalse(result)
+
+    def test_tokens_len_requirement_true(self):
+        """Тест кейз проверяет что условие возвращает True,
+        т.к попадает под ограничение на длину запроса в количестве слов.
+        """
+        req = TokensNumRequirement({"operator": {"type": "more", "amount": 2}})
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.tokenized_elements_list = [
+            {"text": "хочу", "grammem_info": {
+                "aspect": "impf", "mood": "ind", "number": "sing", "person": "1", "tense": "notpast",
+                "transitivity": "tran", "verbform": "fin", "voice": "act", "raw_gram_info":
+                "aspect=impf|mood=ind|number=sing|person=1|tense=notpast|transitivity=tran|verbform=fin|voice=act",
+                "part_of_speech": "VERB"}, "lemma": "хотеть"},
+            {"text": "узнать", "grammem_info": {
+                "aspect": "perf", "transitivity": "tran", "verbform": "inf",
+                "raw_gram_info": "aspect=perf|transitivity=tran|verbform=inf", "part_of_speech": "VERB"},
+             "lemma": "узнать"},
+            {"text": "прогноз", "grammem_info": {
+                "animacy": "inan", "case": "acc", "gender": "masc", "number": "sing", "raw_gram_info":
+                    "animacy=inan|case=acc|gender=masc|number=sing", "part_of_speech": "NOUN"}, "lemma": "прогноз"},
+            {"text": "погоды", "grammem_info": {
+                "animacy": "inan", "case": "gen", "gender": "fem", "number": "sing",
+                "raw_gram_info": "animacy=inan|case=gen|gender=fem|number=sing",
+                "part_of_speech": "NOUN"}, "lemma": "погода"}
+            ]
+        self.assertTrue(req.check(text_preprocessing_result, Mock()))
+
+    def test_tokens_len_requirement_false(self):
+        """Тест кейз проверяет что условие возвращает False,
+        т.к НЕ попадает под ограничение на длину запроса в количестве слов.
+        """
+        req = TokensNumRequirement({"operator": {"type": "more", "amount": 2}})
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.tokenized_elements_list = [
+            {"text": "хочу", "grammem_info": {
+                "aspect": "impf", "mood": "ind", "number": "sing", "person": "1", "tense": "notpast",
+                "transitivity": "tran", "verbform": "fin", "voice": "act", "raw_gram_info":
+                "aspect=impf|mood=ind|number=sing|person=1|tense=notpast|transitivity=tran|verbform=fin|voice=act",
+                "part_of_speech": "VERB"}, "lemma": "хотеть"}
+            ]
+        self.assertFalse(req.check(text_preprocessing_result, Mock()))
+
+    def test_num_in_range_requirement_true(self):
+        """Тест кейз проверяет что условие возвращает True, т.к число находится в заданном диапазоне."""
+        req = NumInRangeRequirement({"min_num": "5", "max_num": "10"})
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.num_token_values = 7
+        self.assertTrue(req.check(text_preprocessing_result, Mock()))
+
+    def test_num_in_range_requirement_false(self):
+        """Тест кейз проверяет что условие возвращает False, т.к число НЕ находится в заданном диапазоне."""
+        req = NumInRangeRequirement({"min_num": "5", "max_num": "10"})
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.num_token_values = 20
+        self.assertFalse(req.check(text_preprocessing_result, Mock()))
+
+    def test_phone_number_number_requirement_true(self):
+        """Тест кейз проверяет что условие возвращает True, т.к кол-во номеров телефонов больше заданного."""
+        req = PhoneNumberNumberRequirement({"operator": {"type": "more", "amount": 1}})
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.get_token_values_by_type.return_value = ["89030478799", "89092534523"]
+        self.assertTrue(req.check(text_preprocessing_result, Mock()))
+
+    def test_phone_number_number_requirement_false(self):
+        """Тест кейз проверяет что условие возвращает False, т.к кол-во номеров телефонов НЕ больше заданного."""
+        req = PhoneNumberNumberRequirement({"operator": {"type": "more", "amount": 10}})
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.get_token_values_by_type.return_value = ["89030478799"]
+        self.assertFalse(req.check(text_preprocessing_result, Mock()))
+
+    def test_number_of_numbers_requirement_true(self):
+        """Тест кейз проверяет что условие возвращает True, т.к кол-во чисел больше заданного."""
+        req = NumberOfNumbersRequirement({"operator": {"type": "more", "amount": 2}})
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.number_of_numbers = 5
+        self.assertTrue(req.check(text_preprocessing_result, Mock()))
+
+    def test_number_of_numbers_requirement_false(self):
+        """Тест кейз проверяет что условие возвращает False, т.к кол-во чисел НЕ больше заданного."""
+        req = NumberOfNumbersRequirement({"operator": {"type": "more", "amount": 2}})
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.number_of_numbers = 1
+        self.assertFalse(req.check(text_preprocessing_result, Mock()))
+
+    @patch("smart_kit.configs.get_app_config")
+    def test_intersection_with_tokens_requirement_true(self, mock_get_app_config):
+        """Тест кейз проверяет что условие возвращает True, т.к хотя бы одно слово из нормализованного
+        вида запроса входит в список слов input_words.
+        """
+        patch_get_app_config(mock_get_app_config)
+
+        req = IntersectionWithTokensSetRequirement({"input_words": ["погода", "время"]})
+
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.raw = {"tokenized_elements_list": [
+            {"text": "прогноз", "grammem_info": {
+                "animacy": "inan", "case": "acc", "gender": "masc", "number": "sing", "raw_gram_info":
+                    "animacy=inan|case=acc|gender=masc|number=sing", "part_of_speech": "NOUN"}, "lemma": "прогноз"},
+            {"text": "погоды", "grammem_info": {
+                "animacy": "inan", "case": "gen", "gender": "fem", "number": "sing",
+                "raw_gram_info": "animacy=inan|case=gen|gender=fem|number=sing",
+                "part_of_speech": "NOUN"}, "lemma": "погода"}
+            ]}
+
+        self.assertTrue(req.check(text_preprocessing_result, Mock()))
+
+    @patch("smart_kit.configs.get_app_config")
+    def test_intersection_with_tokens_requirement_false(self, mock_get_app_config):
+        """Тест кейз проверяет что условие возвращает False, т.к ни одно слово из нормализованного
+        вида запроса не входит в список слов input_words.
+        """
+        patch_get_app_config(mock_get_app_config)
+
+        req = IntersectionWithTokensSetRequirement({"input_words": ["время"]})
+
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.raw = {"tokenized_elements_list": [
+            {"text": "прогноз", "grammem_info": {
+                "animacy": "inan", "case": "acc", "gender": "masc", "number": "sing", "raw_gram_info":
+                    "animacy=inan|case=acc|gender=masc|number=sing", "part_of_speech": "NOUN"}, "lemma": "прогноз"},
+            {"text": "погоды", "grammem_info": {
+                "animacy": "inan", "case": "gen", "gender": "fem", "number": "sing",
+                "raw_gram_info": "animacy=inan|case=gen|gender=fem|number=sing",
+                "part_of_speech": "NOUN"}, "lemma": "погода"}
+        ]}
+
+        self.assertFalse(req.check(text_preprocessing_result, Mock()))
+
+    @patch("smart_kit.configs.get_app_config")
+    def test_normalized_text_in_set_requirement_true(self, mock_get_app_config):
+        """Тест кейз проверяет что условие возвращает True, т.к в нормализованном представлении
+        запрос полностью совпадает с одной из нормализованных строк из input_words.
+        """
+        patch_get_app_config(mock_get_app_config)
+
+        req = NormalizedTextInSetRequirement({"input_words": ["погода", "время"]})
+
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.raw = {"normalized_text": "погода ."}
+
+        self.assertTrue(req.check(text_preprocessing_result, Mock()))
+
+    @patch("smart_kit.configs.get_app_config")
+    def test_normalized_text_in_set_requirement_false(self, mock_get_app_config):
+        """Тест кейз проверяет что условие возвращает False, т.к в нормализованном представлении
+        запрос НЕ совпадает ни с одной из нормализованных строк из input_words.
+        """
+        patch_get_app_config(mock_get_app_config)
+
+        req = NormalizedTextInSetRequirement({"input_words": ["погода", "время"]})
+
+        text_preprocessing_result = Mock()
+        text_preprocessing_result.raw = {"normalized_text": "хотеть узнать ."}
+
+        self.assertFalse(req.check(text_preprocessing_result, Mock()))
 
 
 if __name__ == '__main__':

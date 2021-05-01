@@ -8,10 +8,12 @@ from core.basic_models.classifiers.basic_classifiers import ExternalClassifier
 from core.basic_models.operators.operators import Operator
 from core.basic_models.requirement.basic_requirements import Requirement, CompositeRequirement, AndRequirement, \
     OrRequirement, NotRequirement, RandomRequirement, TopicRequirement, TemplateRequirement, RollingRequirement, \
-    TimeRequirement, DateTimeRequirement, IntersectionRequirement, ClassifierRequirement
+    TimeRequirement, DateTimeRequirement, IntersectionRequirement, ClassifierRequirement, CharacterIdRequirement, \
+    FeatureToggleRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.model.registered import registered_factories
+from smart_kit.feature_toggles.feature_toggles import get_feature_toggles
 from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
 
 
@@ -21,6 +23,7 @@ def patch_get_app_config(mock_get_app_config):
     result.STATIC_PATH = os.path.join(sk_path, 'template/static')
     mock_get_app_config.return_value = result
     result.NORMALIZER = LocalTextNormalizer()
+    result.FEATURE_TOGGLES = get_feature_toggles({"test_true_toggle_name": True, "test_false_toggle_name": False})
     mock_get_app_config.return_value = result
 
 
@@ -383,6 +386,32 @@ class RequirementTest(unittest.TestCase):
         mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
         result = classifier_requirement.check(Mock(), mock_user)
         self.assertFalse(result)
+
+    def test_character_id_requirement_true(self):
+        req = CharacterIdRequirement({"values": ["sber", "afina"]})
+        user = Mock()
+        user.message = Mock()
+        user.message.payload = {"character": {"id": "sber", "name": "Сбер", "gender": "male"}}
+        self.assertTrue(req.check(Mock(), user))
+
+    def test_character_id_requirement_false(self):
+        req = CharacterIdRequirement({"values": ["afina"]})
+        user = Mock()
+        user.message = Mock()
+        user.message.payload = {"character": {"id": "sber", "name": "Сбер", "gender": "male"}}
+        self.assertFalse(req.check(Mock(), user))
+
+    @patch("smart_kit.configs.get_app_config")
+    def test_feature_toggle_check_requirement_true(self, mock_get_app_config):
+        patch_get_app_config(mock_get_app_config)
+        req = FeatureToggleRequirement({"toggle_name": "test_true_toggle_name"})
+        self.assertTrue(req.check(Mock(), Mock()))
+
+    @patch("smart_kit.configs.get_app_config")
+    def test_feature_toggle_check_requirement_false(self, mock_get_app_config):
+        patch_get_app_config(mock_get_app_config)
+        req = FeatureToggleRequirement({"toggle_name": "test_false_toggle_name"})
+        self.assertFalse(req.check(Mock(), Mock()))
 
 
 if __name__ == '__main__':

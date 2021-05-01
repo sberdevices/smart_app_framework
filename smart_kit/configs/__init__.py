@@ -5,6 +5,7 @@ from core.message.from_message import SmartAppFromMessage
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User
 from smart_kit.configs.settings import Settings
+from smart_kit.feature_toggles.feature_toggles import get_feature_toggles
 from smart_kit.models.dialogue_manager import DialogueManager
 from smart_kit.models.smartapp_model import SmartAppModel
 from smart_kit.resources import SmartAppResources
@@ -63,5 +64,9 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
 
     set_default(app_config, "STATIC_CLASSIFIERS_PATH", os.path.join(references_path, "./classifiers"))
     set_default(app_config, "STATIC_CLASSIFIERS_DATA_PATH", os.path.join(references_path, "./classifiers_data"))
+
+    # Можно переопределить в конфиге смартаппа следующим образом:
+    # FEATURE_TOGGLES = get_feature_toggles({"toggle_name_1": True, "toggle_name_2": False})
+    set_default(app_config, "FEATURE_TOGGLES", get_feature_toggles({}))
 
     return app_config

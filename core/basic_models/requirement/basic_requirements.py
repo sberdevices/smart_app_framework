@@ -266,3 +266,33 @@ class ClassifierRequirement(Requirement):
             check_res = False
 
         return check_res
+
+
+class CharacterIdRequirement(Requirement):
+    """Условие возвращает True, если идентификатор выбранного персонажа входит
+    в список значений, иначе - False.
+    """
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(CharacterIdRequirement, self).__init__(items=items, id=id)
+        self.values = items["values"]
+
+    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+              params: Dict[str, Any] = None) -> bool:
+        return user.message.payload["character"]["id"] in self.values
+
+
+class FeatureToggleRequirement(Requirement):
+    """Условие возвращает True, если проверка указанного тогла по названию возвращает True, иначе - False."""
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(FeatureToggleRequirement, self).__init__(items=items, id=id)
+        self.toggle_name = items["toggle_name"]
+        # Из конфига получаем feature toggles
+        from smart_kit.configs import get_app_config
+        app_config = get_app_config()
+        self._feature_toggles = app_config.FEATURE_TOGGLES
+
+    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+              params: Dict[str, Any] = None) -> bool:
+        return self._feature_toggles.is_enabled(self.toggle_name)

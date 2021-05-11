@@ -28,8 +28,8 @@ from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirements
 from core.basic_models.requirement.user_text_requirements import AnySubstringInLoweredTextRequirement, \
-    TokensNumRequirement, IntersectionWithTokensSetRequirement, NormalizedTextInSetRequirement, \
-    NumberOfNumbersRequirement, PhoneNumberNumberRequirement, NumInRangeRequirement
+    IntersectionWithTokensSetRequirement, NormalizedTextInSetRequirement, \
+    PhoneNumberNumberRequirement, NumInRangeRequirement
 from core.basic_models.scenarios.base_scenario import BaseScenario
 from core.basic_models.scenarios.base_scenario import scenarios
 from core.configs.base_config import BaseConfig
@@ -321,7 +321,6 @@ class SmartAppResources(BaseConfig):
         requirements["intersection_with_tokens"] = IntersectionWithTokensSetRequirement
         requirements["normalized_text_in_set"] = NormalizedTextInSetRequirement
         requirements["not"] = NotRequirement
-        requirements["number_of_numbers"] = NumberOfNumbersRequirement
         requirements["num_in_range"] = NumInRangeRequirement
         requirements["or"] = OrRequirement
         requirements["phone_number_number"] = PhoneNumberNumberRequirement
@@ -334,7 +333,6 @@ class SmartAppResources(BaseConfig):
         requirements["template"] = TemplateRequirement
         requirements["template_in_array"] = TemplateInArrayRequirement
         requirements["time"] = TimeRequirement
-        requirements["tokens_len"] = TokensNumRequirement
 
     def init_sdk_items(self):
         answer_items["bubble_text"] = BubbleText

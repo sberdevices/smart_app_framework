@@ -13,8 +13,8 @@ from core.basic_models.requirement.basic_requirements import Requirement, Compos
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.user_text_requirements import AnySubstringInLoweredTextRequirement, \
-    TokensNumRequirement, PhoneNumberNumberRequirement, NumInRangeRequirement, NumberOfNumbersRequirement, \
-    IntersectionWithTokensSetRequirement, NormalizedTextInSetRequirement
+    PhoneNumberNumberRequirement, NumInRangeRequirement, IntersectionWithTokensSetRequirement, \
+    NormalizedTextInSetRequirement
 from core.model.registered import registered_factories
 from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
 
@@ -461,47 +461,6 @@ class RequirementTest(unittest.TestCase):
         result = req.check(text_preprocessing_result, Mock())
         self.assertFalse(result)
 
-    def test_tokens_len_requirement_true(self):
-        """Тест кейз проверяет что условие возвращает True,
-        т.к попадает под ограничение на длину запроса в количестве слов.
-        """
-        req = TokensNumRequirement({"operator": {"type": "more", "amount": 2}})
-        text_preprocessing_result = Mock()
-        text_preprocessing_result.tokenized_elements_list = [
-            {"text": "хочу", "grammem_info": {
-                "aspect": "impf", "mood": "ind", "number": "sing", "person": "1", "tense": "notpast",
-                "transitivity": "tran", "verbform": "fin", "voice": "act", "raw_gram_info":
-                "aspect=impf|mood=ind|number=sing|person=1|tense=notpast|transitivity=tran|verbform=fin|voice=act",
-                "part_of_speech": "VERB"}, "lemma": "хотеть"},
-            {"text": "узнать", "grammem_info": {
-                "aspect": "perf", "transitivity": "tran", "verbform": "inf",
-                "raw_gram_info": "aspect=perf|transitivity=tran|verbform=inf", "part_of_speech": "VERB"},
-             "lemma": "узнать"},
-            {"text": "прогноз", "grammem_info": {
-                "animacy": "inan", "case": "acc", "gender": "masc", "number": "sing", "raw_gram_info":
-                    "animacy=inan|case=acc|gender=masc|number=sing", "part_of_speech": "NOUN"}, "lemma": "прогноз"},
-            {"text": "погоды", "grammem_info": {
-                "animacy": "inan", "case": "gen", "gender": "fem", "number": "sing",
-                "raw_gram_info": "animacy=inan|case=gen|gender=fem|number=sing",
-                "part_of_speech": "NOUN"}, "lemma": "погода"}
-            ]
-        self.assertTrue(req.check(text_preprocessing_result, Mock()))
-
-    def test_tokens_len_requirement_false(self):
-        """Тест кейз проверяет что условие возвращает False,
-        т.к НЕ попадает под ограничение на длину запроса в количестве слов.
-        """
-        req = TokensNumRequirement({"operator": {"type": "more", "amount": 2}})
-        text_preprocessing_result = Mock()
-        text_preprocessing_result.tokenized_elements_list = [
-            {"text": "хочу", "grammem_info": {
-                "aspect": "impf", "mood": "ind", "number": "sing", "person": "1", "tense": "notpast",
-                "transitivity": "tran", "verbform": "fin", "voice": "act", "raw_gram_info":
-                "aspect=impf|mood=ind|number=sing|person=1|tense=notpast|transitivity=tran|verbform=fin|voice=act",
-                "part_of_speech": "VERB"}, "lemma": "хотеть"}
-            ]
-        self.assertFalse(req.check(text_preprocessing_result, Mock()))
-
     def test_num_in_range_requirement_true(self):
         """Тест кейз проверяет что условие возвращает True, т.к число находится в заданном диапазоне."""
         req = NumInRangeRequirement({"min_num": "5", "max_num": "10"})
@@ -528,20 +487,6 @@ class RequirementTest(unittest.TestCase):
         req = PhoneNumberNumberRequirement({"operator": {"type": "more", "amount": 10}})
         text_preprocessing_result = Mock()
         text_preprocessing_result.get_token_values_by_type.return_value = ["89030478799"]
-        self.assertFalse(req.check(text_preprocessing_result, Mock()))
-
-    def test_number_of_numbers_requirement_true(self):
-        """Тест кейз проверяет что условие возвращает True, т.к кол-во чисел больше заданного."""
-        req = NumberOfNumbersRequirement({"operator": {"type": "more", "amount": 2}})
-        text_preprocessing_result = Mock()
-        text_preprocessing_result.number_of_numbers = 5
-        self.assertTrue(req.check(text_preprocessing_result, Mock()))
-
-    def test_number_of_numbers_requirement_false(self):
-        """Тест кейз проверяет что условие возвращает False, т.к кол-во чисел НЕ больше заданного."""
-        req = NumberOfNumbersRequirement({"operator": {"type": "more", "amount": 2}})
-        text_preprocessing_result = Mock()
-        text_preprocessing_result.number_of_numbers = 1
         self.assertFalse(req.check(text_preprocessing_result, Mock()))
 
     @patch("smart_kit.configs.get_app_config")

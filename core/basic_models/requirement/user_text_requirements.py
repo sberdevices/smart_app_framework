@@ -26,24 +26,6 @@ class AnySubstringInLoweredTextRequirement(Requirement):
         return any(s.lower() in lowered_text for s in self.substrings)
 
 
-class TokensNumRequirement(ComparisonRequirement):
-    """Условие возвращает True, если попадает под ограничение на длину запроса в количестве слов, иначе - False."""
-
-    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
-        super().__init__(items, id)
-
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
-        num_tokens = TokenizeHelper.num_tokens(text_preprocessing_result)
-        result = self.operator.compare(num_tokens)
-        if result:
-            params = self._log_params()
-            params["num_tokens"] = num_tokens
-            message = "Requirement: %(requirement)s, num_tokens: %(num_tokens)s"
-            log(message, user, params)
-        return result
-
-
 class NormalizedInputWordsRequirement(Requirement):
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
@@ -102,27 +84,6 @@ class NormalizedTextInSetRequirement(NormalizedInputWordsRequirement):
                       "normalized_input_words: %(normalized_input_words)s"
             log(message, user, params)
 
-        return result
-
-
-class NumberOfNumbersRequirement(ComparisonRequirement):
-    """Условие возвращает True, если кол-во чисел больше/меньше/.. X, иначе - False.
-    Сюда не включаются номера телефонов, карт и другие сущности.x
-    Строго говоря, считается кол-во токенов, имеющих token_type = "NUM_TOKEN".
-    """
-
-    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
-        super().__init__(items, id)
-
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
-        number_of_numbers = text_preprocessing_result.number_of_numbers
-        result = self.operator.compare(number_of_numbers)
-        if result:
-            params = self._log_params()
-            params["number_of_numbers"] = number_of_numbers
-            message = "Requirement: %(requirement)s, number_of_numbers: %(number_of_numbers)s"
-            log(message, user, params)
         return result
 
 

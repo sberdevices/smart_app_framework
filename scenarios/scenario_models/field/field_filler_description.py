@@ -337,7 +337,7 @@ class IntersectionFieldFiller(FieldFillerDescription):
         if items.get("strict"):
             self.operator = operator.eq
         else:
-            self.operator = operator.gt
+            self.operator = operator.ge
 
         from smart_kit.configs import get_app_config
         app_config = get_app_config()

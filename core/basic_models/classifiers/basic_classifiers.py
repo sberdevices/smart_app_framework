@@ -217,16 +217,11 @@ class SciKitClassifier(ExtendedClassifier):
             text_preprocessing_result: BaseTextPreprocessingResult,
             vector: Optional[np.ndarray] = np.array([])
     ) -> List[Any]:
-        prediction_result = []
-        try:
-            if vector.size != 0:
-                prediction_result = self.classifier.predict_proba(
-                    self.prepared(text_preprocessing_result), vector)[0].tolist()
-            else:
-                prediction_result = self.classifier.predict_proba(self.prepared(text_preprocessing_result))[0].tolist()
-        except Exception:
-            pass
-
+        if vector.size != 0:
+            prediction_result = self.classifier.predict_proba(
+                self.prepared(text_preprocessing_result), vector)[0].tolist()
+        else:
+            prediction_result = self.classifier.predict_proba(self.prepared(text_preprocessing_result))[0].tolist()
         return prediction_result
 
 

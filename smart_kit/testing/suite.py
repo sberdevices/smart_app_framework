@@ -115,6 +115,7 @@ class TestCase:
 
         app_callback_id = None
         for index, message in enumerate(self.messages):
+            print('Шаг', index)
             if index and self.interactive:
                 print("Нажмите ENTER, чтобы продолжить...")
                 input()

@@ -165,18 +165,19 @@ class TestClassifierRepository(unittest.TestCase):
                 return_value={"test_classifier": {"type": "scikit", "path": self.temp_model_file_name, "intents": []}}
         ) as mock:
             with patch("core.repositories.folder_repository.FolderRepository.load") as load_mock:
-                classifier_repo = ClassifierRepository(
-                    self.temp_directory_path, self.temp_directory_path, json.loads, "")
-                classifier_repo.load()
-                expected_result = {
-                    "test_classifier": {
-                        "classifier": {"tests": "success"},
-                        "path": self.temp_model_file_name,
-                        "type": "scikit",
-                        "intents": []
+                with patch("core.repositories.classifier_repository.classifiers_initial_launch") as initial_launch_mock:
+                    classifier_repo = ClassifierRepository(
+                        self.temp_directory_path, self.temp_directory_path, json.loads, "")
+                    classifier_repo.load()
+                    expected_result = {
+                        "test_classifier": {
+                            "classifier": {"tests": "success"},
+                            "path": self.temp_model_file_name,
+                            "type": "scikit",
+                            "intents": []
+                        }
                     }
-                }
-                self.assertEqual(expected_result, classifier_repo.data)
+                    self.assertEqual(expected_result, classifier_repo.data)
 
     def test_load_skip_classifier(self):
         """Тест кейз на проверку загрузки skip классификатора, для этого типа классификаторов сам
@@ -201,10 +202,11 @@ class TestClassifierRepository(unittest.TestCase):
         with patch("core.repositories.folder_repository.FolderRepository.data", new_callable=PropertyMock,
                    return_value=expected_return_obj) as mock_folder_data:
             with patch("core.repositories.folder_repository.FolderRepository.load") as load_mock:
-                classifier_repo = ClassifierRepository(
-                    self.temp_directory_path, self.temp_directory_path, json.loads, "")
-                classifier_repo.load()
-                self.assertEqual(expected_return_obj, classifier_repo.data)
+                with patch("core.repositories.classifier_repository.classifiers_initial_launch") as initial_launch_mock:
+                    classifier_repo = ClassifierRepository(
+                        self.temp_directory_path, self.temp_directory_path, json.loads, "")
+                    classifier_repo.load()
+                    self.assertEqual(expected_return_obj, classifier_repo.data)
 
     def test_load_if_not_classifiers_paths(self):
         classifier_repo = ClassifierRepository("./nonexistent_path", "./another_nonexistent_path", json.loads, "")

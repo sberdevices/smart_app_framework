@@ -112,4 +112,5 @@ ____
 
 # Обратная связь
 
-C вопросами и предложениями пишите нам по адресу developer@sberdevices.ru или вступайте в наш Telegram канал - [SmartApp Studio Community](https://t.me/smartapp_studio). 
+C вопросами и предложениями пишите нам по адресу developer@sberdevices.ru или вступайте в 
+наш Telegram канал - [SmartMarket Community](https://t.me/smartmarket_community). 

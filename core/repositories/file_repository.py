@@ -1,6 +1,8 @@
+import os
+
+import core.logging.logger_constants as log_const
 from core.repositories.items_repository import ItemsRepository
 from core.logging.logger_utils import log
-import core.logging.logger_constants as log_const
 
 
 class FileRepository(ItemsRepository):
@@ -10,22 +12,54 @@ class FileRepository(ItemsRepository):
         self.loader = loader
         self.saver = saver
         self.save_target = save_target
+        self._file_exist = False
 
     def load(self):
         if self.source.path_exists(self.filename):
+            self._file_exist = True
             with self.source.open(self.filename, 'rb') as stream:
                 binary_data = stream.read()
                 data = binary_data.decode()
                 self.fill(self.loader(data))
         else:
+            self._file_exist = False
             params = {
                 "error_repository_path": self.filename,
                 log_const.KEY_NAME: log_const.EXCEPTION_VALUE
             }
             log("FileRepository.load loading failed with file %(error_repository_path)s",
-                          params=params, level="WARNING")
+                params=params, level="WARNING")
         super(FileRepository, self).load()
 
     def save(self, save_parameters):
         with self.source.open(self.save_target, 'wb') as stream:
             stream.write(self.saver(self.data, **save_parameters).encode())
+
+
+class UpdatableFileRepository(FileRepository):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._last_mtime = None
+
+    @FileRepository.data.getter
+    def data(self):
+        if self._is_outdated:
+            params = {
+                "filename": self.filename
+            }
+            log("FileRepository.data %(filename)s is outdated. Data will be reloaded.",
+                params=params, level="INFO")
+
+            self.load()
+        return self._data
+
+    def load(self):
+        super().load()
+        if self._file_exist:
+            self._last_mtime = os.path.getmtime(self.filename)
+
+    @property
+    def _is_outdated(self):
+        if self._file_exist:
+            return os.path.getmtime(self.filename) > self._last_mtime
+        return False

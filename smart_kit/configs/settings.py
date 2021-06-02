@@ -4,7 +4,7 @@ import os
 from core.configs.base_config import BaseConfig
 from core.db_adapter.ceph.ceph_adapter import CephAdapter
 from core.db_adapter.os_adapter import OSAdapter
-from core.repositories.file_repository import FileRepository
+from core.repositories.file_repository import UpdatableFileRepository
 
 
 class Settings(BaseConfig):
@@ -19,10 +19,14 @@ class Settings(BaseConfig):
         self.app_name = kwargs.get("app_name")
         self.adapters = {Settings.CephAdapterKey: CephAdapter, self.OSAdapterKey: OSAdapter}
         self.repositories = [
-            FileRepository(self.subfolder_path("template_config.yml"), loader=yaml.safe_load, key="template_settings"),
-            FileRepository(self.subfolder_secret_path("kafka_config.yml"), loader=yaml.safe_load, key="kafka"),
-            FileRepository(self.subfolder_path("ceph_config.yml"), loader=yaml.safe_load, key=self.CephAdapterKey),
-            FileRepository(self.subfolder_path("aiohttp.yml"), loader=yaml.safe_load, key="aiohttp"),
+            UpdatableFileRepository(
+                self.subfolder_path("template_config.yml"), loader=yaml.safe_load, key="template_settings"
+            ),
+            UpdatableFileRepository(self.subfolder_secret_path("kafka_config.yml"), loader=yaml.safe_load, key="kafka"),
+            UpdatableFileRepository(
+                self.subfolder_path("ceph_config.yml"), loader=yaml.safe_load, key=self.CephAdapterKey
+            ),
+            UpdatableFileRepository(self.subfolder_path("aiohttp.yml"), loader=yaml.safe_load, key="aiohttp"),
         ]
         self.repositories = self.override_repositories(self.repositories)
         self.init()

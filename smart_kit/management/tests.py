@@ -33,10 +33,14 @@ class TestsCommand(AppCommand):
                                  default=str(self.DEFAULT_PREDEFINED_FIELDS_STORAGE))
         self.commands = self.parser.add_mutually_exclusive_group(required=True)
         self.commands.add_argument("--run", dest="run", help="Runs Tests", action="store_true")
+        run_command = self.parser.add_argument_group("Running")
+        run_command.add_argument(
+            "--make-csv", dest="make_csv", help="Create csv file for tests results", action="store_true"
+        )
+
         self.commands.add_argument(
             "--gen", dest="gen", help="Create test directory at provided path", action="store_true"
         )
-
         gen_command = self.parser.add_argument_group("Generating")
         gen_command.add_argument(
             "--update", dest="update", help="Create missing template for scenarios", action="store_true",
@@ -47,7 +51,7 @@ class TestsCommand(AppCommand):
         if namespace.gen:
             self.generate_tests_folder(namespace.path, namespace.update)
         elif namespace.run:
-            self.run_tests(namespace.path, namespace.predefined_fields_storage)
+            self.run_tests(namespace.path, namespace.predefined_fields_storage, namespace.make_csv)
         else:
             raise Exception("Something going wrong due parsing the args")
 
@@ -80,7 +84,7 @@ class TestsCommand(AppCommand):
                     if not update:
                         raise
 
-    def run_tests(self, path, predefined_fields_storage):
+    def run_tests(self, path, predefined_fields_storage, make_csv):
         path = define_path(path)
         predefined_fields_storage = define_path(predefined_fields_storage)
         if not os.path.exists(path):
@@ -90,7 +94,7 @@ class TestsCommand(AppCommand):
             print(f"[!] Predefined fields storage file does not found, check file path: {predefined_fields_storage}")
             return
         else:
-            TestSuite(path, self.app_config, predefined_fields_storage).run()
+            TestSuite(path, self.app_config, predefined_fields_storage, make_csv).run()
 
     def get_test_template_path(self):
         path = os.path.join(self.app_config.REFERENCES_PATH, self.TEST_TEMPLATE_PATH)

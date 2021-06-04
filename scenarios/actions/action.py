@@ -175,8 +175,8 @@ class BaseSetVariableAction(Action):
     loaders = collections.defaultdict(str, {"json": json.loads, "float": float, "int": int})
     value: Union[str, Dict]
 
-    def __init__(self, items: Dict[str, Any], id_: Optional[str] = None):
-        super(BaseSetVariableAction, self).__init__(items, id_)
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
+        super(BaseSetVariableAction, self).__init__(items, id)
         self.key: str = items["key"]
         self.loader = items.get('loader')
         value: str = items["value"]

@@ -35,6 +35,7 @@ def _enrich_config_from_secret(kafka_config, secret_config):
 
 
 class MainLoop(BaseMainLoop):
+    MAX_LOG_TIME = 20
     BAD_ANSWER_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Answer Message"})
 
     def __init__(self, *args, **kwargs):
@@ -90,7 +91,13 @@ class MainLoop(BaseMainLoop):
                 self.iterate(kafka_key)
 
             if self.health_check_server:
-                self.health_check_server.iterate()
+                with StatsTimer() as health_check_server_timer:
+                    self.health_check_server.iterate()
+
+                if health_check_server_timer.msecs >= self.MAX_LOG_TIME:
+                    log("Health check iterate time: {} msecs\n".format(health_check_server_timer.msecs),
+                        params={log_const.KEY_NAME: "slow_health_check",
+                                "time_msecs": health_check_server_timer.msecs}, level="WARNING")
 
         log("Stopping Kafka handler", level="WARNING")
         for kafka_key in self.consumers:

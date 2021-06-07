@@ -9,6 +9,7 @@ from lazy import lazy
 from timeout_decorator import timeout_decorator
 
 import core.basic_models.classifiers.classifiers_constants as cls_const
+from core.basic_models.classifiers.vectorizer_models import vectorizers
 from core.model.factory import build_factory
 from core.model.registered import Registered
 from core.text_preprocessing.base import BaseTextPreprocessingResult
@@ -140,6 +141,7 @@ class ExtendedClassifier(Classifier):
         self.intents = self.settings["intents"]
         self._path = self.settings["path"]
         self._classifier = self.settings.get("classifier")
+        # Способ векторизации для реплик указывается в конфигурации классификатора
         self._vectorizer = self.settings.get("vectorizer")
 
     def set_classifier(self, clsf: Classifier) -> None:
@@ -155,10 +157,7 @@ class ExtendedClassifier(Classifier):
             mask: Optional[Dict[str, bool]] = None,
             scenario_classifiers: Optional[Dict[str, Any]] = None
     ) -> List[Dict[str, Union[str, float, bool]]]:
-        # TODO: позже здесь будут добавлены vectorizers, и возможность указывать способ векторизации в конфиге класси-ра
-        # vector = vectorizers[self._vectorizer].vectorize(text_preprocessing_result)
-        # if self._vectorizer else np.array([])
-        vector = np.array([])
+        vector = vectorizers[self._vectorizer].vectorize(text_preprocessing_result) if self._vectorizer else np.array([])
         weights = sorted(self._get_weights(text_preprocessing_result, vector).items(), key=lambda x: x[1], reverse=True)
         answers = []
         for weight in weights:
@@ -218,16 +217,11 @@ class SciKitClassifier(ExtendedClassifier):
             text_preprocessing_result: BaseTextPreprocessingResult,
             vector: Optional[np.ndarray] = np.array([])
     ) -> List[Any]:
-        prediction_result = []
-        try:
-            if vector.size != 0:
-                prediction_result = self.classifier.predict_proba(
-                    self.prepared(text_preprocessing_result), vector)[0].tolist()
-            else:
-                prediction_result = self.classifier.predict_proba(self.prepared(text_preprocessing_result))[0].tolist()
-        except Exception:
-            pass
-
+        if vector.size != 0:
+            prediction_result = self.classifier.predict_proba(
+                self.prepared(text_preprocessing_result), vector)[0].tolist()
+        else:
+            prediction_result = self.classifier.predict_proba(self.prepared(text_preprocessing_result))[0].tolist()
         return prediction_result
 
 

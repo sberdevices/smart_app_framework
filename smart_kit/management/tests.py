@@ -18,7 +18,10 @@ def define_path(path):
 
 class TestsCommand(AppCommand):
     TEST_TEMPLATE_PATH = "test_template.json"
-    DEFAULT_TEMPLATE_PATH = os.path.join(smart_kit.__path__[0], "template/static/references/test_template.json")
+    smart_kit_path = smart_kit.__path__[0]
+    DEFAULT_TEMPLATE_PATH = os.path.join(smart_kit_path, "template/static/references/test_template.json")
+    DEFAULT_PREDEFINED_FIELDS_STORAGE = os.path.join(
+        smart_kit_path, "template/static/references/predefined_fields_storage.json")
     TEST_EXTENSION = ".json"
 
     def __init__(self, app_config):
@@ -26,7 +29,8 @@ class TestsCommand(AppCommand):
         self.parser = argparse.ArgumentParser(description="Tests creating and running.")
         self.parser.add_argument("path", metavar="PATH", type=str, help="Path to directory with tests", action="store")
         self.parser.add_argument("predefined_fields_storage", metavar="PREDEFINED_FIELDS_STORAGE", type=str,
-                                 help="Path to json file with stored predefined fields", action="store")
+                                 help="Path to json file with stored predefined fields", action="store", nargs="?",
+                                 default=str(self.DEFAULT_PREDEFINED_FIELDS_STORAGE))
         self.commands = self.parser.add_mutually_exclusive_group(required=True)
         self.commands.add_argument("--run", dest="run", help="Runs Tests", action="store_true")
         self.commands.add_argument(

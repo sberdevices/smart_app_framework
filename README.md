@@ -41,7 +41,7 @@ ____
 
 * Linux, Mac OS или Windows (необходима установка [Conda](https://docs.conda.io/en/latest/)).
 * 512 МБ свободной памяти.
-* Python 3.6.8 - 3.7.9.
+* Python 3.6.8 - 3.7.8.
 
 ____
 
@@ -112,4 +112,5 @@ ____
 
 # Обратная связь
 
-C вопросами и предложениями пишите нам по адресу developer@sberdevices.ru или вступайте в наш Telegram канал - [SmartApp Studio Community](https://t.me/smartapp_studio). 
+C вопросами и предложениями пишите нам по адресу developer@sberdevices.ru или вступайте в 
+наш Telegram канал - [SmartMarket Community](https://t.me/smartmarket_community). 

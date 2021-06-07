@@ -223,7 +223,7 @@ class SDKAnswer(NodeAction):
         if self._nodes == {}:
             self._nodes = {i: items.get(i) for i in items if i not in ['random_paths', 'same_ans', 'type', 'support_templates', 'no_empty_nodes']}
 
-    # функция идет по путю из RANDOM_PATH, числа в нем считает индексами массива,
+    # функция идет по RANDOM_PATH, числа в нем считает индексами массива,
     # INDEX_WILDCARD - произвольным индексом массива, прочее - ключами словаря
     # в конце пути предполагается непустой массив, дойдя до которого из него выбирается случайный элемент
     def random_by_path(self, input_dict, nested_key):

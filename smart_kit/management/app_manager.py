@@ -35,7 +35,7 @@ class LocalTestingCommand(AppCommand):
             settings_cls=app_config.SETTINGS, references_path=app_config.REFERENCES_PATH,
             resources_cls=app_config.RESOURCES, model_cls=app_config.MODEL,
             dialogue_manager_cls=app_config.DIALOGUE_MANAGER, user_cls=app_config.USER,
-            parametrizer_cls=app_config.PARAMETRIZER, app_name=app_config.APP_NAME
+            parametrizer_cls=app_config.PARAMETRIZER, from_msg_cls=app_config.FROM_MSG, app_name=app_config.APP_NAME
         )
 
     def execute(self, *args, **kwargs):

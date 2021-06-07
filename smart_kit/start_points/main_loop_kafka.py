@@ -242,7 +242,10 @@ class MainLoop(BaseMainLoop):
                             "incoming_data": str(message.masked_value),
                             "headers": str(mq_message.headers()),
                             "waiting_message": waiting_message_time,
-                            MESSAGE_ID_STR: message.incremental_id})
+                            "surface": message.device.surface,
+                            MESSAGE_ID_STR: message.incremental_id},
+                    user=user
+                )
 
                 db_uid = message.db_uid
 

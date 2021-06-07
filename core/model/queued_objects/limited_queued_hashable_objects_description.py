@@ -1,4 +1,4 @@
-from core.descriptions.lazy_descriptions import LazyDescriptions
+from core.descriptions.descriptions_items import DescriptionsItems
 
 
 class LimitedQueuedHashableObjectsDescription:
@@ -10,6 +10,6 @@ class LimitedQueuedHashableObjectsDescription:
         self.max_len = self.items.get("max_len", self.DEFAULT_MAX_LEN)
 
 
-class LimitedQueuedHashableObjectsDescriptions(LazyDescriptions):
+class LimitedQueuedHashableObjectsDescriptionsItems(DescriptionsItems):
     def __init__(self, items):
-        super(LimitedQueuedHashableObjectsDescriptions, self).__init__(LimitedQueuedHashableObjectsDescription, items)
+        super(LimitedQueuedHashableObjectsDescriptionsItems, self).__init__(LimitedQueuedHashableObjectsDescription, items)

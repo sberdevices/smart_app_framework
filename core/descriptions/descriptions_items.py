@@ -1,7 +1,7 @@
 # coding=utf-8
 
 
-class LazyDescriptions:
+class DescriptionsItems:
     def __init__(self, factory, items, ordered=False):
         items = items or {}
         self._factory = factory
@@ -28,7 +28,7 @@ class LazyDescriptions:
             self._items[id] = existed_item
         return existed_item
 
-# should implement python dictionary interface
+    # should implement python dictionary interface
     def get(self, key):
         if key in self:
             return self.__getitem__(key)
@@ -52,7 +52,7 @@ class LazyDescriptions:
         if key in self._items:
             del self._items[key]
         self._raw_items[key] = item
-        self._get_or_create_item(item)
+        self._get_or_create_item(key)
 
     def remove_item(self, key):
         if key in self._items:

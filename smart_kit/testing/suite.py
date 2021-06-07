@@ -1,5 +1,6 @@
 import json
 import os
+from csv import DictWriter, QUOTE_MINIMAL
 from typing import AnyStr, Optional, Tuple, Any, Dict, Callable
 
 from lazy import lazy
@@ -53,13 +54,21 @@ class TestSuite:
 
         self.csv_callback = None
         if make_csv:
-            results_csv_file = open(os.path.join(path, f'tests_results.csv'), 'wt')
-            results_csv_file.write('file;test_case;success\n')
+            field_names = ['file', 'test_case', 'success', 'diff']
+            results_csv_writer = DictWriter(
+                open(os.path.join(path, f'tests_results.csv'), 'wt'),
+                fieldnames=field_names,
+                quoting=QUOTE_MINIMAL
+            )
+            results_csv_writer.writeheader()
 
-            def __csv_file_callback(file: AnyStr):
-                def __csv_test_case_callback(test_case_name: str):
-                    def __write_csv_line(diff: Any):
-                        results_csv_file.write(f'"{file}";{test_case_name};{0 if diff else 1}\n')
+            def __csv_file_callback(file):
+                def __csv_test_case_callback(test_case_name):
+                    def __write_csv_line(diff):
+                        results_csv_writer.writerow(dict(zip(
+                            field_names,
+                            [file, test_case_name, 0 if diff else 1, diff.serialize()]
+                        )))
                     return __write_csv_line
                 return __csv_test_case_callback
             self.csv_callback = __csv_file_callback

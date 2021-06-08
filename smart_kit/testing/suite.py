@@ -1,5 +1,6 @@
 import json
 import os
+from csv import DictWriter, QUOTE_MINIMAL
 from typing import AnyStr, Optional, Tuple, Any, Dict, Callable
 
 from lazy import lazy
@@ -16,7 +17,7 @@ from smart_kit.utils.diff import partial_diff
 
 def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings: Settings, user_cls: type,
                  parametrizer_cls: type, from_msg_cls: type, storaged_predefined_fields: Dict[str, Any],
-                 csv_file_callback: Optional[Callable[[str], Callable[[bool], None]]],
+                 csv_file_callback: Optional[Callable[[str], Callable[[Any], None]]],
                  interactive: bool = False) -> Tuple[int, int]:
     test_file_path = os.path.join(path, file)
     if not os.path.isfile(test_file_path) or not test_file_path.endswith('.json'):
@@ -29,6 +30,10 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
         if isinstance(test_params, list):
             test_params = {"messages": test_params, "user": {}}
         print(f"[+] Processing test case {test_case} from {test_file_path}")
+        if csv_file_callback:
+            csv_case_callback = csv_file_callback(test_case)
+        else:
+            csv_case_callback = None
         if TestCase(
                 app_model,
                 settings,
@@ -38,7 +43,7 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
                 **test_params,
                 storaged_predefined_fields=storaged_predefined_fields,
                 interactive=interactive,
-                csv_case_callback=csv_file_callback(test_case),
+                csv_case_callback=csv_case_callback,
         ).run():
             print(f"[+] {test_case} OK")
             success += 1
@@ -53,13 +58,21 @@ class TestSuite:
 
         self.csv_callback = None
         if make_csv:
-            results_csv_file = open(os.path.join(path, f'tests_results.csv'), 'wt')
-            results_csv_file.write('file;test_case;success\n')
+            field_names = ['file', 'test_case', 'success', 'diff']
+            results_csv_writer = DictWriter(
+                open(os.path.join(path, f'tests_results.csv'), 'wt'),
+                fieldnames=field_names,
+                quoting=QUOTE_MINIMAL
+            )
+            results_csv_writer.writeheader()
 
-            def __csv_file_callback(file: AnyStr):
-                def __csv_test_case_callback(test_case_name: str):
-                    def __write_csv_line(diff: Any):
-                        results_csv_file.write(f'"{file}";{test_case_name};{0 if diff else 1}\n')
+            def __csv_file_callback(file):
+                def __csv_test_case_callback(test_case_name):
+                    def __write_csv_line(diff):
+                        results_csv_writer.writerow(dict(zip(
+                            field_names,
+                            [file, test_case_name, 0 if diff else 1, diff.serialize()]
+                        )))
                     return __write_csv_line
                 return __csv_test_case_callback
             self.csv_callback = __csv_file_callback
@@ -118,7 +131,7 @@ class TestSuite:
 class TestCase:
     def __init__(self, app_model: SmartAppModel, settings: Settings, user_cls: type, parametrizer_cls: type,
                  from_msg_cls: type, messages: dict, storaged_predefined_fields: Dict[str, Any], interactive: bool,
-                 csv_case_callback: Optional[Callable[[bool], None]] = None, user: Optional[dict] = None):
+                 csv_case_callback: Optional[Callable[[Any], None]] = None, user: Optional[dict] = None):
         self.messages = messages
         self.user_state = json.dumps(user)
         self.interactive = interactive

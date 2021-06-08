@@ -17,7 +17,7 @@ from smart_kit.utils.diff import partial_diff
 
 def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings: Settings, user_cls: type,
                  parametrizer_cls: type, from_msg_cls: type, storaged_predefined_fields: Dict[str, Any],
-                 csv_file_callback: Optional[Callable[[str], Callable[[bool], None]]],
+                 csv_file_callback: Optional[Callable[[str], Callable[[Any], None]]],
                  interactive: bool = False) -> Tuple[int, int]:
     test_file_path = os.path.join(path, file)
     if not os.path.isfile(test_file_path) or not test_file_path.endswith('.json'):
@@ -30,6 +30,10 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
         if isinstance(test_params, list):
             test_params = {"messages": test_params, "user": {}}
         print(f"[+] Processing test case {test_case} from {test_file_path}")
+        if csv_file_callback:
+            csv_case_callback = csv_file_callback(test_case)
+        else:
+            csv_case_callback = None
         if TestCase(
                 app_model,
                 settings,
@@ -39,7 +43,7 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
                 **test_params,
                 storaged_predefined_fields=storaged_predefined_fields,
                 interactive=interactive,
-                csv_case_callback=csv_file_callback(test_case),
+                csv_case_callback=csv_case_callback,
         ).run():
             print(f"[+] {test_case} OK")
             success += 1
@@ -127,7 +131,7 @@ class TestSuite:
 class TestCase:
     def __init__(self, app_model: SmartAppModel, settings: Settings, user_cls: type, parametrizer_cls: type,
                  from_msg_cls: type, messages: dict, storaged_predefined_fields: Dict[str, Any], interactive: bool,
-                 csv_case_callback: Optional[Callable[[bool], None]] = None, user: Optional[dict] = None):
+                 csv_case_callback: Optional[Callable[[Any], None]] = None, user: Optional[dict] = None):
         self.messages = messages
         self.user_state = json.dumps(user)
         self.interactive = interactive

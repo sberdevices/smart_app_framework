@@ -1,6 +1,7 @@
 import collections
 import copy
 import json
+import time
 
 from lazy import lazy
 from jinja2 import exceptions as jexcept
@@ -25,6 +26,7 @@ from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PA
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User
 from scenarios.scenario_models.history import Event
+from smart_kit.names.action_params_names import SEND_TIMESTAMP
 
 
 class ClearFormAction(Action):
@@ -552,6 +554,7 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
         save_params = self._get_rendered_tree_recursive(self.save_params_template_data, action_params)
         save_params.update({SAVED_MESSAGES: action_params.get(SAVED_MESSAGES, {})})
         save_params.update({REQUEST_FIELD: action_params.get(REQUEST_FIELD, {})})
+        save_params.update({SEND_TIMESTAMP: time.time()})
 
         if user.settings["template_settings"].get("self_service_with_state_save_messages", True):
             saved_messages = save_params[SAVED_MESSAGES]

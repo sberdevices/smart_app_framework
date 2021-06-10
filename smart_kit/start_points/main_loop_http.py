@@ -130,7 +130,7 @@ class HttpMainLoop(BaseHttpMainLoop):
         return [answer.value.encode()]
 
     def run(self):
-        self._server = make_server('localhost', 8000, self.iterate)
+        self._server = make_server('0.0.0.0', 8000, self.iterate)
         log(
             '''
                 Application start via "python manage.py run_app" recommended only for local testing. 

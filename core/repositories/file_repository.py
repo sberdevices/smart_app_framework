@@ -1,5 +1,7 @@
 import os
 
+from core.db_adapter.os_adapter import OSAdapter
+
 import core.logging.logger_constants as log_const
 from core.repositories.items_repository import ItemsRepository
 from core.logging.logger_utils import log
@@ -41,6 +43,9 @@ class UpdatableFileRepository(FileRepository):
         super().__init__(*args, **kwargs)
         self._last_mtime = None
 
+        if self.source and not isinstance(self.source, OSAdapter):
+            raise Exception(f"{self.__class__.__name__} support only OSAdapter")
+
     @FileRepository.data.getter
     def data(self):
         if self._is_outdated:
@@ -56,10 +61,10 @@ class UpdatableFileRepository(FileRepository):
     def load(self):
         super().load()
         if self._file_exist:
-            self._last_mtime = os.path.getmtime(self.filename)
+            self._last_mtime = self.source.mtime(self.filename)
 
     @property
     def _is_outdated(self):
         if self._file_exist:
-            return os.path.getmtime(self.filename) > self._last_mtime
+            return self.source.mtime(self.filename) > self._last_mtime
         return False

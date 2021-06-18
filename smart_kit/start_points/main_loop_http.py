@@ -108,16 +108,21 @@ class HttpMainLoop(BaseHttpMainLoop):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._server = None
+        self.location_maper = defaultdict(lambda: self.iterate)
+        self.location_maper["/health"] = self.get_health_check
 
     def __call__(self, environ, start_response):
-        return self.iterate(environ, start_response)
+        location = environ.get('PATH_INFO')
+        location_handler = self.location_maper[location]
+        return location_handler(environ, start_response)
+
+    def get_health_check(self, environ, start_response):
+        status, reason, answer = 200, "OK", "ok"
+        start_response(f"{status} {reason}", self._get_outgoing_headers({}))
+        return [answer.encode()]
 
     def iterate(self, environ, start_response):
         try:
-            if "status" in environ.get("PATH_INFO", ""):
-                status, reason, answer = 200, "OK", ""
-                start_response(f"{status} {reason}", self._get_outgoing_headers({}))
-                return [answer.encode()]
             content_length = int(environ.get('CONTENT_LENGTH', '0'))
             body = environ["wsgi.input"].read(content_length).decode()
             headers = self._get_headers(environ)

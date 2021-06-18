@@ -1,5 +1,6 @@
 import json
 import typing
+from collections import defaultdict
 from wsgiref.simple_server import make_server
 
 import scenarios.logging.logger_constants as log_const

@@ -114,6 +114,10 @@ class HttpMainLoop(BaseHttpMainLoop):
 
     def iterate(self, environ, start_response):
         try:
+            if "status" in environ.get("PATH_INFO", ""):
+                status, reason, answer = 200, "OK", ""
+                start_response(f"{status} {reason}", self._get_outgoing_headers({}))
+                return [answer.encode()]
             content_length = int(environ.get('CONTENT_LENGTH', '0'))
             body = environ["wsgi.input"].read(content_length).decode()
             headers = self._get_headers(environ)

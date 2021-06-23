@@ -1,7 +1,7 @@
-from core.descriptions.lazy_descriptions import LazyDescriptions
+from core.descriptions.descriptions_items import DescriptionsItems
 
 
-class SmartUpdatableLazyDescriptions(LazyDescriptions):
+class SmartUpdatableDescriptionsItems(DescriptionsItems):
 
     def update_data(self, items):
         for item_id in items.keys():

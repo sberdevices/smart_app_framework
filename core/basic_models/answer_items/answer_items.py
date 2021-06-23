@@ -1,9 +1,8 @@
-from lazy import lazy
-
-from core.model.registered import Registered
-from core.model.factory import build_factory, factory
 from typing import Dict, Any, Optional
+
 from core.basic_models.requirement.basic_requirements import Requirement
+from core.model.factory import build_factory, factory
+from core.model.registered import Registered
 
 answer_items = Registered()
 items_factory = build_factory(answer_items)
@@ -16,19 +15,19 @@ class SdkAnswerItem:
     id: Optional[str]
     requirement: Requirement
 
-    @lazy
-    @factory(Requirement)
-    def requirement(self):
-        return self._requirement
-
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         items = items or {}
         self.id = id
         self.version = items.get("version", -1)
         self._requirement = items.get("requirement", None)
+        self.requirement = self.build_requirement()
 
     def render(self, nodes: Dict[str, Any]):
         return {}
+
+    @factory(Requirement)
+    def build_requirement(self):
+        return self._requirement
 
 
 class TextSdkItem(SdkAnswerItem):

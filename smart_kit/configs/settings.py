@@ -31,6 +31,13 @@ class Settings(BaseConfig):
         self.repositories = self.override_repositories(self.repositories)
         self.init()
 
+    def init(self):
+        super().init()
+        update_time = self["template_config"].get("config_update_cooldown", 5)
+        for repo in self.repositories:
+            if isinstance(repo, UpdatableFileRepository):
+                repo.update_cooldown = update_time
+
     def override_repositories(self, repositories: list):
         """
         Метод предназначен для переопределения репозиториев в дочерних классах.

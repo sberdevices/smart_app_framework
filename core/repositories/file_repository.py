@@ -1,4 +1,5 @@
 import os
+import time
 
 from core.db_adapter.os_adapter import OSAdapter
 
@@ -39,10 +40,11 @@ class FileRepository(ItemsRepository):
 
 
 class UpdatableFileRepository(FileRepository):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, update_cooldown=5, **kwargs):
         super().__init__(*args, **kwargs)
         self._last_mtime = None
-
+        self._last_update_time = 0
+        self.update_cooldown = update_cooldown
         if self.source and not isinstance(self.source, OSAdapter):
             raise Exception(f"{self.__class__.__name__} support only OSAdapter")
 
@@ -62,9 +64,14 @@ class UpdatableFileRepository(FileRepository):
         super().load()
         if self._file_exist:
             self._last_mtime = self.source.mtime(self.filename)
+        self._last_update_time = time.time()
+
+    @property
+    def expired(self):
+        return self._last_update_time + self.update_cooldown < time.time()
 
     @property
     def _is_outdated(self):
-        if self._file_exist:
+        if self._file_exist and self.expired:
             return self.source.mtime(self.filename) > self._last_mtime
         return False

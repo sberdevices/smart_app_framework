@@ -1,5 +1,6 @@
 import json
 import typing
+from collections import defaultdict
 from wsgiref.simple_server import make_server
 
 import scenarios.logging.logger_constants as log_const
@@ -108,9 +109,18 @@ class HttpMainLoop(BaseHttpMainLoop):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._server = None
+        self.location_maper = defaultdict(lambda: self.iterate)
+        self.location_maper["/health"] = self.get_health_check
 
     def __call__(self, environ, start_response):
-        return self.iterate(environ, start_response)
+        location = environ.get('PATH_INFO')
+        location_handler = self.location_maper[location]
+        return location_handler(environ, start_response)
+
+    def get_health_check(self, environ, start_response):
+        status, reason, answer = 200, "OK", "ok"
+        start_response(f"{status} {reason}", self._get_outgoing_headers({}))
+        return [answer.encode()]
 
     def iterate(self, environ, start_response):
         try:
@@ -130,7 +140,7 @@ class HttpMainLoop(BaseHttpMainLoop):
         return [answer.value.encode()]
 
     def run(self):
-        self._server = make_server('localhost', 8000, self.iterate)
+        self._server = make_server('0.0.0.0', 8000, self.iterate)
         log(
             '''
                 Application start via "python manage.py run_app" recommended only for local testing. 

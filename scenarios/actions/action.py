@@ -323,7 +323,6 @@ class RunLastScenarioAction(Action):
 
 
 class ChoiceScenarioAction(Action):
-
     FIELD_SCENARIOS_KEY = "scenarios"
     FIELD_ELSE_KEY = "else_action"
     FIELD_REQUIREMENT_KEY = "requirement"
@@ -334,14 +333,19 @@ class ChoiceScenarioAction(Action):
         self._scenarios = items[self.FIELD_SCENARIOS_KEY]
         self._requirements = [scenario.pop(self.FIELD_REQUIREMENT_KEY) for scenario in self._scenarios]
 
-    @lazy
+        self.requirement_items = self.build_requirement_items()
+
+        if self._else_item:
+            self.else_item = self.build_else_item()
+        else:
+            self.else_item = None
+
     @list_factory(Requirement)
-    def requirement_items(self):
+    def build_requirement_items(self):
         return self._requirements
 
-    @lazy
     @factory(Action)
-    def else_item(self):
+    def build_else_item(self):
         return self._else_item
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,

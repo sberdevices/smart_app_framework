@@ -26,6 +26,7 @@ class SmartAppModel:
             f"{self.__class__.__name__}.__init__ started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE}
         )
         self.resources = resources
+        self.scenario_descriptions = Descriptions(self.resources.registered_repositories)
         self.template_settings = custom_settings["template_settings"]
         self.app_name = custom_settings.app_name
         self.dialogue_manager = dialogue_manager_cls(scenario_descriptions=self.scenario_descriptions,
@@ -71,7 +72,8 @@ class SmartAppModel:
         params = {log_const.KEY_NAME: log_const.DIALOG_ERROR_VALUE,
                   "message_id": user.message.incremental_id}
 
-        log("exc_handler: Failed to process message. Exception occurred. Fail in MESSAGE: {}".format(user.message.masked_value),
+        log("exc_handler: Failed to process message. Exception occurred. Fail in MESSAGE: {}".format(
+            user.message.masked_value),
             user, params, level="ERROR", exc_info=True)
 
         callback_action_params = get_callback_action_params(user)
@@ -83,8 +85,3 @@ class SmartAppModel:
         commands = exception_action.run(user=user, text_preprocessing_result=None,
                                         params=callback_action_params)
         return commands
-
-
-    @lazy
-    def scenario_descriptions(self):
-        return Descriptions(self.resources.registered_repositories)

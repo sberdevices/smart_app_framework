@@ -1,5 +1,4 @@
 # coding: utf-8
-from lazy import lazy
 
 from core.model.factory import ordered_dict_factory, build_factory
 from core.model.registered import Registered
@@ -25,10 +24,10 @@ class FormDescription(BaseFormDescription):
     def __init__(self, items, id):
         super(FormDescription, self).__init__(items, id)
         self._fields = items["fields"]
+        self.fields = self.build_fields()
 
-    @lazy
     @ordered_dict_factory(BasicFieldDescription)
-    def fields(self):
+    def build_fields(self):
         return self._fields
 
 
@@ -36,8 +35,8 @@ class CompositeFormDescription(BaseFormDescription):
     def __init__(self, items, id):
         super(CompositeFormDescription, self).__init__(items, id)
         self._forms = items["forms"]
+        self.forms = self.build_forms()
 
-    @lazy
     @ordered_dict_factory(BaseFormDescription)
-    def forms(self):
+    def build_forms(self):
         return self._forms

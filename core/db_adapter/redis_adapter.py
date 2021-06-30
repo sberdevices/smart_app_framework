@@ -24,9 +24,7 @@ class RedisAdapter(DBAdapter):
         return self._redis.set(id, data)
 
     def _replace_if_equals(self, id, sample, data):
-        if data == sample:
-            return self._redis.touch(id)
-        return False
+        return self._redis.set(id, data)
 
     def _get(self, id):
         data = self._redis.get(id)

@@ -50,6 +50,7 @@ class SmartAppFromMessage:
                  masking_fields=None, headers_required=True, validators: Iterable[MessageValidator] = ()):
         self.logging_uuid = str(uuid.uuid4())
         self._value = value
+        self._as_dict = json.loads(self.value)
         self.topic_key = topic_key
         self.kafka_key = kafka_key
         self.creation_time = creation_time or current_time_ms()
@@ -147,59 +148,60 @@ class SmartAppFromMessage:
     def _required_fields(self):
         return {self.MESSAGE_ID, self.UUID, self.PAYLOAD, self.SESSION_ID, self.MESSAGE_NAME}
 
-    @lazy
+    @property
     def session_id(self):
         return self.as_dict.get(self.SESSION_ID)
 
     # database user_id
-    @lazy
+    @property
     def db_uid(self):
         return "{}_{}_{}".format(self.sub, self.uid, self.channel)
 
-    @lazy
+    @property
     def channel(self):
         return self.uuid.get(field.USER_CHANNEL)
 
-    @lazy
+    @property
     def uid(self):
         return self.uuid.get(field.USER_ID)
 
-    @lazy
+    @property
     def sub(self):
         return self.uuid.get(field.SUB)
 
-    @lazy
+    @property
     def uuid(self):
         return self.as_dict[self.UUID]
 
-    @lazy
+    @property
     def payload(self):
         return self.as_dict[self.PAYLOAD]
 
-    @lazy
+
+    @property
     def type(self):
         return self.as_dict[self.MESSAGE_NAME]
 
     def project_name(self):
         return self.payload.get(field.PROJECT_NAME)
 
-    @lazy
+    @property
     def intent(self):
         return self.payload.get(field.INTENT)
 
-    @lazy
+    @property
     def device(self):
         return Device(self.payload.get(field.DEVICE) or {})
 
-    @lazy
+    @property
     def app_info(self):
         return AppInfo(self.payload.get(field.APP_INFO) or {})
 
-    @lazy
+    @property
     def smart_bio(self):
         return self.payload.get(field.SMART_BIO) or {}
 
-    @lazy
+    @property
     def annotations(self):
         annotations = self.payload.get(field.ANNOTATIONS) or {}
         for annotation in annotations:
@@ -228,7 +230,7 @@ class SmartAppFromMessage:
     def generate_new_callback_id(self):
         return str(uuid.uuid4())
 
-    @lazy
+    @property
     def masked_value(self):
         data = pickle_deepcopy(self.as_dict)
         masking(data, self.masking_fields)
@@ -239,18 +241,17 @@ class SmartAppFromMessage:
         return self.as_dict[self.MESSAGE_NAME]
 
     # unique message_id
-    @lazy
+    @property
     def incremental_id(self):
         return self.as_dict[self.MESSAGE_ID]
 
-    @lazy
+    @property
     def as_dict(self):
-        return json.loads(self._value)
+        return self._as_dict
 
-    @lazy
+    @property
     def value(self):
         return self._value
-
 
 basic_error_message = SmartAppFromMessage(
     '''

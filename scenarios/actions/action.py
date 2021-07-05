@@ -1,6 +1,7 @@
 import collections
 import copy
 import json
+import time
 
 from lazy import lazy
 from jinja2 import exceptions as jexcept
@@ -25,6 +26,7 @@ from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PA
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User
 from scenarios.scenario_models.history import Event
+from smart_kit.names.action_params_names import SEND_TIMESTAMP
 
 
 class ClearFormAction(Action):
@@ -321,7 +323,6 @@ class RunLastScenarioAction(Action):
 
 
 class ChoiceScenarioAction(Action):
-
     FIELD_SCENARIOS_KEY = "scenarios"
     FIELD_ELSE_KEY = "else_action"
     FIELD_REQUIREMENT_KEY = "requirement"
@@ -332,14 +333,19 @@ class ChoiceScenarioAction(Action):
         self._scenarios = items[self.FIELD_SCENARIOS_KEY]
         self._requirements = [scenario.pop(self.FIELD_REQUIREMENT_KEY) for scenario in self._scenarios]
 
-    @lazy
+        self.requirement_items = self.build_requirement_items()
+
+        if self._else_item:
+            self.else_item = self.build_else_item()
+        else:
+            self.else_item = None
+
     @list_factory(Requirement)
-    def requirement_items(self):
+    def build_requirement_items(self):
         return self._requirements
 
-    @lazy
     @factory(Action)
-    def else_item(self):
+    def build_else_item(self):
         return self._else_item
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
@@ -552,6 +558,7 @@ class SelfServiceActionWithState(BasicSelfServiceActionWithState):
         save_params = self._get_rendered_tree_recursive(self.save_params_template_data, action_params)
         save_params.update({SAVED_MESSAGES: action_params.get(SAVED_MESSAGES, {})})
         save_params.update({REQUEST_FIELD: action_params.get(REQUEST_FIELD, {})})
+        save_params.update({SEND_TIMESTAMP: time.time()})
 
         if user.settings["template_settings"].get("self_service_with_state_save_messages", True):
             saved_messages = save_params[SAVED_MESSAGES]

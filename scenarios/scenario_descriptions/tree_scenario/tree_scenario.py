@@ -18,10 +18,10 @@ class TreeScenario(FormFillingScenario):
         super(TreeScenario, self).__init__(items, id)
         self._start_node_key = items["start_node_key"]
         self._scenario_nodes = items["scenario_nodes"]
+        self.scenario_nodes = self.build_scenario_nodes()
 
-    @lazy
     @dict_factory(TreeScenarioNode)
-    def scenario_nodes(self):
+    def build_scenario_nodes(self):
         return self._scenario_nodes
 
     def _field(self, form, text_preprocessing_result, user, params):

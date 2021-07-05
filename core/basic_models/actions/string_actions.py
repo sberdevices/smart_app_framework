@@ -1,20 +1,17 @@
 # coding: utf-8
 import random
-
-from lazy import lazy
 from copy import copy
-
 from typing import Union, Dict, List, Any, Optional
 
-from core.basic_models.actions.basic_actions import CommandAction
-from core.basic_models.answer_items.answer_items import SdkAnswerItem
-from core.basic_models.requirement.external_requirements import ExternalRequirement
-from core.text_preprocessing.base import BaseTextPreprocessingResult
-from core.model.base_user import BaseUser
-from core.unified_template.unified_template import UnifiedTemplate, UNIFIED_TEMPLATE_TYPE_NAME
-from core.basic_models.actions.command import Command
-from core.model.factory import factory, list_factory
+from lazy import lazy
 
+from core.basic_models.actions.basic_actions import CommandAction
+from core.basic_models.actions.command import Command
+from core.basic_models.answer_items.answer_items import SdkAnswerItem
+from core.model.base_user import BaseUser
+from core.model.factory import list_factory
+from core.text_preprocessing.base import BaseTextPreprocessingResult
+from core.unified_template.unified_template import UnifiedTemplate, UNIFIED_TEMPLATE_TYPE_NAME
 
 ANSWER_TO_USER = "ANSWER_TO_USER"
 
@@ -381,19 +378,20 @@ class SDKAnswerToUser(NodeAction):
         self._suggests_template = items.get(self.SUGGESTIONS_TEMPLATE)
         self._root = items.get(self.ROOT, {})
 
-    @lazy
+        self.items = self.build_items()
+        self.suggests = self.build_suggests()
+        self.root = self.build_root()
+
     @list_factory(SdkAnswerItem)
-    def items(self):
+    def build_items(self):
         return self._items
 
-    @lazy
     @list_factory(SdkAnswerItem)
-    def suggests(self):
+    def build_suggests(self):
         return self._suggests
 
-    @lazy
     @list_factory(SdkAnswerItem)
-    def root(self):
+    def build_root(self):
         return self._root
 
     def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,

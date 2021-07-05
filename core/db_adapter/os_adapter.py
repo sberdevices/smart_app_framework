@@ -45,3 +45,6 @@ class OSAdapter(DBAdapter):
 
     def _path_exists(self, path):
         return os.path.exists(path)
+
+    def _mtime(self, path):
+        return os.path.getmtime(path)

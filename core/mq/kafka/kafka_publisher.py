@@ -68,7 +68,7 @@ class KafkaPublisher(BaseKafkaPublisher):
         self._poll()
 
     def _poll(self):
-        poll_timeout = self._config["poll_timeout"]
+        poll_timeout = self._config.get("poll_timeout", 0)
         if poll_timeout > 0:
             while True:
                 result = self._producer.poll(poll_timeout)

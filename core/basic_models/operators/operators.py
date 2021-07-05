@@ -1,5 +1,4 @@
 # coding: utf-8
-from lazy import lazy
 from typing import Union, Any, Dict, List, Optional
 
 from core.basic_models.operators.comparators import MoreComparator, LessComparator, MoreOrEqualComparator, \
@@ -22,33 +21,22 @@ class Operator:
 
 
 class CompositeOperator(Operator):
-    operators: Operator
+    operators: List[Operator]
 
     def __init__(self, items: Optional[Dict[str, Any]]) -> None:
         super(CompositeOperator, self).__init__(items)
         self._operators: Dict[str, Any] = items["operators"]
+        self.operators = self.build_operators()
 
-    @lazy
     @list_factory(Operator)
-    def operators(self):
+    def build_operators(self):
         return self._operators
 
     def compare(self, value: Any) -> bool:
         return all(operator.compare(value) for operator in self.operators)
 
 
-class AnyOperator(Operator):
-    operators: Operator
-
-    def __init__(self, items: Optional[Dict[str, Any]]) -> None:
-        super(AnyOperator, self).__init__(items)
-        self._operators: Dict[str, Any] = items["operators"]
-
-    @lazy
-    @list_factory(Operator)
-    def operators(self):
-        return self._operators
-
+class AnyOperator(CompositeOperator):
     def compare(self, value: Any) -> bool:
         return any(operator.compare(value) for operator in self.operators)
 

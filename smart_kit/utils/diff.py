@@ -1,6 +1,7 @@
 import functools
 import typing
 import tabulate
+import json
 
 DoesNotExpected = object()
 
@@ -35,6 +36,12 @@ class Diff:
             )
 
         return "\n".join((missed, does_not_expected, different))
+
+    def serialize(self):
+        return json.dumps({
+            'missed': self.missed.copy(),
+            'different': self.different.copy()
+        })
 
 
 @functools.singledispatch

@@ -81,10 +81,10 @@ class CompositeFiller(FieldFillerDescription):
     def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str] = None) -> None:
         super(CompositeFiller, self).__init__(items, id)
         self._fillers: Optional[List[Dict[str, Any]]] = items.get("fillers") or []
+        self.fillers = self.build_fillers()
 
-    @lazy
     @list_factory(FieldFillerDescription)
-    def fillers(self):
+    def build_fillers(self):
         return self._fillers
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
@@ -293,11 +293,11 @@ class PreviousMessagesFiller(FieldFillerDescription):
     def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str] = None) -> None:
         super(PreviousMessagesFiller, self).__init__(items, id)
         self._filler: Optional[Dict[str, Any]] = items.get("filler")
+        self.filler = self.build_filler()
         self.count = items.get("count")
 
-    @lazy
     @factory(FieldFillerDescription)
-    def filler(self):
+    def build_filler(self):
         return self._filler
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
@@ -514,5 +514,6 @@ class ClassifierFiller(FieldFillerDescription):
 
 class ClassifierFillerMeta(ClassifierFiller):
 
-    def _get_result(self, answers: List[Dict[str, Union[str, float, bool]]]) -> List[Dict[str, Union[str, float, bool]]]:
+    def _get_result(self, answers: List[Dict[str, Union[str, float, bool]]]) -> List[
+        Dict[str, Union[str, float, bool]]]:
         return answers

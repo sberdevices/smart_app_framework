@@ -23,7 +23,7 @@ class HandlerTest4(unittest.TestCase):
 
         self.test_action = Mock('action')
         self.test_action.run = lambda x, y, z: 10  # пусть что то возвращает
-        self.test_user2 = Mock('user')
+        self.test_user2 = MagicMock('user')
         self.test_user2.id = '123-345-678'  # пусть чему-то равняется
         self.test_user2.descriptions = {'external_actions': {'any action name': self.test_action}}
         self.test_user2.message = Mock('message')
@@ -35,7 +35,10 @@ class HandlerTest4(unittest.TestCase):
         self.test_user2.message.device = Mock()
         self.test_user2.message.device.surface = "test_surface"
         self.test_user2.message.app_info = {}
-        self.test_user2.behaviors = MagicMock()
+        self.callback11_action_params = MagicMock()
+        self.test_user2.behaviors = Mock()
+        self.test_user2.behaviors.get_callback_action_params = MagicMock(return_value=self.callback11_action_params)
+
         self.test_payload = {'message': {1: 1}}
 
     def test_handler_respond_init(self):
@@ -53,9 +56,9 @@ class HandlerTest4(unittest.TestCase):
 
     def test_handler_respond_get_action_params(self):
         obj = handle_respond.HandlerRespond(app_name=self.app_name)
-        self.assertTrue(obj.get_action_params(self.test_payload) == {})
-        self.assertTrue(obj.get_action_params("any data") == {})
-        self.assertTrue(obj.get_action_params(None) == {})
+        self.assertTrue(obj.get_action_params(self.test_payload, self.test_user2) == self.callback11_action_params)
+        self.assertTrue(obj.get_action_params("any data", self.test_user2) == self.callback11_action_params)
+        self.assertTrue(obj.get_action_params(None, self.test_user2) == self.callback11_action_params)
 
     def test_handler_respond_run(self):
         self.assertIsNotNone(handle_respond.TextPreprocessingResult(self.test_payload.get("message", {})))

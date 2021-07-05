@@ -1,18 +1,15 @@
 # coding: utf-8
 import random
-
-from lazy import lazy
-
 from typing import Union, Dict, List, Any, Optional
 
 import core.logging.logger_constants as log_const
-from core.logging.logger_utils import log
-from core.basic_models.requirement.basic_requirements import Requirement
-from core.text_preprocessing.base import BaseTextPreprocessingResult
-from core.model.base_user import BaseUser
 from core.basic_models.actions.command import Command
+from core.basic_models.requirement.basic_requirements import Requirement
+from core.logging.logger_utils import log
+from core.model.base_user import BaseUser
 from core.model.factory import build_factory, factory, list_factory
 from core.model.registered import Registered
+from core.text_preprocessing.base import BaseTextPreprocessingResult
 
 actions = Registered()
 action_factory = build_factory(actions)
@@ -88,14 +85,15 @@ class RequirementAction(Action):
         # to not change statics "item" key is added
         self._item = items[self.FIELD_KEY]
 
-    @lazy
+        self.requirement = self.build_requirement()
+        self.internal_item = self.build_internal_item()
+
     @factory(Requirement)
-    def requirement(self):
+    def build_requirement(self):
         return self._requirement
 
-    @lazy
     @factory(Action)
-    def internal_item(self):
+    def build_internal_item(self):
         return self._item
 
     def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
@@ -119,14 +117,19 @@ class ChoiceAction(Action):
         self._requirement_items = items[self.FIELD_REQUIREMENT_KEY]
         self._else_item = items.get(self.FIELD_ELSE_KEY)
 
-    @lazy
+        self.items = self.build_items()
+
+        if self._else_item:
+            self.else_item = self.build_else_item()
+        else:
+            self.else_item = None
+
     @list_factory(RequirementAction)
-    def items(self):
+    def build_items(self):
         return self._requirement_items
 
-    @lazy
     @factory(Action)
-    def else_item(self):
+    def build_else_item(self):
         return self._else_item
 
     def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
@@ -158,19 +161,23 @@ class ElseAction(Action):
         self._item = items[self.FIELD_ITEM_KEY]
         self._else_item = items.get(self.FIELD_ELSE_KEY)
 
-    @lazy
+        self.requirement = self.build_requirement()
+        self.item = self.build_item()
+        if self._else_item:
+            self.else_item = self.build_else_item()
+        else:
+            self.else_item = None
+
     @factory(Requirement)
-    def requirement(self):
+    def build_requirement(self):
         return self._requirement
 
-    @lazy
     @factory(Action)
-    def item(self):
+    def build_item(self):
         return self._item
 
-    @lazy
     @factory(Action)
-    def else_item(self):
+    def build_else_item(self):
         return self._else_item
 
     def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
@@ -190,10 +197,10 @@ class CompositeAction(Action):
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super(CompositeAction, self).__init__(items, id)
         self._actions = items.get("actions") or []
+        self.actions = self.build_actions()
 
-    @lazy
     @list_factory(Action)
-    def actions(self):
+    def build_actions(self):
         return self._actions
 
     def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
@@ -235,15 +242,15 @@ class RandomAction(Action):
 
     def __init__(self, items, id=None):
         super().__init__(items, id)
-        self.actions = items["actions"]
+        self._raw_actions = items["actions"]
+        self.actions = self.build_actions()
 
-    @lazy
     @list_factory(Action)
-    def get_action(self):
-        return self.actions
+    def build_actions(self):
+        return self._raw_actions
 
     def run(self, user, text_preprocessing_result, params=None):
-        pos = random.randint(0, len(self.actions) - 1)
-        action = self.get_action[pos]
+        pos = random.randint(0, len(self._raw_actions) - 1)
+        action = self.actions[pos]
         command_list = action.run(user, text_preprocessing_result, params=params)
         return command_list

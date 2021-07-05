@@ -363,6 +363,7 @@ class SmartAppResources(BaseConfig):
         cmp.comparators["more"] = cmp.MoreComparator
         cmp.comparators["more_or_equal"] = cmp.MoreOrEqualComparator
         cmp.comparators["not_equal"] = cmp.NotEqualComparator
+        cmp.comparators["in"] = cmp.InComparator
 
     def init_history_formatters(self):
         formatters[None] = HistoryEventFormatter

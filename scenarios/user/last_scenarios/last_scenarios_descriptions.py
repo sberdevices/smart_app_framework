@@ -1,13 +1,13 @@
 # coding: utf-8
-from core.descriptions.lazy_descriptions import LazyDescriptions
+from core.descriptions.descriptions_items import DescriptionsItems
 from scenarios.user.last_scenarios.last_scenarios_description import LastScenariosDescription
 
 
-class LastScenariosDescriptions(LazyDescriptions):
+class LastScenariosDescriptionsItems(DescriptionsItems):
     DEFAULT_COUNT = 1
 
     def __init__(self, items):
-        super(LastScenariosDescriptions, self).__init__(LastScenariosDescription, items)
+        super(LastScenariosDescriptionsItems, self).__init__(LastScenariosDescription, items)
 
     def get_count(self, text_preprocessing_result, user):
         count = self.DEFAULT_COUNT

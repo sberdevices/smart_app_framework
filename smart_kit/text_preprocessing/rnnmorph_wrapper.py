@@ -1,7 +1,6 @@
 import re
 import pymorphy2
 import tensorflow as tf
-from rnnmorph.predictor import RNNMorphPredictor
 from core.text_preprocessing.grammem.grammem_constants import GRAMMEM_INFO, PART_OF_SPEECH, LEMMA, TEXT, TOKEN_TYPE, \
     LIST_OF_TOKEN_TYPES_DATA, TOKEN_VALUE, VALUE, RAW_GRAM_INFO, OTHER, TRANSITIVITY, ANIMACY, ASPECT
 
@@ -35,9 +34,6 @@ class RNNMorphWrapper:
     def __init__(self):
         self._graph = tf.Graph()
         self._session = tf.Session(graph=self._graph)
-        with self._session.as_default():
-            with self._graph.as_default():
-                self.rnnmorph = RNNMorphPredictor(language="ru")
         self.pymorphy_analyzer = pymorphy2.MorphAnalyzer()
         self.latin = re.compile("^[0-9]*[A-Za-z]+[0-9]*$")
         self.cyrillic = re.compile("[А-Яа-яЁе]+")
@@ -71,19 +67,21 @@ class RNNMorphWrapper:
     def _change_pos(self, token, analysis):
         if re.match(self.latin, analysis.word):
             token[GRAMMEM_INFO][PART_OF_SPEECH] = "X"
-        elif analysis.pos == "PUNCT" and re.search(self.cyrillic, analysis.word):
+        elif analysis.tag.cyr_repr == "ЗПР" and re.search(self.cyrillic, analysis.word):
             token[GRAMMEM_INFO][PART_OF_SPEECH] = "X"
         else:
-            token[GRAMMEM_INFO][PART_OF_SPEECH] = analysis.pos
+            token[GRAMMEM_INFO][PART_OF_SPEECH] = analysis.tag.POS
         return token
 
     def _gram_info_processing(self, tags_to_add, analysis):
         gramme_info = {}
         raw_gram_data = []
-        if analysis.tag != "_":
-            for tag in analysis.tag.split("|"):
-                gramme_info[tag.split("=")[0].lower()] = tag.split("=")[1].lower()
-            gramme_info.update(tags_to_add)
+        tags = ["_POS", "animacy", "aspect", "case", "gender", "involvement", "mood", "number", "person", "tense",
+                "transitivity", "voice"]
+        for key in tags:
+            if getattr(analysis.tag, key):
+                gramme_info[key] = getattr(analysis.tag, key)
+        gramme_info.update(tags_to_add)
         sorted_gramme_info = {key: gramme_info[key] for key in sorted(gramme_info.keys())}
         for key in sorted_gramme_info:
             raw_gram_data.append(key + "=" + sorted_gramme_info[key])
@@ -92,7 +90,7 @@ class RNNMorphWrapper:
 
     def _rnnmorph_to_token_dicti(self, token, analysis):
         additional_info, tags_to_add, changed_lemma = self._choose_pymorphy_form(analysis.word, analysis.normal_form,
-                                                                                 analysis.pos)
+                                                                                 analysis.tag.POS)
         sorted_gramme_info, raw_gram_info = self._gram_info_processing(tags_to_add, analysis)
         token[GRAMMEM_INFO] = sorted_gramme_info
         token[GRAMMEM_INFO][RAW_GRAM_INFO] = raw_gram_info
@@ -109,9 +107,7 @@ class RNNMorphWrapper:
         :return: Список из словарей, обогащенный морфологической информацией
         """
         raw_token_list = [token[TEXT] for token in token_desc_list]
-        with self._session.as_default():
-            with self._graph.as_default():
-                analyze_result = self.rnnmorph.predict(raw_token_list)
+        analyze_result = [self.pymorphy_analyzer.parse(word)[0] for word in raw_token_list]
 
         res = []
         for i in range(len(token_desc_list)):

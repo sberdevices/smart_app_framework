@@ -46,16 +46,16 @@ class Pymorpy2MorphWrapper:
         for hyp in hypotheses:
             if hyp.normal_form == lemma:
                 break
-        changed_lemma = lemma.replace("ё", "е")
+        changed_lemma = lemma
         if not hyp:
             return other, tags_to_add, changed_lemma
         str_tag = str(hyp.tag)
         if "Surn" in str_tag:
             other = "фам"
-            changed_lemma = word.lower().replace("ё", "е")
+            changed_lemma = word.lower()
         elif "Patr" in str_tag:
             other = "отч"
-            changed_lemma = word.lower().replace("ё", "е")  # у Петрович лемма внезапно Пётр
+            changed_lemma = word.lower()
         if hyp.tag.transitivity:
             tags_to_add[TRANSITIVITY] = str(hyp.tag.transitivity)
         if hyp.tag.animacy and pos == "NOUN":

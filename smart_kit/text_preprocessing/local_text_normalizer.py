@@ -76,7 +76,6 @@ class LocalTextNormalizer(BaseTextNormalizer, metaclass=Singleton):
             'Объединение цифр после stt': NumbersUnionAfterSTT(text2num),
             'Конверсия юникодовых символов': UnicodeSymbolsConverter(unicode_symbols),
             'Цифры и буквы отдельно': unmerge_numbers_and_letters,
-            'Ё на Е': replace_yo_to_e,
             'Номера телефонов': NormalizePhoneNumbers(),
             'Номера телефонов из голоса': NormalizePhoneNumbersVoice(),
             'Номера карт': MergeCardNumbers(),

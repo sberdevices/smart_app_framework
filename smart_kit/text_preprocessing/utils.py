@@ -46,10 +46,6 @@ def revert_dict_with_list_values(dicti):
     return new_dic
 
 
-def replace_yo_to_e(text: str) -> str:
-    return replace_by_dict(text, {"Ё": "Е", "ё": "е"})
-
-
 def replace_currencies_symbols(text: str) -> str:
     return replace_by_dict(text, {"$": " usd", "₽": " rur", "€": " eur"})
 

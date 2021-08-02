@@ -10,7 +10,7 @@ from smart_kit.text_preprocessing.base_text_normalizer import BaseTextNormalizer
 from smart_kit.text_preprocessing.nltk_tokenizer_binding import NLTKWordTokenizer
 from smart_kit.text_preprocessing.pymorphy2_morph_wrapper import Pymorpy2MorphWrapper
 from smart_kit.text_preprocessing.text2num import Text2Num, NumbersUnionAfterSTT
-from smart_kit.text_preprocessing.utils import replace_yo_to_e, unmerge_numbers_and_letters, merge_numbers, \
+from smart_kit.text_preprocessing.utils import unmerge_numbers_and_letters, merge_numbers, \
     replace_currencies_symbols, AdditionalMathSplitter, MergeCardNumbersVoice, MergeCardNumbers, \
     NormalizePhoneNumbersVoice, NormalizePhoneNumbers, UnicodeSymbolsConverter, ReplaceSynonyms, \
     CurrencyTokensOneIterationMerger, reverse_json_dict, return_lemmas_only, Singleton

@@ -2,7 +2,6 @@ import pymorphy2
 import nltk
 
 from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
-from smart_kit.text_preprocessing.pymorphy2_morph_wrapper import Pymorpy2MorphWrapper
 from collections import defaultdict
 from core.text_preprocessing.grammem.grammem_constants import TOKEN_VALUE, TOKEN_TYPE, IS_BEGINNING_OF_COMPOSITE, \
     COMPOSITE_TOKEN_VALUE, COMPOSITE_TOKEN_TYPE, VALUE, LIST_OF_TOKEN_TYPES_DATA

@@ -27,7 +27,7 @@ class TextPreprocessingResult(BaseTextPreprocessingResult):
         self.pipeline_results = items.get("pipeline_results", {})
         self._human_normalized_text = items.get("human_normalized_text")
         self._human_normalized_text_with_anaphora = items.get("human_normalized_text_with_anaphora")
-        self.normalized_text_pymorphy = None
+        self._normalized_text_pymorphy = None
         self._tokenized_string = None
         self._normalized_text_with_verb_mood = None
         self._words_tokenized = None
@@ -49,11 +49,13 @@ class TextPreprocessingResult(BaseTextPreprocessingResult):
 
     @property
     def normalized_text_pymorphy(self):
-        if self.normalized_text_pymorphy is None:
+        if self._normalized_text_pymorphy is None:
             morph = pymorphy2.MorphAnalyzer()
-            self.normalized_text_pymorphy = morph.parse(nltk.tokenize.word_tokenize(self.original_text))
+            normalized_words = [morph.parse(tokenized_word)[0].normalized.normal_form
+                                for tokenized_word in nltk.tokenize.word_tokenize(self.original_text)]
+            self._normalized_text_pymorphy = " ".join(normalized_words)
 
-        return self.normalized_text_pymorphy
+        return self._normalized_text_pymorphy
 
     @property
     def tokenized_string(self):

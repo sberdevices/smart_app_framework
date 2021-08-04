@@ -1,5 +1,8 @@
 import pymorphy2
 import nltk
+
+from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
+from smart_kit.text_preprocessing.pymorphy2_morph_wrapper import Pymorpy2MorphWrapper
 from collections import defaultdict
 from core.text_preprocessing.grammem.grammem_constants import TOKEN_VALUE, TOKEN_TYPE, IS_BEGINNING_OF_COMPOSITE, \
     COMPOSITE_TOKEN_VALUE, COMPOSITE_TOKEN_TYPE, VALUE, LIST_OF_TOKEN_TYPES_DATA
@@ -27,6 +30,7 @@ class TextPreprocessingResult(BaseTextPreprocessingResult):
         self.pipeline_results = items.get("pipeline_results", {})
         self._human_normalized_text = items.get("human_normalized_text")
         self._human_normalized_text_with_anaphora = items.get("human_normalized_text_with_anaphora")
+        self._tokenized_elements_list_pymorphy = None
         self._normalized_text_pymorphy = None
         self._tokenized_string = None
         self._normalized_text_with_verb_mood = None
@@ -46,12 +50,20 @@ class TextPreprocessingResult(BaseTextPreprocessingResult):
         self._tokenized_string_stop_words = None
         self._words_tokenized_stop_words = None
         self._words_tokenized_set_stop_words = None
+        self.morph = pymorphy2.MorphAnalyzer()
+
+    @property
+    def tokenized_elements_list_pymorphy(self):
+        if self._tokenized_elements_list_pymorphy is None:
+            normalizer = LocalTextNormalizer()
+            self._tokenized_elements_list_pymorphy = normalizer(self.original_text)["tokenized_elements_list"]
+
+        return self._tokenized_elements_list_pymorphy
 
     @property
     def normalized_text_pymorphy(self):
         if self._normalized_text_pymorphy is None:
-            morph = pymorphy2.MorphAnalyzer()
-            normalized_words = [morph.parse(tokenized_word)[0].normalized.normal_form
+            normalized_words = [self.morph.parse(tokenized_word)[0].normalized.normal_form
                                 for tokenized_word in nltk.tokenize.word_tokenize(self.original_text)]
             self._normalized_text_pymorphy = " ".join(normalized_words)
 

@@ -24,6 +24,7 @@ from core.utils.exception_handlers import exc_handler
 from core.utils.pickle_copy import pickle_deepcopy
 from core.utils.stats_timer import StatsTimer
 from scenarios.user.user_model import User
+from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
 
 field_filler_description = Registered()
 
@@ -339,13 +340,11 @@ class IntersectionFieldFiller(FieldFillerDescription):
         else:
             self.operator = operator.ge
 
-        from smart_kit.configs import get_app_config
-        app_config = get_app_config()
-
         self.normalized_cases = []
         for key, val in self.cases.items():
             tokens_list = []
-            for message in app_config.NORMALIZER.normalize_sequence(val):
+            normalizer = LocalTextNormalizer()
+            for message in normalizer.normalize_sequence(val):
                 case = set()
                 for norm in message["tokenized_elements_list"]:
                     if norm.get("token_type") != "SENTENCE_ENDPOINT_TOKEN":
@@ -356,7 +355,7 @@ class IntersectionFieldFiller(FieldFillerDescription):
     @exc_handler(on_error_obj_method_name="on_extract_error")
     def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User,
                 params: Dict[str, Any] = None) -> Optional[str]:
-        tpr_tokenized_set = {norm.get("lemma") for norm in text_preprocessing_result.tokenized_elements_list if
+        tpr_tokenized_set = {norm.get("lemma") for norm in text_preprocessing_result.tokenized_elements_list_pymorphy if
                              norm.get("token_type") != "SENTENCE_ENDPOINT_TOKEN"}
         for key, tokens_list in self.normalized_cases:
             for tokens in tokens_list:

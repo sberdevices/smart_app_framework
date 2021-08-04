@@ -227,7 +227,3 @@ class TextPreprocessingResult(BaseTextPreprocessingResult):
         return {"original_text": self.original_text,
                 "normalized_text": self.normalized_text,
                 "tokenized_elements_list": self.__tokenized_elements_list}
-
-    @normalized_text_pymorphy.setter
-    def normalized_text_pymorphy(self, value):
-        self._normalized_text_pymorphy = value

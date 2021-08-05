@@ -409,8 +409,7 @@ class ApproveFiller(FieldFillerDescription):
     def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str] = None) -> None:
         super(ApproveFiller, self).__init__(items, id)
 
-        from smart_kit.configs import get_app_config
-        app_config = get_app_config()
+        normalizer = LocalTextNormalizer()
 
         self.yes_words = items.get("yes_words")
         self.no_words = items.get("no_words")
@@ -418,11 +417,11 @@ class ApproveFiller(FieldFillerDescription):
         self.set_no_words: Set = set(self.no_words or [])
         self.yes_words_normalized: Set = {
             TextPreprocessingResult(result).tokenized_string for result in
-            app_config.NORMALIZER.normalize_sequence(self.set_yes_words)
+            normalizer.normalize_sequence(list(self.set_yes_words))
         }
         self.no_words_normalized: Set = {
             TextPreprocessingResult(result).tokenized_string for result in
-            app_config.NORMALIZER.normalize_sequence(self.set_no_words)
+            normalizer.normalize_sequence(list(self.set_no_words))
         }
 
     @exc_handler(on_error_obj_method_name="on_extract_error")

@@ -8,6 +8,7 @@ from core.model.base_user import BaseUser
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.text_preprocessing.helpers import TokenizeHelper
 from scenarios.user.user_model import User
+from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
 
 
 class AnySubstringInLoweredTextRequirement(Requirement):
@@ -31,16 +32,13 @@ class NormalizedInputWordsRequirement(Requirement):
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         super(NormalizedInputWordsRequirement, self).__init__(items, id)
 
-        # Получаем используемый нормализатор из конфига аппа
-        from smart_kit.configs import get_app_config
-        app_config = get_app_config()
-        self.normalizer = app_config.NORMALIZER
+        self.normalizer = LocalTextNormalizer()
 
         # Нормализуем входные слова из условия
         self.input_words = set(items["input_words"])
         self.normalized_input_words = set([
             norm_res["normalized_text"].replace(".", "").strip()
-            for norm_res in self.normalizer.normalize_sequence(self.input_words)
+            for norm_res in self.normalizer.normalize_sequence(list(self.input_words))
         ])
 
 

@@ -7,6 +7,8 @@ from core.utils.pickle_copy import pickle_deepcopy
 from core.utils.masking_message import masking
 from core.message.msg_validator import MessageValidator
 
+encoder = {"json.dumps": json.dumps} #TODO add protobuf
+
 
 class SmartAppToMessage:
     ROOT_NODES_KEY = "root_nodes"
@@ -22,6 +24,7 @@ class SmartAppToMessage:
         self.forward_fields = forward_fields or ()
         self.masking_fields = masking_fields
         self.validators = validators
+        self.loader = self.command.loader
 
     @lazy
     def payload(self):
@@ -41,7 +44,8 @@ class SmartAppToMessage:
             "sessionId": self.incoming_message.session_id,
             "messageName": self.command.name,
             "payload": self.payload,
-            "uuid": self.incoming_message.uuid
+            "uuid": self.incoming_message.uuid,
+            "loader": self.loader
         }
         fields.update(self.root_nodes)
         return fields
@@ -50,10 +54,12 @@ class SmartAppToMessage:
     def masked_value(self):
         data = pickle_deepcopy(self.as_dict)
         masking(data, self.masking_fields)
+        #TODO encode with encoder dict
         return json.dumps(data, ensure_ascii=False)
 
     @lazy
     def value(self):
+        #TODO encode with encoder dict
         return json.dumps(self.as_dict, ensure_ascii=False)
 
     def validate(self):

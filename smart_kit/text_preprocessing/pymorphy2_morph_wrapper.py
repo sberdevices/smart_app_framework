@@ -88,7 +88,7 @@ class Pymorpy2MorphWrapper:
         raw_gram_info = "|".join(raw_gram_data)
         return sorted_gramme_info, raw_gram_info
 
-    def _rnnmorph_to_token_dicti(self, token, analysis):
+    def _pymorphy_morph_to_token_dicti(self, token, analysis):
         additional_info, tags_to_add, changed_lemma = self._choose_pymorphy_form(analysis.word, analysis.normal_form,
                                                                                  analysis.tag.POS)
         sorted_gramme_info, raw_gram_info = self._gram_info_processing(tags_to_add, analysis)
@@ -113,7 +113,7 @@ class Pymorpy2MorphWrapper:
         for i in range(len(token_desc_list)):
             analysis = analyze_result[i]
             tokenized_element = token_desc_list[i]
-            final_tokenized_element = self._rnnmorph_to_token_dicti(tokenized_element, analysis)
+            final_tokenized_element = self._pymorphy_morph_to_token_dicti(tokenized_element, analysis)
             res.append(final_tokenized_element)
         return res
 

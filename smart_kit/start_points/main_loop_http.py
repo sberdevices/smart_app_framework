@@ -1,6 +1,7 @@
 import json
 import typing
 from collections import defaultdict
+import sys
 from wsgiref.simple_server import make_server
 
 import scenarios.logging.logger_constants as log_const
@@ -152,4 +153,4 @@ class HttpMainLoop(BaseHttpMainLoop):
     def stop(self, signum, frame):
         if self._server:
             self._server.server_close()
-        exit(0)
+        sys.exit(0)

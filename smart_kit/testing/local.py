@@ -1,5 +1,6 @@
 import cmd
 import json
+import sys
 import os
 import pprint
 import typing
@@ -133,7 +134,7 @@ class CLInterface(cmd.Cmd):
     def preloop(self):
         if len(self.available_scenarios) == 0:
             print("Нет доступных сценариев.")
-            exit(0)
+            sys.exit(0)
 
         self.environment.intent = self.available_scenarios[0]
         print("Текущий сценарий: ", self.environment.intent)

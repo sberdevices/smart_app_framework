@@ -29,7 +29,7 @@ setup(
         "dill==0.3.3",
         "h5py<3.0.0",
         "ics==0.6",
-        "jaeger_client==4.3.0",
+        "jaeger_client==4.6.0",
         "Jinja2==2.10.1",
         "keras==2.3.1",
         "lazy",

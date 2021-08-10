@@ -18,6 +18,8 @@ def data_files_for_packages(package_files: dict) -> list:
 SAF_data_files = data_files_for_packages({
     # Our app
     '': ['static/.'],
+    # Our lib
+    'smart_kit': ['template/.'],
     # 3rd-party libs
     'ics': ['grammar/contentline.ebnf'],
     'pymorphy2_dicts': ['data/*.json', 'data/*.array', 'data/*.dawg', 'data/*.intdawg'],

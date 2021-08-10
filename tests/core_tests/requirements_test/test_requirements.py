@@ -330,7 +330,7 @@ class RequirementTest(unittest.TestCase):
             }
         )
         text_normalization_result = Mock()
-        text_normalization_result.tokenized_elements_list = [
+        text_normalization_result.tokenized_elements_list_pymorphy = [
             {'lemma': 'я'},
             {'lemma': 'хотеть'},
         ]

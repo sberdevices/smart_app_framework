@@ -55,7 +55,8 @@ setup(
         "tensorflow==1.15",
         "timeout-decorator==0.4.1",
         "tqdm",
-        "Twisted"
+        "Twisted",
+        "pyinstaller=4.5",
     ],
     classifiers=[
         "Programming Language :: Python :: 3.6",

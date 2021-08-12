@@ -20,7 +20,7 @@ class Command:
         self.action_id = action_id
         self.request_type = request_type
         self.request_data = request_data or {}
-        self.loader = loader or {"name": "json.dumps", "params": {}}
+        self.loader = loader or "json.dumps"
 
     @property
     def raw(self):

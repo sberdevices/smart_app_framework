@@ -63,18 +63,18 @@ class SmartAppToMessage:
     def masked_value(self):
         data = pickle_deepcopy(self.as_dict)
         masking(data, self.masking_fields)
-        if self.command.loader["name"] == "json.dumps":
+        if self.command.loader == "json.dumps":
             return json.dumps(data, ensure_ascii=False)
-        elif self.command.loader["name"] == "protobuf":
+        elif self.command.loader == "protobuf":
             protobuf_message = self.as_protobuf_message(data)
             return protobuf_message.SerializeToString()
 
 
     @lazy
     def value(self):
-        if self.command.loader["name"] == "json.dumps":
+        if self.command.loader == "json.dumps":
             return json.dumps(self.as_dict, ensure_ascii=False)
-        elif self.command.loader["name"] == "protobuf":
+        elif self.command.loader == "protobuf":
             protobuf_message = self.as_protobuf_message(self.as_dict)
             return protobuf_message.SerializeToString()
 

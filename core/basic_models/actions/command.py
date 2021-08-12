@@ -3,12 +3,24 @@
 
 class Command:
     def __init__(self, name, params=None, action_id=None, request_type=None, request_data=None, loader=None):
+        """
+        Initialize Command instance with params
+
+        :param name: str, command name
+        :param params:
+        :param action_id:
+        :param request_type:
+        :param request_data:
+        :param loader: {"name": str, "params": {...}}, loader for data before send. Possible loader names: json.dumps /
+                                                       protobuf
+        """
+
         self.name = name
         self.payload = params or {}
         self.action_id = action_id
         self.request_type = request_type
         self.request_data = request_data or {}
-        self.loader = loader or "json.dumps"
+        self.loader = loader or {"name": "json.dumps", "params": {}}
 
     @property
     def raw(self):

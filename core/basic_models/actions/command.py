@@ -11,8 +11,7 @@ class Command:
         :param action_id:
         :param request_type:
         :param request_data:
-        :param loader: {"name": str, "params": {...}}, loader for data before send. Possible loader names: json.dumps /
-                                                       protobuf
+        :param loader: loader name for data before send. Possible loader values: json.dumps / protobuf
         """
 
         self.name = name

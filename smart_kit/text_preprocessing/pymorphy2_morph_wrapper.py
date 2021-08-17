@@ -1,6 +1,5 @@
 import re
 import pymorphy2
-import tensorflow as tf
 from core.text_preprocessing.grammem.grammem_constants import GRAMMEM_INFO, PART_OF_SPEECH, LEMMA, TEXT, TOKEN_TYPE, \
     LIST_OF_TOKEN_TYPES_DATA, TOKEN_VALUE, VALUE, RAW_GRAM_INFO, OTHER, TRANSITIVITY, ANIMACY, ASPECT
 
@@ -32,8 +31,6 @@ class Pymorpy2MorphWrapper:
     """
 
     def __init__(self):
-        self._graph = tf.Graph()
-        self._session = tf.Session(graph=self._graph)
         self.pymorphy_analyzer = pymorphy2.MorphAnalyzer()
         self.latin = re.compile("^[0-9]*[A-Za-z]+[0-9]*$")
         self.cyrillic = re.compile("[А-Яа-яЁе]+")

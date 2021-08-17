@@ -30,7 +30,7 @@ setup(
         "ics==0.6",
         "jaeger_client==4.3.0",
         "Jinja2==2.10.1",
-        "keras==2.3.1",
+        "keras==2.6.0",
         "lazy",
         "nltk==3.5",
         "numpy",

@@ -69,7 +69,6 @@ class SmartAppToMessage:
             protobuf_message = self.as_protobuf_message(data)
             return protobuf_message.SerializeToString()
 
-
     @lazy
     def value(self):
         if self.command.loader == "json.dumps":

@@ -39,6 +39,13 @@ class KafkaConsumer(BaseKafkaConsumer):
         consumer.assign(partitions)
 
     @staticmethod
+    def on_coop_assign_offset_end(consumer, partitions):
+        for p in partitions:
+            p.offset = OFFSET_END
+        KafkaConsumer.on_assign_log(consumer, partitions)
+        consumer.incremental_assign(partitions)
+
+    @staticmethod
     def on_assign_log(consumer, partitions):
         log_level = "WARNING"
         for p in partitions:
@@ -53,8 +60,16 @@ class KafkaConsumer(BaseKafkaConsumer):
 
     def subscribe(self, topics=None):
         topics = topics or list(self._config["topics"].values())
+
         self._consumer.subscribe(topics,
-                                 on_assign=KafkaConsumer.on_assign_offset_end if self.assign_offset_end else KafkaConsumer.on_assign_log)
+                                 on_assign=self.get_on_assign_callback() if self.assign_offset_end else KafkaConsumer.on_assign_log)
+
+    def get_on_assign_callback(self):
+        if "cooperative" in self._config["conf"].get("partition.assignment.strategy", ""):
+            callback = KafkaConsumer.on_coop_assign_offset_end
+        else:
+            callback = KafkaConsumer.on_assign_offset_end
+        return callback
 
     def unsubscribe(self):
         self._consumer.unsubscribe()

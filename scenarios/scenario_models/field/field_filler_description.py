@@ -24,7 +24,6 @@ from core.utils.exception_handlers import exc_handler
 from core.utils.pickle_copy import pickle_deepcopy
 from core.utils.stats_timer import StatsTimer
 from scenarios.user.user_model import User
-from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
 
 field_filler_description = Registered()
 
@@ -340,11 +339,13 @@ class IntersectionFieldFiller(FieldFillerDescription):
         else:
             self.operator = operator.ge
 
+        from smart_kit.configs import get_app_config
+        app_config = get_app_config()
+
         self.normalized_cases = []
         for key, val in self.cases.items():
             tokens_list = []
-            normalizer = LocalTextNormalizer()
-            for message in normalizer.normalize_sequence(val):
+            for message in app_config.NORMALIZER.normalize_sequence(val):
                 case = set()
                 for norm in message["tokenized_elements_list"]:
                     if norm.get("token_type") != "SENTENCE_ENDPOINT_TOKEN":
@@ -409,7 +410,8 @@ class ApproveFiller(FieldFillerDescription):
     def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str] = None) -> None:
         super(ApproveFiller, self).__init__(items, id)
 
-        normalizer = LocalTextNormalizer()
+        from smart_kit.configs import get_app_config
+        app_config = get_app_config()
 
         self.yes_words = items.get("yes_words")
         self.no_words = items.get("no_words")
@@ -417,11 +419,11 @@ class ApproveFiller(FieldFillerDescription):
         self.set_no_words: Set = set(self.no_words or [])
         self.yes_words_normalized: Set = {
             TextPreprocessingResult(result).tokenized_string for result in
-            normalizer.normalize_sequence(list(self.set_yes_words))
+            app_config.NORMALIZER.normalize_sequence(list(self.set_yes_words))
         }
         self.no_words_normalized: Set = {
             TextPreprocessingResult(result).tokenized_string for result in
-            normalizer.normalize_sequence(list(self.set_no_words))
+            app_config.NORMALIZER.normalize_sequence(list(self.set_no_words))
         }
 
     @exc_handler(on_error_obj_method_name="on_extract_error")

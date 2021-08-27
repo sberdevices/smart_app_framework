@@ -54,8 +54,11 @@ class TextPreprocessingResult(BaseTextPreprocessingResult):
     @property
     def tokenized_elements_list_pymorphy(self):
         if self._tokenized_elements_list_pymorphy is None:
-            normalizer = LocalTextNormalizer()
-            self._tokenized_elements_list_pymorphy = normalizer(self.original_text)["tokenized_elements_list"]
+
+            from smart_kit.configs import get_app_config
+            app_config = get_app_config()
+
+            self._tokenized_elements_list_pymorphy = app_config.NORMALIZER(self.original_text)["tokenized_elements_list"]
 
         return self._tokenized_elements_list_pymorphy
 

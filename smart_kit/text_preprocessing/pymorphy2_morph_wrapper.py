@@ -25,7 +25,7 @@ def token_list_to_sentences(token_desc_list: list) -> list:
     return results
 
 
-class Pymorpy2MorphWrapper:
+class Pymorphy2MorphWrapper:
     """
     Класс предназначен для получения граммемной информации о токенах.
     """

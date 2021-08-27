@@ -1,7 +1,5 @@
-import pymorphy2
 import nltk
 
-from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
 from collections import defaultdict
 from core.text_preprocessing.grammem.grammem_constants import TOKEN_VALUE, TOKEN_TYPE, IS_BEGINNING_OF_COMPOSITE, \
     COMPOSITE_TOKEN_VALUE, COMPOSITE_TOKEN_TYPE, VALUE, LIST_OF_TOKEN_TYPES_DATA
@@ -49,7 +47,10 @@ class TextPreprocessingResult(BaseTextPreprocessingResult):
         self._tokenized_string_stop_words = None
         self._words_tokenized_stop_words = None
         self._words_tokenized_set_stop_words = None
-        self.morph = pymorphy2.MorphAnalyzer()
+
+        from smart_kit.configs import get_app_config
+        app_config = get_app_config()
+        self.morph = app_config.NORMALIZER.morph.pymorphy_analyzer
 
     @property
     def tokenized_elements_list_pymorphy(self):

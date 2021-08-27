@@ -3,7 +3,7 @@ from collections import OrderedDict
 from typing import Callable, Any, Dict
 
 import tensorflow as tf
-from keras.utils import CustomObjectScope
+from keras.utils.generic_utils import CustomObjectScope
 
 import scenarios.logging.logger_constants as scenarios_log_const
 from core.basic_models.classifiers.basic_classifiers import SkipClassifier, SciKitClassifier, ExternalClassifier, \

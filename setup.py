@@ -27,11 +27,10 @@ setup(
         "croniter",
         "dawg==0.8.0",
         "dill==0.3.3",
-        "h5py<3.0.0",
         "ics==0.6",
         "jaeger_client==4.3.0",
         "Jinja2==2.10.1",
-        "keras==2.3.1",
+        "keras==2.6.0",
         "lazy",
         "nltk==3.5",
         "numpy",
@@ -46,19 +45,19 @@ setup(
         "PyYAML==5.3",
         "redis",
         "requests==2.22.0",
-        "rnnmorph==0.4.0",
         "rusenttokenize==0.0.5",
         "scikit-learn==0.24.1",
         "setuptools",
         "tabulate",
         "tatsu==4.4.0",
-        "tensorflow==1.15",
+        "tensorflow==2.6.0",
         "timeout-decorator==0.4.1",
         "tqdm",
         "Twisted"
     ],
     classifiers=[
         "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7"
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.9"
     ]
 )

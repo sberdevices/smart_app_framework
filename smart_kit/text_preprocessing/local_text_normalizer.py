@@ -26,12 +26,12 @@ class LocalTextNormalizer(BaseTextNormalizer, metaclass=Singleton):
 
     def __init__(self):
         self.__ready_to_use = False
-        self.morph = None
+        self._morph = None
 
     @lazy
     def morph(self):
-        self.morph = Pymorphy2MorphWrapper()
-        return self.morph
+        self._morph = Pymorphy2MorphWrapper()
+        return self._morph
 
     def get_token_list(self, text):
         sentences = self.sentence_tokenizer(text.strip())

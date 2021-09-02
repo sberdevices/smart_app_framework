@@ -1,5 +1,6 @@
 import random
 from typing import Dict, Any
+import jinja2
 from core.model.base_user import BaseUser as User
 
 
@@ -38,6 +39,7 @@ class ReplySelector:
                     break
             if reply_list:
                 result = random.choice(reply_list)
+                result = jinja2.Template(result).render()
             else:
                 raise KeyError("Key not found")
         return result

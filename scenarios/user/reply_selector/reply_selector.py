@@ -1,7 +1,8 @@
 import random
 from typing import Dict, Any
-import jinja2
+
 from core.model.base_user import BaseUser as User
+from core.unified_template.unified_template import UnifiedTemplate
 
 
 class ReplySelector:
@@ -39,7 +40,7 @@ class ReplySelector:
                     break
             if reply_list:
                 result = random.choice(reply_list)
-                result = jinja2.Template(result).render()
+                result = UnifiedTemplate(result).render()
             else:
                 raise KeyError("Key not found")
         return result

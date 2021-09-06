@@ -4,7 +4,7 @@ import os
 from core.configs.base_config import BaseConfig
 from core.db_adapter.ceph.ceph_adapter import CephAdapter
 from core.db_adapter.os_adapter import OSAdapter
-from core.repositories.file_repository import FileRepository
+from core.repositories.file_repository import UpdatableFileRepository, FileRepository
 
 
 class Settings(BaseConfig):
@@ -19,13 +19,25 @@ class Settings(BaseConfig):
         self.app_name = kwargs.get("app_name")
         self.adapters = {Settings.CephAdapterKey: CephAdapter, self.OSAdapterKey: OSAdapter}
         self.repositories = [
-            FileRepository(self.subfolder_path("template_config.yml"), loader=yaml.safe_load, key="template_settings"),
+            FileRepository(
+                self.subfolder_path("template_config.yml"), loader=yaml.safe_load, key="template_settings"
+            ),
             FileRepository(self.subfolder_secret_path("kafka_config.yml"), loader=yaml.safe_load, key="kafka"),
-            FileRepository(self.subfolder_path("ceph_config.yml"), loader=yaml.safe_load, key=self.CephAdapterKey),
+            FileRepository(
+                self.subfolder_path("ceph_config.yml"), loader=yaml.safe_load, key=self.CephAdapterKey
+            ),
             FileRepository(self.subfolder_path("aiohttp.yml"), loader=yaml.safe_load, key="aiohttp"),
         ]
         self.repositories = self.override_repositories(self.repositories)
         self.init()
+
+    def init(self):
+        super().init()
+        update_time = self["template_settings"].get("config_update_cooldown")
+        if update_time is not None:
+            for repo in self.repositories:
+                if isinstance(repo, UpdatableFileRepository):
+                    repo.update_cooldown = update_time
 
     def override_repositories(self, repositories: list):
         """

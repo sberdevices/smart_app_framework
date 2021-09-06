@@ -356,7 +356,7 @@ class IntersectionFieldFiller(FieldFillerDescription):
     @exc_handler(on_error_obj_method_name="on_extract_error")
     def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User,
                 params: Dict[str, Any] = None) -> Optional[str]:
-        tpr_tokenized_set = {norm.get("lemma") for norm in text_preprocessing_result.tokenized_elements_list if
+        tpr_tokenized_set = {norm.get("lemma") for norm in text_preprocessing_result.tokenized_elements_list_pymorphy if
                              norm.get("token_type") != "SENTENCE_ENDPOINT_TOKEN"}
         for key, tokens_list in self.normalized_cases:
             for tokens in tokens_list:
@@ -419,11 +419,11 @@ class ApproveFiller(FieldFillerDescription):
         self.set_no_words: Set = set(self.no_words or [])
         self.yes_words_normalized: Set = {
             TextPreprocessingResult(result).tokenized_string for result in
-            app_config.NORMALIZER.normalize_sequence(self.set_yes_words)
+            app_config.NORMALIZER.normalize_sequence(list(self.set_yes_words))
         }
         self.no_words_normalized: Set = {
             TextPreprocessingResult(result).tokenized_string for result in
-            app_config.NORMALIZER.normalize_sequence(self.set_no_words)
+            app_config.NORMALIZER.normalize_sequence(list(self.set_no_words))
         }
 
     @exc_handler(on_error_obj_method_name="on_extract_error")

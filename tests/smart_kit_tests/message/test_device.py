@@ -1,6 +1,6 @@
 # coding: utf-8
 import unittest
-from smart_kit.message import device
+from core.message import device
 
 
 class MessageDeviceTest1(unittest.TestCase):

@@ -15,7 +15,8 @@ from scenarios.user.preprocessing_messages.prepricessing_messages_for_scenarios 
 from scenarios.scenario_models.history import History
 from scenarios.behaviors.behaviors import Behaviors
 from scenarios.user.reply_selector.reply_selector import ReplySelector
-
+from smart_kit.utils.monitoring import smart_kit_metrics
+import scenarios.logging.logger_constants as log_const
 
 class User(BaseUser):
 
@@ -33,6 +34,10 @@ class User(BaseUser):
             user_values = json.loads(db_data) if db_data else None
         except ValueError:
             user_values = None
+            smart_kit_metrics.counter_load_error(settings.app_name)
+            log(f"%(class_name)s.__init__ User load ValueError %(uid)s with user data {db_data}",
+                params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
+                 "uid": str(id)}, level="ERROR")
             load_error = True
         super(User, self).__init__(id, message, user_values, descriptions, load_error)
         self.__parametrizer_cls = parametrizer_cls

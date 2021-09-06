@@ -1,5 +1,5 @@
-import ssl
 import fnmatch
+import ssl
 
 import boto
 import boto.s3.connection as s3_connection
@@ -32,9 +32,9 @@ class CephAdapter(DBAdapter):
             self._bucket = self._client.get_bucket(self.config["bucket"])
         except Exception:
             log("CephAdapter connect error",
-                          params={log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
-                          level="ERROR",
-                          exc_info=True)
+                params={log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
+                level="ERROR",
+                exc_info=True)
             monitoring.got_counter("ceph_connection_exception")
             raise
 
@@ -51,7 +51,7 @@ class CephAdapter(DBAdapter):
 
     def _open(self, filename, mode, *args, **kwargs):
         io_config = {"filename": filename,
-                     "mode":mode,
+                     "mode": mode,
                      "bucket": self._bucket,
                      "try_count": self.config.get("read_tries")}
         return CephIO(io_config)
@@ -69,3 +69,8 @@ class CephAdapter(DBAdapter):
 
     def _path_exists(self, path):
         return bool(self._list_dir(path))
+
+    def _mtime(self, path):
+        key = self._bucket.get_key(path)
+        if key and key.last_modified:
+            return key.last_modified

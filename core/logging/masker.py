@@ -8,7 +8,7 @@ class LogMasker:
     between single or double quotes
     and any non digit character
     """
-    card_regular = re.compile("(?:^|\s|\'|\")(?:(\d{18})|(\d{16})|(?:\d{4} ){3}(\d{4})(\s?\d{2})?)(?:$|\D)")
+    card_regular = re.compile("(?:^|\s|\'|\")(?:(\d{18})|(\d{16})|(?:\d{4} ){3}(\d{4})(\s?\d{2})?)(?:$|\W)")
     d_regular = re.compile("\d")
 
     @classmethod

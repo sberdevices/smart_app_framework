@@ -55,7 +55,7 @@ ____
 Для перехода на новую версию фреймворка выполните в терминале следующие команды:
 
 ```bash
-python3 -m pip uninstall smart-app-framework
+python3 -m pip uninstall -y smart-app-framework
 python3 -m pip install git+https://github.com/sberdevices/smart_app_framework@main
 ```
 

@@ -16,8 +16,13 @@ class QuestionFieldDescription(BasicFieldDescription):
         self._on_filled_actions = items.get("on_filled_actions", [])
         self._ask_again_question = items.get("ask_again_question")
         self.has_again_question = bool(self._ask_again_question)
+        self._ask_again_number = items.get("ask_again_number", 1)
 
     @lazy
     @factory(Action)
     def ask_again_question(self):
         return self._ask_again_question
+
+    @lazy
+    def ask_again_number(self):
+        return self._ask_again_number

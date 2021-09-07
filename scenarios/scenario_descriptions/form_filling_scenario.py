@@ -54,7 +54,7 @@ class FormFillingScenario(BaseScenario):
             if not field.valid and field.description.has_requests and \
                     field.description.requirement.check(
                     text_preprocessing_result, user, params
-            ):
+                    ):
                 return field
 
     def get_fields_data(self, form, form_key):

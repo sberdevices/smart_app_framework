@@ -53,8 +53,8 @@ class FormFillingScenario(BaseScenario):
             field = form.fields[field_name]
             if not field.valid and field.description.has_requests and \
                     field.description.requirement.check(
-                        text_preprocessing_result, user, params
-                    ):
+                    text_preprocessing_result, user, params
+            ):
                 return field
 
     def get_fields_data(self, form, form_key):
@@ -177,8 +177,7 @@ class FormFillingScenario(BaseScenario):
         logging_params.update(self._log_params())
         log("Extracted data=%(data_extracted_str)s", user, logging_params)
 
-        validation_error_msg = self._validate_extracted_data(user, text_preprocessing_result, form, data_extracted,
-                                                             params)
+        validation_error_msg = self._validate_extracted_data(user, text_preprocessing_result, form, data_extracted, params)
         if validation_error_msg:
             reply_messages = validation_error_msg
         else:

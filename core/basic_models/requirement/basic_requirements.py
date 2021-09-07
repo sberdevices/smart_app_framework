@@ -43,8 +43,9 @@ class Requirement:
         return True
 
     def on_check_error(self, text_preprocessing_result, user):
-        log("exc_handler: Requirement failed to check. Return False. MESSAGE: {}.".format(user.message.masked_value),
-            user, {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
+        log("exc_handler: Requirement failed to check. Return False. MESSAGE: %(message_str)s.",
+            user, {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE,
+                   "message_str": user.message.masked_value},
             level="ERROR", exc_info=True)
         return False
 

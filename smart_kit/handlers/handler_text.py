@@ -23,8 +23,8 @@ class HandlerText(HandlerBase):
         super().run(payload, user)
         text_preprocessing_result = TextPreprocessingResult(payload.get("message", {}))
 
-        log("text preprocessing result: '{}'".format(str(text_preprocessing_result.raw)), user,
-                      {log_const.KEY_NAME: log_const.NORMALIZED_TEXT_VALUE})
+        log("text preprocessing result: '%(tpr_str)s'", user,
+            {log_const.KEY_NAME: log_const.NORMALIZED_TEXT_VALUE, "tpr_str": str(text_preprocessing_result.raw)})
 
         answer = self._handle_base(text_preprocessing_result, user)
         return answer

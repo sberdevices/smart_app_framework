@@ -28,6 +28,7 @@ class ReplySelector:
             f".{self.character_key}",
             ""
         ]
+        self._user = user
 
     @lazy
     def _bundles_templates(self):
@@ -37,7 +38,6 @@ class ReplySelector:
                 for index, answer in enumerate(variation_answers):
                     _bundles_templates[bundle_key][variation_key][index] = UnifiedTemplate(answer)
         return _bundles_templates
-
 
     def get_text_by_key(self, bundle_name: str, reply_key="") -> str:
         result = ""
@@ -50,7 +50,8 @@ class ReplySelector:
                 if reply_list:
                     break
             if reply_list:
-                result = random.choice(reply_list).render()
+                params = self._user.parametrizer.collect()  # TODO get text_preprocessing_result
+                result = random.choice(reply_list).render(params)
             else:
                 raise KeyError("Key not found")
         return result

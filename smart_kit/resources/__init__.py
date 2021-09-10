@@ -27,6 +27,7 @@ from core.basic_models.requirement.counter_requirements import CounterValueRequi
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirements
+from core.basic_models.requirement.project_requirements import SettingsRequirement
 from core.basic_models.requirement.user_text_requirements import AnySubstringInLoweredTextRequirement, \
     IntersectionWithTokensSetRequirement, NormalizedTextInSetRequirement, \
     PhoneNumberNumberRequirement, NumInRangeRequirement
@@ -333,6 +334,7 @@ class SmartAppResources(BaseConfig):
         requirements["template"] = TemplateRequirement
         requirements["template_in_array"] = TemplateInArrayRequirement
         requirements["time"] = TimeRequirement
+        requirements["settings"] = SettingsRequirement
 
     def init_sdk_items(self):
         answer_items["bubble_text"] = BubbleText

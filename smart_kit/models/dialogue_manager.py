@@ -16,7 +16,7 @@ class DialogueManager:
         log(f"{self.__class__.__name__}.__init__ started.",
                       params={log_const.KEY_NAME: log_const.STARTUP_VALUE})
         self.scenario_descriptions = scenario_descriptions
-        self.scenarios = scenario_descriptions['scenarios']
+        self.scenarios = scenario_descriptions["scenarios"]
         self.scenario_keys = set(self.scenarios.get_keys())
         self.actions = scenario_descriptions["external_actions"]
         self.app_name = app_name
@@ -32,6 +32,16 @@ class DialogueManager:
         scenario_key = user.message.payload[field.INTENT]
 
         if scenario_key in scenarios_names:
+
+            last_events = user.history.raw["events"]
+            if len(last_events) > 0:
+                last_event = last_events[len(last_events)-1]
+                if last_event.get("type") == "field_event" and last_event.get("results") == "ask_question":
+                    last_field_name = last_event["content"]["field"]
+                    last_form_name = user.scenario_models.descriptions._items[scenario_key]["form_type"]
+                    last_form = user.forms.descriptions._items[last_form_name]
+                    max_ask_again_times = last_form[last_field_name].ask_again_times
+
             scenario = self.scenarios[scenario_key]
             if not scenario.text_fits(text_preprocessing_result, user):
                 smart_kit_metrics.counter_nothing_found(self.app_name, scenario_key, user)

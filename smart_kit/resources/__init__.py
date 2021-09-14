@@ -88,7 +88,7 @@ from scenarios.user.preprocessing_messages.preprocessing_messages_description im
 from smart_kit.action.http import HTTPRequestAction
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
 
-from smart_app_framework.core.db_adapter.aioredis_sentinel_adapter import AIORedisSentinelAdapter
+from core.db_adapter.aioredis_sentinel_adapter import AIORedisSentinelAdapter
 
 
 class SmartAppResources(BaseConfig):

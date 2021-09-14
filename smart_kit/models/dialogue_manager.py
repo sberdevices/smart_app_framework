@@ -39,7 +39,7 @@ class DialogueManager:
                 form = self.scenarios[scenario_key]._get_form(user)
                 field_ = self.scenarios[scenario_key]._field(form, text_preprocessing_result, user, None)
                 has_ask_again = field_.description.has_requests
-                max_ask_again_times = field_.ask_again_times
+                max_ask_again_times = field_.description.ask_again_times
                 if is_form_filling and has_ask_again:
                     return self.run_scenario(scenario_key, text_preprocessing_result, user), True
 

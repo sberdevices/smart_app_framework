@@ -5,6 +5,7 @@ from core.names import field
 import scenarios.logging.logger_constants as log_const
 from lazy import lazy
 
+from scenarios.scenario_descriptions.form_filling_scenario import FormFillingScenario
 from smart_kit.system_answers.nothing_found_action import NothingFoundAction
 from smart_kit.utils.monitoring import smart_kit_metrics
 
@@ -32,18 +33,16 @@ class DialogueManager:
         scenario_key = user.message.payload[field.INTENT]
 
         if scenario_key in scenarios_names:
-
-            last_events = user.history.raw["events"]
-            if len(last_events) > 0:
-                last_event = last_events[len(last_events)-1]
-                if last_event.get("type") == "field_event" and last_event.get("results") == "ask_question":
-                    last_field_name = last_event["content"]["field"]
-                    last_form_name = user.scenario_models.descriptions._items[scenario_key]["form_type"]
-                    last_form = user.forms.descriptions._items[last_form_name]
-                    max_ask_again_times = last_form[last_field_name].ask_again_times
-
             scenario = self.scenarios[scenario_key]
             if not scenario.text_fits(text_preprocessing_result, user):
+                is_form_filling = isinstance(scenario, FormFillingScenario)
+                form = self.scenarios[scenario_key]._get_form(user)
+                field_ = self.scenarios[scenario_key]._field(form, text_preprocessing_result, user, None)
+                has_ask_again = field_.description.has_requests
+                max_ask_again_times = field_.ask_again_times
+                if is_form_filling and has_ask_again:
+                    return self.run_scenario(scenario_key, text_preprocessing_result, user), True
+
                 smart_kit_metrics.counter_nothing_found(self.app_name, scenario_key, user)
 
                 return self._nothing_found_action.run(user, text_preprocessing_result), False

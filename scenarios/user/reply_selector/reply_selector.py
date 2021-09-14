@@ -50,7 +50,7 @@ class ReplySelector:
                 if reply_list:
                     break
             if reply_list:
-                params = self._user.parametrizer.collect()  # TODO get text_preprocessing_result
+                params = self._user.parametrizer.collect()  # TODO give run-time action parameters to collect call
                 result = random.choice(reply_list).render(params)
             else:
                 raise KeyError("Key not found")

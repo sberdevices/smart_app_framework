@@ -8,6 +8,7 @@ from lazy import lazy
 from scenarios.scenario_descriptions.form_filling_scenario import FormFillingScenario
 from smart_kit.system_answers.nothing_found_action import NothingFoundAction
 from smart_kit.utils.monitoring import smart_kit_metrics
+from scenarios.scenario_models.history import Event, HistoryConstants
 
 
 class DialogueManager:
@@ -36,12 +37,21 @@ class DialogueManager:
             scenario = self.scenarios[scenario_key]
             if not scenario.text_fits(text_preprocessing_result, user):
                 is_form_filling = isinstance(scenario, FormFillingScenario)
-                form = self.scenarios[scenario_key]._get_form(user)
-                field_ = self.scenarios[scenario_key]._field(form, text_preprocessing_result, user, None)
-                has_ask_again = field_.description.has_requests
-                max_ask_again_times = field_.description.ask_again_times
-                if is_form_filling and has_ask_again:
-                    return self.run_scenario(scenario_key, text_preprocessing_result, user), True
+                if is_form_filling:
+                    scenario_ = self.scenarios[scenario_key]
+                    form = scenario_._get_form(user)
+                    field_ = scenario_._field(form, text_preprocessing_result, user, None)
+                    if field_:
+                        has_ask_again = field_.description.has_requests
+                        if has_ask_again:
+                            max_ask_again_times = field_.description.ask_again_times
+                            user.history.add_event(
+                                Event(type=HistoryConstants.types.FIELD_EVENT,
+                                      scenario=scenario_.root_id,
+                                      content={HistoryConstants.content_fields.FIELD: field_.description.id},
+                                      results=HistoryConstants.event_results.ASK_QUESTION))
+                            reply = scenario_.get_reply(user, text_preprocessing_result, scenario_.actions, field_, form)
+                            return reply, True
 
                 smart_kit_metrics.counter_nothing_found(self.app_name, scenario_key, user)
 

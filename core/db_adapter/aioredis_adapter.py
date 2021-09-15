@@ -1,3 +1,5 @@
+import copy
+
 import aioredis
 import typing
 
@@ -36,7 +38,14 @@ class AIORedisAdapter(DBAdapter):
         return await self._run(self._path_exists, path)
 
     async def connect(self):
-        self._redis = await aioredis.create_redis_pool(**self.config)
+        print("Here is the content of REDIS_CONFIG:", self.config)
+        print("Connecting to a single redis server")
+        config = copy.deepcopy(self.config)
+        redis_url = config.pop("redis", None)
+        if not isinstance(redis_url, str):
+            raise ValueError(
+                "redis should be specified like redis://[[username]:[password]]@localhost:6379/0")
+        self._redis = aioredis.from_url(redis_url, **config)
 
     def _open(self, filename, *args, **kwargs):
         pass

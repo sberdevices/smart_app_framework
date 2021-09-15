@@ -21,7 +21,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "aiohttp==3.7.4",
-        "aioredis",
+        "aioredis==1.3.1",
         "boto==2.49.0",
         "confluent_kafka==1.7.0",
         "croniter",

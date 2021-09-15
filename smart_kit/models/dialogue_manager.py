@@ -43,8 +43,8 @@ class DialogueManager:
                     field_ = scenario_._field(form, text_preprocessing_result, user, None)
                     if field_:
                         has_ask_again = field_.description.has_requests
-                        if has_ask_again:
-                            max_ask_again_times = field_.description.ask_again_times
+                        if has_ask_again and field_.description.ask_again_times > 0:
+                            field_.description.ask_again_times -= 1
                             user.history.add_event(
                                 Event(type=HistoryConstants.types.FIELD_EVENT,
                                       scenario=scenario_.root_id,

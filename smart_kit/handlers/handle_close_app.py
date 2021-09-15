@@ -19,4 +19,4 @@ class HandlerCloseApp(HandlerBase):
             "tpr_str": str(text_preprocessing_result.raw)
         }
         self._clear_current_scenario.run(user, text_preprocessing_result)
-        log("HandlerCloseApp with text preprocessing result: '%(tpr_str)s'", user, params)
+        log("HandlerCloseApp with text preprocessing result", user, params)

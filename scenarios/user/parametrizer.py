@@ -32,5 +32,6 @@ class Parametrizer(BasicParametrizer):
             "text_preprocessing_result": tpr_data,
             "uuid": self._user.message.uuid,
             "variables": self._user.variables.values,
+            "settings": self._user.settings
         }
         return data

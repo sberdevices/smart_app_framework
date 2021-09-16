@@ -35,16 +35,19 @@ class DialogueManager:
 
         if scenario_key in scenarios_names:
             scenario = self.scenarios[scenario_key]
+
+            is_form_filling = isinstance(scenario, FormFillingScenario)
+            if is_form_filling:
+                scenario_ = self.scenarios[scenario_key]
+                form = scenario_._get_form(user)
+                field_ = scenario_._field(form, text_preprocessing_result, user, None)
+
             if not scenario.text_fits(text_preprocessing_result, user):
                 is_form_filling = isinstance(scenario, FormFillingScenario)
-                if is_form_filling:
-                    scenario_ = self.scenarios[scenario_key]
-                    form = scenario_._get_form(user)
-                    field_ = scenario_._field(form, text_preprocessing_result, user, None)
-                    if field_:
+                if is_form_filling and field_:
                         has_ask_again = field_.description.has_requests
-                        if has_ask_again and field_.description.ask_again_times > 0:
-                            field_.description.ask_again_times -= 1
+                        if has_ask_again and field_.description.ask_again_times_left > 0:
+                            field_.description.ask_again_times_left -= 1
                             user.history.add_event(
                                 Event(type=HistoryConstants.types.FIELD_EVENT,
                                       scenario=scenario_.root_id,
@@ -56,6 +59,9 @@ class DialogueManager:
                 smart_kit_metrics.counter_nothing_found(self.app_name, scenario_key, user)
 
                 return self._nothing_found_action.run(user, text_preprocessing_result), False
+
+            if is_form_filling and field_:
+                field_.description.ask_again_times_left = field_.description.ask_again_times
 
         return self.run_scenario(scenario_key, text_preprocessing_result, user), True
 

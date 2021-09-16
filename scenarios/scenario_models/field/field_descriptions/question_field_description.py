@@ -17,6 +17,7 @@ class QuestionFieldDescription(BasicFieldDescription):
         self._ask_again_question = items.get("ask_again_question")
         self.has_again_question = bool(self._ask_again_question)
         self._ask_again_times = items.get("ask_again_times", 0)
+        self._ask_again_times_left = self._ask_again_times
 
     @lazy
     @factory(Action)
@@ -26,3 +27,7 @@ class QuestionFieldDescription(BasicFieldDescription):
     @lazy
     def ask_again_times(self):
         return self._ask_again_times
+
+    @lazy
+    def ask_again_times_left(self):
+        return self._ask_again_times_left

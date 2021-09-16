@@ -37,24 +37,26 @@ class DialogueManager:
             scenario = self.scenarios[scenario_key]
 
             is_form_filling = isinstance(scenario, FormFillingScenario)
+            field_ = None
+            form = None
             if is_form_filling:
-                scenario_ = self.scenarios[scenario_key]
-                form = scenario_._get_form(user)
-                field_ = scenario_._field(form, text_preprocessing_result, user, None)
+                form = scenario._get_form(user)
+                field_ = scenario._field(form, text_preprocessing_result, user, None)
 
             if not scenario.text_fits(text_preprocessing_result, user):
                 is_form_filling = isinstance(scenario, FormFillingScenario)
                 if is_form_filling and field_:
-                        has_ask_again = field_.description.has_requests
-                        if has_ask_again and field_.description.ask_again_times_left > 0:
-                            field_.description.ask_again_times_left -= 1
-                            user.history.add_event(
-                                Event(type=HistoryConstants.types.FIELD_EVENT,
-                                      scenario=scenario_.root_id,
-                                      content={HistoryConstants.content_fields.FIELD: field_.description.id},
-                                      results=HistoryConstants.event_results.ASK_QUESTION))
-                            reply = scenario_.get_reply(user, text_preprocessing_result, scenario_.actions, field_, form)
-                            return reply, True
+                    has_ask_again = field_.description.has_requests
+                    if has_ask_again and field_.description.ask_again_times_left > 0:
+                        field_.description.ask_again_times_left -= 1
+                        user.history.add_event(
+                            Event(type=HistoryConstants.types.FIELD_EVENT,
+                                  scenario=scenario.root_id,
+                                  content={HistoryConstants.content_fields.FIELD: field_.description.id},
+                                  results=HistoryConstants.event_results.ASK_QUESTION))
+                        reply = scenario.get_reply(
+                            user, text_preprocessing_result, scenario.actions, field_, form)
+                        return reply, True
 
                 smart_kit_metrics.counter_nothing_found(self.app_name, scenario_key, user)
 

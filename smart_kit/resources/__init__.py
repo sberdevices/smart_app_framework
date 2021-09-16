@@ -27,6 +27,7 @@ from core.basic_models.requirement.counter_requirements import CounterValueRequi
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirements
+from core.basic_models.requirement.project_requirements import SettingsRequirement
 from core.basic_models.requirement.user_text_requirements import AnySubstringInLoweredTextRequirement, \
     IntersectionWithTokensSetRequirement, NormalizedTextInSetRequirement, \
     PhoneNumberNumberRequirement, NumInRangeRequirement
@@ -86,6 +87,8 @@ from scenarios.user.preprocessing_messages.preprocessing_messages_description im
     PreprocessingMessagesDescription
 from smart_kit.action.http import HTTPRequestAction
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
+
+from core.db_adapter.aioredis_sentinel_adapter import AIORedisSentinelAdapter
 
 
 class SmartAppResources(BaseConfig):
@@ -333,6 +336,7 @@ class SmartAppResources(BaseConfig):
         requirements["template"] = TemplateRequirement
         requirements["template_in_array"] = TemplateInArrayRequirement
         requirements["time"] = TimeRequirement
+        requirements["settings"] = SettingsRequirement
 
     def init_sdk_items(self):
         answer_items["bubble_text"] = BubbleText
@@ -380,6 +384,7 @@ class SmartAppResources(BaseConfig):
         db_adapters["memory"] = MemoryAdapter
         db_adapters["redis"] = RedisAdapter
         db_adapters["aioredis"] = AIORedisAdapter
+        db_adapters["aioredis_sentinel"] = AIORedisSentinelAdapter
 
     def init_classifiers(self):
         classifiers[None] = Classifier

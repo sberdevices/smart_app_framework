@@ -54,8 +54,16 @@ class DialogueManager:
                                   scenario=scenario.root_id,
                                   content={HistoryConstants.content_fields.FIELD: field_.description.id},
                                   results=HistoryConstants.event_results.ASK_QUESTION))
-                        reply = scenario.get_reply(
-                            user, text_preprocessing_result, scenario.actions, field_, form)
+                        if field_.description.has_again_question:
+                            reply = scenario.get_action_results(user,
+                                                                text_preprocessing_result,
+                                                                [field_.description.ask_again_question], {})
+                        else:
+                            reply = scenario.get_reply(user,
+                                                       text_preprocessing_result,
+                                                       scenario.actions,
+                                                       field_,
+                                                       form)
                         return reply, True
 
                 smart_kit_metrics.counter_nothing_found(self.app_name, scenario_key, user)

@@ -4,12 +4,14 @@ from core.request.kafka_request import KafkaRequest
 
 class SmartKitKafkaRequest(KafkaRequest):
     KAFKA_REPLY_TOPIC = "kafka_replyTopic"
+    KAFKA_EXTRA_HEADERS = "kafka_extraHeaders"
 
     def __init__(self, items, id=None):
         super(SmartKitKafkaRequest, self).__init__(items)
         items = items or {}
         self._callback_id = items.get(self._callback_id_header_name)
         self._kafka_replyTopic = items.get(self.KAFKA_REPLY_TOPIC)
+        self._kafka_extraHeaders = items.get(self.KAFKA_EXTRA_HEADERS) or {}
 
     @property
     def _callback_id_header_name(self):
@@ -21,6 +23,9 @@ class SmartKitKafkaRequest(KafkaRequest):
             headers_dict[self._callback_id_header_name] = str(self._callback_id).encode()
         if self._kafka_replyTopic:
             headers_dict[self.KAFKA_REPLY_TOPIC] = str(self._kafka_replyTopic).encode()
+        if self._kafka_extraHeaders:
+            for k, v in self._kafka_extraHeaders.items():
+                headers_dict[k] = str(v).encode()
         headers_list = list(headers_dict.items())
         return headers_list
 

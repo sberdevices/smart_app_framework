@@ -414,6 +414,7 @@ class MainLoop(BaseMainLoop):
         log("OUTGOING TO TOPIC_KEY: %(topic_key)s",
             params={log_const.KEY_NAME: "outgoing_message",
                     "topic_key": request.topic_key,
+                    "headers": str(request._get_new_headers(original_mq_message)),
                     "data": answer.masked_value}, user=user)
 
     @lru_cache()

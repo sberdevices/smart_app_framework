@@ -29,24 +29,19 @@ class DialogueManager:
         return self.actions.get(self.NOTHING_FOUND_ACTION) or NothingFoundAction()
 
     def run(self, text_preprocessing_result, user):
-        last_scenarios = user.last_scenarios
-        scenarios_names = last_scenarios.scenarios_names
+        scenarios_names = user.last_scenarios.scenarios_names
         scenario_key = user.message.payload[field.INTENT]
 
         if scenario_key in scenarios_names:
             scenario = self.scenarios[scenario_key]
-
             is_form_filling = isinstance(scenario, FormFillingScenario)
-            field_ = None
-            form = None
+
             if is_form_filling:
                 form = scenario._get_form(user)
                 field_ = scenario._field(form, text_preprocessing_result, user, None)
 
-            if not scenario.text_fits(text_preprocessing_result, user):
-                is_form_filling = isinstance(scenario, FormFillingScenario)
-                if is_form_filling and field_:
-                    has_ask_again = field_.description.has_requests
+                if not scenario.text_fits(text_preprocessing_result, user):
+                    has_ask_again = field_.description.has_requests or field_.description.has_again_question
                     if has_ask_again and field_.description.ask_again_times_left > 0:
                         field_.description.ask_again_times_left -= 1
                         user.history.add_event(
@@ -55,9 +50,7 @@ class DialogueManager:
                                   content={HistoryConstants.content_fields.FIELD: field_.description.id},
                                   results=HistoryConstants.event_results.ASK_QUESTION))
                         if field_.description.has_again_question:
-                            reply = scenario.get_action_results(user,
-                                                                text_preprocessing_result,
-                                                                [field_.description.ask_again_question], {})
+                            reply = scenario.get_ask_again_question_result(text_preprocessing_result, user, {})
                         else:
                             reply = scenario.get_reply(user,
                                                        text_preprocessing_result,
@@ -66,11 +59,10 @@ class DialogueManager:
                                                        form)
                         return reply, True
 
-                smart_kit_metrics.counter_nothing_found(self.app_name, scenario_key, user)
+                    smart_kit_metrics.counter_nothing_found(self.app_name, scenario_key, user)
 
-                return self._nothing_found_action.run(user, text_preprocessing_result), False
+                    return self._nothing_found_action.run(user, text_preprocessing_result), False
 
-            if is_form_filling and field_:
                 field_.description.ask_again_times_left = field_.description.ask_again_times
 
         return self.run_scenario(scenario_key, text_preprocessing_result, user), True

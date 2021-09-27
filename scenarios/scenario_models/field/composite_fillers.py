@@ -3,7 +3,7 @@ from typing import Optional, Union, List, Dict, Any
 import core.logging.logger_constants as log_const
 from core.basic_models.actions.basic_actions import RequirementAction, ChoiceAction, ElseAction
 from core.logging.logger_utils import log
-from core.model.factory import factory
+from core.model.factory import factory, list_factory
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.utils.exception_handlers import exc_handler
 from scenarios.scenario_models.field.field_filler_description import FieldFillerDescription
@@ -37,6 +37,22 @@ class ChoiceFiller(ChoiceAction):
     FIELD_REQUIREMENT_KEY = "requirement_fillers"
     FIELD_ELSE_KEY = "else_filler"
 
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
+        super(ChoiceFiller, self).__init__(items, id)
+        self._requirement_items = items["requirement_fillers"]
+        self._else_item = items.get("else_filler")
+
+        self.items = self.build_items()
+        self.else_item = self.build_else_item()
+
+    @list_factory(RequirementFiller)
+    def build_items(self):
+        return self._requirement_items
+
+    @factory(FieldFillerDescription)
+    def build_else_item(self):
+        return self._else_item
+
     def on_extract_error(self, text_preprocessing_result, user, params=None):
         log("exc_handler: ChoiceFiller failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value),
             user,
@@ -52,6 +68,22 @@ class ChoiceFiller(ChoiceAction):
 class ElseFiller(ElseAction):
     FIELD_ITEM_KEY = "filler"
     FIELD_ELSE_KEY = "else_filler"
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
+        super(ElseFiller, self).__init__(items, id)
+        self._item = items["filler"]
+        self._else_item = items.get("else_filler")
+
+        self.item = self.build_item()
+        self.else_item = self.build_else_item()
+
+    @factory(FieldFillerDescription)
+    def build_item(self):
+        return self._item
+
+    @factory(FieldFillerDescription)
+    def build_else_item(self):
+        return self._else_item
 
     def on_extract_error(self, text_preprocessing_result, user, params=None):
         log("exc_handler: ElseFiller failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value),

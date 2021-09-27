@@ -39,8 +39,8 @@ class ChoiceFiller(ChoiceAction):
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super(ChoiceFiller, self).__init__(items, id)
-        self._requirement_items = items["requirement_fillers"]
-        self._else_item = items.get("else_filler")
+        self._requirement_items = items[self.FIELD_REQUIREMENT_KEY]
+        self._else_item = items.get(self.FIELD_ELSE_KEY)
 
         self.items = self.build_items()
         self.else_item = self.build_else_item()
@@ -71,8 +71,8 @@ class ElseFiller(ElseAction):
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super(ElseFiller, self).__init__(items, id)
-        self._item = items["filler"]
-        self._else_item = items.get("else_filler")
+        self._item = items[self.FIELD_ITEM_KEY]
+        self._else_item = items.get(self.FIELD_ELSE_KEY)
 
         self.item = self.build_item()
         self.else_item = self.build_else_item()

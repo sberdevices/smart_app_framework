@@ -14,6 +14,7 @@ class TestSmartAppToMessage(unittest.TestCase):
         self.message_ = Mock()
         self.command_.payload = {"z": 1}
         self.command_.name = "AnyName"
+        self.command_.loader = "json.dumps"
         self.request_.header = "json"
         self.message_.payload = {"q": 0}
         self.message_.incremental_id = 111

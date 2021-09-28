@@ -36,7 +36,7 @@ class TestIntersectionFieldFiller(TestCase):
             }
         }
         text_preprocessing_result = Mock()
-        text_preprocessing_result.tokenized_elements_list = [
+        text_preprocessing_result.tokenized_elements_list_pymorphy = [
             {'lemma': 'весь'},
             {'lemma': 'хороший'},
             {'lemma': 'и'},
@@ -65,7 +65,7 @@ class TestIntersectionFieldFiller(TestCase):
             }
         }
         text_preprocessing_result = Mock()
-        text_preprocessing_result.tokenized_elements_list = [
+        text_preprocessing_result.tokenized_elements_list_pymorphy = [
             {'lemma': 'весь'},
             {'lemma': 'хороший'},
             {'lemma': 'и'},
@@ -95,7 +95,7 @@ class TestIntersectionFieldFiller(TestCase):
             }
         }
         text_preprocessing_result = Mock()
-        text_preprocessing_result.tokenized_elements_list = [
+        text_preprocessing_result.tokenized_elements_list_pymorphy = [
             {'lemma': 'хороший'},
             {'lemma': 'рыба'},
         ]
@@ -110,7 +110,7 @@ class TestIntersectionFieldFiller(TestCase):
         patch_get_app_config(mock_get_app_config)
         items = {}
         text_preprocessing_result = Mock()
-        text_preprocessing_result.tokenized_elements_list = []
+        text_preprocessing_result.tokenized_elements_list_pymorphy = []
 
         filler = IntersectionFieldFiller(items)
         result = filler.extract(text_preprocessing_result, None)
@@ -133,7 +133,7 @@ class TestIntersectionFieldFiller(TestCase):
             'default': 'дефолтный тунец'
         }
         text_preprocessing_result = Mock()
-        text_preprocessing_result.tokenized_elements_list = [
+        text_preprocessing_result.tokenized_elements_list_pymorphy = [
             {'lemma': 'мой'},
             {'lemma': 'дядя'},
             {'lemma': 'самый'},

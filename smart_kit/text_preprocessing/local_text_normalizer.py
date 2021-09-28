@@ -1,6 +1,7 @@
 from typing import List, Sequence
 
 import nltk
+from lazy import lazy
 from rusenttokenize import ru_sent_tokenize
 
 from core.repositories.file_repository import FileRepository
@@ -25,6 +26,12 @@ class LocalTextNormalizer(BaseTextNormalizer, metaclass=Singleton):
 
     def __init__(self):
         self.__ready_to_use = False
+        self._morph = None
+
+    @lazy
+    def morph(self):
+        self._morph = Pymorphy2MorphWrapper()
+        return self._morph
 
     def get_token_list(self, text):
         sentences = self.sentence_tokenizer(text.strip())
@@ -69,7 +76,6 @@ class LocalTextNormalizer(BaseTextNormalizer, metaclass=Singleton):
 
         self.sentence_tokenizer = ru_sent_tokenize
         self.word_tokenizer = NLTKWordTokenizer(word_false_stoppings, words_without_splitting_point)
-        self.morph = Pymorphy2MorphWrapper()
 
         skip_func = lambda x: x
         self.converter_pipeline = {

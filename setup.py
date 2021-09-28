@@ -21,7 +21,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "aiohttp==3.7.4",
-        "aioredis",
+        "aioredis==2.0.0",
         "boto==2.49.0",
         "confluent_kafka==1.7.0",
         "croniter",
@@ -37,7 +37,7 @@ setup(
         "objgraph==3.4.1",
         "prometheus-client==0.7.1",
         "psutil==5.8.0",
-        "pyignite==0.5.0",
+        "pyignite==0.5.2",
         "pymorphy2==0.8",
         "pymorphy2_dicts==2.4.393442.3710985",
         "python-dateutil==2.7.3",

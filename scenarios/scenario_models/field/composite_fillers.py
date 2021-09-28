@@ -22,9 +22,9 @@ class RequirementFiller(RequirementAction):
         return self._item
 
     def on_extract_error(self, text_preprocessing_result, user, params=None):
-        log("exc_handler: RequirementFiller failed to extract. Return None. MESSAGE: {}.".format(
-            user.message.masked_value),
-            user, {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)
+        log("exc_handler: RequirementFiller failed to extract. Return None. MESSAGE: %(masked_message)s.",
+            user, {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE, "masked_message": user.message.masked_value},
+            level="ERROR", exc_info=True)
         return None
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
@@ -54,9 +54,9 @@ class ChoiceFiller(ChoiceAction):
         return self._else_item
 
     def on_extract_error(self, text_preprocessing_result, user, params=None):
-        log("exc_handler: ChoiceFiller failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value),
-            user,
-            {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)
+        log("exc_handler: ChoiceFiller failed to extract. Return None. MESSAGE: %(masked_message)s.",
+            user, {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE, "masked_message": user.message.masked_value},
+            level="ERROR", exc_info=True)
         return None
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
@@ -86,9 +86,9 @@ class ElseFiller(ElseAction):
         return self._else_item
 
     def on_extract_error(self, text_preprocessing_result, user, params=None):
-        log("exc_handler: ElseFiller failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value),
-            user,
-            {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)
+        log("exc_handler: ElseFiller failed to extract. Return None. MESSAGE: %(masked_message)s.",
+            user, {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE, "masked_message": user.message.masked_value},
+            level="ERROR", exc_info=True)
         return None
 
     @exc_handler(on_error_obj_method_name="on_extract_error")

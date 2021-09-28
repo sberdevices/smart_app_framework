@@ -70,10 +70,10 @@ class SmartAppModel:
         user.do_not_save = True
         smart_kit_metrics.counter_exception(self.app_name)
         params = {log_const.KEY_NAME: log_const.DIALOG_ERROR_VALUE,
-                  "message_id": user.message.incremental_id}
+                  "message_id": user.message.incremental_id,
+                  "masked_message": user.message.masked_value}
 
-        log("exc_handler: Failed to process message. Exception occurred. Fail in MESSAGE: {}".format(
-            user.message.masked_value),
+        log("exc_handler: Failed to process message. Exception occurred. Fail in MESSAGE: %(masked_message)s",
             user, params, level="ERROR", exc_info=True)
 
         callback_action_params = get_callback_action_params(user)

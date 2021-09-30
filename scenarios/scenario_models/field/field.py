@@ -84,6 +84,7 @@ class QuestionField(BasicField):
     def __init__(self, description, items, user, lifetime):
         items = items or {}
         super(QuestionField, self).__init__(description, items, user, lifetime)
+        self.ask_again_counter = items.get("ask_again_counter", 0)
 
     @property
     def value(self):
@@ -119,6 +120,18 @@ class QuestionField(BasicField):
         if self.description.need_save_context:
             self._user.last_fields[self.description.id].value = value
             self._user.last_fields[self.description.id].set_remove_time(self._lifetime)
+
+    @property
+    def raw(self):
+        result = {}
+        is_value_changed = (self._value is not None and self._value != self.description.default_value)
+        if is_value_changed:
+            result["value"] = self._value
+        if self._available != self.description.available:
+            result["available"] = self._available
+        if self.ask_again_counter != 0:
+            result["ask_again_counter"] = self.ask_again_counter
+        return result
 
 
 class IntegrationField(BasicField):

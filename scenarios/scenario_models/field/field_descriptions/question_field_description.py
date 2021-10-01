@@ -16,7 +16,6 @@ class QuestionFieldDescription(BasicFieldDescription):
         self._on_filled_actions = items.get("on_filled_actions", [])
         self._ask_again_requests = items.get("ask_again_questions")
         self.has_again_requests = bool(self._ask_again_requests)
-        self.ask_again_times = items.get("ask_again_times", 0)
 
     @lazy
     @list_factory(Action)

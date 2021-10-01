@@ -41,33 +41,22 @@ class DialogueManager:
                 field_ = scenario._field(form, text_preprocessing_result, user, None)
 
                 if not scenario.text_fits(text_preprocessing_result, user):
-                    ask_again_times_left = field_.description.ask_again_times - field_.ask_again_counter
 
-                    if field_.description.has_requests and ask_again_times_left > 0 \
-                            or field_.description.has_again_requests:
+                    if field_.description.has_again_requests:
                         user.history.add_event(
                             Event(type=HistoryConstants.types.FIELD_EVENT,
                                   scenario=scenario.root_id,
                                   content={HistoryConstants.content_fields.FIELD: field_.description.id},
                                   results=HistoryConstants.event_results.ASK_QUESTION))
-                        if field_.description.has_again_requests:
-                            if field_.ask_again_counter < len(field_.description.ask_again_requests):
-                                reply = field_.description.ask_again_requests[field_.ask_again_counter].run(
-                                    user, text_preprocessing_result,
-                                    user.parametrizer.collect(text_preprocessing_result)
-                                )
-                                field_.ask_again_counter += 1
-                            else:
-                                smart_kit_metrics.counter_nothing_found(self.app_name, scenario_key, user)
-                                return self._nothing_found_action.run(user, text_preprocessing_result), False
-                        else:
+
+                        if field_.ask_again_counter < len(field_.description.ask_again_requests):
+                            reply = field_.description.ask_again_requests[field_.ask_again_counter].run(
+                                user, text_preprocessing_result,
+                                user.parametrizer.collect(text_preprocessing_result)
+                            )
                             field_.ask_again_counter += 1
-                            reply = scenario.get_reply(user,
-                                                       text_preprocessing_result,
-                                                       scenario.actions,
-                                                       field_,
-                                                       form)
-                        return reply, True
+
+                            return reply, True
 
                     smart_kit_metrics.counter_nothing_found(self.app_name, scenario_key, user)
 

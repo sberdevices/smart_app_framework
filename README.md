@@ -117,7 +117,7 @@ ____
 
 # Документация
 
-Вы можете ознакомиться с подробной документацией по работе со SmartApp Framework в [справочнике разработчика](https://github.blog/2020-12-15-token-authentication-requirements-for-git-operations/).
+Вы можете ознакомиться с подробной документацией по работе со SmartApp Framework в [справочнике разработчика](https://developers.sber.ru/docs/ru/salute/python-framework/overview).
 
 
 

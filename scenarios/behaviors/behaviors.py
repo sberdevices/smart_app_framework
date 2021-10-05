@@ -14,7 +14,7 @@ import scenarios.logging.logger_constants as log_const
 
 
 class Behaviors:
-    EXPIRATION_DELAY = 10
+    EXPIRATION_DELAY = 1
 
     def __init__(self, items, descriptions, user):
         self._items = items or {}

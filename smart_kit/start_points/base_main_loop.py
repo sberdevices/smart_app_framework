@@ -61,14 +61,14 @@ class BaseMainLoop:
                 smart_kit_metrics.init_metrics(app_name=self.app_name)
 
             log("%(class_name)s.__init__ completed.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                                                                        "class_name": self.__class__.__name__})
+                                                              "class_name": self.__class__.__name__})
         except:
             log("%(class_name)s.__init__ exception.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                                                                        "class_name": self.__class__.__name__},
-                          level="ERROR", exc_info=True)
+                                                              "class_name": self.__class__.__name__},
+                level="ERROR", exc_info=True)
             raise
 
-    def get_db(self):
+    async def get_db(self):
         db_adapter = db_adapter_factory(self.settings["template_settings"].get("db_adapter", {}))
         if db_adapter.IS_ASYNC:
             raise Exception(
@@ -80,7 +80,7 @@ class BaseMainLoop:
     def _generate_answers(self, user, commands, message, **kwargs):
         raise NotImplementedError
 
-    def _create_health_check_server(self, settings):
+    async def _create_health_check_server(self, settings):
         health_check_server = None
         if settings["health_check"].get("enabled"):
             log("Init health_check started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE})
@@ -93,18 +93,19 @@ class BaseMainLoop:
             )
         return health_check_server
 
-    def _create_jaeger_tracer(self, template_settings):
+    async def _create_jaeger_tracer(self, template_settings):
         jaeger_config = template_settings["jaeger_config"]
         config = ExtendedConfig(config=jaeger_config, service_name=self.app_name,
                                 validate=True)
         tracer = config.initialize_tracer()
         return tracer
 
-    def load_user(self, db_uid, message):
+    async def load_user(self, db_uid, message):
         db_data = None
         load_error = False
         try:
-            db_data = self.db_adapter.get(db_uid)
+            db_adapter = await self.db_adapter
+            db_data = db_adapter.get(db_uid)
         except (DBAdapterException, ValueError):
             log("Failed to get user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                    log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")
@@ -118,9 +119,9 @@ class BaseMainLoop:
             descriptions=self.model.scenario_descriptions,
             parametrizer_cls=self.parametrizer_cls,
             load_error=load_error
-        )
+            )
 
-    def save_user(self, db_uid, user, message):
+    async def save_user(self, db_uid, user, message):
         no_collisions = True
         if user.do_not_save:
             log("User %(uid)s will not saved", user=user, params={"uid": user.id,
@@ -134,12 +135,13 @@ class BaseMainLoop:
                     params={"uid": user.id,
                             log_const.KEY_NAME: "user_save",
                             "user_length": len(str_data)})
+                db_adapter = await self.db_adapter
                 if user.initial_db_data and self.user_save_check_for_collisions:
-                    no_collisions = self.db_adapter.replace_if_equals(db_uid,
-                                                                      sample=user.initial_db_data,
-                                                                      data=str_data)
+                    no_collisions = db_adapter.replace_if_equals(db_uid,
+                                                                 sample=user.initial_db_data,
+                                                                 data=str_data)
                 else:
-                    self.db_adapter.save(db_uid, str_data)
+                    db_adapter.save(db_uid, str_data)
             except (DBAdapterException, ValueError):
                 log("Failed to set user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                        log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")

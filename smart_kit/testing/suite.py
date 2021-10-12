@@ -150,18 +150,18 @@ class TestCase:
         success = True
 
         app_callback_id = None
-        for index, message in enumerate(self.messages):
+        for index, message_ in enumerate(self.messages):
             print('Шаг', index)
             if index and self.interactive:
                 print("Нажмите ENTER, чтобы продолжить...")
                 input()
 
-            request = message["request"]
-            response = message["response"]
+            request = message_["request"]
+            response = message_["response"]
 
             # Если использован флаг linkPreviousByCallbackId и после предыдущего сообщения был сохранен app_callback_id,
             # сообщению добавляются заголовки. Таким образом, сработает behavior, созданный предыдущим запросом
-            if message.get(LINK_BEHAVIOR_FLAG) and app_callback_id:
+            if message_.get(LINK_BEHAVIOR_FLAG) and app_callback_id:
                 headers = [(self.__from_msg_cls.CALLBACK_ID_HEADER_NAME, app_callback_id.encode())]
             else:
                 headers = [('kafka_correlationId', 'test_123')]
@@ -173,7 +173,7 @@ class TestCase:
                 parametrizer_cls=self.__parametrizer_cls
             )
 
-            self.post_process_user(user, message)
+            self.post_process_user(user, message_)
 
             commands = self.app_model.answer(message, user) or []
 

@@ -173,6 +173,8 @@ class TestCase:
                 parametrizer_cls=self.__parametrizer_cls
             )
 
+            self.post_process_user(user, message)
+
             commands = self.app_model.answer(message, user) or []
 
             answers = self._generate_answers(
@@ -257,3 +259,6 @@ class TestCase:
             del response["pronounce_texts"]
 
         return response
+
+    def post_process_user(self, user, message):
+        pass

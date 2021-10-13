@@ -33,7 +33,7 @@ def regex_masking(record: Union[Mapping, str, Iterable], regex: Pattern[str], fu
         return record
 
 
-def masking(data: MutableMapping, masking_fields: Optional[list] = None):
+def masking(data: MutableMapping, masking_fields: Optional[Iterable] = None):
     if masking_fields is None:
         masking_fields = DEFAULT_MASKING_FIELDS
     if isinstance(data, MutableMapping):

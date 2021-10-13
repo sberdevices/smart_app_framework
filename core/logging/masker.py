@@ -4,6 +4,8 @@ import re
 
 class LogMasker:
     """
+    DEPRECATED: Card masks in core/utils/masking_message.py
+
     Regular expression is used to find 16 digit or 18 digit number that could be
     between single or double quotes
     and any non digit character

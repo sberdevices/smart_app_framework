@@ -8,7 +8,6 @@ from lazy import lazy
 from scenarios.scenario_descriptions.form_filling_scenario import FormFillingScenario
 from smart_kit.system_answers.nothing_found_action import NothingFoundAction
 from smart_kit.utils.monitoring import smart_kit_metrics
-from scenarios.scenario_models.history import Event, HistoryConstants
 
 
 class DialogueManager:

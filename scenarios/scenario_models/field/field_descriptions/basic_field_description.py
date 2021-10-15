@@ -31,8 +31,7 @@ class BasicFieldDescription:
         self.need_save_context = items.get("need_save_context", False)
         self.need_load_context = items.get("need_load_context", False)
         self.fill_other = items.get("fill_other", True)
-        self._ask_again_requests = items.get("ask_again_questions")
-        self.has_again_requests = bool(self._ask_again_requests)
+        self._ask_again_requests = items.get("ask_again_questions", [])
 
     @lazy
     @list_factory(Action)

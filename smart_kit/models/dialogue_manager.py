@@ -37,23 +37,12 @@ class DialogueManager:
             is_form_filling = isinstance(scenario, FormFillingScenario)
 
             if is_form_filling:
-                form = scenario._get_form(user)
-                field_ = scenario._field(form, text_preprocessing_result, user, None)
+                params = user.parametrizer.collect(text_preprocessing_result)
 
                 if not scenario.text_fits(text_preprocessing_result, user):
 
-                    if field_.description.has_again_requests and \
-                            field_.ask_again_counter < len(field_.description.ask_again_requests):
-                        user.history.add_event(
-                            Event(type=HistoryConstants.types.FIELD_EVENT,
-                                  scenario=scenario.root_id,
-                                  content={HistoryConstants.content_fields.FIELD: field_.description.id},
-                                  results=HistoryConstants.event_results.ASK_QUESTION))
-                        reply = field_.description.ask_again_requests[field_.ask_again_counter].run(
-                            user, text_preprocessing_result,
-                            user.parametrizer.collect(text_preprocessing_result)
-                        )
-                        field_.ask_again_counter += 1
+                    if scenario.check_ask_again_requests(text_preprocessing_result, user, params):
+                        reply = scenario.ask_again(text_preprocessing_result, user, params)
 
                         return reply, True
 

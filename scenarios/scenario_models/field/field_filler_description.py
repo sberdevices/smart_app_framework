@@ -48,8 +48,9 @@ class FieldFillerDescription:
         return None
 
     def on_extract_error(self, text_preprocessing_result, user, params=None):
-        log("exc_handler: Filler failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value), user,
-            {log_const.KEY_NAME: core_log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)
+        log("exc_handler: Filler failed to extract. Return None. MESSAGE: %(masked_message)s.", user,
+            {log_const.KEY_NAME: core_log_const.HANDLED_EXCEPTION_VALUE, "masked_message": user.message.masked_value},
+            level="ERROR", exc_info=True)
         return None
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,

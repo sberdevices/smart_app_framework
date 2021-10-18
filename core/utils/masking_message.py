@@ -1,12 +1,19 @@
 from typing import Callable, Optional, Iterable, Mapping, Union, Pattern, Match, MutableMapping
 import re
-import traceback
 
 MASK = "***"
 DEFAULT_MASKING_FIELDS = ["token", "access_token", "refresh_token", "epkId", "profileId"]
 CARD_MASKING_FIELDS = ["message"]
 
-card_regular = re.compile("(?:^|\s|\'|\")(?:(\d{18})|(\d{16})|(?:\d{4} ){3}(\d{4})(\s?\d{2})?)(?:$|\W)")
+card_regular = re.compile("(?:(\d{18})|(\d{16})|(?:\d{4} ){3}(\d{4})(\s?\d{2})?)")
+
+
+def luhn_checksum(card_number: str) -> bool:
+    digits = [int(d) for d in card_number]
+    odd_digits = digits[-1::-2]
+    even_digits = digits[-2::-2]
+    checksum = sum(odd_digits) + sum(map(lambda x: (x * 2) % 10 + (x * 2) // 10, even_digits))
+    return checksum % 10 == 0
 
 
 def card_sub_func(x: Match[str]) -> str:
@@ -17,7 +24,7 @@ def card_sub_func(x: Match[str]) -> str:
     last_char = g0[-1]
 
     mask = d_regular.sub("*", x.group(0))[:-(4 + is_last_not_digit)]
-    digs = ((x.group(1) or '') + (x.group(2) or '') + (x.group(3) or '') + (x.group(4) or '')).replace(' ', '')[-4:]
+    digs = (x.group(0) or '').replace(' ', '')[-4:]
     return mask + digs + (last_char * is_last_not_digit)
 
 

@@ -1,7 +1,7 @@
 # coding=utf-8
 import asyncio
 import json
-import time
+from time import time
 from collections import namedtuple
 from functools import lru_cache
 
@@ -9,6 +9,7 @@ from confluent_kafka.cimpl import KafkaException
 from lazy import lazy
 
 import scenarios.logging.logger_constants as log_const
+from core.db_adapter.db_adapter import DBAdapterException
 from core.jaeger_custom_client import jaeger_utils
 from core.jaeger_custom_client import kafka_codec as jaeger_kafka_codec
 from core.logging.logger_utils import log, UID_STR, MESSAGE_ID_STR
@@ -80,6 +81,67 @@ class MainLoop(BaseMainLoop):
                                                               "class_name": self.__class__.__name__},
                 level="ERROR", exc_info=True)
             raise
+
+    async def save_user_async(self, db_uid, user, message):
+        no_collisions = True
+        if user.do_not_save:
+            log("User %(uid)s will not saved", user=user, params={"uid": user.id,
+                                                                  log_const.KEY_NAME: "user_will_not_saved"})
+        else:
+
+            no_collisions = True
+            try:
+                str_data = user.raw_str
+                log("Saving User %(uid)s. Serialized utf8 json length is %(user_length)s symbols.", user=user,
+                    params={"uid": user.id,
+                            log_const.KEY_NAME: "user_save",
+                            "user_length": len(str_data)})
+                if user.initial_db_data and self.user_save_check_for_collisions:
+                    if self.db_adapter.IS_ASYNC:
+                        no_collisions = await self.db_adapter.replace_if_equals(db_uid,
+                                                                                sample=user.initial_db_data,
+                                                                                data=str_data)
+                    else:
+                        no_collisions = self.db_adapter.replace_if_equals(db_uid,
+                                                                          sample=user.initial_db_data,
+                                                                          data=str_data)
+                else:
+                    if self.db_adapter.IS_ASYNC:
+                        await self.db_adapter.save(db_uid, str_data)
+                    else:
+                        self.db_adapter.save(db_uid, str_data)
+            except (DBAdapterException, ValueError):
+                log("Failed to set user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
+                                                       log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")
+                smart_kit_metrics.counter_save_error(self.app_name)
+            if not no_collisions:
+                smart_kit_metrics.counter_save_collision(self.app_name)
+        return no_collisions
+
+    async def load_user_async(self, db_uid, message):
+        db_data = None
+        load_error = False
+        try:
+            if self.db_adapter.IS_ASYNC:
+                db_data = await self.db_adapter.get(db_uid)
+            else:
+                db_data = self.db_adapter.get(db_uid)
+        except (DBAdapterException, ValueError):
+            log("Failed to get user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
+                                                   log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")
+            load_error = True
+            smart_kit_metrics.counter_load_error(self.app_name)
+            # to skip message when load failed
+            raise
+        return self.user_cls(
+            message.uid,
+            message=message,
+            db_data=db_data,  # плохо ломать базовые интерфейсы
+            settings=self.settings,
+            descriptions=self.model.scenario_descriptions,
+            parametrizer_cls=self.parametrizer_cls,
+            load_error=load_error
+        )
 
     def pre_handle(self):
         self.iterate_behavior_timeouts()
@@ -479,24 +541,86 @@ class MainLoop(BaseMainLoop):
         return self.settings["template_settings"].get("masking_fields")
 
     def save_behavior_timeouts(self, user, mq_message, kafka_key):
-        for i, (expire_time_us, callback_id) in enumerate(user.behaviors.get_behavior_timeouts()):
-            # two behaviors can be created in one query, so we need add some salt to make theirs key unique
-            unique_key = expire_time_us + i * 1e-5
-            log(
-                "%(class_name)s: adding local_timeout on callback %(callback_id)s with timeout on %(unique_key)s",
+        for i, (timeout, callback_id) in enumerate(user.behaviors.get_behavior_timeouts()):
+            # если колбеков много, разносим их на 1 секунду друг от друга во избежание коллизий
+            timeout = timeout + i
+            log("%(class_name)s: adding local_timeout on callback %(callback_id)s with timeout in %(when)s seconds.",
                 params={log_const.KEY_NAME: "adding_local_timeout",
                         "class_name": self.__class__.__name__,
                         "callback_id": callback_id,
-                        "unique_key": unique_key})
-            self.behaviors_timeouts.push(unique_key, self.behaviors_timeouts_value_cls._make(
-                (user.message.db_uid, callback_id, mq_message, kafka_key)))
+                        "timeout": timeout})
 
-        for callback_id in user.behaviors.get_returned_callbacks():
-            log("%(class_name)s: removing local_timeout on callback %(callback_id)s",
-                params={log_const.KEY_NAME: "removing_local_timeout",
-                        "class_name": self.__class__.__name__,
-                        "callback_id": callback_id})
-            self.behaviors_timeouts.remove(callback_id)
+            self.loop.call_later(
+                timeout,
+                self.loop.create_task,
+                self.do_behavior_timeout(user.message.db_uid, callback_id, mq_message, kafka_key)
+            )
 
     def stop(self, signum, frame):
         self.is_work = False
+
+    async def do_behavior_timeout(self, db_uid, callback_id, mq_message, kafka_key):
+        if not self.is_work:
+            return
+        try:
+            save_tries = 0
+            user_save_ok = False
+            answers = []
+            user = None
+            while save_tries < self.user_save_collisions_tries and not user_save_ok:
+                callback_found = False
+                log(f"MainLoop.do_behavior_timeout: handling callback {callback_id}. for db_uid {db_uid}. try {save_tries}.")
+
+                save_tries += 1
+
+                orig_message_raw = json.loads(mq_message.value())
+                orig_message_raw[SmartAppFromMessage.MESSAGE_NAME] = message_names.LOCAL_TIMEOUT
+
+                timeout_from_message = self._get_timeout_from_message(orig_message_raw, callback_id,
+                                                                      headers=mq_message.headers())
+
+                user = await self.load_user_async(db_uid, timeout_from_message)
+                # TODO:  not to load user to check behaviors.has_callback ?
+                if user.behaviors.has_callback(callback_id):
+                    callback_found = True
+                    commands = self.model.answer(timeout_from_message, user)
+                    topic_key = self._get_topic_key(mq_message, kafka_key)
+                    answers = self._generate_answers(user=user, commands=commands, message=timeout_from_message,
+                                                     topic_key=topic_key,
+                                                     kafka_key=kafka_key)
+
+                    user_save_ok = await self.save_user_async(db_uid, user, mq_message)
+
+                    if not user_save_ok:
+                        log("MainLoop.iterate_behavior_timeouts: save user got collision on uid %(uid)s db_version %(db_version)s.",
+                            user=user,
+                            params={log_const.KEY_NAME: "ignite_collision",
+                                    "db_uid": db_uid,
+                                    "message_key": mq_message.key(),
+                                    "kafka_key": kafka_key,
+                                    "uid": user.id,
+                                    "db_version": str(user.variables.get(user.USER_DB_VERSION))},
+                            level="WARNING")
+
+            if not user_save_ok and callback_found:
+                log("MainLoop.iterate_behavior_timeouts: db_save collision all tries left on uid %(uid)s db_version %(db_version)s.",
+                    user=user,
+                    params={log_const.KEY_NAME: "ignite_collision",
+                            "db_uid": db_uid,
+                            "message_key": mq_message.key(),
+                            "message_partition": mq_message.partition(),
+                            "kafka_key": kafka_key,
+                            "uid": user.id,
+                            "db_version": str(user.variables.get(user.USER_DB_VERSION))},
+                    level="WARNING")
+
+                smart_kit_metrics.counter_save_collision_tries_left(self.app_name)
+            if user_save_ok:
+                self.save_behavior_timeouts(user, mq_message, kafka_key)
+                for answer in answers:
+                    self._send_request(user, answer, mq_message)
+        except:
+            log("%(class_name)s error.", params={log_const.KEY_NAME: "error_handling_timeout",
+                                                 "class_name": self.__class__.__name__,
+                                                 log_const.REQUEST_VALUE: str(mq_message.value())},
+                level="ERROR", exc_info=True)

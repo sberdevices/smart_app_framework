@@ -40,8 +40,8 @@ class Behaviors:
             for key, value in callback_action_params.get(LOCAL_VARS, {}).items():
                 self._user.local_vars.set(key, value)
 
-    def _add_behavior_timeout(self, expire_time_us, callback_id):
-        self._behavior_timeouts.append((expire_time_us, callback_id))
+    def _add_behavior_timeout(self, time_left, callback_id):
+        self._behavior_timeouts.append((time_left, callback_id))
 
     def get_behavior_timeouts(self):
         return self._behavior_timeouts
@@ -72,8 +72,7 @@ class Behaviors:
             action_params=action_params,
         )
         self._callbacks[callback_id] = callback
-        log(
-            f"behavior.add: adding behavior %({log_const.BEHAVIOR_ID_VALUE})s with scenario_id"
+        log(f"behavior.add: adding behavior %({log_const.BEHAVIOR_ID_VALUE})s with scenario_id"
             f" %({log_const.CHOSEN_SCENARIO_VALUE})s for callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s"
             f" expiration_time: %(expiration_time)s.",
             user=self._user,
@@ -84,8 +83,7 @@ class Behaviors:
                     "expiration_time": expiration_time})
 
         behavior_description = self.descriptions[behavior_id]
-        expire_time_us = behavior_description.get_expire_time_from_now(self._user)
-        self._add_behavior_timeout(expire_time_us, callback_id)
+        self._add_behavior_timeout(behavior_description.timeout(self._user) + self.EXPIRATION_DELAY, callback_id)
 
     def _delete(self, callback_id):
         if callback_id in self._callbacks:

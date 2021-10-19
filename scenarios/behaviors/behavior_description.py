@@ -18,10 +18,10 @@ class BehaviorDescription:
         self.version = items.get("version", -1)
         self.loop_def = items.get("loop_def", True)
 
-    async def get_expire_time_from_now(self, user):
+    def get_expire_time_from_now(self, user):
         return time.time() + await self.timeout(user)
 
-    async def timeout(self, user):
+    def timeout(self, user):
         setting_timeout = user.settings["template_settings"].get("services_timeout", {}).get(self.id)
         return setting_timeout or self._timeout
 

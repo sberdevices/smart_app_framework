@@ -173,7 +173,7 @@ class TestCase:
                 parametrizer_cls=self.__parametrizer_cls
             )
 
-            self.post_process_user(user, message_)
+            self.post_setup_user(user)
 
             commands = self.app_model.answer(message, user) or []
 
@@ -260,5 +260,5 @@ class TestCase:
 
         return response
 
-    def post_process_user(self, user, message):
+    def post_setup_user(self, user):
         pass

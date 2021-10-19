@@ -1,4 +1,5 @@
 # coding=utf-8
+import asyncio
 import json
 import time
 from collections import namedtuple
@@ -40,6 +41,7 @@ class MainLoop(BaseMainLoop):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.loop = asyncio.get_event_loop()
         log("%(class_name)s.__init__ started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                         "class_name": self.__class__.__name__})
         try:
@@ -106,6 +108,53 @@ class MainLoop(BaseMainLoop):
             self.publishers[kafka_key].close()
             log("Kafka publisher connection is closed", level="WARNING")
         log("Kafka handler is stopped", level="WARNING")
+
+    async def main_coro(self):
+        tasks = [self.iterate_coro(kafka_key) for kafka_key in self.consumers]
+        tasks.append(self.healthcheck_coro())
+        await asyncio.gather(*tasks)
+
+    async def healthcheck_coro(self):
+        if self.health_check_server:
+            with StatsTimer() as health_check_server_timer:
+                self.health_check_server.iterate()
+
+            if health_check_server_timer.msecs >= self.MAX_LOG_TIME:
+                log("Health check iterate time: {} msecs\n".format(health_check_server_timer.msecs),
+                    params={log_const.KEY_NAME: "slow_health_check",
+                            "time_msecs": health_check_server_timer.msecs}, level="WARNING")
+
+    async def iterate_coro(self, kafka_key):
+        consumer = self.consumers[kafka_key]
+        mq_message = None
+        message_value = None
+        try:
+            mq_message = None
+            message_value = None
+            with StatsTimer() as poll_timer:
+                mq_message = consumer.poll()
+
+            if mq_message:
+                stats = "Polling time: {} msecs\n".format(poll_timer.msecs)
+                message_value = mq_message.value()  # DRY!
+                self.process_message(mq_message, consumer, kafka_key, stats)
+
+        except KafkaException as kafka_exp:
+            log("kafka error: %(kafka_exp)s. MESSAGE: {}.".format(message_value),
+                params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
+                        "kafka_exp": str(kafka_exp),
+                        log_const.REQUEST_VALUE: str(message_value)},
+                level="ERROR", exc_info=True)
+        except Exception:
+            try:
+                log("%(class_name)s iterate error. Kafka key %(kafka_key)s MESSAGE: {}.".format(message_value),
+                    params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
+                            "kafka_key": kafka_key},
+                    level="ERROR", exc_info=True)
+                consumer.commit_offset(mq_message)
+            except Exception:
+                log("Error handling worker fail exception.",
+                    level="ERROR", exc_info=True)
 
     def _generate_answers(self, user, commands, message, **kwargs):
         topic_key = kwargs["topic_key"]

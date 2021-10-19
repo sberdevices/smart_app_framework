@@ -52,8 +52,8 @@ class Behaviors:
     def get_returned_callbacks(self):
         return self._returned_callbacks
 
-    async def add(self, callback_id: str, behavior_id, scenario_id=None, text_preprocessing_result_raw=None,
-                  action_params=None):
+    def add(self, callback_id: str, behavior_id, scenario_id=None, text_preprocessing_result_raw=None,
+            action_params=None):
         text_preprocessing_result_raw = text_preprocessing_result_raw or {}
         # behavior will be removed after timeout + EXPIRATION_DELAY
         expiration_time = (
@@ -94,8 +94,8 @@ class Behaviors:
     def clear_all(self):
         self._callbacks = {}
 
-    async def _log_callback(self, callback_id: str, log_name: str, metric, behavior_result: str,
-                            callback_action_params: Dict):
+    def _log_callback(self, callback_id: str, log_name: str, metric, behavior_result: str,
+                      callback_action_params: Dict):
         callback = self._get_callback(callback_id)
         behavior = self.descriptions[callback.behavior_id] if callback else None
         callback_action_params = callback_action_params or {}
@@ -116,7 +116,7 @@ class Behaviors:
             user=self._user,
             params=log_params)
 
-    async def success(self, callback_id: str):
+    def success(self, callback_id: str):
         log(f"behavior.success started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
             params={log_const.KEY_NAME: log_const.BEHAVIOR_SUCCESS_VALUE,
@@ -127,7 +127,7 @@ class Behaviors:
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
-            await self._log_callback(
+            self._log_callback(
                 callback_id,
                 "behavior_success",
                 smart_kit_metrics.counter_behavior_success,
@@ -139,7 +139,7 @@ class Behaviors:
         self._delete(callback_id)
         return result
 
-    async def fail(self, callback_id: str):
+    def fail(self, callback_id: str):
         log(f"behavior.fail started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
             params={log_const.KEY_NAME: log_const.BEHAVIOR_FAIL_VALUE,
@@ -150,15 +150,15 @@ class Behaviors:
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
-            await self._log_callback(callback_id, "behavior_fail",
-                                     smart_kit_metrics.counter_behavior_fail, "fail",
-                                     callback_action_params)
+            self._log_callback(callback_id, "behavior_fail",
+                               smart_kit_metrics.counter_behavior_fail, "fail",
+                               callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
             result = behavior.fail_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
 
-    async def timeout(self, callback_id: str):
+    def timeout(self, callback_id: str):
         log(f"behavior.timeout started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
             params={log_const.KEY_NAME: log_const.BEHAVIOR_TIMEOUT_VALUE,
@@ -169,15 +169,15 @@ class Behaviors:
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
-            await self._log_callback(callback_id, "behavior_timeout",
-                                     smart_kit_metrics.counter_behavior_timeout, "timeout",
-                                     callback_action_params)
+            self._log_callback(callback_id, "behavior_timeout",
+                               smart_kit_metrics.counter_behavior_timeout, "timeout",
+                               callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
             result = behavior.timeout_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
 
-    async def misstate(self, callback_id: str):
+    def misstate(self, callback_id: str):
         log(f"behavior.misstate started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
             params={log_const.KEY_NAME: log_const.BEHAVIOR_MISSTATE_VALUE,
@@ -188,9 +188,9 @@ class Behaviors:
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
-            await self._log_callback(callback_id, "behavior_misstate",
-                                     smart_kit_metrics.counter_behavior_misstate, "misstate",
-                                     callback_action_params)
+            self._log_callback(callback_id, "behavior_misstate",
+                               smart_kit_metrics.counter_behavior_misstate, "misstate",
+                               callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
             result = behavior.misstate_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
@@ -209,7 +209,7 @@ class Behaviors:
         if callback:
             return callback.action_params
 
-    async def check_misstate(self, callback_id: str):
+    def check_misstate(self, callback_id: str):
         log(f"behavior.check_misstate started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
             params={log_const.KEY_NAME: log_const.BEHAVIOR_CHECK_MISSTATE_VALUE,
@@ -230,7 +230,7 @@ class Behaviors:
                         level="WARNING")
                 return last_scenario_equal_callback_scenario
 
-    async def expire(self):
+    def expire(self):
         callback_id_for_delete = []
         for callback_id, (
                 behavior_id, expiration_time, scenario_id, text_preprocessing_result,
@@ -252,7 +252,7 @@ class Behaviors:
                 params=log_params, level="WARNING", user=self._user)
             self._delete(callback_id)
 
-    async def check_got_saved_id(self, behavior_id):
+    def check_got_saved_id(self, behavior_id):
         if self.descriptions[behavior_id].loop_def:
             for callback_id, (_behavior_id, expiration_time, scenario_id, text_preprocessing_result,
                               action_params) in self._callbacks.items():
@@ -273,7 +273,7 @@ class Behaviors:
     def raw(self):
         return {key: callback._asdict() for key, callback in self._callbacks.items()}
 
-    async def _get_to_message_name(self, callback_id):
+    def _get_to_message_name(self, callback_id):
         callback_action_params = self.get_callback_action_params(callback_id) or {}
         to_message_name = callback_action_params.get(TO_MESSAGE_NAME)
         return to_message_name

@@ -41,10 +41,10 @@ class MainLoop(BaseMainLoop):
     BAD_ANSWER_COMMAND = Command(message_names.ERROR, {"code": -1, "description": "Invalid Answer Message"})
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.loop = asyncio.get_event_loop()
         log("%(class_name)s.__init__ started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                         "class_name": self.__class__.__name__})
+        self.loop = asyncio.get_event_loop()
+        super().__init__(*args, **kwargs)
         try:
             kafka_config = _enrich_config_from_secret(
                 self.settings["kafka"]["template-engine"], self.settings.get("secret_kafka", {})
@@ -71,9 +71,16 @@ class MainLoop(BaseMainLoop):
             for key in self.consumers:
                 self.consumers[key].subscribe()
             self.publishers = publishers
+
+            # is needed? start #
             self.behaviors_timeouts_value_cls = namedtuple('behaviors_timeouts_value',
                                                            'db_uid, callback_id, mq_message, kafka_key')
             self.behaviors_timeouts = HeapqKV(value_to_key_func=lambda val: val.callback_id)
+            # is needed? end #
+
+            self.iterate_tries = 0
+            self.concurrent_messages = 0
+
             log("%(class_name)s.__init__ completed.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                               "class_name": self.__class__.__name__})
         except:
@@ -172,20 +179,24 @@ class MainLoop(BaseMainLoop):
     #     log("Kafka handler is stopped", level="WARNING")
 
     def run(self):
+        log("%(class_name)s.run started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
+                                                  "class_name": self.__class__.__name__})
         try:
             loop = asyncio.get_event_loop()
             loop.run_until_complete(self.main_coro())
         except (SystemExit,):
-            log.info("MainLoop stopped")
+            log("%(class_name)s.run stopped", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
+                                                      "class_name": self.__class__.__name__})
 
     async def main_coro(self):
         log("%(class_name)s.main_coro started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                         "class_name": self.__class__.__name__})
 
-        tasks = [self.iterate_coro(kafka_key) for kafka_key in self.consumers]
+        tasks = [self.main_work(kafka_key) for kafka_key in self.consumers]
         tasks.append(self.healthcheck_coro())
         await asyncio.gather(*tasks)
 
+        # is needed? start #
         log("Stopping Kafka handler", level="WARNING")
         for kafka_key in self.consumers:
             self.consumers[kafka_key].close()
@@ -193,6 +204,10 @@ class MainLoop(BaseMainLoop):
             self.publishers[kafka_key].close()
             log("Kafka publisher connection is closed", level="WARNING")
         log("Kafka handler is stopped", level="WARNING")
+        # is needed? end #
+
+        log("%(class_name)s.main_coro completed", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
+                                                          "class_name": self.__class__.__name__})
 
     async def healthcheck_coro(self):
         if self.health_check_server:
@@ -204,38 +219,51 @@ class MainLoop(BaseMainLoop):
                     params={log_const.KEY_NAME: "slow_health_check",
                             "time_msecs": health_check_server_timer.msecs}, level="WARNING")
 
-    async def iterate_coro(self, kafka_key):
+    async def main_work(self, kafka_key):
+        # is needed? start #
+        # from DP #
+        self.iterate_tries = self.iterate_tries % 1000 + 1
+        # is needed? end #
+
         consumer = self.consumers[kafka_key]
-        mq_message = None
         message_value = None
+        max_concurent_messages = self.settings["template_settings"].get("max_concurent_messages", 20)
+
         loop = asyncio.get_event_loop()
-        try:
-            mq_message = None
-            message_value = None
-            with StatsTimer() as poll_timer:
-                mq_message = await loop.run_in_executor(None, consumer.poll)
 
-            if mq_message:
-                stats = "Polling time: {} msecs\n".format(poll_timer.msecs)
-                message_value = mq_message.value()  # DRY!
-                self.process_message(mq_message, consumer, kafka_key, stats)
-
-        except KafkaException as kafka_exp:
-            log("kafka error: %(kafka_exp)s. MESSAGE: {}.".format(message_value),
-                params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                        "kafka_exp": str(kafka_exp),
-                        log_const.REQUEST_VALUE: str(message_value)},
-                level="ERROR", exc_info=True)
-        except Exception:
+        while self.is_work:
+            if self.concurrent_messages >= max_concurent_messages:
+                log(f"%(class_name)s.main_work: max {max_concurent_messages} concurent messages occured",
+                    params={"class_name": self.__class__.__name__,
+                            log_const.KEY_NAME: "max_concurent_messages"}, level='WARNING')
+                await asyncio.sleep(0.2)
+                continue
             try:
-                log("%(class_name)s iterate error. Kafka key %(kafka_key)s MESSAGE: {}.".format(message_value),
+                mq_message = None
+                with StatsTimer() as poll_timer:
+                    # Max delay between polls configured in consumer.poll_timeout param
+                    mq_message = await loop.run_in_executor(None, consumer.poll)
+                if mq_message:
+                    stats = "Polling time: {} msecs\n".format(poll_timer.msecs)
+                    message_value = mq_message.value()  # DRY!
+                    self.process_message(mq_message, consumer, kafka_key, stats)
+
+            except KafkaException as kafka_exp:
+                log("kafka error: %(kafka_exp)s. MESSAGE: {}.".format(message_value),
                     params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                            "kafka_key": kafka_key},
+                            "kafka_exp": str(kafka_exp),
+                            log_const.REQUEST_VALUE: str(message_value)},
                     level="ERROR", exc_info=True)
-                consumer.commit_offset(mq_message)
             except Exception:
-                log("Error handling worker fail exception.",
-                    level="ERROR", exc_info=True)
+                try:
+                    log("%(class_name)s iterate error. Kafka key %(kafka_key)s MESSAGE: {}.".format(message_value),
+                        params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
+                                "kafka_key": kafka_key},
+                        level="ERROR", exc_info=True)
+                    consumer.commit_offset(mq_message)
+                except Exception:
+                    log("Error handling worker fail exception.",
+                        level="ERROR", exc_info=True)
 
     def _generate_answers(self, user, commands, message, **kwargs):
         topic_key = kwargs["topic_key"]

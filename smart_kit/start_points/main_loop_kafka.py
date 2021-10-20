@@ -1,7 +1,7 @@
 # coding=utf-8
 import asyncio
 import json
-from time import time
+import time
 from collections import namedtuple
 from functools import lru_cache
 
@@ -544,7 +544,7 @@ class MainLoop(BaseMainLoop):
         for i, (timeout, callback_id) in enumerate(user.behaviors.get_behavior_timeouts()):
             # если колбеков много, разносим их на 1 секунду друг от друга во избежание коллизий
             timeout = timeout + i
-            log("%(class_name)s: adding local_timeout on callback %(callback_id)s with timeout in %(when)s seconds.",
+            log("%(class_name)s: adding local_timeout on callback %(callback_id)s with timeout in %(timeout)s seconds.",
                 params={log_const.KEY_NAME: "adding_local_timeout",
                         "class_name": self.__class__.__name__,
                         "callback_id": callback_id,

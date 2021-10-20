@@ -146,22 +146,45 @@ class MainLoop(BaseMainLoop):
     def pre_handle(self):
         self.iterate_behavior_timeouts()
 
+    # def run(self):
+    #     log("%(class_name)s.run started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
+    #                                               "class_name": self.__class__.__name__})
+    #     while self.is_work:
+    #         self.pre_handle()
+    #         for kafka_key in self.consumers:
+    #             self.iterate(kafka_key)
+    #
+    #         if self.health_check_server:
+    #             with StatsTimer() as health_check_server_timer:
+    #                 self.health_check_server.iterate()
+    #
+    #             if health_check_server_timer.msecs >= self.MAX_LOG_TIME:
+    #                 log("Health check iterate time: {} msecs\n".format(health_check_server_timer.msecs),
+    #                     params={log_const.KEY_NAME: "slow_health_check",
+    #                             "time_msecs": health_check_server_timer.msecs}, level="WARNING")
+    #
+    #     log("Stopping Kafka handler", level="WARNING")
+    #     for kafka_key in self.consumers:
+    #         self.consumers[kafka_key].close()
+    #         log("Kafka consumer connection is closed", level="WARNING")
+    #         self.publishers[kafka_key].close()
+    #         log("Kafka publisher connection is closed", level="WARNING")
+    #     log("Kafka handler is stopped", level="WARNING")
+
     def run(self):
-        log("%(class_name)s.run started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                                                  "class_name": self.__class__.__name__})
-        while self.is_work:
-            self.pre_handle()
-            for kafka_key in self.consumers:
-                self.iterate(kafka_key)
+        try:
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(self.main_coro())
+        except (SystemExit,):
+            log.info("MainLoop stopped")
 
-            if self.health_check_server:
-                with StatsTimer() as health_check_server_timer:
-                    self.health_check_server.iterate()
+    async def main_coro(self):
+        log("%(class_name)s.main_coro started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
+                                                        "class_name": self.__class__.__name__})
 
-                if health_check_server_timer.msecs >= self.MAX_LOG_TIME:
-                    log("Health check iterate time: {} msecs\n".format(health_check_server_timer.msecs),
-                        params={log_const.KEY_NAME: "slow_health_check",
-                                "time_msecs": health_check_server_timer.msecs}, level="WARNING")
+        tasks = [self.iterate_coro(kafka_key) for kafka_key in self.consumers]
+        tasks.append(self.healthcheck_coro())
+        await asyncio.gather(*tasks)
 
         log("Stopping Kafka handler", level="WARNING")
         for kafka_key in self.consumers:
@@ -170,11 +193,6 @@ class MainLoop(BaseMainLoop):
             self.publishers[kafka_key].close()
             log("Kafka publisher connection is closed", level="WARNING")
         log("Kafka handler is stopped", level="WARNING")
-
-    async def main_coro(self):
-        tasks = [self.iterate_coro(kafka_key) for kafka_key in self.consumers]
-        tasks.append(self.healthcheck_coro())
-        await asyncio.gather(*tasks)
 
     async def healthcheck_coro(self):
         if self.health_check_server:
@@ -190,11 +208,12 @@ class MainLoop(BaseMainLoop):
         consumer = self.consumers[kafka_key]
         mq_message = None
         message_value = None
+        loop = asyncio.get_event_loop()
         try:
             mq_message = None
             message_value = None
             with StatsTimer() as poll_timer:
-                mq_message = consumer.poll()
+                mq_message = await loop.run_in_executor(None, consumer.poll)
 
             if mq_message:
                 stats = "Polling time: {} msecs\n".format(poll_timer.msecs)
@@ -569,7 +588,8 @@ class MainLoop(BaseMainLoop):
             user = None
             while save_tries < self.user_save_collisions_tries and not user_save_ok:
                 callback_found = False
-                log(f"MainLoop.do_behavior_timeout: handling callback {callback_id}. for db_uid {db_uid}. try {save_tries}.")
+                log(
+                    f"MainLoop.do_behavior_timeout: handling callback {callback_id}. for db_uid {db_uid}. try {save_tries}.")
 
                 save_tries += 1
 
@@ -592,7 +612,8 @@ class MainLoop(BaseMainLoop):
                     user_save_ok = await self.save_user_async(db_uid, user, mq_message)
 
                     if not user_save_ok:
-                        log("MainLoop.iterate_behavior_timeouts: save user got collision on uid %(uid)s db_version %(db_version)s.",
+                        log(
+                            "MainLoop.iterate_behavior_timeouts: save user got collision on uid %(uid)s db_version %(db_version)s.",
                             user=user,
                             params={log_const.KEY_NAME: "ignite_collision",
                                     "db_uid": db_uid,
@@ -603,7 +624,8 @@ class MainLoop(BaseMainLoop):
                             level="WARNING")
 
             if not user_save_ok and callback_found:
-                log("MainLoop.iterate_behavior_timeouts: db_save collision all tries left on uid %(uid)s db_version %(db_version)s.",
+                log(
+                    "MainLoop.iterate_behavior_timeouts: db_save collision all tries left on uid %(uid)s db_version %(db_version)s.",
                     user=user,
                     params={log_const.KEY_NAME: "ignite_collision",
                             "db_uid": db_uid,

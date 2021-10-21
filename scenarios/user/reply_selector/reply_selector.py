@@ -30,18 +30,9 @@ class ReplySelector:
         ]
         self._user = user
 
-    @lazy
-    def _bundles_templates(self):
-        _bundles_templates = self._bundles
-        for bundle_key, bundle_variations in self._bundles.items():
-            for variation_key, variation_answers in bundle_variations.items():
-                for index, answer in enumerate(variation_answers):
-                    _bundles_templates[bundle_key][variation_key][index] = UnifiedTemplate(answer)
-        return _bundles_templates
-
     def get_text_by_key(self, bundle_name: str, reply_key="") -> str:
         result = ""
-        bundle = self._bundles_templates[bundle_name]
+        bundle = self._bundles[bundle_name]
         if bundle:
             reply_list = None
             for suffix in self.__suffix:
@@ -51,7 +42,8 @@ class ReplySelector:
                     break
             if reply_list:
                 params = self._user.parametrizer.collect()  # TODO give run-time action parameters to collect call
-                result = random.choice(reply_list).render(params)
+                result_str = random.choice(reply_list)
+                result = UnifiedTemplate(result_str).render(params)
             else:
                 raise KeyError("Key not found")
         return result

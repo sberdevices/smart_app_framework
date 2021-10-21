@@ -126,31 +126,6 @@ class MainLoop(BaseMainLoop):
                 smart_kit_metrics.counter_save_collision(self.app_name)
         return no_collisions
 
-    async def load_user_async(self, db_uid, message):
-        db_data = None
-        load_error = False
-        try:
-            if self.db_adapter.IS_ASYNC:
-                db_data = await self.db_adapter.get(db_uid)
-            else:
-                db_data = self.db_adapter.get(db_uid)
-        except (DBAdapterException, ValueError):
-            log("Failed to get user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
-                                                   log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")
-            load_error = True
-            smart_kit_metrics.counter_load_error(self.app_name)
-            # to skip message when load failed
-            raise
-        return self.user_cls(
-            message.uid,
-            message=message,
-            db_data=db_data,  # плохо ломать базовые интерфейсы
-            settings=self.settings,
-            descriptions=self.model.scenario_descriptions,
-            parametrizer_cls=self.parametrizer_cls,
-            load_error=load_error
-        )
-
     def pre_handle(self):
         self.iterate_behavior_timeouts()
 
@@ -395,7 +370,8 @@ class MainLoop(BaseMainLoop):
 
                 with self.tracer.scope_manager.activate(span, True) as scope:
                     with StatsTimer() as load_timer:
-                        user = self.load_user(db_uid, message)
+                        user = await self.load_user(db_uid, message)
+                # method async updated before that line #
 
                 with self.tracer.scope_manager.activate(span, True) as scope:
                     with self.tracer.start_span('Loading time', child_of=scope.span) as span:

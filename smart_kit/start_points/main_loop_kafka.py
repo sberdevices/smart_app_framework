@@ -44,6 +44,7 @@ class MainLoop(BaseMainLoop):
         log("%(class_name)s.__init__ started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                         "class_name": self.__class__.__name__})
         self.loop = asyncio.get_event_loop()
+        self.health_check_server_future = None
         super().__init__(*args, **kwargs)
         try:
             kafka_config = _enrich_config_from_secret(
@@ -153,31 +154,6 @@ class MainLoop(BaseMainLoop):
     def pre_handle(self):
         self.iterate_behavior_timeouts()
 
-    # def run(self):
-    #     log("%(class_name)s.run started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-    #                                               "class_name": self.__class__.__name__})
-    #     while self.is_work:
-    #         self.pre_handle()
-    #         for kafka_key in self.consumers:
-    #             self.iterate(kafka_key)
-    #
-    #         if self.health_check_server:
-    #             with StatsTimer() as health_check_server_timer:
-    #                 self.health_check_server.iterate()
-    #
-    #             if health_check_server_timer.msecs >= self.MAX_LOG_TIME:
-    #                 log("Health check iterate time: {} msecs\n".format(health_check_server_timer.msecs),
-    #                     params={log_const.KEY_NAME: "slow_health_check",
-    #                             "time_msecs": health_check_server_timer.msecs}, level="WARNING")
-    #
-    #     log("Stopping Kafka handler", level="WARNING")
-    #     for kafka_key in self.consumers:
-    #         self.consumers[kafka_key].close()
-    #         log("Kafka consumer connection is closed", level="WARNING")
-    #         self.publishers[kafka_key].close()
-    #         log("Kafka publisher connection is closed", level="WARNING")
-    #     log("Kafka handler is stopped", level="WARNING")
-
     def run(self):
         log("%(class_name)s.run started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                   "class_name": self.__class__.__name__})
@@ -210,14 +186,22 @@ class MainLoop(BaseMainLoop):
                                                           "class_name": self.__class__.__name__})
 
     async def healthcheck_coro(self):
-        if self.health_check_server:
-            with StatsTimer() as health_check_server_timer:
-                self.health_check_server.iterate()
+        while True:
+            # does it work? start #
+            # from DP #
+            if not self.health_check_server_future or self.health_check_server_future.done() or self.health_check_server_future.cancelled():
+                self.health_check_server_future = self.loop.run_in_executor(None,  self.health_check_server.iterate)
+            await asyncio.sleep(0.5)
+            # does it work? end #
 
-            if health_check_server_timer.msecs >= self.MAX_LOG_TIME:
-                log("Health check iterate time: {} msecs\n".format(health_check_server_timer.msecs),
-                    params={log_const.KEY_NAME: "slow_health_check",
-                            "time_msecs": health_check_server_timer.msecs}, level="WARNING")
+            # if self.health_check_server:
+            #     with StatsTimer() as health_check_server_timer:
+            #         self.health_check_server.iterate()
+            #
+            #     if health_check_server_timer.msecs >= self.MAX_LOG_TIME:
+            #         log("Health check iterate time: {} msecs\n".format(health_check_server_timer.msecs),
+            #             params={log_const.KEY_NAME: "slow_health_check",
+            #                     "time_msecs": health_check_server_timer.msecs}, level="WARNING")
 
     async def main_work(self, kafka_key):
         # is needed? start #

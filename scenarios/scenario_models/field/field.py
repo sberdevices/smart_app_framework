@@ -123,12 +123,7 @@ class QuestionField(BasicField):
 
     @property
     def raw(self):
-        result = {}
-        is_value_changed = (self._value is not None and self._value != self.description.default_value)
-        if is_value_changed:
-            result["value"] = self._value
-        if self._available != self.description.available:
-            result["available"] = self._available
+        result = super().raw
         if self.ask_again_counter != 0:
             result["ask_again_counter"] = self.ask_again_counter
         return result

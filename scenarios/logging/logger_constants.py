@@ -52,6 +52,8 @@ BEHAVIOR_FAIL_VALUE = "behavior_fail"
 BEHAVIOR_TIMEOUT_VALUE = "behavior_timeout"
 BEHAVIOR_CALLBACK_ID_VALUE = "behavior_callback_id"
 BEHAVIOR_ID_VALUE = "behavior_id"
+HOSTNAME = "hostname"
+CHECK_HOSTNAME = "check_hostname"
 
 NORMALIZE_INTENT_VALUE = "normalize_intent"
 SKIPPED_INTENT_VALUE = 'skipped_intent'
@@ -87,5 +89,6 @@ CHOSEN_NODE_ID_MESSAGE = "%(key_name)s=%(chosen_node_id)s"
 SKIPPED_INTENT_MESSAGE = "Skipped intent %(intent_id)s, scenario is not available"
 CONTAINER_REQUIREMENT_CHECK_MESSAGE = 'Classifier container requirement check: result: ' \
                                       '%(requirement_check)s, container: %(container_name)s'
+MESSAGE_ID = "message_id"
 
 CALLBACK_ID_HEADER = "app_callback_id"

@@ -1,16 +1,16 @@
 # coding: utf-8
-from time import time
+import socket
 from collections import namedtuple
+from time import time
 from typing import Dict
 
+import scenarios.logging.logger_constants as log_const
 from core.logging.logger_utils import log
 from core.names.field import APP_INFO
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from core.utils.pickle_copy import pickle_deepcopy
-from smart_kit.utils.monitoring import smart_kit_metrics
-
 from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, LOCAL_VARS
-import scenarios.logging.logger_constants as log_const
+from smart_kit.utils.monitoring import smart_kit_metrics
 
 
 class Behaviors:
@@ -54,6 +54,7 @@ class Behaviors:
 
     def add(self, callback_id: str, behavior_id, scenario_id=None, text_preprocessing_result_raw=None,
             action_params=None):
+        self._check_hostname(callback_id, behavior_id, scenario_id)
         text_preprocessing_result_raw = text_preprocessing_result_raw or {}
         # behavior will be removed after timeout + EXPIRATION_DELAY
         expiration_time = (
@@ -124,6 +125,7 @@ class Behaviors:
         callback = self._get_callback(callback_id)
         result = None
         if callback:
+            self._check_hostname(callback_id, callback.behavior_id, callback.scenario_id)
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
@@ -147,6 +149,7 @@ class Behaviors:
         callback = self._get_callback(callback_id)
         result = None
         if callback:
+            self._check_hostname(callback_id, callback.behavior_id, callback.scenario_id)
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
@@ -277,3 +280,22 @@ class Behaviors:
         callback_action_params = self.get_callback_action_params(callback_id) or {}
         to_message_name = callback_action_params.get(TO_MESSAGE_NAME)
         return to_message_name
+
+    def _check_hostname(self, callback_id, behavior_id, scenario_id) -> None:
+        host: str = socket.gethostname()
+        host_from_cache: str = self._user.local_vars.get(log_const.HOSTNAME)
+        if host_from_cache is None:
+            self._user.local_vars.set(log_const.HOSTNAME, host)
+            return
+        if host_from_cache != host:
+            log(
+                f"behavior.check_hostname: current and last hostname are not equal on the same message_id.",
+                user=self._user,
+                params={log_const.KEY_NAME: log_const.CHECK_HOSTNAME,
+                        log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id,
+                        log_const.BEHAVIOR_ID_VALUE: behavior_id,
+                        log_const.CHOSEN_SCENARIO_VALUE: scenario_id,
+                        log_const.MESSAGE_ID: self._user.message.logging_uuid
+                        }
+            )
+            smart_kit_metrics.counter_host_has_changed(self._user.settings.app_name)

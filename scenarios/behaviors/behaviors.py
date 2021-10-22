@@ -20,8 +20,10 @@ class Behaviors:
         self._items = items or {}
         self.descriptions = descriptions
         self._user = user
-        self.Callback = namedtuple('Callback',
-                                   'behavior_id expire_time scenario_id text_preprocessing_result action_params')
+        self.Callback = namedtuple(
+            'Callback',
+            'behavior_id expire_time scenario_id text_preprocessing_result action_params hostname')
+
         self._callbacks = {}
         self._behavior_timeouts = []
         self._returned_callbacks = []
@@ -31,6 +33,7 @@ class Behaviors:
         for key, callback in self._items.items():
             callback.setdefault("text_preprocessing_result", {})
             callback.setdefault("action_params", {})
+            callback.setdefault("hostname", None)
             self._callbacks[key] = self.Callback(**callback)
 
         callback_id = self._user.message.callback_id
@@ -54,7 +57,7 @@ class Behaviors:
 
     def add(self, callback_id: str, behavior_id, scenario_id=None, text_preprocessing_result_raw=None,
             action_params=None):
-        self._check_hostname(callback_id, behavior_id, scenario_id)
+        host = socket.gethostname()
         text_preprocessing_result_raw = text_preprocessing_result_raw or {}
         # behavior will be removed after timeout + EXPIRATION_DELAY
         expiration_time = (
@@ -71,6 +74,7 @@ class Behaviors:
             scenario_id=scenario_id,
             text_preprocessing_result=text_preprocessing_result_raw,
             action_params=action_params,
+            hostname=host
         )
         self._callbacks[callback_id] = callback
         log(
@@ -284,9 +288,6 @@ class Behaviors:
     def _check_hostname(self, callback_id, behavior_id, scenario_id) -> None:
         host: str = socket.gethostname()
         host_from_cache: str = self._user.local_vars.get(log_const.HOSTNAME)
-        if host_from_cache is None:
-            self._user.local_vars.set(log_const.HOSTNAME, host)
-            return
         if host_from_cache != host:
             log(
                 f"behavior.check_hostname: current and last hostname are not equal on the same message_id.",

@@ -129,7 +129,7 @@ class Behaviors:
         callback = self._get_callback(callback_id)
         result = None
         if callback:
-            self._check_hostname(callback_id, callback.behavior_id, callback.scenario_id)
+            self._check_hostname(callback)
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
@@ -153,7 +153,7 @@ class Behaviors:
         callback = self._get_callback(callback_id)
         result = None
         if callback:
-            self._check_hostname(callback_id, callback.behavior_id, callback.scenario_id)
+            self._check_hostname(callback)
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
@@ -285,18 +285,20 @@ class Behaviors:
         to_message_name = callback_action_params.get(TO_MESSAGE_NAME)
         return to_message_name
 
-    def _check_hostname(self, callback_id, behavior_id, scenario_id) -> None:
+    def _check_hostname(self, callback) -> None:
         host: str = socket.gethostname()
-        host_from_cache: str = self._user.local_vars.get(log_const.HOSTNAME)
-        if host_from_cache != host:
+        if callback.hostname != host:
             log(
-                f"behavior.check_hostname: current and last hostname are not equal on the same message_id.",
+                f"behavior.check_hostname: current %({log_const.HOSTNAME})s and "
+                f"last %({log_const.LAST_HOSTNAME})s hostname are not equal on the same message_id.",
                 user=self._user,
                 params={log_const.KEY_NAME: log_const.CHECK_HOSTNAME,
-                        log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id,
-                        log_const.BEHAVIOR_ID_VALUE: behavior_id,
-                        log_const.CHOSEN_SCENARIO_VALUE: scenario_id,
-                        log_const.MESSAGE_ID: self._user.message.logging_uuid
+                        log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback.callback_id,
+                        log_const.BEHAVIOR_ID_VALUE: callback.behavior_id,
+                        log_const.CHOSEN_SCENARIO_VALUE: callback.scenario_id,
+                        log_const.MESSAGE_ID: self._user.message.logging_uuid,
+                        log_const.HOSTNAME: host,
+                        log_const.LAST_HOSTNAME: callback.hostname,
                         }
             )
             smart_kit_metrics.counter_host_has_changed(self._user.settings.app_name)

@@ -53,6 +53,7 @@ BEHAVIOR_TIMEOUT_VALUE = "behavior_timeout"
 BEHAVIOR_CALLBACK_ID_VALUE = "behavior_callback_id"
 BEHAVIOR_ID_VALUE = "behavior_id"
 HOSTNAME = "hostname"
+LAST_HOSTNAME = "last_hostname"
 CHECK_HOSTNAME = "check_hostname"
 
 NORMALIZE_INTENT_VALUE = "normalize_intent"

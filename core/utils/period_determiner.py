@@ -1,0 +1,562 @@
+"""
+Модуль для определения временного периода из текста на русском языке
+!!! Модуль работает только со словами в нижнем регистре !!!
+
+usage: begin_date, end_date = period_determiner(words_to_process)
+
+Автор: Нурманов Алишер
+Дата: октябрь 2021 года
+"""
+
+import re
+from typing import List, Tuple, Optional
+from datetime import datetime, timedelta
+
+
+__author__ = 'anurmanov'
+
+# глобальный формат даты
+date_format: str = '%d.%m.%Y'
+# шаблоны регулярок для определения дат
+re_short_date_pattern = '^([0-9]{2}).([0-9]{2}).([0-9]{2})$'
+re_long_date_pattern = '^([0-9]{2}).([0-9]{2}).([0-9]{4})$'
+
+
+class IncorrectDateException(Exception):
+    pass
+
+
+class StateMachineForDateDetermining:
+    """
+    Класс конечный-автомат (КА) для определения даты из строки на русском языке.
+    Работает следующим образом:
+    на вход в КА передаем последовательно слова, каждое новое слово влияет на состояние КА
+    и КА понимает какой период времени пытаемся сообщить,
+    а также КА может понять, что дата определена некорректно
+    """
+
+    _is_determined: bool
+    _is_error: bool
+    _date_period: List[Optional[datetime]]
+    _day: int
+    _month: int
+    _year: int
+
+    # следующее ожидаемое слово
+    # если это слово не получено, то ошибка
+    # например: если пришло "вчерашний", то ждем слово "день"
+    # если любое следующее слово ошибка, как в случае текста "сегодня",
+    # то _next_expected_word = ''
+    _next_expected_word: Optional[str]
+
+    # дескриптор относительного периода:
+    #  1 - указание на текущий период - нынешний, текущий, сегодняшний, этот
+    #  0 - отсутствует
+    # -1 - указание на прошлый период - вчерашний, вчера, прошлый, предыдущий
+    _relative_descriptor: int
+
+    # при поступлении числа в КА мы еще не понимаем к чему относится число,
+    # поэтому сохраняем его в self._quantifier, но как только мы его использовали,
+    # то сразу его обнуляем для приему следующего числа
+    _quantifier: int
+
+    def __init__(self):
+        self._current_date = datetime.now()
+        self._date_period = [None, None]
+        self._relative_descriptor = 0
+        self._quantifier = 0
+        self._day = 0
+        self._month = 0
+        self._year = 0
+        self._is_determined = False
+        self._is_error = False
+        self._next_expected_word = None
+
+    def has_errors(self):
+        return self._is_error
+
+    @property
+    def result(self) -> Tuple[Optional[str], Optional[str]]:
+        if self._is_error:
+            return 'error', 'error'
+
+        if self._is_determined:
+            # если дата считается определенной, но остался неиспользуемый квантификатор,
+            # то это ошибка
+            if self._quantifier:
+                return 'error', 'error'
+
+            # если указали период, то берем из self._date_period
+            if self._date_period[0]:
+                # если год определен, то надо его использовать
+                if self._year:
+                    try:
+                        self._date_period[0] = safe_datetime(
+                            year=self._year,
+                            month=self._date_period[0].month,
+                            day=self._date_period[0].day
+                        )
+                    except IncorrectDateException:
+                        return 'error', 'error'
+
+                if self._date_period[1]:
+                    # если год определен, то надо его использовать
+                    if self._year:
+                        try:
+                            self._date_period[1] = safe_datetime(
+                                year=self._year,
+                                month=self._date_period[1].month,
+                                day=self._date_period[1].day
+                            )
+                        except IncorrectDateException:
+                            return 'error', 'error'
+
+                # конец периода не указан, то берем текущий день в качестве окончания
+                else:
+                    self._date_period[1] = self._current_date
+
+                return format_date(self._date_period[0]), format_date(self._date_period[1])
+
+            else:
+                # Иначе строим дату начала на основе года, месяца и дня,
+                # а дату окончания берем текущим днем
+                self._date_period[1] = self._current_date
+
+                # если день не указан, тогда берем первый день
+                if self._day == 0:
+                    self._day = 1
+                # если месяц не указан, тогда берем первый месяц
+                if self._month == 0:
+                    self._month = 1
+                # если год не указан, тогда берем текущий год
+                if self._year == 0:
+                    self._year = self._current_date.year
+
+                try:
+                    self._date_period[0] = safe_datetime(self._year, self._month, self._day)
+                except IncorrectDateException:
+                    return 'error', 'error'
+
+                return format_date(self._date_period[0]), format_date(self._date_period[1])
+
+        return 'error', 'error'
+
+    # TODO: добавить умение работать с неделями и временами года (типо "за прошлую зиму" чтобы понимал)
+    def input(self, word: str):
+        """
+        Ключевой метод КА принимающий слова и меняющий свое состояние в зависимости от этого
+        """
+
+        try:
+            # если в КА ошибка, то он больше не обрабатывает слова
+            if self._is_error:
+                return
+
+            # если ждем какое-то слово
+            if self._next_expected_word:
+                if word != self._next_expected_word:
+                    self._is_error = True
+                    return
+                self._next_expected_word = None
+            # если _next_expected_word пустая строка,
+            # то больше не ждем никаких слов
+            # и любое пришедшее слово приводит к ошибке
+            elif self._next_expected_word == '':
+                self._is_error = True
+                return
+
+            # проверка через регулярку дат форматов dd.mm.yy и dd.mm.yyyy
+            m = re.match(re_short_date_pattern, word)
+            if m:
+                self._date_period[0] = self._date_period[1] = \
+                    safe_datetime(
+                        year=2000 + int(m.group(3)),
+                        month=int(m.group(2)),
+                        day=int(m.group(1))
+                    )
+                self._is_determined = True
+                return
+
+            m = re.match(re_long_date_pattern, word)
+            if m:
+                self._date_period[0] = self._date_period[1] = \
+                    safe_datetime(
+                        year=int(m.group(3)),
+                        month=int(m.group(2)),
+                        day=int(m.group(1))
+                    )
+                self._is_determined = True
+                return
+
+            # передаем число в КА
+            if word.isnumeric():
+                # квантификатор уже определен
+                if self._quantifier:
+                    self._is_error = True
+                    return
+                # иначе
+                else:
+                    self._quantifier = int(word)
+                    if self._quantifier > 1900:
+                        self._year = self._quantifier
+                        self._quantifier = 0
+
+            # иначе если в КА прилетело слово
+            else:
+                # год
+                if match_word_with_list(word, ['год']) != -1:
+                    if self._quantifier:
+                        self._year = self._quantifier
+                        self._quantifier = 0
+                    # указан относительный период
+                    elif self._relative_descriptor:
+                        if self._relative_descriptor > 0:
+                            self._year = self._current_date.year
+                        else:
+                            # квантификатор нужен для примера: 2 прошлых года
+                            self._year = self._current_date.year - 1 * (self._quantifier if self._quantifier else 1)
+                            self._quantifier = 0
+
+                    self._is_determined = True
+                # месяц
+                elif match_word_with_list(word, ['месяц']) != -1:
+                    # указан относительный период
+                    if self._relative_descriptor:
+                        if self._relative_descriptor > 0:
+                            self._month = self._current_date.month
+                        else:
+                            # квантификатор нужен для примера: 2 прошлых месяца
+                            delta_month = self._quantifier if self._quantifier else 1
+                            if self._current_date.month < delta_month:
+                                self._month = 12 + self._current_date.month - delta_month
+                                self._year = self._current_date.year - 1
+                            else:
+                                self._month = self._current_date.month - delta_month
+                                self._year = self._current_date.year
+                            self._quantifier = 0
+
+                        self._is_determined = True
+                # день
+                elif match_word_with_list(word, ['ден', 'дня', 'дней']) != -1:
+                    # указан относительный период
+                    if self._relative_descriptor:
+                        if self._relative_descriptor > 0:
+                            self._date_period[0] = self._current_date
+                        else:
+                            if self._quantifier:
+                                # квантификатор нужен для примера: 2 прошлых дня
+                                self._date_period[0] = \
+                                    self._current_date \
+                                    - timedelta(
+                                        days=self._quantifier if self._quantifier else 0
+                                    )
+
+                                self._quantifier = 0
+                            else:
+                                self._date_period[0] = self._date_period[1] = \
+                                    self._current_date - timedelta(days=1)
+
+                        self._is_determined = True
+                # квартал
+                elif match_word_with_list(word, ['квартал']) != -1:
+                    if self._quantifier:
+                        if not (self._quantifier in [1, 2, 3, 4]):
+                            self._is_error = True
+                        else:
+                            self._date_period[0] = \
+                                safe_datetime(
+                                    year=self._current_date.year,
+                                    month=3 * self._quantifier - 2,
+                                    day=1
+                                )
+
+                            if self._quantifier == 4:
+                                self._date_period[1] = \
+                                    safe_datetime(
+                                        year=self._current_date.year + 1,
+                                        month=1,
+                                        day=1
+                                    ) - timedelta(days=1)
+                            else:
+                                self._date_period[1] = \
+                                    safe_datetime(
+                                        year=self._current_date.year,
+                                        month=3 * self._quantifier + 1,
+                                        day=1
+                                    ) - timedelta(days=1)
+
+                        self._quantifier = 0
+                        self._is_determined = True
+                    # если не указан номер квартала, то это ошибка
+                    else:
+                        self._is_error = True
+
+                # другие слова
+                else:
+                    if match_word_with_list(word, ['вчерашн']) != -1:
+                        self._next_expected_word = 'день'
+                        self._relative_descriptor = -1
+                    elif match_word_with_list(word, ['вчера']) != -1:
+                        self._date_period[0] = self._date_period[1] = \
+                            self._current_date - timedelta(days=1)
+                        self._next_expected_word = ''
+                        self._is_determined = True
+                    elif match_word_with_list(word, ['сегодн', 'ныне']) != -1:
+                        self._date_period[0] = self._date_period[1] = \
+                            self._current_date
+                        self._next_expected_word = ''
+                        self._is_determined = True
+                    elif match_word_with_list(word, ['сегодняшн']) != -1:
+                        self._next_expected_word = 'день'
+                        self._relative_descriptor = 1
+
+                    else:
+                        # обрабатваем месяца
+                        months = [
+                            'январ',
+                            'феврал',
+                            'март',
+                            'апрел',
+                            'ма',
+                            'июн',
+                            'июл',
+                            'август',
+                            'сентябр',
+                            'октябр',
+                            'ноябр',
+                            'декабр'
+                        ]
+                        month_index = match_word_with_list(word, months)
+                        if month_index != -1:
+                            self._month = month_index + 1
+                            if self._quantifier:
+                                self._day = self._quantifier
+                                self._quantifier = 0
+
+                            if self._day:
+                                self._date_period[0] = self._date_period[1] = safe_datetime(
+                                    year=self._current_date.year,
+                                    month=self._month,
+                                    day=self._day
+                                )
+                            else:
+                                self._date_period[0] = safe_datetime(
+                                    year=self._current_date.year,
+                                    month=self._month,
+                                    day=1
+                                )
+
+                                self._date_period[1] = \
+                                    safe_datetime(
+                                        year=self._current_date.year + 1 if self._month == 12 else self._current_date.year,
+                                        month=1 if self._month == 12 else self._month + 1,
+                                        day=1
+                                    ) - timedelta(days=1)
+
+                            self._is_determined = True
+                            return
+
+                        pos_relative_descriptors = [
+                            'текущ',
+                            'нынешн',
+                            'этот',
+                            'эт'
+                        ]
+                        if match_word_with_list(word, pos_relative_descriptors) != -1:
+                            self._relative_descriptor = 1
+                            return
+
+                        neg_relative_descriptors = [
+                            'прошл',
+                            'предыдущ'
+                        ]
+                        if match_word_with_list(word, neg_relative_descriptors) != -1:
+                            self._relative_descriptor = -1
+                            return
+
+        except IncorrectDateException:
+            self._is_error = True
+
+
+def format_date(date: Optional[datetime]) -> str:
+    if date:
+        return date.strftime(date_format)
+    return 'error'
+
+
+def safe_datetime(year: int, month: int, day: int) -> Optional[datetime]:
+    # исправление ошибки для февраля високосного года:
+    # в невисокрсный год (не кратный 4) не может быть дня 29 февраля
+    if year % 4 != 0 and month == 2 and day == 29:
+        return datetime(year=year, month=month, day=28)
+    # для всех остальных случаев в случае
+    # при передачи некорректой комбинации года, месяца и дня
+    # будем возвращать None
+    else:
+        try:
+            return datetime(year=year, month=month, day=day)
+        except ValueError as exc:
+            raise IncorrectDateException('Некорректная дата') from exc
+
+
+def match_word_with_list(word_to_check: str, list_of_pattern_words: List[str]) -> int:
+    """
+    Проверяем слово на вхождение в список слов, указанных без окончания.
+    Примеры:
+    match_word_with_list("года", ["год"]) == True
+    match_word_with_list("май", ["ма", "июн", "июл"]) == True
+    match_word_with_list("мая", ["ма", "июн", "июл"]) == True
+    match_word_with_list("зима", ["весн", "лет", "осен", "зим"]) == True
+
+    :param word_to_check: проверяемое слово
+    :param list_of_pattern_words: список слово без окончания
+    :return: индекс слова совпадающего в списке, -1 - если совпадения нет
+    """
+    i: int = 0
+    for pattern_word in list_of_pattern_words:
+        # окончание это комбинация букв длинной до 3 символов
+        # сначала думал что гласные только должны быть,
+        # но окончание "ых" в слове "прошлых" заставило использова все буквы
+        pattern_str: str = '^' + pattern_word + '[а-я]{0,3}$'
+        if re.match(pattern_str, word_to_check):
+            return i
+        i += 1
+
+    return -1
+
+
+def is_from_date_dictionary(word: str) -> bool:
+    """
+    Функция определяет входит ли слово
+    в "словарь" описывающий период времени
+
+    :param word:
+    :return:
+    """
+
+    # некоторые слова лишены окончания для нивелирования влияния падежей
+    list_of_dictionary: List[str] = [
+        "по",
+        "до",
+        "вчерашн",
+        "вчера",
+        "прошл",
+        "текущ",
+        "этот",
+        "эт",
+        "ныне",
+        "нынешн",
+        "сегодн",
+        "сегодняшн",
+        #"зима",
+        #"зиму",
+        #"весна",
+        #"весну",
+        #"лето",
+        #"осень",
+        "день",
+        "дня",
+        "месяц",
+        "год",
+        #"недел",
+        "квартал",
+        "январь",
+        "феврал",
+        "март",
+        "апрель",
+        "май",
+        "июнь",
+        "июль",
+        "август",
+        "сентябрь",
+        "октябрь",
+        "ноябрь",
+        "декабрь"
+    ]
+    if match_word_with_list(word, list_of_dictionary) == -1:
+        return False
+    return True
+
+
+def period_determiner(words_to_process: List[str]) -> Tuple[str, str]:
+    """
+    Входная функция модуля, ее вызываем для получения дат.
+    Она использует рабочую функцию date_determiner
+
+    :param words_to_process: список слово в нижнем регистре
+    :return: кортеж строк дат в формате dd.mm.yyyy,
+    если одна из них или обе ошибочные, то error
+    """
+
+    # проверяем не указаны ли начало и конец периода
+    # с помощью слов "по" или "до"
+    i = 0
+    try:
+        i = words_to_process.index('по')
+    except ValueError as exc:
+        pass
+
+    if not i:
+        try:
+            i = words_to_process.index('до')
+        except ValueError as exc:
+            pass
+
+    begin_of_period: str = ''
+    end_of_period: str = ''
+
+    # указаны начало и конец периода с помощью слов "по" или "до",
+    if i:
+        begin_of_period, _ = date_determiner(words_to_process[:i])
+        _, end_of_period = date_determiner(words_to_process[i+1:])
+    # иначе имеем дело со словами, указывающих на единственную дату
+    else:
+        begin_of_period, end_of_period = date_determiner(words_to_process)
+
+    # дата начала не должна быть больше даты окончания периода
+    if begin_of_period != 'error' and end_of_period != 'error':
+        begin_date: datetime = datetime.strptime(begin_of_period, date_format)
+        end_date: datetime = datetime.strptime(end_of_period, date_format)
+        if begin_date > end_date:
+            return 'error', 'error'
+
+    return begin_of_period, end_of_period
+
+
+def date_determiner(words_to_process: List[str]) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Функция определяет дату на основе переданных слов на русском языке
+    Краеугольная функция всего модуля.
+
+    :param words_to_process:
+    :return: картеж дат в формате dd.mm.yyyy или error, error в случае ошибки
+    """
+
+    state_machine = StateMachineForDateDetermining()
+    for word in words_to_process:
+        state_machine.input(word)
+        if state_machine.has_errors():
+            return 'error', 'error'
+
+    return state_machine.result
+
+
+def extract_words_describing_period(words_from_intent: List[str]) -> List[str]:
+    """
+    Функция извлекает список слов, описываюищих период,
+    для последующей передаче функциям для определения периода
+
+    :param words_from_intent: все слова из предложения в нижнем регистре
+    :return: список слов описывающих период
+    """
+
+    words_to_process: List[str] = []
+    for word in words_from_intent:
+        if word.isnumeric() \
+            or is_from_date_dictionary(word) \
+                or re.match(re_short_date_pattern, word) \
+                or re.match(re_long_date_pattern, word):
+            words_to_process.append(word)
+
+    return words_to_process
+

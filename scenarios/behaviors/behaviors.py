@@ -129,7 +129,7 @@ class Behaviors:
         callback = self._get_callback(callback_id)
         result = None
         if callback:
-            self._check_hostname(callback)
+            self._check_hostname(callback_id, callback)
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
@@ -153,7 +153,7 @@ class Behaviors:
         callback = self._get_callback(callback_id)
         result = None
         if callback:
-            self._check_hostname(callback)
+            self._check_hostname(callback_id, callback)
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
@@ -240,8 +240,7 @@ class Behaviors:
     def expire(self):
         callback_id_for_delete = []
         for callback_id, (
-                behavior_id, expiration_time, scenario_id, text_preprocessing_result,
-                action_params) in self._callbacks.items():
+                behavior_id, expiration_time, *_) in self._callbacks.items():
             if expiration_time <= time():
                 callback_id_for_delete.append(callback_id)
         for callback_id in callback_id_for_delete:
@@ -261,8 +260,7 @@ class Behaviors:
 
     def check_got_saved_id(self, behavior_id):
         if self.descriptions[behavior_id].loop_def:
-            for callback_id, (_behavior_id, expiration_time, scenario_id, text_preprocessing_result,
-                              action_params) in self._callbacks.items():
+            for callback_id, (_behavior_id, *_) in self._callbacks.items():
                 if _behavior_id == behavior_id:
                     log(
                         f"behavior.check_got_saved_id == True: already got saved behavior %({log_const.BEHAVIOR_ID_VALUE})s for callback_id %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s",
@@ -285,7 +283,7 @@ class Behaviors:
         to_message_name = callback_action_params.get(TO_MESSAGE_NAME)
         return to_message_name
 
-    def _check_hostname(self, callback) -> None:
+    def _check_hostname(self, callback_id, callback) -> None:
         host: str = socket.gethostname()
         if callback.hostname != host:
             log(
@@ -293,7 +291,7 @@ class Behaviors:
                 f"last %({log_const.LAST_HOSTNAME})s hostname are not equal on the same message_id.",
                 user=self._user,
                 params={log_const.KEY_NAME: log_const.CHECK_HOSTNAME,
-                        log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback.callback_id,
+                        log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id,
                         log_const.BEHAVIOR_ID_VALUE: callback.behavior_id,
                         log_const.CHOSEN_SCENARIO_VALUE: callback.scenario_id,
                         log_const.MESSAGE_ID: self._user.message.logging_uuid,

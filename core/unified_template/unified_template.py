@@ -43,9 +43,10 @@ class UnifiedTemplate:
         try:
             result = self.silent_render(params_dict)
         except Exception:
-            log("Failed to render template: %(template)s with params {} ".format(str(params_dict)),
+            log("Failed to render template: %(template)s with params %(params_dict_str)s",
                 params={log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE,
-                          "template": str(self.input)},
+                          "template": str(self.input),
+                        "params_dict_str": str(params_dict)},
                 level="ERROR",
                 exc_info=True)
             monitoring.got_counter("core_jinja_template_error")

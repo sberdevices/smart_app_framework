@@ -181,7 +181,9 @@ class FormFillingScenario(BaseScenario):
         user.preprocessing_messages_for_scenarios.add(text_preprocessing_result)
 
         data_extracted = self._extract_data(form, text_preprocessing_result, user, params)
-        log("Extracted data={}".format(data_extracted), user, self._log_params())
+        logging_params = {"data_extracted_str": str(data_extracted)}
+        logging_params.update(self._log_params())
+        log("Extracted data=%(data_extracted_str)s", user, logging_params)
 
         validation_error_msg = self._validate_extracted_data(user, text_preprocessing_result, form, data_extracted, params)
         if validation_error_msg:

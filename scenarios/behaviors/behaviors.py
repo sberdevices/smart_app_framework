@@ -192,6 +192,7 @@ class Behaviors:
         callback = self._get_callback(callback_id)
         result = None
         if callback:
+            self._check_hostname(callback_id, callback)
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params

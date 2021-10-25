@@ -45,7 +45,7 @@ class MainLoop(BaseMainLoop):
                                                         "class_name": self.__class__.__name__})
         self.loop = asyncio.get_event_loop()
         self.health_check_server_future = None
-        BaseMainLoop.__init__(self, *args, **kwargs)
+        super().__init__(self, *args, **kwargs)
 
         try:
             kafka_config = _enrich_config_from_secret(
@@ -171,15 +171,6 @@ class MainLoop(BaseMainLoop):
                 self.health_check_server_future = self.loop.run_in_executor(None,  self.health_check_server.iterate)
             await asyncio.sleep(0.5)
             # does it work? end #
-
-            # if self.health_check_server:
-            #     with StatsTimer() as health_check_server_timer:
-            #         self.health_check_server.iterate()
-            #
-            #     if health_check_server_timer.msecs >= self.MAX_LOG_TIME:
-            #         log("Health check iterate time: {} msecs\n".format(health_check_server_timer.msecs),
-            #             params={log_const.KEY_NAME: "slow_health_check",
-            #                     "time_msecs": health_check_server_timer.msecs}, level="WARNING")
 
     async def main_work(self, kafka_key):
         # is needed? start #

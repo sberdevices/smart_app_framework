@@ -29,8 +29,9 @@ class Action:
         raise NotImplementedError
 
     def on_run_error(self, text_preprocessing_result, user):
-        log("exc_handler: Action failed to run. Return None. MESSAGE: {}.".format(user.message.masked_value), user,
-            {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
+        log("exc_handler: Action failed to run. Return None. MESSAGE: %(masked_message)s.", user,
+            {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE,
+             "masked_message": user.message.masked_value},
             level="ERROR", exc_info=True)
         return None
 

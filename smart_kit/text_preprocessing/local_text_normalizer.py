@@ -1,6 +1,7 @@
 from typing import List, Sequence
 
 import nltk
+from lazy import lazy
 from rusenttokenize import ru_sent_tokenize
 
 from core.repositories.file_repository import FileRepository
@@ -8,9 +9,9 @@ from core.utils.loader import ordered_json
 
 from smart_kit.text_preprocessing.base_text_normalizer import BaseTextNormalizer
 from smart_kit.text_preprocessing.nltk_tokenizer_binding import NLTKWordTokenizer
-from smart_kit.text_preprocessing.rnnmorph_wrapper import RNNMorphWrapper
+from smart_kit.text_preprocessing.pymorphy2_morph_wrapper import Pymorphy2MorphWrapper
 from smart_kit.text_preprocessing.text2num import Text2Num, NumbersUnionAfterSTT
-from smart_kit.text_preprocessing.utils import replace_yo_to_e, unmerge_numbers_and_letters, merge_numbers, \
+from smart_kit.text_preprocessing.utils import unmerge_numbers_and_letters, merge_numbers, \
     replace_currencies_symbols, AdditionalMathSplitter, MergeCardNumbersVoice, MergeCardNumbers, \
     NormalizePhoneNumbersVoice, NormalizePhoneNumbers, UnicodeSymbolsConverter, ReplaceSynonyms, \
     CurrencyTokensOneIterationMerger, reverse_json_dict, return_lemmas_only, Singleton
@@ -25,6 +26,12 @@ class LocalTextNormalizer(BaseTextNormalizer, metaclass=Singleton):
 
     def __init__(self):
         self.__ready_to_use = False
+        self._morph = None
+
+    @lazy
+    def morph(self):
+        self._morph = Pymorphy2MorphWrapper()
+        return self._morph
 
     def get_token_list(self, text):
         sentences = self.sentence_tokenizer(text.strip())
@@ -69,14 +76,12 @@ class LocalTextNormalizer(BaseTextNormalizer, metaclass=Singleton):
 
         self.sentence_tokenizer = ru_sent_tokenize
         self.word_tokenizer = NLTKWordTokenizer(word_false_stoppings, words_without_splitting_point)
-        self.morph = RNNMorphWrapper()
 
         skip_func = lambda x: x
         self.converter_pipeline = {
             'Объединение цифр после stt': NumbersUnionAfterSTT(text2num),
             'Конверсия юникодовых символов': UnicodeSymbolsConverter(unicode_symbols),
             'Цифры и буквы отдельно': unmerge_numbers_and_letters,
-            'Ё на Е': replace_yo_to_e,
             'Номера телефонов': NormalizePhoneNumbers(),
             'Номера телефонов из голоса': NormalizePhoneNumbersVoice(),
             'Номера карт': MergeCardNumbers(),

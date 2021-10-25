@@ -2,7 +2,7 @@ from core.text_preprocessing.grammem.grammem_constants import (
     IS_STOP_WORD, LEMMA, PART_OF_SPEECH, GRAMMEM_INFO, TEXT, TOKEN_TYPE, LIST_OF_DEPENDENTS, AMBIGUOUS, TENSE, MOOD,
     COMPOSITE_TOKEN_TYPE, IS_BEGINNING_OF_COMPOSITE, COMPOSITE_TOKEN_LENGTH,
     W2V_STRING, DEPENDENT_ADPOSITIONS, IMPORTANT_SURNAME_VALUE,
-    IS_BEGINNING_OF_ANAPHOR, ANTECEDENT_LEMMA)
+    IS_BEGINNING_OF_ANAPHOR, ANTECEDENT_LEMMA, PART_OF_SPEECH_PYMORPHY)
 from core.text_preprocessing.constants import SENTENCE_ENDPOINT_TOKEN, ANIMACY_TOKEN
 
 
@@ -81,8 +81,8 @@ class TokenizeHelper:
             if token_type != SENTENCE_ENDPOINT_TOKEN:
                 grammem_info = token.get(GRAMMEM_INFO)
                 if grammem_info is not None:
-                    pos = grammem_info.get(PART_OF_SPEECH)
-                    if pos != "PUNCT":
+                    pos = grammem_info.get(PART_OF_SPEECH_PYMORPHY)
+                    if pos != "PNCT":
                         if token_type is not None and token_type != ANIMACY_TOKEN:
                             final_line.append(token_type)
                         elif not token.get(IS_STOP_WORD) or (token.get(IS_STOP_WORD) and consider_stop_words):

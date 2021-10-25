@@ -1,3 +1,5 @@
+import nltk
+
 from collections import defaultdict
 from core.text_preprocessing.grammem.grammem_constants import TOKEN_VALUE, TOKEN_TYPE, IS_BEGINNING_OF_COMPOSITE, \
     COMPOSITE_TOKEN_VALUE, COMPOSITE_TOKEN_TYPE, VALUE, LIST_OF_TOKEN_TYPES_DATA
@@ -14,7 +16,7 @@ class TextPreprocessingResult(BaseTextPreprocessingResult):
                  "_num_token_values", "_person_token_values", "_money_token_values", "_time_date_token_values",
                  "_period_token_values", "_org_token_values", "_time_date_interval_token_values",
                  "_relative_token_values", "_ccy_token_values", "_geo_token_values", "pipeline_results",
-                 "_tokenized_string_stop_words", "_words_tokenized_stop_words","_words_tokenized_set_stop_words")
+                 "_tokenized_string_stop_words", "_words_tokenized_stop_words", "_words_tokenized_set_stop_words")
 
     def __init__(self, items):
         super(TextPreprocessingResult, self).__init__(items)
@@ -25,6 +27,8 @@ class TextPreprocessingResult(BaseTextPreprocessingResult):
         self.pipeline_results = items.get("pipeline_results", {})
         self._human_normalized_text = items.get("human_normalized_text")
         self._human_normalized_text_with_anaphora = items.get("human_normalized_text_with_anaphora")
+        self._tokenized_elements_list_pymorphy = None
+        self._normalized_text_pymorphy = None
         self._tokenized_string = None
         self._normalized_text_with_verb_mood = None
         self._words_tokenized = None
@@ -45,6 +49,30 @@ class TextPreprocessingResult(BaseTextPreprocessingResult):
         self._words_tokenized_set_stop_words = None
 
     @property
+    def tokenized_elements_list_pymorphy(self):
+        if self._tokenized_elements_list_pymorphy is None:
+
+            from smart_kit.configs import get_app_config
+            app_config = get_app_config()
+
+            self._tokenized_elements_list_pymorphy = app_config.NORMALIZER(self.original_text)["tokenized_elements_list"]
+
+        return self._tokenized_elements_list_pymorphy
+
+    @property
+    def normalized_text_pymorphy(self):
+        if self._normalized_text_pymorphy is None:
+
+            from smart_kit.configs import get_app_config
+            app_config = get_app_config()
+
+            normalized_words = [app_config.NORMALIZER.morph.pymorphy_analyzer.parse(tokenized_word)[0].normalized.normal_form
+                                for tokenized_word in nltk.tokenize.word_tokenize(self.original_text)]
+            self._normalized_text_pymorphy = " ".join(normalized_words)
+
+        return self._normalized_text_pymorphy
+
+    @property
     def tokenized_string(self):
         if self._tokenized_string is None:
             self._tokenized_string = TokenizeHelper.return_lemmas_only(self.__tokenized_elements_list,
@@ -55,8 +83,8 @@ class TextPreprocessingResult(BaseTextPreprocessingResult):
     def tokenized_string_stop_words(self):
         if self._tokenized_string_stop_words is None:
             self._tokenized_string_stop_words = TokenizeHelper.return_lemmas_only(self.__tokenized_elements_list,
-                                                                       include_sentence_endpoint=False,
-                                                                       consider_stop_words=True)
+                                                                                  include_sentence_endpoint=False,
+                                                                                  consider_stop_words=True)
         return self._tokenized_string_stop_words
 
     @property
@@ -68,7 +96,7 @@ class TextPreprocessingResult(BaseTextPreprocessingResult):
     @property
     def human_normalized_text_with_anaphora(self):
         if self._human_normalized_text_with_anaphora is None:
-            self._human_normalized_text_with_anaphora =\
+            self._human_normalized_text_with_anaphora = \
                 TokenizeHelper.get_human_normalized_text_with_anaphora(self.__tokenized_elements_list)
         return self._human_normalized_text_with_anaphora
 

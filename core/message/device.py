@@ -41,3 +41,7 @@ class Device:
     @lazy
     def tenant(self):
         return self._value.get("tenant") or ""
+
+    @lazy
+    def device_id(self):
+        return self._value.get("deviceId") or ""

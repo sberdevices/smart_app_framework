@@ -48,8 +48,9 @@ class FieldFillerDescription:
         return None
 
     def on_extract_error(self, text_preprocessing_result, user, params=None):
-        log("exc_handler: Filler failed to extract. Return None. MESSAGE: {}.".format(user.message.masked_value), user,
-            {log_const.KEY_NAME: core_log_const.HANDLED_EXCEPTION_VALUE}, level="ERROR", exc_info=True)
+        log("exc_handler: Filler failed to extract. Return None. MESSAGE: %(masked_message)s.", user,
+            {log_const.KEY_NAME: core_log_const.HANDLED_EXCEPTION_VALUE, "masked_message": user.message.masked_value},
+            level="ERROR", exc_info=True)
         return None
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
@@ -356,7 +357,7 @@ class IntersectionFieldFiller(FieldFillerDescription):
     @exc_handler(on_error_obj_method_name="on_extract_error")
     def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User,
                 params: Dict[str, Any] = None) -> Optional[str]:
-        tpr_tokenized_set = {norm.get("lemma") for norm in text_preprocessing_result.tokenized_elements_list if
+        tpr_tokenized_set = {norm.get("lemma") for norm in text_preprocessing_result.tokenized_elements_list_pymorphy if
                              norm.get("token_type") != "SENTENCE_ENDPOINT_TOKEN"}
         for key, tokens_list in self.normalized_cases:
             for tokens in tokens_list:
@@ -419,11 +420,11 @@ class ApproveFiller(FieldFillerDescription):
         self.set_no_words: Set = set(self.no_words or [])
         self.yes_words_normalized: Set = {
             TextPreprocessingResult(result).tokenized_string for result in
-            app_config.NORMALIZER.normalize_sequence(self.set_yes_words)
+            app_config.NORMALIZER.normalize_sequence(list(self.set_yes_words))
         }
         self.no_words_normalized: Set = {
             TextPreprocessingResult(result).tokenized_string for result in
-            app_config.NORMALIZER.normalize_sequence(self.set_no_words)
+            app_config.NORMALIZER.normalize_sequence(list(self.set_no_words))
         }
 
     @exc_handler(on_error_obj_method_name="on_extract_error")

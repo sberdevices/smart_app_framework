@@ -6,7 +6,8 @@ from typing import Dict
 
 from core.text_preprocessing.constants import ANIMACY_TOKEN
 from core.text_preprocessing.grammem.grammem_constants import TEXT, LEMMA, TOKEN_TYPE, LIST_OF_TOKEN_TYPES_DATA, \
-    TOKEN_VALUE, VALUE, COMPOSITE_TOKEN_TYPE, IS_BEGINNING_OF_COMPOSITE, GRAMMEM_INFO, PART_OF_SPEECH, IS_STOP_WORD
+    TOKEN_VALUE, VALUE, COMPOSITE_TOKEN_TYPE, IS_BEGINNING_OF_COMPOSITE, GRAMMEM_INFO, PART_OF_SPEECH, IS_STOP_WORD, \
+    PART_OF_SPEECH_PYMORPHY
 
 NUM_TOKEN = "NUM_TOKEN"
 CUSTOM_PUNCTUATION = set(string.punctuation + "«»…=#-——–")
@@ -43,10 +44,6 @@ def revert_dict_with_list_values(dicti):
             if x not in new_dic:
                 new_dic[x] = k
     return new_dic
-
-
-def replace_yo_to_e(text: str) -> str:
-    return replace_by_dict(text, {"Ё": "Е", "ё": "е"})
 
 
 def replace_currencies_symbols(text: str) -> str:
@@ -123,8 +120,8 @@ def return_lemmas_only(token_desc_list: list, include_sentence_endpoint: bool = 
         if token_type != SENTENCE_ENDPOINT_TOKEN:
             grammem_info = token.get(GRAMMEM_INFO)
             if grammem_info is not None:
-                pos = grammem_info.get(PART_OF_SPEECH)
-                if pos != "PUNCT":
+                pos = grammem_info.get(PART_OF_SPEECH_PYMORPHY)
+                if pos != "PNCT":
                     if token_type is not None and token_type != ANIMACY_TOKEN:
                         final_line.append(token_type)
                     elif not token.get(IS_STOP_WORD) or (token.get(IS_STOP_WORD) and consider_stop_words):

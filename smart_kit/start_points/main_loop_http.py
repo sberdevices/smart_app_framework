@@ -61,8 +61,9 @@ class BaseHttpMainLoop(BaseMainLoop):
 
     def process_message(self, message: SmartAppFromMessage, *args, **kwargs):
         stats = ""
-        log("INCOMING DATA: {}".format(message.masked_value),
-            params={log_const.KEY_NAME: "incoming_policy_message"})
+        log("INCOMING DATA: %(masked_message)s",
+            params={log_const.KEY_NAME: "incoming_policy_message",
+                    "masked_message": message.masked_value})
         db_uid = message.db_uid
 
         with StatsTimer() as load_timer:

@@ -200,7 +200,7 @@ def test_period_determiner_14():
         'sdfdasq0',
     ]
     result = period_determiner(words_to_process)
-    assert result == ('error', 'error')
+    assert result == ('', '')
 
 
 def test_period_determiner_15():
@@ -268,6 +268,44 @@ def test_period_determiner_20():
     ]
     result = period_determiner(words_to_process)
     assert result == ('28.03.2019', '{}.{}.{}'.format(current_date.day, current_date.month, current_date.year))
+
+
+def test_period_determiner_21():
+    # если используется корректная форма к примеру "за n года",
+    # то период определится как с даты ранее на 365 * n дней текущего дня
+    count_of_years: int = 3
+    words_to_process = [
+        'за',
+        str(count_of_years),
+        'года'
+    ]
+    result = period_determiner(words_to_process)
+    d1: datetime = current_date - timedelta(365 * count_of_years)
+    assert result == ('{}.{}.{}'.format(d1.day if d1.day > 9 else '0' + str(d1.day),
+                                        d1.month if d1.month > 9 else '0' + str(d1.month),
+                                        d1.year),
+                      '{}.{}.{}'.format(current_date.day,
+                                        current_date.month,
+                                        current_date.year))
+
+
+def test_period_determiner_22():
+    # если используется корректная форма к примеру "за n месяца",
+    # то период определится как с даты ранее на 30 * n дней текущего дня
+    count_of_months: int = 2
+    words_to_process = [
+        'за',
+        str(count_of_months),
+        'месяца'
+    ]
+    result = period_determiner(words_to_process)
+    d1: datetime = current_date - timedelta(30 * count_of_months)
+    assert result == ('{}.{}.{}'.format(d1.day if d1.day > 9 else '0' + str(d1.day),
+                                        d1.month if d1.month > 9 else '0' + str(d1.month),
+                                        d1.year),
+                      '{}.{}.{}'.format(current_date.day,
+                                        current_date.month,
+                                        current_date.year))
 
 
 def test_extract_words_describing_period_1():

@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 
 __author__ = 'anurmanov'
 
+
 # глобальный формат даты
 date_format: str = '%d.%m.%Y'
 # шаблоны регулярок для определения дат
@@ -151,19 +152,12 @@ class StateMachineForDateDetermining:
                 except IncorrectDateException:
                     return 'error', 'error'
 
-                # если работаем с периодом или дата относительна текущей даты,
-                # то конец периода всегда окончивается текущей датой
-                # пример: "с 12 мая" или "за 4 прошлых месяца"
-                if self._is_period or self._relative_descriptor:
-                    # берем текущий день в качестве окончания
-                    self._date_period[1] = self._current_date
-                else:
-                    # иначе период за 1 день
-                    self._date_period[1] = self._date_period[0]
+                # берем текущий день в качестве окончания
+                self._date_period[1] = self._current_date
 
                 return format_date(self._date_period[0]), format_date(self._date_period[1])
 
-        return 'error', 'error'
+        return '', ''
 
     # TODO: добавить умение работать с неделями и временами года (типо "за прошлую зиму" чтобы понимал)
     def input(self, word: str):
@@ -258,57 +252,75 @@ class StateMachineForDateDetermining:
                 # год
                 if match_word_with_list(word, ['год']) != -1:
                     if self._quantifier:
-                        self._year = self._quantifier
-                        self._quantifier = 0
+                        # год должен быть 4х-значным и больще 1900 года
+                        if self._quantifier > 1900:
+                            self._year = self._quantifier
+                            self._quantifier = 0
                     # указан относительный период
-                    elif self._relative_descriptor:
+                    if self._relative_descriptor:
                         if self._relative_descriptor > 0:
                             self._year = self._current_date.year
                         else:
                             # квантификатор нужен для примера: 2 прошлых года
                             self._year = self._current_date.year - 1 * (self._quantifier if self._quantifier else 1)
                             self._quantifier = 0
+                    else:
+                        # если относительный период не указан,
+                        # то период определяем как (365 * self._quanifier) дней ранее
+                        # пример: за год - значит с периода 365 дней ранее по сегодня
+                        if self._month == 0:
+                            self._date_period[0] = \
+                                self._current_date \
+                                - timedelta(
+                                    days=365 * (self._quantifier if self._quantifier else 1)
+                                )
+                            self._quantifier = 0
 
                     self._is_determined = True
                 # месяц
                 elif match_word_with_list(word, ['месяц']) != -1:
                     # указан относительный период
-                    if self._relative_descriptor:
-                        if self._relative_descriptor > 0:
-                            self._month = self._current_date.month
+                    if self._relative_descriptor > 0:
+                        self._month = self._current_date.month
+                    elif self._relative_descriptor < 0:
+                        # квантификатор нужен для примера: 2 прошлых месяца
+                        delta_month = self._quantifier if self._quantifier else 0
+                        if self._current_date.month < delta_month:
+                            self._month = 12 + self._current_date.month - delta_month
+                            self._year = self._current_date.year - 1
                         else:
-                            # квантификатор нужен для примера: 2 прошлых месяца
-                            delta_month = self._quantifier if self._quantifier else 1
-                            if self._current_date.month < delta_month:
-                                self._month = 12 + self._current_date.month - delta_month
-                                self._year = self._current_date.year - 1
-                            else:
-                                self._month = self._current_date.month - delta_month
-                                self._year = self._current_date.year
-                            self._quantifier = 0
+                            self._month = self._current_date.month - delta_month
+                            self._year = self._current_date.year
+                        self._quantifier = 0
+                    else:
+                        # если относительный период не указан,
+                        # то период определяем как (30 * self._quanifier) дней ранее
+                        # пример: за месяц - значит с периода 30 дней ранее по сегодня
+                        self._date_period[0] = \
+                            self._current_date \
+                            - timedelta(
+                                days=30 * (self._quantifier if self._quantifier else 1)
+                            )
+                        self._quantifier = 0
 
-                        self._is_determined = True
+                    self._is_determined = True
                 # день
                 elif match_word_with_list(word, ['ден', 'дня', 'дней']) != -1:
                     # указан относительный период
-                    if self._relative_descriptor:
-                        if self._relative_descriptor > 0:
-                            self._date_period[0] = self._current_date
-                        else:
-                            if self._quantifier:
-                                # квантификатор нужен для примера: 2 прошлых дня
-                                self._date_period[0] = \
-                                    self._current_date \
-                                    - timedelta(
-                                        days=self._quantifier if self._quantifier else 0
-                                    )
+                    if self._relative_descriptor > 0:
+                        self._date_period[0] = self._current_date
+                    else:
+                        # квантификатор нужен для примера: 2 прошлых дня
+                        # когда квантификатор = 0, как в примере - за день,
+                        # то это значит со вчерашнего дня
+                        self._date_period[0] = self._current_date \
+                            - timedelta(
+                                days=self._quantifier if self._quantifier else 1
+                            )
 
-                                self._quantifier = 0
-                            else:
-                                self._date_period[0] = self._date_period[1] = \
-                                    self._current_date - timedelta(days=1)
+                        self._quantifier = 0
 
-                        self._is_determined = True
+                    self._is_determined = True
                 # квартал
                 elif match_word_with_list(word, ['квартал']) != -1:
                     if self._quantifier:
@@ -569,7 +581,8 @@ def period_determiner(words_to_process: List[str]) -> Tuple[str, str]:
         begin_of_period, end_of_period = date_determiner(words_to_process)
 
     # дата начала не должна быть больше даты окончания периода
-    if begin_of_period != 'error' and end_of_period != 'error':
+    if re.match(re_long_date_pattern, begin_of_period) \
+            and re.match(re_long_date_pattern, end_of_period):
         begin_date: datetime = datetime.strptime(begin_of_period, date_format)
         end_date: datetime = datetime.strptime(end_of_period, date_format)
         if begin_date > end_date:

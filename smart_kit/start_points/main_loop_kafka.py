@@ -45,7 +45,8 @@ class MainLoop(BaseMainLoop):
                                                         "class_name": self.__class__.__name__})
         self.loop = asyncio.get_event_loop()
         self.health_check_server_future = None
-        super().__init__(*args, **kwargs)
+        BaseMainLoop.__init__(self, *args, **kwargs)
+
         try:
             kafka_config = _enrich_config_from_secret(
                 self.settings["kafka"]["template-engine"], self.settings.get("secret_kafka", {})
@@ -144,7 +145,8 @@ class MainLoop(BaseMainLoop):
                                                         "class_name": self.__class__.__name__})
 
         tasks = [self.main_work(kafka_key) for kafka_key in self.consumers]
-        tasks.append(self.healthcheck_coro())
+        if self.health_check_server is not None:
+            tasks.append(self.healthcheck_coro())
         await asyncio.gather(*tasks)
 
         # is needed? start #
@@ -164,7 +166,8 @@ class MainLoop(BaseMainLoop):
         while True:
             # does it work? start #
             # from DP #
-            if not self.health_check_server_future or self.health_check_server_future.done() or self.health_check_server_future.cancelled():
+            if not self.health_check_server_future or self.health_check_server_future.done() or \
+                    self.health_check_server_future.cancelled():
                 self.health_check_server_future = self.loop.run_in_executor(None,  self.health_check_server.iterate)
             await asyncio.sleep(0.5)
             # does it work? end #
@@ -205,7 +208,7 @@ class MainLoop(BaseMainLoop):
                 if mq_message:
                     stats = "Polling time: {} msecs\n".format(poll_timer.msecs)
                     message_value = mq_message.value()  # DRY!
-                    self.process_message(mq_message, consumer, kafka_key, stats)
+                    await self.process_message(mq_message, consumer, kafka_key, stats)
 
             except KafkaException as kafka_exp:
                 log("kafka error: %(kafka_exp)s. MESSAGE: {}.".format(message_value),
@@ -323,7 +326,7 @@ class MainLoop(BaseMainLoop):
         topic_names_2_key = self._topic_names_2_key(kafka_key)
         return self.default_topic_key(kafka_key) or topic_names_2_key[mq_message.topic()]
 
-    def process_message(self, mq_message, consumer, kafka_key, stats):
+    async def process_message(self, mq_message, consumer, kafka_key, stats):
         topic_key = self._get_topic_key(mq_message, kafka_key)
 
         save_tries = 0

@@ -41,7 +41,7 @@ class BaseMainLoop:
             self.model: SmartAppModel = model
             self.user_cls = user_cls
             self.parametrizer_cls = parametrizer_cls
-            self.db_adapter = await self.get_db()
+            self.db_adapter = self.get_db()
             self.is_work = True
             self.to_msg_validators: Iterable[MessageValidator] = to_msg_validators
             self.from_msg_validators: Iterable[MessageValidator] = from_msg_validators

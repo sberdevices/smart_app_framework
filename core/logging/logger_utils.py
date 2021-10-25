@@ -55,10 +55,7 @@ def log(message, user=None, params=None, level="INFO", exc_info=None):
         else:
             params = _make_message(user, params)
 
-        masked_message = LogMasker.mask_structure(message, LogMasker.regular_exp)
-        masked_params = LogMasker.mask_structure(params, LogMasker.regular_exp)
-
-        app_logger.log(level_name, masked_message, masked_params, exc_info=exc_info)
+        app_logger.log(level_name, message, params, exc_info=exc_info)
     except timeout_decorator.TimeoutError:
         raise
     except:

@@ -174,7 +174,7 @@ class StateMachineForDateDetermining:
         try:
 
             # если предлоги "от" или "с" идут не первыми словами, то это ошибка
-            if word == 'с' or word == 'от':
+            if word == 'с' or word == 'со' or word == 'от':
                 if self._empty_state:
                     # зафиксировали что имеем дело с периодом
                     self._is_period = True
@@ -490,6 +490,7 @@ def is_from_date_dictionary(word: str) -> bool:
     list_of_dictionary: List[str] = [
         "от",
         "с",
+        "со",
         "по",
         "до",
         "вчерашн",

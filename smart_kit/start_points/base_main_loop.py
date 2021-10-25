@@ -1,6 +1,7 @@
 # coding=utf-8
 
 from typing import Type, Iterable
+import asyncio
 import signal
 
 import scenarios.logging.logger_constants as log_const
@@ -36,12 +37,13 @@ class BaseMainLoop:
         try:
             signal.signal(signal.SIGINT, self.stop)
             signal.signal(signal.SIGTERM, self.stop)
+            self.loop = asyncio.get_event_loop()
             self.settings = settings
             self.app_name = self.settings.app_name
             self.model: SmartAppModel = model
             self.user_cls = user_cls
             self.parametrizer_cls = parametrizer_cls
-            self.db_adapter = await self.get_db()
+            self.db_adapter = self.get_db()
             self.is_work = True
             self.to_msg_validators: Iterable[MessageValidator] = to_msg_validators
             self.from_msg_validators: Iterable[MessageValidator] = from_msg_validators
@@ -68,10 +70,10 @@ class BaseMainLoop:
                 level="ERROR", exc_info=True)
             raise
 
-    async def get_db(self):
+    def get_db(self):
         db_adapter = db_adapter_factory(self.settings["template_settings"].get("db_adapter", {}))
         if db_adapter.IS_ASYNC:
-            await db_adapter.connect()
+            self.loop.run_until_complete(db_adapter.connect())
         else:
             db_adapter.connect()
         return db_adapter

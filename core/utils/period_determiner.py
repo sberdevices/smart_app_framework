@@ -18,6 +18,7 @@ __author__ = 'anurmanov'
 # глобальный формат даты
 date_format: str = '%d.%m.%Y'
 # шаблоны регулярок для определения дат
+re_shortest_date_pattern = '^([0-9]{2}).([0-9]{2})$'
 re_short_date_pattern = '^([0-9]{2}).([0-9]{2}).([0-9]{2})$'
 re_long_date_pattern = '^([0-9]{2}).([0-9]{2}).([0-9]{4})$'
 
@@ -35,6 +36,12 @@ class StateMachineForDateDetermining:
     а также КА может понять, что дата определена некорректно
     """
 
+    # начальное пустое состояние автомата до прихода первого слова
+    _empty_state: bool
+
+    # Истина, если используется период до текущего дня
+    # иначе конкретная дата (день, месяц, квартал, год)
+    _is_period: bool
     _is_determined: bool
     _is_error: bool
     _date_period: List[Optional[datetime]]
@@ -61,6 +68,8 @@ class StateMachineForDateDetermining:
     _quantifier: int
 
     def __init__(self):
+        self._empty_state = True
+        self._is_period = False
         self._current_date = datetime.now()
         self._date_period = [None, None]
         self._relative_descriptor = 0
@@ -86,7 +95,7 @@ class StateMachineForDateDetermining:
             if self._quantifier:
                 return 'error', 'error'
 
-            # если указали период, то берем из self._date_period
+            # если указали 1ую дату в периоде
             if self._date_period[0]:
                 # если год определен, то надо его использовать
                 if self._year:
@@ -99,28 +108,33 @@ class StateMachineForDateDetermining:
                     except IncorrectDateException:
                         return 'error', 'error'
 
-                if self._date_period[1]:
-                    # если год определен, то надо его использовать
-                    if self._year:
-                        try:
-                            self._date_period[1] = safe_datetime(
-                                year=self._year,
-                                month=self._date_period[1].month,
-                                day=self._date_period[1].day
-                            )
-                        except IncorrectDateException:
-                            return 'error', 'error'
-
-                # конец периода не указан, то берем текущий день в качестве окончания
-                else:
+                # если работаем с периодом или дата относительна текущей даты,
+                # то конец периода всегда окончивается текущей датой
+                # пример: "с 12 мая" или "за 4 прошлых месяца"
+                if self._is_period or self._relative_descriptor:
+                    # берем текущий день в качестве окончания
                     self._date_period[1] = self._current_date
+                else:
+                    # иначе берем расчитанную 2ую дату
+                    if self._date_period[1]:
+                        # если год определен, то надо его использовать
+                        if self._year:
+                            try:
+                                self._date_period[1] = safe_datetime(
+                                    year=self._year,
+                                    month=self._date_period[1].month,
+                                    day=self._date_period[1].day
+                                )
+                            except IncorrectDateException:
+                                return 'error', 'error'
+                    else:
+                        # если она пустая, то берем текущую дату
+                        self._date_period[1] = self._current_date
 
                 return format_date(self._date_period[0]), format_date(self._date_period[1])
 
             else:
                 # Иначе строим дату начала на основе года, месяца и дня,
-                # а дату окончания берем текущим днем
-                self._date_period[1] = self._current_date
 
                 # если день не указан, тогда берем первый день
                 if self._day == 0:
@@ -137,6 +151,16 @@ class StateMachineForDateDetermining:
                 except IncorrectDateException:
                     return 'error', 'error'
 
+                # если работаем с периодом или дата относительна текущей даты,
+                # то конец периода всегда окончивается текущей датой
+                # пример: "с 12 мая" или "за 4 прошлых месяца"
+                if self._is_period or self._relative_descriptor:
+                    # берем текущий день в качестве окончания
+                    self._date_period[1] = self._current_date
+                else:
+                    # иначе период за 1 день
+                    self._date_period[1] = self._date_period[0]
+
                 return format_date(self._date_period[0]), format_date(self._date_period[1])
 
         return 'error', 'error'
@@ -148,6 +172,21 @@ class StateMachineForDateDetermining:
         """
 
         try:
+
+            # если предлоги "от" или "с" идут не первыми словами, то это ошибка
+            if word == 'с' or word == 'от':
+                if self._empty_state:
+                    # зафиксировали что имеем дело с периодом
+                    self._is_period = True
+                    return
+                else:
+                    self._is_error = True
+                    return
+
+            # после прихода первого слова начальное состояние теряется
+            if self._empty_state:
+                self._empty_state = False
+
             # если в КА ошибка, то он больше не обрабатывает слова
             if self._is_error:
                 return
@@ -165,7 +204,7 @@ class StateMachineForDateDetermining:
                 self._is_error = True
                 return
 
-            # проверка через регулярку дат форматов dd.mm.yy и dd.mm.yyyy
+            # проверка через регулярку дат формата dd.mm.yy
             m = re.match(re_short_date_pattern, word)
             if m:
                 self._date_period[0] = self._date_period[1] = \
@@ -177,11 +216,24 @@ class StateMachineForDateDetermining:
                 self._is_determined = True
                 return
 
+            # проверка через регулярку дат формата dd.mm.yyyy
             m = re.match(re_long_date_pattern, word)
             if m:
                 self._date_period[0] = self._date_period[1] = \
                     safe_datetime(
                         year=int(m.group(3)),
+                        month=int(m.group(2)),
+                        day=int(m.group(1))
+                    )
+                self._is_determined = True
+                return
+
+            # проверка через регулярку дат формата dd.mm
+            m = re.match(re_shortest_date_pattern, word)
+            if m:
+                self._date_period[0] = self._date_period[1] = \
+                    safe_datetime(
+                        year=self._current_date.year,
                         month=int(m.group(2)),
                         day=int(m.group(1))
                     )
@@ -436,6 +488,8 @@ def is_from_date_dictionary(word: str) -> bool:
 
     # некоторые слова лишены окончания для нивелирования влияния падежей
     list_of_dictionary: List[str] = [
+        "от",
+        "с",
         "по",
         "до",
         "вчерашн",
@@ -554,6 +608,7 @@ def extract_words_describing_period(words_from_intent: List[str]) -> List[str]:
     for word in words_from_intent:
         if word.isnumeric() \
             or is_from_date_dictionary(word) \
+                or re.match(re_shortest_date_pattern, word) \
                 or re.match(re_short_date_pattern, word) \
                 or re.match(re_long_date_pattern, word):
             words_to_process.append(word)

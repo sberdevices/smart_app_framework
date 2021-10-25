@@ -10,7 +10,7 @@ from core.utils.period_determiner import period_determiner
 from core.utils.period_determiner import extract_words_describing_period
 
 
-__author__ = 'anurmanov'
+__author__ = 'out-nurmanov-as'
 
 
 def test_period_determiner():
@@ -124,7 +124,14 @@ def test_period_determiner():
     result = period_determiner(words_to_process)
     assert result == ('28.01.2012', '12.03.2020')
 
-    # если квартал ипользуется
+    # если даты передана в формате dd.mm
+    words_to_process = [
+        '28.01'
+    ]
+    result = period_determiner(words_to_process)
+    assert result == ('28.01.{}'.format(current_date.year), '28.01.{}'.format(current_date.year))
+
+    # если конкретный квартал ипользуется
     words_to_process = [
         '3',
         'квартал',
@@ -132,6 +139,16 @@ def test_period_determiner():
     ]
     result = period_determiner(words_to_process)
     assert result == ('01.07.2020', '30.09.2020')
+
+    # если начиная с определенного квартала
+    words_to_process = [
+        'с',
+        '3',
+        'квартала',
+        '2020',
+    ]
+    result = period_determiner(words_to_process)
+    assert result == ('01.07.2020', '{}.{}.{}'.format(current_date.day, current_date.month, current_date.year))
 
     # если одна из дат некорректная
     words_to_process = [
@@ -194,6 +211,28 @@ def test_period_determiner():
     result = period_determiner(words_to_process)
     assert result == ('28.03.{}'.format(current_date.year), '28.03.{}'.format(current_date.year))
 
+    # если используется корректная форма к примеру "за 28 марта",
+    # то определится как 28 марта текущего года
+    words_to_process = [
+        '28',
+        'марта',
+        '2019'
+    ]
+    result = period_determiner(words_to_process)
+    assert result == ('28.03.2019', '28.03.2019')
+
+
+    # если используется корректная форма к примеру "с 28 марта 2019",
+    # то период определится как  с 28 марта 2019 года по сегодня
+    words_to_process = [
+        'с',
+        '28',
+        'марта',
+        '2019',
+    ]
+    result = period_determiner(words_to_process)
+    assert result == ('28.03.2019', '{}.{}.{}'.format(current_date.day, current_date.month, current_date.year))
+
 
 def test_extract_words_describing_period():
     words_from_intent = [
@@ -211,7 +250,7 @@ def test_extract_words_describing_period():
     words_from_intent = [
         "заказать",
         "выписку",
-        "c",
+        "с",
         "марта",
         "2019",
         "года",
@@ -219,7 +258,7 @@ def test_extract_words_describing_period():
         "ныне"
     ]
     result = extract_words_describing_period(words_from_intent)
-    assert result == ['марта', '2019', 'года', 'по', 'ныне']
+    assert result == ['с', 'марта', '2019', 'года', 'по', 'ныне']
 
     words_from_intent = [
         "заказать",

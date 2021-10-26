@@ -308,6 +308,34 @@ def test_period_determiner_22():
                                         current_date.year))
 
 
+def test_period_determiner_23():
+    # если используется форма "с 2 по 17 июня"
+    count_of_months: int = 2
+    words_to_process = [
+        'с',
+        '2',
+        'по',
+        '17',
+        'января'
+    ]
+    result = period_determiner(words_to_process)
+    d1: datetime = current_date - timedelta(30 * count_of_months)
+    assert result == ('02.01.{}'.format(current_date.year),
+                      '17.01.{}'.format(current_date.year))
+
+
+def test_period_determiner_24():
+    # тест контроля максимального количества дней в периоде
+    count_of_years: int = 2
+    words_to_process = [
+        'за',
+        str(count_of_years),
+        'года'
+    ]
+    result = period_determiner(words_to_process, max_days_in_period=365)
+    assert result == ('error', 'error')
+
+
 def test_extract_words_describing_period_1():
     words_from_intent = [
         "заказать",

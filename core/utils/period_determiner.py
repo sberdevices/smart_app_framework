@@ -545,7 +545,7 @@ def is_from_date_dictionary(word: str) -> bool:
     return True
 
 
-def period_determiner(words_to_process: List[str]) -> Tuple[str, str]:
+def period_determiner(words_to_process: List[str], max_days_in_period: Optional[int] = None) -> Tuple[str, str]:
     """
     Входная функция модуля, ее вызываем для получения дат.
     Она использует рабочую функцию date_determiner
@@ -576,6 +576,29 @@ def period_determiner(words_to_process: List[str]) -> Tuple[str, str]:
     if i:
         begin_of_period, _ = date_determiner(words_to_process[:i])
         _, end_of_period = date_determiner(words_to_process[i+1:])
+
+        # в русском языке период можно выбрать еще вот как:
+        # с 2 по 13 апреля 2021 - первый период номером дня,
+        # а вторая дата в обучной форме.
+        # Обрабатываем этот случай после КА
+        if (begin_of_period == 'error' or begin_of_period == '') and \
+                end_of_period != '' and end_of_period != 'error':
+            j: int = len(words_to_process[:i])
+            if j <= 2:
+                if words_to_process[j-1].isnumeric():
+                    d1 = int(words_to_process[j-1])
+                    m = re.match(re_long_date_pattern, end_of_period)
+                    if m:
+                        d2 = int(m.group(1))
+                        m2 = m.group(2)
+                        y2 = m.group(3)
+                        if d1 > d2:
+                            return 'error', 'error'
+                        else:
+                            begin_of_period = '{}.{}.{}'\
+                                .format(d1 if d1 > 9 else '0' + str(d1), m2, y2)
+
+
     # иначе имеем дело со словами, указывающих на единственную дату
     else:
         begin_of_period, end_of_period = date_determiner(words_to_process)
@@ -587,6 +610,12 @@ def period_determiner(words_to_process: List[str]) -> Tuple[str, str]:
         end_date: datetime = datetime.strptime(end_of_period, date_format)
         if begin_date > end_date:
             return 'error', 'error'
+        else:
+            # контроль максимального количества дней в выбранном периоде
+            if max_days_in_period:
+                t: timedelta = end_date - begin_date
+                if t.days > max_days_in_period:
+                    return 'error', 'error'
 
     return begin_of_period, end_of_period
 

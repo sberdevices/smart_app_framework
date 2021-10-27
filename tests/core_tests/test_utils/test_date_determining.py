@@ -336,6 +336,25 @@ def test_period_determiner_24():
     assert result == ('error', 'error')
 
 
+def test_period_determiner_25():
+    # если используется корректная форма к примеру "за n недель",
+    # то период определится как с даты ранее на 7 * n дней текущего дня
+    count_of_weeks: int = 3
+    words_to_process = [
+        'за',
+        str(count_of_weeks),
+        'недели'
+    ]
+    result = period_determiner(words_to_process)
+    d1: datetime = current_date - timedelta(7 * count_of_weeks)
+    assert result == ('{}.{}.{}'.format(d1.day if d1.day > 9 else '0' + str(d1.day),
+                                        d1.month if d1.month > 9 else '0' + str(d1.month),
+                                        d1.year),
+                      '{}.{}.{}'.format(current_date.day,
+                                        current_date.month,
+                                        current_date.year))
+
+
 def test_extract_words_describing_period_1():
     words_from_intent = [
         "заказать",

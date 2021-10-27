@@ -159,7 +159,6 @@ class StateMachineForDateDetermining:
 
         return '', ''
 
-    # TODO: добавить умение работать с неделями и временами года (типо "за прошлую зиму" чтобы понимал)
     def input(self, word: str):
         """
         Ключевой метод КА принимающий слова и меняющий свое состояние в зависимости от этого
@@ -319,6 +318,17 @@ class StateMachineForDateDetermining:
                             )
 
                         self._quantifier = 0
+
+                    self._is_determined = True
+                # неделя
+                elif match_word_with_list(word, ['недел']) != -1:
+                    # всегда относительный текущего дня период
+                    self._date_period[0] = self._current_date \
+                        - timedelta(
+                            days=7 * self._quantifier if self._quantifier else 1
+                        )
+
+                    self._quantifier = 0
 
                     self._is_determined = True
                 # квартал
@@ -515,17 +525,11 @@ def is_from_date_dictionary(word: str) -> bool:
         "нынешн",
         "сегодн",
         "сегодняшн",
-        #"зима",
-        #"зиму",
-        #"весна",
-        #"весну",
-        #"лето",
-        #"осень",
         "день",
         "дня",
         "месяц",
         "год",
-        #"недел",
+        "недел",
         "квартал",
         "январь",
         "феврал",

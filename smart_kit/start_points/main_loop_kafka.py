@@ -133,8 +133,7 @@ class MainLoop(BaseMainLoop):
         log("%(class_name)s.run started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                   "class_name": self.__class__.__name__})
         try:
-            loop = asyncio.get_event_loop()
-            loop.run_until_complete(self.main_coro())
+            self.loop.run_until_complete(self.main_coro())
         except (SystemExit,):
             log("%(class_name)s.run stopped", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                       "class_name": self.__class__.__name__})

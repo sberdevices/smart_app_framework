@@ -216,7 +216,7 @@ class MainLoop(BaseMainLoop):
                     log("Error handling worker fail exception.",
                         level="ERROR", exc_info=True)
 
-    async def _generate_answers(self, user, commands, message, **kwargs):
+    def _generate_answers(self, user, commands, message, **kwargs):
         topic_key = kwargs["topic_key"]
         kafka_key = kwargs["kafka_key"]
         answers = []
@@ -265,14 +265,14 @@ class MainLoop(BaseMainLoop):
                     timeout_from_message = self._get_timeout_from_message(orig_message_raw, callback_id,
                                                                           headers=mq_message.headers())
 
-                    user = self.load_user(db_uid, timeout_from_message)
+                    user = await self.load_user(db_uid, timeout_from_message)
                     commands = self.model.answer(timeout_from_message, user)
                     topic_key = self._get_topic_key(mq_message, kafka_key)
                     answers = self._generate_answers(user=user, commands=commands, message=timeout_from_message,
                                                      topic_key=topic_key,
                                                      kafka_key=kafka_key)
 
-                    user_save_no_collisions = self.save_user(db_uid, user, mq_message)
+                    user_save_no_collisions = await self.save_user(db_uid, user, mq_message)
 
                     if user and not user_save_no_collisions:
                         log(
@@ -371,7 +371,7 @@ class MainLoop(BaseMainLoop):
                             commands = await self.model.answer(message, user)
 
                     with self.tracer.start_span('Script time', child_of=scope.span) as span:
-                        answers = await self._generate_answers(user=user, commands=commands, message=message,
+                        answers = self._generate_answers(user=user, commands=commands, message=message,
                                                                topic_key=topic_key,
                                                                kafka_key=kafka_key)
                         smart_kit_metrics.sampling_script_time(self.app_name, script_timer.secs)
@@ -403,7 +403,6 @@ class MainLoop(BaseMainLoop):
                     mq_message.set_headers([])
                 self.tracer.inject(span_context=span.context, format=jaeger_kafka_codec.KAFKA_MAP,
                                    carrier=mq_message.headers())
-                # method async updated before that line #
 
                 if answers:
                     for answer in answers:

@@ -54,7 +54,7 @@ class SmartAppModel:
         return self._handlers[message_type]
 
     @exc_handler(on_error_obj_method_name="on_answer_error")
-    def answer(self, message, user):
+    async def answer(self, message, user):
         user.expire()
         handler = self.get_handler(message.type)
 

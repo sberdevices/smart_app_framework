@@ -166,7 +166,7 @@ class MainLoop(BaseMainLoop):
             # from DP #
             if not self.health_check_server_future or self.health_check_server_future.done() or \
                     self.health_check_server_future.cancelled():
-                self.health_check_server_future = self.loop.run_in_executor(None,  self.health_check_server.iterate)
+                self.health_check_server_future = self.loop.run_in_executor(None, self.health_check_server.iterate)
             await asyncio.sleep(0.5)
             # does it work? end #
 
@@ -216,7 +216,7 @@ class MainLoop(BaseMainLoop):
                     log("Error handling worker fail exception.",
                         level="ERROR", exc_info=True)
 
-    def _generate_answers(self, user, commands, message, **kwargs):
+    async def _generate_answers(self, user, commands, message, **kwargs):
         topic_key = kwargs["topic_key"]
         kafka_key = kwargs["kafka_key"]
         answers = []
@@ -363,25 +363,23 @@ class MainLoop(BaseMainLoop):
                 with self.tracer.scope_manager.activate(span, True) as scope:
                     with StatsTimer() as load_timer:
                         user = await self.load_user(db_uid, message)
-                # method async updated before that line #
 
-                with self.tracer.scope_manager.activate(span, True) as scope:
                     with self.tracer.start_span('Loading time', child_of=scope.span) as span:
                         smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
                         stats += "Loading time: {} msecs\n".format(load_timer.msecs)
                         with StatsTimer() as script_timer:
-                            commands = self.model.answer(message, user)
+                            commands = await self.model.answer(message, user)
 
                     with self.tracer.start_span('Script time', child_of=scope.span) as span:
-                        answers = self._generate_answers(user=user, commands=commands, message=message,
-                                                         topic_key=topic_key,
-                                                         kafka_key=kafka_key)
+                        answers = await self._generate_answers(user=user, commands=commands, message=message,
+                                                               topic_key=topic_key,
+                                                               kafka_key=kafka_key)
                         smart_kit_metrics.sampling_script_time(self.app_name, script_timer.secs)
                         stats += "Script time: {} msecs\n".format(script_timer.msecs)
 
                     with self.tracer.start_span('Saving time', child_of=scope.span) as span:
                         with StatsTimer() as save_timer:
-                            user_save_no_collisions = self.save_user(db_uid, user, message)
+                            user_save_no_collisions = await self.save_user(db_uid, user, message)
 
                     smart_kit_metrics.sampling_save_time(self.app_name, save_timer.secs)
                     stats += "Saving time: {} msecs\n".format(save_timer.msecs)
@@ -405,6 +403,7 @@ class MainLoop(BaseMainLoop):
                     mq_message.set_headers([])
                 self.tracer.inject(span_context=span.context, format=jaeger_kafka_codec.KAFKA_MAP,
                                    carrier=mq_message.headers())
+                # method async updated before that line #
 
                 if answers:
                     for answer in answers:

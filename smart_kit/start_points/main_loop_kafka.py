@@ -79,7 +79,6 @@ class MainLoop(BaseMainLoop):
             self.behaviors_timeouts = HeapqKV(value_to_key_func=lambda val: val.callback_id)
             # is needed? end #
 
-            self.iterate_tries = 0
             self.concurrent_messages = 0
 
             log("%(class_name)s.__init__ completed.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
@@ -90,44 +89,9 @@ class MainLoop(BaseMainLoop):
                 level="ERROR", exc_info=True)
             raise
 
-    async def save_user_async(self, db_uid, user, message):
-        no_collisions = True
-        if user.do_not_save:
-            log("User %(uid)s will not saved", user=user, params={"uid": user.id,
-                                                                  log_const.KEY_NAME: "user_will_not_saved"})
-        else:
-
-            no_collisions = True
-            try:
-                str_data = user.raw_str
-                log("Saving User %(uid)s. Serialized utf8 json length is %(user_length)s symbols.", user=user,
-                    params={"uid": user.id,
-                            log_const.KEY_NAME: "user_save",
-                            "user_length": len(str_data)})
-                if user.initial_db_data and self.user_save_check_for_collisions:
-                    if self.db_adapter.IS_ASYNC:
-                        no_collisions = await self.db_adapter.replace_if_equals(db_uid,
-                                                                                sample=user.initial_db_data,
-                                                                                data=str_data)
-                    else:
-                        no_collisions = self.db_adapter.replace_if_equals(db_uid,
-                                                                          sample=user.initial_db_data,
-                                                                          data=str_data)
-                else:
-                    if self.db_adapter.IS_ASYNC:
-                        await self.db_adapter.save(db_uid, str_data)
-                    else:
-                        self.db_adapter.save(db_uid, str_data)
-            except (DBAdapterException, ValueError):
-                log("Failed to set user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
-                                                       log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")
-                smart_kit_metrics.counter_save_error(self.app_name)
-            if not no_collisions:
-                smart_kit_metrics.counter_save_collision(self.app_name)
-        return no_collisions
-
-    def pre_handle(self):
-        self.iterate_behavior_timeouts()
+    # TODO find where it should be used
+    async def pre_handle(self):
+        await self.iterate_behavior_timeouts()
 
     def run(self):
         log("%(class_name)s.run started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
@@ -162,31 +126,24 @@ class MainLoop(BaseMainLoop):
 
     async def healthcheck_coro(self):
         while True:
-            # does it work? start #
-            # from DP #
             if not self.health_check_server_future or self.health_check_server_future.done() or \
                     self.health_check_server_future.cancelled():
                 self.health_check_server_future = self.loop.run_in_executor(None, self.health_check_server.iterate)
             await asyncio.sleep(0.5)
-            # does it work? end #
 
     async def main_work(self, kafka_key):
-        # is needed? start #
-        # from DP #
-        self.iterate_tries = self.iterate_tries % 1000 + 1
-        # is needed? end #
-
         consumer = self.consumers[kafka_key]
         message_value = None
-        max_concurent_messages = self.settings["template_settings"].get("max_concurent_messages", 20)
+        max_concurrent_messages = self.settings["template_settings"].get("max_concurrent_messages", 20)
 
         loop = asyncio.get_event_loop()
 
         while self.is_work:
-            if self.concurrent_messages >= max_concurent_messages:
-                log(f"%(class_name)s.main_work: max {max_concurent_messages} concurent messages occured",
+            # seems useless because self.concurrent_messages do not change
+            if self.concurrent_messages >= max_concurrent_messages:
+                log(f"%(class_name)s.main_work: max {max_concurrent_messages} concurrent messages occured",
                     params={"class_name": self.__class__.__name__,
-                            log_const.KEY_NAME: "max_concurent_messages"}, level='WARNING')
+                            log_const.KEY_NAME: "max_concurrent_messages"}, level='WARNING')
                 await asyncio.sleep(0.2)
                 continue
             try:
@@ -247,7 +204,7 @@ class MainLoop(BaseMainLoop):
         timeout_from_message.callback_id = callback_id
         return timeout_from_message
 
-    def iterate_behavior_timeouts(self):
+    async def iterate_behavior_timeouts(self):
         now = time.time()
         while now > (self.behaviors_timeouts.get_head_key() or float("inf")):
             _, behavior_timeout_value = self.behaviors_timeouts.pop()
@@ -435,38 +392,6 @@ class MainLoop(BaseMainLoop):
             smart_kit_metrics.counter_save_collision_tries_left(self.app_name)
         consumer.commit_offset(mq_message)
 
-    def iterate(self, kafka_key):
-        consumer = self.consumers[kafka_key]
-        mq_message = None
-        message_value = None
-        try:
-            mq_message = None
-            message_value = None
-            with StatsTimer() as poll_timer:
-                mq_message = consumer.poll()
-
-            if mq_message:
-                stats = "Polling time: {} msecs\n".format(poll_timer.msecs)
-                message_value = mq_message.value()  # DRY!
-                self.process_message(mq_message, consumer, kafka_key, stats)
-
-        except KafkaException as kafka_exp:
-            log("kafka error: %(kafka_exp)s. MESSAGE: {}.".format(message_value),
-                params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                        "kafka_exp": str(kafka_exp),
-                        log_const.REQUEST_VALUE: str(message_value)},
-                level="ERROR", exc_info=True)
-        except Exception:
-            try:
-                log("%(class_name)s iterate error. Kafka key %(kafka_key)s MESSAGE: {}.".format(message_value),
-                    params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                            "kafka_key": kafka_key},
-                    level="ERROR", exc_info=True)
-                consumer.commit_offset(mq_message)
-            except Exception:
-                log("Error handling worker fail exception.",
-                    level="ERROR", exc_info=True)
-
     def check_message_key(self, from_message, message_key, user):
         sub = from_message.sub
         channel = from_message.channel
@@ -577,7 +502,7 @@ class MainLoop(BaseMainLoop):
                 timeout_from_message = self._get_timeout_from_message(orig_message_raw, callback_id,
                                                                       headers=mq_message.headers())
 
-                user = await self.load_user_async(db_uid, timeout_from_message)
+                user = await self.load_user(db_uid, timeout_from_message)
                 # TODO:  not to load user to check behaviors.has_callback ?
                 if user.behaviors.has_callback(callback_id):
                     callback_found = True
@@ -587,7 +512,7 @@ class MainLoop(BaseMainLoop):
                                                      topic_key=topic_key,
                                                      kafka_key=kafka_key)
 
-                    user_save_ok = await self.save_user_async(db_uid, user, mq_message)
+                    user_save_ok = await self.save_user(db_uid, user, mq_message)
 
                     if not user_save_ok:
                         log(

@@ -44,7 +44,7 @@ class MainLoop(BaseMainLoop):
         log("%(class_name)s.__init__ started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                         "class_name": self.__class__.__name__})
         self.health_check_server_future = None
-        super().__init__(self, *args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         try:
             kafka_config = _enrich_config_from_secret(

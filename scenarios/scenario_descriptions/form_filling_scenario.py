@@ -29,15 +29,23 @@ class FormFillingScenario(BaseScenario):
     def text_fits(self, text_preprocessing_result, user):
         return self._check_field(text_preprocessing_result, user, None)
 
-    def check_ask_again_question(self, text_preprocessing_result, user, params):
+    def check_ask_again_requests(self, text_preprocessing_result, user, params):
         form = user.forms[self.form_type]
         question_field = self._field(form, text_preprocessing_result, user, params)
-        return question_field.description.has_again_question
+        return question_field.ask_again_counter < len(question_field.description.ask_again_requests)
 
-    def get_ask_again_question_result(self, text_preprocessing_result, user, params):
+    def ask_again(self, text_preprocessing_result, user, params):
         form = user.forms[self.form_type]
         question_field = self._field(form, text_preprocessing_result, user, params)
-        question = question_field.description.ask_again_question
+        question = question_field.description.ask_again_requests[question_field.ask_again_counter]
+        question_field.ask_again_counter += 1
+
+        user.history.add_event(
+            Event(type=HistoryConstants.types.FIELD_EVENT,
+                  scenario=self.root_id,
+                  content={HistoryConstants.content_fields.FIELD: question_field.description.id},
+                  results=HistoryConstants.event_results.ASK_QUESTION))
+
         return question.run(user, text_preprocessing_result, params)
 
     def _check_field(self, text_preprocessing_result, user, params):
@@ -54,7 +62,7 @@ class FormFillingScenario(BaseScenario):
             if not field.valid and field.description.has_requests and \
                     field.description.requirement.check(
                     text_preprocessing_result, user, params
-            ):
+                    ):
                 return field
 
     def get_fields_data(self, form, form_key):

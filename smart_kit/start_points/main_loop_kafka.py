@@ -382,7 +382,7 @@ class MainLoop(BaseMainLoop):
 
                     with self.tracer.start_span('Saving time', child_of=scope.span) as span:
                         with StatsTimer() as save_timer:
-                            user_save_no_collisions = self.save_user(db_uid, user, message)
+                            user_save_no_collisions = await self.save_user(db_uid, user, message)
 
                     smart_kit_metrics.sampling_save_time(self.app_name, save_timer.secs)
                     stats += "Saving time: {} msecs\n".format(save_timer.msecs)

@@ -236,8 +236,7 @@ class MainLoop(BaseMainLoop):
                     user_save_no_collisions = await self.save_user(db_uid, user, mq_message)
 
                     if user and not user_save_no_collisions:
-                        log(
-                            "MainLoop.iterate_behavior_timeouts: save user got collision on uid %(uid)s db_version %(db_version)s.",
+                        log("MainLoop.iterate_behavior_timeouts: save user got collision on uid %(uid)s db_version %(db_version)s.",
                             user=user,
                             params={log_const.KEY_NAME: "ignite_collision",
                                     "db_uid": db_uid,

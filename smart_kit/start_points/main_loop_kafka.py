@@ -2,6 +2,7 @@
 import asyncio
 import json
 import time
+import sys
 from collections import namedtuple
 from functools import lru_cache
 
@@ -103,26 +104,10 @@ class MainLoop(BaseMainLoop):
                                                       "class_name": self.__class__.__name__})
 
     async def main_coro(self):
-        log("%(class_name)s.main_coro started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                                                        "class_name": self.__class__.__name__})
-
         tasks = [self.main_work(kafka_key) for kafka_key in self.consumers]
         if self.health_check_server is not None:
             tasks.append(self.healthcheck_coro())
         await asyncio.gather(*tasks)
-
-        # is needed? start #
-        log("Stopping Kafka handler", level="WARNING")
-        for kafka_key in self.consumers:
-            self.consumers[kafka_key].close()
-            log("Kafka consumer connection is closed", level="WARNING")
-            self.publishers[kafka_key].close()
-            log("Kafka publisher connection is closed", level="WARNING")
-        log("Kafka handler is stopped", level="WARNING")
-        # is needed? end #
-
-        log("%(class_name)s.main_coro completed", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                                                          "class_name": self.__class__.__name__})
 
     async def healthcheck_coro(self):
         while True:
@@ -134,46 +119,60 @@ class MainLoop(BaseMainLoop):
     async def main_work(self, kafka_key):
         consumer = self.consumers[kafka_key]
         message_value = None
+
         max_concurrent_messages = self.settings["template_settings"].get("max_concurrent_messages", 10)
-
-        loop = asyncio.get_event_loop()
-
+        max_concurrent_messages_delay = self.settings["template_settings"].get("max_concurrent_messages_delay", 0.1)
+        last_poll_begin_time = time.time()
         while self.is_work:
+            from_last_poll_begin_ms = int((time.time() - last_poll_begin_time) * 1000)
+            stats = "From last poll time: {} msecs\n".format(from_last_poll_begin_ms)
+            log_params = {
+                log_const.KEY_NAME: "timings",
+                "from_last_poll_begin_ms": from_last_poll_begin_ms
+            }
+            last_poll_begin_time = time.time()
             if self.concurrent_messages >= max_concurrent_messages:
-                log(f"%(class_name)s.main_work: max {max_concurrent_messages} concurrent messages occured",
-                    params={"class_name": self.__class__.__name__,
-                            log_const.KEY_NAME: "max_concurrent_messages"}, level='WARNING')
-                await asyncio.sleep(0.2)
+                log(f"main_loop.main_work: max {max_concurrent_messages} concurrent messages occured",
+                    params={log_const.KEY_NAME: "max_concurrent_messages"}, level='WARNING')
+                await asyncio.sleep(max_concurrent_messages_delay)
+                total_delay = log_params.get("waiting_max_concurrent_messages", 0)
+                total_delay += max_concurrent_messages_delay
+                log_params["waiting_max_concurrent_messages"] = total_delay
                 continue
             try:
                 self.concurrent_messages += 1
                 mq_message = None
                 with StatsTimer() as poll_timer:
                     # Max delay between polls configured in consumer.poll_timeout param
-                    mq_message = await loop.run_in_executor(None, consumer.poll)
+                    mq_message = await self.loop.run_in_executor(None, consumer.poll)
                 if mq_message:
-                    stats = "Polling time: {} msecs\n".format(poll_timer.msecs)
-                    message_value = mq_message.value()  # DRY!
+                    headers = mq_message.headers()
+                    if headers is None:
+                        raise Exception("No incoming message headers found.")
+                    stats += "Polling time: {} msecs\n".format(poll_timer.msecs)
+                    log_params["kafka_polling"] = poll_timer.msecs
+                    message_value = json.loads(mq_message.value())
                     await self.process_message(mq_message, consumer, kafka_key, stats)
 
             except KafkaException as kafka_exp:
                 self.concurrent_messages -= 1
-                log("kafka error: %(kafka_exp)s. MESSAGE: {}.".format(message_value),
+                log("kafka error: %(kafka_exp)s.",
                     params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                             "kafka_exp": str(kafka_exp),
                             log_const.REQUEST_VALUE: str(message_value)},
                     level="ERROR", exc_info=True)
             except Exception:
                 self.concurrent_messages -= 1
+                log("%(class_name)s iterate error. Kafka key %(kafka_key)s",
+                    params={log_const.KEY_NAME: "worker_exception",
+                            "kafka_key": kafka_key,
+                            log_const.REQUEST_VALUE: str(message_value)},
+                    level="ERROR", exc_info=True)
                 try:
-                    log("%(class_name)s iterate error. Kafka key %(kafka_key)s MESSAGE: {}.".format(message_value),
-                        params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                                "kafka_key": kafka_key},
-                        level="ERROR", exc_info=True)
                     consumer.commit_offset(mq_message)
                 except Exception:
-                    log("Error handling worker fail exception.",
-                        level="ERROR", exc_info=True)
+                    log("Error handling worker fail exception.", level="ERROR", exc_info=True)
+                    raise
             else:
                 self.concurrent_messages -= 1
 
@@ -478,7 +477,17 @@ class MainLoop(BaseMainLoop):
             )
 
     def stop(self, signum, frame):
+        log("Stop call!")
+        log("Stopping Kafka handler", level="WARNING")
+        for kafka_key in self.consumers:
+            self.consumers[kafka_key].close()
+            log("Kafka consumer connection is closed", level="WARNING")
+            self.publishers[kafka_key].close()
+            log("Kafka publisher connection is closed", level="WARNING")
+        log("Kafka handler is stopped", level="WARNING")
         self.is_work = False
+
+        sys.exit()
 
     async def do_behavior_timeout(self, db_uid, callback_id, mq_message, kafka_key):
         if not self.is_work:

@@ -134,12 +134,11 @@ class MainLoop(BaseMainLoop):
     async def main_work(self, kafka_key):
         consumer = self.consumers[kafka_key]
         message_value = None
-        max_concurrent_messages = self.settings["template_settings"].get("max_concurrent_messages", 20)
+        max_concurrent_messages = self.settings["template_settings"].get("max_concurrent_messages", 10)
 
         loop = asyncio.get_event_loop()
 
         while self.is_work:
-            # seems useless because self.concurrent_messages do not change
             if self.concurrent_messages >= max_concurrent_messages:
                 log(f"%(class_name)s.main_work: max {max_concurrent_messages} concurrent messages occured",
                     params={"class_name": self.__class__.__name__,
@@ -147,6 +146,7 @@ class MainLoop(BaseMainLoop):
                 await asyncio.sleep(0.2)
                 continue
             try:
+                self.concurrent_messages += 1
                 mq_message = None
                 with StatsTimer() as poll_timer:
                     # Max delay between polls configured in consumer.poll_timeout param
@@ -157,12 +157,14 @@ class MainLoop(BaseMainLoop):
                     await self.process_message(mq_message, consumer, kafka_key, stats)
 
             except KafkaException as kafka_exp:
+                self.concurrent_messages -= 1
                 log("kafka error: %(kafka_exp)s. MESSAGE: {}.".format(message_value),
                     params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                             "kafka_exp": str(kafka_exp),
                             log_const.REQUEST_VALUE: str(message_value)},
                     level="ERROR", exc_info=True)
             except Exception:
+                self.concurrent_messages -= 1
                 try:
                     log("%(class_name)s iterate error. Kafka key %(kafka_key)s MESSAGE: {}.".format(message_value),
                         params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
@@ -172,6 +174,8 @@ class MainLoop(BaseMainLoop):
                 except Exception:
                     log("Error handling worker fail exception.",
                         level="ERROR", exc_info=True)
+            else:
+                self.concurrent_messages -= 1
 
     def _generate_answers(self, user, commands, message, **kwargs):
         topic_key = kwargs["topic_key"]

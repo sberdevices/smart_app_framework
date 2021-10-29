@@ -3,17 +3,11 @@
 !!! Модуль работает только со словами в нижнем регистре !!!
 
 usage: begin_date, end_date = period_determiner(words_to_process)
-
-Автор: Нурманов Алишер
-Дата: октябрь 2021 года
 """
 
 import re
 from typing import List, Tuple, Optional
 from datetime import datetime, timedelta
-
-
-__author__ = 'anurmanov'
 
 
 # глобальный формат даты
@@ -50,12 +44,13 @@ class StateMachineForDateDetermining:
     _month: int
     _year: int
 
-    # следующее ожидаемое слово
+    # список следующих ожидаемых слово
     # если это слово не получено, то ошибка
     # например: если пришло "вчерашний", то ждем слово "день"
     # если любое следующее слово ошибка, как в случае текста "сегодня",
-    # то _next_expected_word = ''
-    _next_expected_word: Optional[str]
+    # то _next_expected_words = []
+    # если не рассматриваем следующие слова, то _next_expected_words = None
+    _next_expected_words: Optional[List[str]]
 
     # дескриптор относительного периода:
     #  1 - указание на текущий период - нынешний, текущий, сегодняшний, этот
@@ -80,7 +75,7 @@ class StateMachineForDateDetermining:
         self._year = 0
         self._is_determined = False
         self._is_error = False
-        self._next_expected_word = None
+        self._next_expected_words = None
 
     def has_errors(self):
         return self._is_error
@@ -185,15 +180,15 @@ class StateMachineForDateDetermining:
                 return
 
             # если ждем какое-то слово
-            if self._next_expected_word:
-                if word != self._next_expected_word:
+            if self._next_expected_words:
+                if word not in self._next_expected_words:
                     self._is_error = True
                     return
-                self._next_expected_word = None
-            # если _next_expected_word пустая строка,
+                self._next_expected_words = None
+            # если _next_expected_words пустой список,
             # то больше не ждем никаких слов
             # и любое пришедшее слово приводит к ошибке
-            elif self._next_expected_word == '':
+            elif self._next_expected_words == []:
                 self._is_error = True
                 return
 
@@ -368,20 +363,20 @@ class StateMachineForDateDetermining:
                 # другие слова
                 else:
                     if match_word_with_list(word, ['вчерашн']) != -1:
-                        self._next_expected_word = 'день'
+                        self._next_expected_words = ['день']
                         self._relative_descriptor = -1
                     elif match_word_with_list(word, ['вчера']) != -1:
                         self._date_period[0] = self._date_period[1] = \
                             self._current_date - timedelta(days=1)
-                        self._next_expected_word = ''
+                        self._next_expected_words = []
                         self._is_determined = True
                     elif match_word_with_list(word, ['сегодн', 'ныне']) != -1:
                         self._date_period[0] = self._date_period[1] = \
                             self._current_date
-                        self._next_expected_word = ''
+                        self._next_expected_words = []
                         self._is_determined = True
                     elif match_word_with_list(word, ['сегодняшн']) != -1:
-                        self._next_expected_word = 'день'
+                        self._next_expected_words = ['день']
                         self._relative_descriptor = 1
 
                     else:
@@ -503,9 +498,6 @@ def is_from_date_dictionary(word: str) -> bool:
     """
     Функция определяет входит ли слово
     в "словарь" описывающий период времени
-
-    :param word:
-    :return:
     """
 
     # некоторые слова лишены окончания для нивелирования влияния падежей
@@ -645,7 +637,7 @@ def date_determiner(words_to_process: List[str]) -> Tuple[Optional[str], Optiona
 def extract_words_describing_period(words_from_intent: List[str]) -> List[str]:
     """
     Функция извлекает список слов, описываюищих период,
-    для последующей передаче функциям для определения периода
+    для последующей передачи функциям для определения периода
 
     :param words_from_intent: все слова из предложения в нижнем регистре
     :return: список слов описывающих период

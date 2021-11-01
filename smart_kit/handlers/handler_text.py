@@ -30,5 +30,5 @@ class HandlerText(HandlerBase):
         return answer
 
     async def _handle_base(self, text_preprocessing_result, user):
-        answer, is_answer_found = self.dialogue_manager.run(text_preprocessing_result, user)
+        answer, is_answer_found = await self.dialogue_manager.run(text_preprocessing_result, user)
         return answer or []

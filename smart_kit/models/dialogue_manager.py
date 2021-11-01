@@ -27,7 +27,7 @@ class DialogueManager:
     def _nothing_found_action(self):
         return self.actions.get(self.NOTHING_FOUND_ACTION) or NothingFoundAction()
 
-    def run(self, text_preprocessing_result, user):
+    async def run(self, text_preprocessing_result, user):
         scenarios_names = user.last_scenarios.scenarios_names
         scenario_key = user.message.payload[field.INTENT]
 
@@ -49,9 +49,9 @@ class DialogueManager:
 
                     return self._nothing_found_action.run(user, text_preprocessing_result), False
 
-        return self.run_scenario(scenario_key, text_preprocessing_result, user), True
+        return await self.run_scenario(scenario_key, text_preprocessing_result, user), True
 
-    def run_scenario(self, scen_id, text_preprocessing_result, user):
+    async def run_scenario(self, scen_id, text_preprocessing_result, user):
         initial_last_scenario = user.last_scenarios.last_scenario_name
         scenario = self.scenarios[scen_id]
         params = {log_const.KEY_NAME: log_const.CHOSEN_SCENARIO_VALUE,
@@ -59,7 +59,7 @@ class DialogueManager:
                   log_const.SCENARIO_DESCRIPTION_VALUE: scenario.scenario_description
                   }
         log(log_const.LAST_SCENARIO_MESSAGE, user, params)
-        run_scenario_result = scenario.run(text_preprocessing_result, user)
+        run_scenario_result = await scenario.run(text_preprocessing_result, user)
 
         actual_last_scenario = user.last_scenarios.last_scenario_name
         if actual_last_scenario and actual_last_scenario != initial_last_scenario:

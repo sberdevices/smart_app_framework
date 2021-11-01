@@ -85,7 +85,7 @@ class TreeScenario(FormFillingScenario):
         return all_forms_fields
 
     @monitoring.got_histogram("scenario_time")
-    def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
+    async def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
         main_form = self._get_form(user)
         user.last_scenarios.add(self.id, text_preprocessing_result)
         user.preprocessing_messages_for_scenarios.add(text_preprocessing_result)

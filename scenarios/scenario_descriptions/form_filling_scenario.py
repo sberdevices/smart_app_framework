@@ -175,7 +175,7 @@ class FormFillingScenario(BaseScenario):
         return action_messages
 
     @monitoring.got_histogram("scenario_time")
-    def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
+    async def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
         form = self._get_form(user)
         user.last_scenarios.add(self.id, text_preprocessing_result)
         user.preprocessing_messages_for_scenarios.add(text_preprocessing_result)

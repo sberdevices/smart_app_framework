@@ -35,7 +35,7 @@ class HandlerTest6(unittest.TestCase):
         self.assertIsNotNone(obj.KAFKA_KEY)
         self.assertIsNotNone(obj._clear_current_scenario)
 
-    def test_handler_close_app_run(self):
+    async def test_handler_close_app_run(self):
         self.assertIsNotNone(handle_close_app.log_const.KEY_NAME)
         obj = handle_close_app.HandlerCloseApp(app_name=self.app_name)
-        self.assertIsNone(obj.run(self.test_payload, self.test_user))
+        self.assertIsNone(await obj.run(self.test_payload, self.test_user))

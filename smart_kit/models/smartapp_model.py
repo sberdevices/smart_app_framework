@@ -59,7 +59,7 @@ class SmartAppModel:
         handler = self.get_handler(message.type)
 
         if not user.load_error:
-            commands = handler.run(message.payload, user)
+            commands = await handler.run(message.payload, user)
         else:
             log("Error in loading user data", user, level="ERROR", exc_info=True)
             raise Exception("Error in loading user data")

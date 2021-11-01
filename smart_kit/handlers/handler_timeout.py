@@ -10,8 +10,8 @@ from smart_kit.utils.monitoring import smart_kit_metrics
 
 class HandlerTimeout(HandlerBase):
 
-    def run(self, payload, user):
-        super().run(payload, user)
+    async def run(self, payload, user):
+        await super().run(payload, user)
         callback_id = user.message.callback_id
         if user.behaviors.has_callback(callback_id):
             params = {log_const.KEY_NAME: "handling_timeout"}

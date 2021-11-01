@@ -24,7 +24,7 @@ class HandlerRespond(HandlerBase):
         callback_id = user.message.callback_id
         return user.behaviors.get_callback_action_params(callback_id)
 
-    def run(self, payload, user):
+    async def run(self, payload, user):
         callback_id = user.message.callback_id
         action_params = self.get_action_params(payload, user)
         action_name = self.get_action_name(payload, user)

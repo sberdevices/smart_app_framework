@@ -26,7 +26,7 @@ class HandlerText(HandlerBase):
         log("text preprocessing result", user,
             {log_const.KEY_NAME: log_const.NORMALIZED_TEXT_VALUE, "tpr_str": str(text_preprocessing_result.raw)})
 
-        answer = self._handle_base(text_preprocessing_result, user)
+        answer = await self._handle_base(text_preprocessing_result, user)
         return answer
 
     async def _handle_base(self, text_preprocessing_result, user):

@@ -24,7 +24,7 @@ def test_period_determiner_1():
         'ныне'
     ]
     result = period_determiner(words_to_process)
-    assert result == ('01.03.2019', '{}.{}.{}'.format(current_date.day, current_date.month, current_date.year))
+    assert result == ('01.03.2019', '{}.{}.{}'.format(str(current_date.day).zfill(2), str(current_date.month).zfill(2), current_date.year))
 
 
 def test_period_determiner_2():
@@ -38,7 +38,7 @@ def test_period_determiner_2():
         'день',
     ]
     result = period_determiner(words_to_process)
-    assert result == ('01.03.2019', '{}.{}.{}'.format(current_date.day, current_date.month, current_date.year))
+    assert result == ('01.03.2019', '{}.{}.{}'.format(str(current_date.day).zfill(2), str(current_date.month).zfill(2), current_date.year))
 
 
 def test_period_determiner_3():
@@ -91,8 +91,8 @@ def test_period_determiner_5():
         year = current_date.year
 
     assert result == (
-        '01.{}.{}'.format(month if month > 9 else '0' + str(month), year),
-        '{}.{}.{}'.format(current_date.day, current_date.month, current_date.year)
+        '01.{}.{}'.format(str(month).zfill(2), year),
+        '{}.{}.{}'.format(str(current_date.day).zfill(2), str(current_date.month).zfill(2), current_date.year)
     )
 
 
@@ -107,13 +107,9 @@ def test_period_determiner_6():
     result = period_determiner(words_to_process)
     d = current_date - timedelta(days=delta_day)
 
-    day = d.day if d.day > 9 else '0' + str(d.day)
-    month = d.month if d.month > 9 else '0' + str(d.month)
-    year = d.year
-
     assert result == (
-        '{}.{}.{}'.format(day, month, year),
-        '{}.{}.{}'.format(current_date.day, current_date.month, current_date.year)
+        '{}.{}.{}'.format(str(d.day).zfill(2), str(d.month).zfill(2), d.year),
+        '{}.{}.{}'.format(str(current_date.day).zfill(2), str(current_date.month).zfill(2), current_date.year)
     )
 
 
@@ -167,7 +163,7 @@ def test_period_determiner_11():
         '2020',
     ]
     result = period_determiner(words_to_process)
-    assert result == ('01.07.2020', '{}.{}.{}'.format(current_date.day, current_date.month, current_date.year))
+    assert result == ('01.07.2020', '{}.{}.{}'.format(str(current_date.day).zfill(2), str(current_date.month).zfill(2), current_date.year))
 
 
 def test_period_determiner_12():
@@ -267,7 +263,7 @@ def test_period_determiner_20():
         '2019',
     ]
     result = period_determiner(words_to_process)
-    assert result == ('28.03.2019', '{}.{}.{}'.format(current_date.day, current_date.month, current_date.year))
+    assert result == ('28.03.2019', '{}.{}.{}'.format(str(current_date.day).zfill(2), str(current_date.month).zfill(2), current_date.year))
 
 
 def test_period_determiner_21():
@@ -281,11 +277,11 @@ def test_period_determiner_21():
     ]
     result = period_determiner(words_to_process)
     d1: datetime = current_date - timedelta(365 * count_of_years)
-    assert result == ('{}.{}.{}'.format(d1.day if d1.day > 9 else '0' + str(d1.day),
-                                        d1.month if d1.month > 9 else '0' + str(d1.month),
+    assert result == ('{}.{}.{}'.format(str(d1.day).zfill(2),
+                                        str(d1.month).zfill(2),
                                         d1.year),
-                      '{}.{}.{}'.format(current_date.day,
-                                        current_date.month,
+                      '{}.{}.{}'.format(str(current_date.day).zfill(2),
+                                        str(current_date.month).zfill(2),
                                         current_date.year))
 
 
@@ -300,11 +296,11 @@ def test_period_determiner_22():
     ]
     result = period_determiner(words_to_process)
     d1: datetime = current_date - timedelta(30 * count_of_months)
-    assert result == ('{}.{}.{}'.format(d1.day if d1.day > 9 else '0' + str(d1.day),
-                                        d1.month if d1.month > 9 else '0' + str(d1.month),
+    assert result == ('{}.{}.{}'.format(str(d1.day).zfill(2),
+                                        str(d1.month).zfill(2),
                                         d1.year),
-                      '{}.{}.{}'.format(current_date.day,
-                                        current_date.month,
+                      '{}.{}.{}'.format(str(current_date.day).zfill(2),
+                                        str(current_date.month).zfill(2),
                                         current_date.year))
 
 
@@ -347,13 +343,32 @@ def test_period_determiner_25():
     ]
     result = period_determiner(words_to_process)
     d1: datetime = current_date - timedelta(7 * count_of_weeks)
-    assert result == ('{}.{}.{}'.format(d1.day if d1.day > 9 else '0' + str(d1.day),
-                                        d1.month if d1.month > 9 else '0' + str(d1.month),
+    assert result == ('{}.{}.{}'.format(str(d1.day).zfill(2),
+                                        str(d1.month).zfill(2),
                                         d1.year),
-                      '{}.{}.{}'.format(current_date.day,
-                                        current_date.month,
+                      '{}.{}.{}'.format(str(current_date.day).zfill(2),
+                                        str(current_date.month).zfill(2),
                                         current_date.year))
 
+
+def test_period_determiner_26():
+    # если используется корректная форма к примеру "за последние n дней",
+    # то период определится как с даты ранее на n дней текущего дня
+    count_of_days: int = 30
+    words_to_process = [
+        'за',
+        'последние',
+        str(count_of_days),
+        'дней'
+    ]
+    result = period_determiner(words_to_process)
+    d1: datetime = current_date - timedelta(count_of_days)
+    assert result == ('{}.{}.{}'.format(str(d1.day).zfill(2),
+                                        str(d1.month).zfill(2),
+                                        d1.year),
+                      '{}.{}.{}'.format(str(current_date.day).zfill(2),
+                                        str(current_date.month).zfill(2),
+                                        current_date.year))
 
 def test_extract_words_describing_period_1():
     words_from_intent = [

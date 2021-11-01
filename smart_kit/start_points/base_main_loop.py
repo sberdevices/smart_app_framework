@@ -72,10 +72,11 @@ class BaseMainLoop:
 
     def get_db(self):
         db_adapter = db_adapter_factory(self.settings["template_settings"].get("db_adapter", {}))
-        if db_adapter.IS_ASYNC:
-            self.loop.run_until_complete(db_adapter.connect())
-        else:
-            db_adapter.connect()
+        if not db_adapter.IS_ASYNC:
+            raise Exception(
+                f"Blocking adapter {db_adapter.__class__.__name__} is not good for {self.__class__.__name__}"
+            )
+        self.loop.run_until_complete(db_adapter.connect())
         return db_adapter
 
     def _generate_answers(self, user, commands, message, **kwargs):
@@ -105,12 +106,14 @@ class BaseMainLoop:
         db_data = None
         load_error = False
         try:
-            db_data = await self.db_adapter.get(db_uid) if self.db_adapter.IS_ASYNC else self.db_adapter.get(db_uid)
+            db_data = await self.db_adapter.get(db_uid)
         except (DBAdapterException, ValueError):
             log("Failed to get user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                    log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")
             load_error = True
             smart_kit_metrics.counter_load_error(self.app_name)
+            # to skip message when load failed
+            raise
         return self.user_cls(
             message.uid,
             message=message,
@@ -136,17 +139,11 @@ class BaseMainLoop:
                             log_const.KEY_NAME: "user_save",
                             "user_length": len(str_data)})
                 if user.initial_db_data and self.user_save_check_for_collisions:
-                    if self.db_adapter.IS_ASYNC:
-                        no_collisions = await self.db_adapter.replace_if_equals(db_uid,
-                                                                                sample=user.initial_db_data,
-                                                                                data=str_data)
-                    else:
-                        no_collisions = self.db_adapter.replace_if_equals(db_uid,
-                                                                          sample=user.initial_db_data,
-                                                                          data=str_data)
+                    no_collisions = await self.db_adapter.replace_if_equals(db_uid,
+                                                                            sample=user.initial_db_data,
+                                                                            data=str_data)
                 else:
-                    await self.db_adapter.save(db_uid, str_data) if self.db_adapter.IS_ASYNC else \
-                        self.db_adapter.save(db_uid, str_data)
+                    await self.db_adapter.save(db_uid, str_data)
             except (DBAdapterException, ValueError):
                 log("Failed to set user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                        log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")

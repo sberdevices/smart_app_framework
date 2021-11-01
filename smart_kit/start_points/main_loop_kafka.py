@@ -152,7 +152,7 @@ class MainLoop(BaseMainLoop):
                     stats += "Polling time: {} msecs\n".format(poll_timer.msecs)
                     log_params["kafka_polling"] = poll_timer.msecs
                     message_value = json.loads(mq_message.value())
-                    await self.process_message(mq_message, consumer, kafka_key, stats)
+                    await self.process_message(mq_message, consumer, kafka_key, stats, log_params)
 
             except KafkaException as kafka_exp:
                 self.concurrent_messages -= 1
@@ -273,14 +273,14 @@ class MainLoop(BaseMainLoop):
         topic_names_2_key = self._topic_names_2_key(kafka_key)
         return self.default_topic_key(kafka_key) or topic_names_2_key[mq_message.topic()]
 
-    async def process_message(self, mq_message, consumer, kafka_key, stats):
+    async def process_message(self, mq_message, consumer, kafka_key, stats, log_params):
         topic_key = self._get_topic_key(mq_message, kafka_key)
-
         save_tries = 0
-        user_save_no_collisions = False
+        user_save_ok = False
         user = None
         db_uid = None
-        while save_tries < self.user_save_collisions_tries and not user_save_no_collisions:
+        validation_failed = False
+        while save_tries < self.user_save_collisions_tries and not user_save_ok:
             save_tries += 1
             message_value = mq_message.value()
             message = SmartAppFromMessage(message_value,
@@ -294,9 +294,15 @@ class MainLoop(BaseMainLoop):
                 if message.creation_time:
                     waiting_message_time = time.time() * 1000 - message.creation_time
                     stats += "Waiting message: {} msecs\n".format(waiting_message_time)
+                    log_params["waiting_message"] = waiting_message_time
 
                 stats += "Mid: {}\n".format(message.incremental_id)
+                log_params[MESSAGE_ID_STR] = message.incremental_id
                 smart_kit_metrics.sampling_mq_waiting_time(self.app_name, waiting_message_time / 1000)
+
+                if self._is_message_timeout_to_skip(message, waiting_message_time):
+                    skip_timeout = True
+                    break
 
                 self.check_message_key(message, mq_message.key(), user)
                 log("INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %(incoming_data)s",
@@ -318,8 +324,9 @@ class MainLoop(BaseMainLoop):
                 span = jaeger_utils.get_incoming_spam(self.tracer, message, mq_message)
 
                 with self.tracer.scope_manager.activate(span, True) as scope:
-                    with StatsTimer() as load_timer:
-                        user = await self.load_user(db_uid, message)
+                    with self.tracer.start_span('Loading time', child_of=scope.span) as span:
+                        with StatsTimer() as load_timer:
+                            user = await self.load_user(db_uid, message)
 
                     with self.tracer.start_span('Loading time', child_of=scope.span) as span:
                         smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
@@ -331,16 +338,18 @@ class MainLoop(BaseMainLoop):
                         answers = self._generate_answers(user=user, commands=commands, message=message,
                                                          topic_key=topic_key,
                                                          kafka_key=kafka_key)
-                        smart_kit_metrics.sampling_script_time(self.app_name, script_timer.secs)
                         stats += "Script time: {} msecs\n".format(script_timer.msecs)
+                        log_params["script_time"] = script_timer.msecs
+                        smart_kit_metrics.sampling_script_time(self.app_name, script_timer.secs)
 
                     with self.tracer.start_span('Saving time', child_of=scope.span) as span:
                         with StatsTimer() as save_timer:
-                            user_save_no_collisions = await self.save_user(db_uid, user, message)
+                            user_save_ok = await self.save_user(db_uid, user, message)
 
+                    stats += "Saving user to DB time: {} msecs\n".format(save_timer.msecs)
+                    log_params["user_saving"] = save_timer.msecs
                     smart_kit_metrics.sampling_save_time(self.app_name, save_timer.secs)
-                    stats += "Saving time: {} msecs\n".format(save_timer.msecs)
-                    if not user_save_no_collisions:
+                    if not user_save_ok:
                         log("MainLoop.iterate: save user got collision on uid %(uid)s db_version %(db_version)s.",
                             user=user,
                             params={log_const.KEY_NAME: "ignite_collision",
@@ -353,7 +362,8 @@ class MainLoop(BaseMainLoop):
                             level="WARNING")
                         continue
 
-                    self.save_behavior_timeouts(user, mq_message, kafka_key)
+                    if answers:
+                        self.save_behavior_timeouts(user, mq_message, kafka_key)
 
                 if mq_message.headers() is None:
                     mq_message.set_headers([])
@@ -364,9 +374,12 @@ class MainLoop(BaseMainLoop):
                     for answer in answers:
                         with StatsTimer() as publish_timer:
                             self._send_request(user, answer, mq_message)
+                            smart_kit_metrics.counter_outgoing(self.app_name, answer.command.name, answer, user)
                         stats += "Publishing time: {} msecs".format(publish_timer.msecs)
+                        log_params["kafka_publishing"] = publish_timer.msecs
                         log(stats)
             else:
+                validation_failed = True
                 try:
                     data = message.masked_value
                 except:
@@ -375,7 +388,11 @@ class MainLoop(BaseMainLoop):
                     params={log_const.KEY_NAME: "invalid_message",
                             "data": data}, level="ERROR")
                 smart_kit_metrics.counter_invalid_message(self.app_name)
-        if user and not user_save_no_collisions:
+                break
+        if stats:
+            log(stats, user=user, params=log_params)
+
+        if user and not user_save_ok and not validation_failed:
             log("MainLoop.iterate: db_save collision all tries left on uid %(uid)s db_version %(db_version)s.",
                 user=user,
                 params={log_const.KEY_NAME: "ignite_collision",
@@ -386,9 +403,39 @@ class MainLoop(BaseMainLoop):
                         "uid": user.id,
                         "db_version": str(user.variables.get(user.USER_DB_VERSION))},
                 level="WARNING")
-
             smart_kit_metrics.counter_save_collision_tries_left(self.app_name)
+
         consumer.commit_offset(mq_message)
+
+    def _is_message_timeout_to_skip(self, message, waiting_message_time):
+        # Returns True if timeout is found
+        waiting_message_timeout = self.settings["template_settings"].get("waiting_message_timeout", {})
+        warning_delay = waiting_message_timeout.get('warning', 200)
+        skip_delay = waiting_message_timeout.get('skip', 8000)
+        log_level = None
+        make_break = False
+
+        if waiting_message_time >= skip_delay:
+            # Too old message
+            log_level = "ERROR"
+            make_break = True
+
+        elif waiting_message_time >= warning_delay:
+            # Warn, but continue message processing
+            log_level = "WARNING"
+            smart_kit_metrics.counter_mq_long_waiting(self.app_name)
+
+        if log_level is not None:
+            log(
+                f"Out of time message %(waiting_message_time)s msecs, "
+                f"mid: %(mid)s {message.as_dict}",
+                params={
+                    log_const.KEY_NAME: "waiting_message_timeout",
+                    "waiting_message_time": waiting_message_time,
+                    "mid": message.incremental_id
+                },
+                level=log_level)
+        return make_break
 
     def check_message_key(self, from_message, message_key, user):
         sub = from_message.sub

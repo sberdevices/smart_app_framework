@@ -261,6 +261,7 @@ def test_period_determiner_20():
         '28',
         'марта',
         '2019',
+        'года'
     ]
     result = period_determiner(words_to_process)
     assert result == ('28.03.2019', '{}.{}.{}'.format(str(current_date.day).zfill(2), str(current_date.month).zfill(2), current_date.year))
@@ -369,6 +370,19 @@ def test_period_determiner_26():
                       '{}.{}.{}'.format(str(current_date.day).zfill(2),
                                         str(current_date.month).zfill(2),
                                         current_date.year))
+
+
+def test_period_determiner_27():
+    # если используется корректная форма к примеру "за последние n дней",
+    # то период определится как с даты ранее на n дней текущего дня
+    words_to_process = [
+        'за',
+        '2020',
+        'год'
+    ]
+    result = period_determiner(words_to_process)
+    assert result == ('01.01.2020', '31.12.2020')
+
 
 def test_extract_words_describing_period_1():
     words_from_intent = [

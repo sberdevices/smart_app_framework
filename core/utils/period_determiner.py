@@ -132,6 +132,12 @@ class StateMachineForDateDetermining:
             else:
                 # Иначе строим дату начала на основе года, месяца и дня,
 
+                # для частного случая когда указан только год
+                if self._day == 0 and self._month == 0 and self._year:
+                    self._date_period[0] = safe_datetime(self._year, 1, 1)
+                    self._date_period[1] = safe_datetime(self._year, 12, 31)
+                    return format_date(self._date_period[0]), format_date(self._date_period[1])
+
                 # если день не указан, тогда берем первый день
                 if self._day == 0:
                     self._day = 1
@@ -262,7 +268,7 @@ class StateMachineForDateDetermining:
                         # если относительный период не указан,
                         # то период определяем как (365 * self._quanifier) дней ранее
                         # пример: за год - значит с периода 365 дней ранее по сегодня
-                        if self._month == 0:
+                        if self._month == 0 and self._year == 0:
                             self._date_period[0] = \
                                 self._current_date \
                                 - timedelta(

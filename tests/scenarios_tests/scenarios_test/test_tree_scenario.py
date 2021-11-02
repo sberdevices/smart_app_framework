@@ -29,7 +29,7 @@ class BreakAction:
 
 class TestTreeScenario(TestCase):
 
-    def test_1(self):
+    async def test_1(self):
         """
         Тест проверяет сценарий из одного узла. Предполагается идеальный случай, когда одно поле
         и мы смогли его заполнить.
@@ -84,11 +84,11 @@ class TestTreeScenario(TestCase):
 
         scenario = TreeScenario(items, 1)
 
-        result = scenario.run(text_preprocessing_result, user)
+        result = await scenario.run(text_preprocessing_result, user)
         self.assertIsNone(current_node_mock.current_node)
         context_forms.new.assert_called_once_with(form_type)
 
-    def test_breake(self):
+    async def test_breake(self):
         """
         Тест проверяет выход из сценария если сработает флаг break_scenario
         """
@@ -145,7 +145,7 @@ class TestTreeScenario(TestCase):
 
         scenario = TreeScenario(items, 1)
 
-        result = scenario.run(text_preprocessing_result, user)
+        result = await scenario.run(text_preprocessing_result, user)
 
         self.assertFalse(scenario.actions[0].called)
         self.assertEqual(result[0].name, "break action result")

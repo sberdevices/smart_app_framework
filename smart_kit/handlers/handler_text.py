@@ -19,16 +19,16 @@ class HandlerText(HandlerBase):
             f"{self.__class__.__name__}.__init__ finished.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE}
         )
 
-    def run(self, payload, user):
-        super().run(payload, user)
+    async def run(self, payload, user):
+        await super().run(payload, user)
         text_preprocessing_result = TextPreprocessingResult(payload.get("message", {}))
 
         log("text preprocessing result", user,
             {log_const.KEY_NAME: log_const.NORMALIZED_TEXT_VALUE, "tpr_str": str(text_preprocessing_result.raw)})
 
-        answer = self._handle_base(text_preprocessing_result, user)
+        answer = await self._handle_base(text_preprocessing_result, user)
         return answer
 
-    def _handle_base(self, text_preprocessing_result, user):
-        answer, is_answer_found = self.dialogue_manager.run(text_preprocessing_result, user)
+    async def _handle_base(self, text_preprocessing_result, user):
+        answer, is_answer_found = await self.dialogue_manager.run(text_preprocessing_result, user)
         return answer or []

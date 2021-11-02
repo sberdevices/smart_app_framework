@@ -37,15 +37,15 @@ class HandlerTest5(unittest.TestCase):
         self.assertIsNotNone(handler_text.log_const.STARTUP_VALUE)
         self.assertIsNotNone(obj1.__class__.__name__)
 
-    def test_handler_text_handle_base(self):
+    async def test_handler_text_handle_base(self):
         obj1 = handler_text.HandlerText(self.app_name, self.test_dialog_manager1)
         obj2 = handler_text.HandlerText(self.app_name, self.test_dialog_manager2)
-        self.assertTrue(obj1._handle_base(self.test_text_preprocessing_result, self.test_user) == "TestAnswer")
-        self.assertTrue(obj2._handle_base(self.test_text_preprocessing_result, self.test_user) == [])
+        self.assertTrue(await obj1._handle_base(self.test_text_preprocessing_result, self.test_user) == "TestAnswer")
+        self.assertTrue(await obj2._handle_base(self.test_text_preprocessing_result, self.test_user) == [])
 
-    def test_handler_text_run(self):
+    async def test_handler_text_run(self):
         self.assertIsNotNone(handler_text.log_const.NORMALIZED_TEXT_VALUE)
         obj1 = handler_text.HandlerText(self.app_name, self.test_dialog_manager1)
         obj2 = handler_text.HandlerText(self.app_name, self.test_dialog_manager2)
-        self.assertTrue(obj1.run(self.test_payload, self.test_user) == "TestAnswer")
-        self.assertTrue(obj2.run(self.test_payload, self.test_user) == [])
+        self.assertTrue(await obj1.run(self.test_payload, self.test_user) == "TestAnswer")
+        self.assertTrue(await obj2.run(self.test_payload, self.test_user) == [])

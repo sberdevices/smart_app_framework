@@ -10,7 +10,6 @@ from confluent_kafka.cimpl import KafkaException
 from lazy import lazy
 
 import scenarios.logging.logger_constants as log_const
-from core.db_adapter.db_adapter import DBAdapterException
 from core.jaeger_custom_client import jaeger_utils
 from core.jaeger_custom_client import kafka_codec as jaeger_kafka_codec
 from core.logging.logger_utils import log, UID_STR, MESSAGE_ID_STR
@@ -226,7 +225,7 @@ class MainLoop(BaseMainLoop):
                                                                           headers=mq_message.headers())
 
                     user = await self.load_user(db_uid, timeout_from_message)
-                    commands = self.model.answer(timeout_from_message, user)
+                    commands = await self.model.answer(timeout_from_message, user)
                     topic_key = self._get_topic_key(mq_message, kafka_key)
                     answers = self._generate_answers(user=user, commands=commands, message=timeout_from_message,
                                                      topic_key=topic_key,
@@ -560,7 +559,7 @@ class MainLoop(BaseMainLoop):
                 # TODO:  not to load user to check behaviors.has_callback ?
                 if user.behaviors.has_callback(callback_id):
                     callback_found = True
-                    commands = self.model.answer(timeout_from_message, user)
+                    commands = await self.model.answer(timeout_from_message, user)
                     topic_key = self._get_topic_key(mq_message, kafka_key)
                     answers = self._generate_answers(user=user, commands=commands, message=timeout_from_message,
                                                      topic_key=topic_key,

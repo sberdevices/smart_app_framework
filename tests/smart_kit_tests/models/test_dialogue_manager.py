@@ -69,7 +69,7 @@ class ModelsTest1(unittest.TestCase):
         with self.assertRaises(TypeError):
             obj2._nothing_found_action()
 
-    def test_dialogue_manager_run(self):
+    async def test_dialogue_manager_run(self):
         obj1 = dialogue_manager.DialogueManager({'scenarios': self.test_scenarios,
                                                 'external_actions': {'nothing_found_action': self.TestAction}},
                                                 self.app_name)
@@ -77,18 +77,17 @@ class ModelsTest1(unittest.TestCase):
                                                  'external_actions': {}}, self.app_name)
 
         # путь по умолчанию без выполнения условий
-        self.assertTrue(obj1.run(self.test_text_preprocessing_result, self.test_user1) == ("TestNameResult", True))
-        self.assertTrue(obj2.run(self.test_text_preprocessing_result, self.test_user1) == ("TestNameResult", True))
+        self.assertTrue(await obj1.run(self.test_text_preprocessing_result, self.test_user1) == ("TestNameResult", True))
+        self.assertTrue(await obj2.run(self.test_text_preprocessing_result, self.test_user1) == ("TestNameResult", True))
 
         # случай когда срабатоли оба условия
         self.assertTrue(obj1.run(self.test_text_preprocessing_result, self.test_user2) == ("TestNameResult", True))
         # случай, когда 2-е условие не выполнено
         self.assertTrue(obj2.run(self.test_text_preprocessing_result, self.test_user3) == ('TestNameResult', True))
 
-    def test_dialogue_manager_run_scenario(self):
+    async def test_dialogue_manager_run_scenario(self):
         obj = dialogue_manager.DialogueManager({'scenarios': self.test_scenarios,
                                                 'external_actions': {'nothing_found_action': self.TestAction}},
                                                self.app_name)
-        self.assertTrue(obj.run_scenario(1, self.test_text_preprocessing_result, self.test_user1) == "ResultTestName")
-        self.assertTrue(obj.run_scenario(2, self.test_text_preprocessing_result, self.test_user1) == "TestNameResult")
-
+        self.assertTrue(await obj.run_scenario(1, self.test_text_preprocessing_result, self.test_user1) == "ResultTestName")
+        self.assertTrue(await obj.run_scenario(2, self.test_text_preprocessing_result, self.test_user1) == "TestNameResult")

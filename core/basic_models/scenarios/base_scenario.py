@@ -96,5 +96,5 @@ class BaseScenario:
     def history(self):
         return {"scenario_path": [{"scenario": self.id, "node": None}]}
 
-    def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
+    async def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
         return self.get_action_results(user, text_preprocessing_result, self.actions, params)

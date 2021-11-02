@@ -60,7 +60,7 @@ class HandlerTest4(unittest.TestCase):
         self.assertTrue(obj.get_action_params("any data", self.test_user2) == self.callback11_action_params)
         self.assertTrue(obj.get_action_params(None, self.test_user2) == self.callback11_action_params)
 
-    def test_handler_respond_run(self):
+    async def test_handler_respond_run(self):
         self.assertIsNotNone(handle_respond.TextPreprocessingResult(self.test_payload.get("message", {})))
         self.assertIsNotNone(handle_respond.log_const.KEY_NAME)
         self.assertIsNotNone(handle_respond.log_const.NORMALIZED_TEXT_VALUE)
@@ -68,5 +68,5 @@ class HandlerTest4(unittest.TestCase):
         obj1 = handle_respond.HandlerRespond(app_name=self.app_name)
         obj2 = handle_respond.HandlerRespond(self.app_name, "any action name")
         with self.assertRaises(KeyError):
-            obj1.run(self.test_payload, self.test_user1)
-        self.assertTrue(obj2.run(self.test_payload, self.test_user2) == 10)
+            await obj1.run(self.test_payload, self.test_user1)
+        self.assertTrue(await obj2.run(self.test_payload, self.test_user2) == 10)

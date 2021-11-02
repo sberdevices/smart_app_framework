@@ -25,8 +25,8 @@ class HandlerTest2(unittest.TestCase):
         self.test_user.behaviors.get_callback_action_params = lambda *x, **y: {}
         self.test_payload = Mock('payload')
 
-    def test_handler_timeout(self):
+    async def test_handler_timeout(self):
         obj = handler_timeout.HandlerTimeout(self.app_name)
         self.assertIsNotNone(obj.KAFKA_KEY)
         self.assertIsNotNone(handler_timeout.log_const.KEY_NAME)
-        self.assertTrue(obj.run(self.test_payload, self.test_user) == 120)
+        self.assertTrue(await obj.run(self.test_payload, self.test_user) == 120)

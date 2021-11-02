@@ -24,8 +24,8 @@ class Action:
         self.id = id
         self.version = items.get("version", -1)
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         raise NotImplementedError
 
     def on_run_error(self, text_preprocessing_result, user):
@@ -50,9 +50,9 @@ class CommandAction(Action):
         self.request_type = items.get("request_type") or self.DEFAULT_REQUEST_TYPE
         self.request_data = items.get("request_data")
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
-        super(CommandAction, self).run(user, text_preprocessing_result, params)
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
+        await super(CommandAction, self).run(user, text_preprocessing_result, params)
         return None
 
 
@@ -65,8 +65,8 @@ class DoingNothingAction(CommandAction):
         super(DoingNothingAction, self).__init__(items, id)
         self.nodes = items.get("nodes") or {}
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
         commands = [Command(self.command, self.nodes, self.id, request_type=self.request_type,
                             request_data=self.request_data)]
         return commands
@@ -97,11 +97,11 @@ class RequirementAction(Action):
     def build_internal_item(self):
         return self._item
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         result = None
         if self.requirement.check(text_preprocessing_result, user, params):
-            result = self.internal_item.run(user, text_preprocessing_result, params)
+            result = await self.internal_item.run(user, text_preprocessing_result, params)
         return result
 
 
@@ -133,18 +133,18 @@ class ChoiceAction(Action):
     def build_else_item(self):
         return self._else_item
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         result = None
         choice_is_made = False
         for item in self.items:
             checked = item.requirement.check(text_preprocessing_result, user, params)
             if checked:
-                result = item.internal_item.run(user, text_preprocessing_result, params)
+                result = await item.internal_item.run(user, text_preprocessing_result, params)
                 choice_is_made = True
                 break
         if not choice_is_made and self._else_item:
-            result = self.else_item.run(user, text_preprocessing_result, params)
+            result = await self.else_item.run(user, text_preprocessing_result, params)
         return result
 
 
@@ -181,13 +181,13 @@ class ElseAction(Action):
     def build_else_item(self):
         return self._else_item
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Optional[Dict[str, Union[str, float, int]]]] = None) -> Optional[List[Command]]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Optional[Dict[str, Union[str, float, int]]]] = None) -> Optional[List[Command]]:
         result = None
         if self.requirement.check(text_preprocessing_result, user, params):
-            result = self.item.run(user, text_preprocessing_result, params)
+            result = await self.item.run(user, text_preprocessing_result, params)
         elif self._else_item:
-            result = self.else_item.run(user, text_preprocessing_result, params)
+            result = await self.else_item.run(user, text_preprocessing_result, params)
         return result
 
 
@@ -204,11 +204,11 @@ class CompositeAction(Action):
     def build_actions(self):
         return self._actions
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         commands = []
         for action in self.actions:
-            action_result = action.run(user, text_preprocessing_result, params)
+            action_result = await action.run(user, text_preprocessing_result, params)
             if action_result:
                 commands += action_result
         return commands
@@ -224,8 +224,8 @@ class NonRepeatingAction(CompositeAction):
         self._actions_count = len(items["actions"])
         self._last_action_ids_storage = items["last_action_ids_storage"]
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         last_ids = user.last_action_ids[self._last_action_ids_storage]
         all_indexes = list(range(self._actions_count))
         max_last_ids_count = self._actions_count - 1
@@ -235,7 +235,7 @@ class NonRepeatingAction(CompositeAction):
         action_index = random.choice(available_indexes)
         action = self.actions[action_index]
         last_ids.add(action_index)
-        result = action.run(user, text_preprocessing_result, params)
+        result = await action.run(user, text_preprocessing_result, params)
         return result
 
 
@@ -250,8 +250,8 @@ class RandomAction(Action):
     def build_actions(self):
         return self._raw_actions
 
-    def run(self, user, text_preprocessing_result, params=None):
+    async def run(self, user, text_preprocessing_result, params=None):
         pos = random.randint(0, len(self._raw_actions) - 1)
         action = self.actions[pos]
-        command_list = action.run(user, text_preprocessing_result, params=params)
+        command_list = await action.run(user, text_preprocessing_result, params=params)
         return command_list

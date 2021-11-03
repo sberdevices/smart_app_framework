@@ -62,7 +62,7 @@ class BaseScenario:
                       scenarios_log_const.CHOSEN_ACTION_VALUE: self._empty_answer}
         log(scenarios_log_const.CHOSEN_ACTION_MESSAGE, user, log_params)
         try:
-            empty_answer = self.empty_answer.run(user, text_preprocessing_result, params) or []
+            empty_answer = await self.empty_answer.run(user, text_preprocessing_result, params) or []
         except KeyError:
             log_params = {log_const.KEY_NAME: scenarios_log_const.CHOSEN_ACTION_VALUE}
             log("Scenario has empty answer, but empty_answer action isn't defined",
@@ -74,7 +74,7 @@ class BaseScenario:
                            actions: List[Action], params: Dict[str, Any] = None) -> List[Command]:
         results = []
         for action in actions:
-            result = action.run(user, text_preprocessing_result, params)
+            result = await action.run(user, text_preprocessing_result, params)
             log_params = self._log_params()
             log_params["class"] = action.__class__.__name__
             log("called action: %(class)s", user, log_params)

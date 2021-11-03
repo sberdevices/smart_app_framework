@@ -1,4 +1,5 @@
 # coding: utf-8
+import asyncio
 import unittest
 from unittest.mock import Mock, MagicMock, patch
 
@@ -39,7 +40,7 @@ class MockAction:
         items = items or {}
         self.result = items.get("result")
 
-    def run(self, user, text_preprocessing_result, params=None):
+    async def run(self, user, text_preprocessing_result, params=None):
         return self.result or ["test action run"]
 
 
@@ -49,7 +50,7 @@ class UserMockAction:
         self.result = items.get("result")
         self.done = False
 
-    def run(self, user, text_preprocessing_result, params=None):
+    async def run(self, user, text_preprocessing_result, params=None):
         self.done = True
 
 
@@ -89,7 +90,8 @@ class ActionTest(unittest.TestCase):
         items = {"nodes": "test"}
         action = Action(items)
         try:
-            action.run(None, None)
+            loop = asyncio.get_event_loop()
+            loop.run_until_complete(action.run(None, None))
             result = False
         except NotImplementedError:
             result = True
@@ -100,12 +102,14 @@ class ActionTest(unittest.TestCase):
         action = ExternalAction(items)
         user = Mock()
         user.descriptions = {"external_actions": {"test_action_key": MockAction()}}
-        self.assertEqual(action.run(user, None), ["test action run"])
+        loop = asyncio.get_event_loop()
+        self.assertEqual(loop.run_until_complete(action.run(user, None)), ["test action run"])
 
     def test_doing_nothing_action(self):
         items = {"nodes": {"answer": "test"}, "command": "test_name"}
         action = DoingNothingAction(items)
-        result = action.run(None, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(action.run(None, None))
         self.assertIsInstance(result, list)
         command = result[0]
         self.assertIsInstance(command, Command)
@@ -121,10 +125,11 @@ class ActionTest(unittest.TestCase):
         action = RequirementAction(items)
         self.assertIsInstance(action.requirement, MockRequirement)
         self.assertIsInstance(action.internal_item, MockAction)
-        self.assertEqual(action.run(None, None), ["test action run"])
+        loop = asyncio.get_event_loop()
+        self.assertEqual(loop.run_until_complete(action.run(None, None)), ["test action run"])
         items = {"requirement": {"type": "test", "result": False}, "action": {"type": "test"}}
         action = RequirementAction(items)
-        result = action.run(None, None)
+        result = loop.run_until_complete(action.run(None, None))
         self.assertIsNone(result)
 
     def test_requirement_choice(self):
@@ -135,7 +140,8 @@ class ActionTest(unittest.TestCase):
         choice_action = ChoiceAction(items)
         self.assertIsInstance(choice_action.items, list)
         self.assertIsInstance(choice_action.items[0], RequirementAction)
-        result = choice_action.run(None, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(choice_action.run(None, None))
         self.assertEqual(result, "action2")
 
     def test_requirement_choice_else(self):
@@ -149,7 +155,8 @@ class ActionTest(unittest.TestCase):
         choice_action = ChoiceAction(items)
         self.assertIsInstance(choice_action.items, list)
         self.assertIsInstance(choice_action.items[0], RequirementAction)
-        result = choice_action.run(None, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(choice_action.run(None, None))
         self.assertEqual(result, "action3")
 
     def test_string_action(self):
@@ -164,7 +171,8 @@ class ActionTest(unittest.TestCase):
                  "nodes":
                      {"item": "template", "params": "{{params}}"}}
         action = StringAction(items)
-        result = action.run(user, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(action.run(user, None))
         self.assertEqual(expected[0].name, result[0].name)
         self.assertEqual(expected[0].payload, result[0].payload)
 
@@ -180,7 +188,8 @@ class ActionTest(unittest.TestCase):
             "else_action": {"type": "test", "result": "else_action"}
         }
         action = ElseAction(items)
-        self.assertEqual(action.run(user, None), "main_action")
+        loop = asyncio.get_event_loop()
+        self.assertEqual(loop.run_until_complete(action.run(user, None)), "main_action")
 
     def test_else_action_else(self):
         registered_factories[Requirement] = requirement_factory
@@ -194,7 +203,8 @@ class ActionTest(unittest.TestCase):
             "else_action": {"type": "test", "result": "else_action"}
         }
         action = ElseAction(items)
-        self.assertEqual(action.run(user, None), "else_action")
+        loop = asyncio.get_event_loop()
+        self.assertEqual(loop.run_until_complete(action.run(user, None)), "else_action")
 
     def test_else_action_no_else_if(self):
         registered_factories[Requirement] = requirement_factory
@@ -207,7 +217,8 @@ class ActionTest(unittest.TestCase):
             "action": {"type": "test", "result": "main_action"},
         }
         action = ElseAction(items)
-        self.assertEqual(action.run(user, None), "main_action")
+        loop = asyncio.get_event_loop()
+        self.assertEqual(loop.run_until_complete(action.run(user, None)), "main_action")
 
     def test_else_action_no_else_else(self):
         registered_factories[Requirement] = requirement_factory
@@ -220,7 +231,8 @@ class ActionTest(unittest.TestCase):
             "action": {"type": "test", "result": "main_action"},
         }
         action = ElseAction(items)
-        result = action.run(user, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(action.run(user, None))
         self.assertIsNone(result)
 
     def test_composite_action(self):
@@ -234,7 +246,8 @@ class ActionTest(unittest.TestCase):
             ]
         }
         action = CompositeAction(items)
-        result = action.run(user, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(action.run(user, None))
         self.assertEqual(['test action run', 'test action run'], result)
 
     def test_node_action_support_templates(self):
@@ -261,7 +274,8 @@ class ActionTest(unittest.TestCase):
             self.assertIsInstance(template, UnifiedTemplate)
         user = MagicMock()
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
-        output = action.run(user=user, text_preprocessing_result=None)[0].payload["answer"]
+        loop = asyncio.get_event_loop()
+        output = loop.run_until_complete(action.run(user=user, text_preprocessing_result=None))[0].payload["answer"]
         self.assertEqual(output, expected)
 
     def test_string_action_support_templates(self):
@@ -286,7 +300,8 @@ class ActionTest(unittest.TestCase):
         action = StringAction(items)
         user = MagicMock()
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
-        output = action.run(user=user, text_preprocessing_result=None)[0].payload
+        loop = asyncio.get_event_loop()
+        output = loop.run_until_complete(action.run(user=user, text_preprocessing_result=None))[0].payload
         self.assertEqual(output, expected)
 
 
@@ -306,13 +321,15 @@ class NonRepeatingActionTest(unittest.TestCase):
 
     def test_run_available_indexes(self):
         self.user.last_action_ids["last_action_ids_storage"].get_list.side_effect = [[0]]
-        result = self.action.run(self.user, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(self.action.run(self.user, None))
         self.user.last_action_ids["last_action_ids_storage"].add.assert_called_once()
         self.assertEqual(result, self.expected1)
 
     def test_run_no_available_indexes(self):
         self.user.last_action_ids["last_action_ids_storage"].get_list.side_effect = [[0, 1]]
-        result = self.action.run(self.user, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(self.action.run(self.user, None))
         self.assertEqual(result, self.expected)
 
 
@@ -324,7 +341,8 @@ class CounterIncrementActionTest(unittest.TestCase):
         user.counters = {"test": counter}
         items = {"key": "test"}
         action = CounterIncrementAction(items)
-        action.run(user, None)
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(action.run(user, None))
         user.counters["test"].inc.assert_called_once()
 
 
@@ -336,7 +354,8 @@ class CounterDecrementActionTest(unittest.TestCase):
         user.counters = {"test": counter}
         items = {"key": "test"}
         action = CounterDecrementAction(items)
-        action.run(user, None)
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(action.run(user, None))
         user.counters["test"].dec.assert_called_once()
 
 
@@ -347,7 +366,8 @@ class CounterClearActionTest(unittest.TestCase):
         user.counters.inc = Mock()
         items = {"key": "test"}
         action = CounterClearAction(items)
-        action.run(user, None)
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(action.run(user, None))
         user.counters.clear.assert_called_once()
 
 
@@ -360,7 +380,8 @@ class CounterSetActionTest(unittest.TestCase):
         user.counters = counters
         items = {"key": "test"}
         action = CounterSetAction(items)
-        action.run(user, None)
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(action.run(user, None))
         user.counters["test"].set.assert_called_once()
 
 
@@ -373,7 +394,8 @@ class CounterCopyActionTest(unittest.TestCase):
         user.counters = {"src": counter_src, "dst": counter_dst}
         items = {"source": "src", "destination": "dst"}
         action = CounterCopyAction(items)
-        action.run(user, None)
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(action.run(user, None))
         user.counters["dst"].set.assert_called_once_with(user.counters["src"].value,
                                                          action.reset_time, action.time_shift)
 
@@ -390,8 +412,8 @@ class AfinaAnswerActionTest(unittest.TestCase):
             }
         }
         action = AfinaAnswerAction(items)
-
-        result = action.run(user, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(action.run(user, None))
         self.assertEqual(expected[0]._name, result[0].name)
         self.assertEqual(expected[0].raw, result[0].raw)
 
@@ -410,8 +432,8 @@ class AfinaAnswerActionTest(unittest.TestCase):
             }
         }
         action = AfinaAnswerAction(items)
-
-        result = action.run(user, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(action.run(user, None))
         self.assertEqual(expected[0]._name, result[0].name)
         self.assertEqual(expected[0].raw, result[0].raw)
 
@@ -424,7 +446,8 @@ class AfinaAnswerActionTest(unittest.TestCase):
         user.message.payload = {"personInfo": {"name": "Ivan Ivanov"}}
         items = {"nodes": {"answer": ["{{payload.personInfo.name}}"]}}
         action = AfinaAnswerAction(items)
-        result = action.run(user, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(action.run(user, None))
         self.assertEqual(expected[0]._name, result[0].name)
         self.assertEqual(expected[0].raw, result[0].raw)
 
@@ -436,7 +459,8 @@ class AfinaAnswerActionTest(unittest.TestCase):
         user.descriptions = {"render_templates": template}
         items = None
         action = AfinaAnswerAction(items)
-        result = action.run(user, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(action.run(user, None))
         self.assertEqual(result, [])
 
     def test__items_empty_dict(self):
@@ -447,7 +471,8 @@ class AfinaAnswerActionTest(unittest.TestCase):
         user.descriptions = {"render_templates": template}
         items = {}
         action = AfinaAnswerAction(items)
-        result = action.run(user, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(action.run(user, None))
         self.assertEqual(result, [])
 
 
@@ -501,9 +526,10 @@ class CardAnswerActionTest(unittest.TestCase):
         exp3 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'items': [{'bubble': {'text': 'Text1'}}, {'card': {'type': 'simple_list', 'header': '1 доллар США ', 'items': [{'title': 'Купить', 'body': '67.73 RUR'}, {'title': 'Продать', 'body': '64.56 RUR'}], 'footer': 'Ivan Ivanov Сбербанк Онлайн на сегодня 17:53 при обмене до 1000 USD'}}], 'suggestions': {'buttons': [{'title': 'Отделения', 'action': {'text': 'Где ближайщие отделения сбера?', 'type': 'text'}}]}}}"
         exp4 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'items': [{'bubble': {'text': 'Text2'}}, {'card': {'type': 'simple_list', 'header': '1 доллар США ', 'items': [{'title': 'Купить', 'body': '67.73 RUR'}, {'title': 'Продать', 'body': '64.56 RUR'}], 'footer': 'Ivan Ivanov Сбербанк Онлайн на сегодня 17:53 при обмене до 1000 USD'}}], 'suggestions': {'buttons': [{'title': 'Отделения', 'action': {'text': 'Где ближайщие отделения сбера?', 'type': 'text'}}]}}}"
         expect_arr = [exp1, exp2, exp3, exp4]
+        loop = asyncio.get_event_loop()
         for i in range(10):
             action = SDKAnswer(items)
-            result = action.run(user, None)
+            result = loop.run_until_complete(action.run(user, None))
             self.assertEqual("ANSWER_TO_USER", result[0].name)
             self.assertTrue(str(result[0].raw) in expect_arr)
 
@@ -524,9 +550,10 @@ class CardAnswerActionTest(unittest.TestCase):
         exp3 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText2'}}"
         exp4 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText2'}}"
         exp_list = [exp1, exp2, exp3, exp4]
+        loop = asyncio.get_event_loop()
         for i in range(10):
             action = SDKAnswer(items)
-            result = action.run(user, None)
+            result = loop.run_until_complete(action.run(user, None))
             self.assertEqual("ANSWER_TO_USER", result[0].name)
             self.assertTrue(str(result[0].raw) in exp_list)
 
@@ -562,9 +589,10 @@ class CardAnswerActionTest(unittest.TestCase):
         exp3 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'suggestions': {'buttons': [{'title': 'отделения2', 'action': {'text': 'отделения', 'type': 'text'}}, {'title': 'кредит1', 'action': {'text': 'кредит', 'type': 'text'}}]}}}"
         exp4 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'suggestions': {'buttons': [{'title': 'отделения2', 'action': {'text': 'отделения', 'type': 'text'}}, {'title': 'кредит2', 'action': {'text': 'кредит', 'type': 'text'}}]}}}"
         expect_arr = [exp1, exp2, exp3, exp4]
+        loop = asyncio.get_event_loop()
         for i in range(10):
             action = SDKAnswer(items)
-            result = action.run(user, None)
+            result = loop.run_until_complete(action.run(user, None))
             self.assertEqual("ANSWER_TO_USER", result[0].name)
             self.assertTrue(str(result[0].raw) in expect_arr)
 
@@ -655,8 +683,9 @@ class SDKRandomAnswer(unittest.TestCase):
         exp2 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'items': [{'bubble': {'text': 'Ivan Ivanov', 'markdown': False}}, {'card': {'cards_params': 'a lot of params'}}], 'suggestions': {'buttons': [{'title': 'p1', 'action': {'text': 'Ivan Ivanov', 'type': 'text'}}, {'title': 'p1', 'action': {'text': 'Ivan Ivanov', 'type': 'text'}}, {'title': 'p1', 'action': {'deep_link': 'www.ww.w', 'type': 'deep_link'}}]}, 'pronounceText': 'p1'}}"
 
         action = SDKAnswerToUser(items)
+        loop = asyncio.get_event_loop()
         for i in range(3):
-            result = action.run(user, None)
+            result = loop.run_until_complete(action.run(user, None))
             self.assertTrue(str(result[0].raw) in [exp1, exp2])
 
     def test_SDKItemAnswer_root(self):
@@ -704,8 +733,9 @@ class SDKRandomAnswer(unittest.TestCase):
         exp2 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'p2'}}"
 
         action = SDKAnswerToUser(items)
+        loop = asyncio.get_event_loop()
         for i in range(3):
-            result = action.run(user, None)
+            result = loop.run_until_complete(action.run(user, None))
             self.assertTrue(str(result[0].raw) in [exp1, exp2])
 
     def test_SDKItemAnswer_simple(self):
@@ -726,7 +756,8 @@ class SDKRandomAnswer(unittest.TestCase):
                 ]
         }
         action = SDKAnswerToUser(items)
-        result = action.run(user, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(action.run(user, None))
         self.assertDictEqual(result[0].raw, {'messageName': 'ANSWER_TO_USER', 'payload': {'items': [{'bubble': {'text': '42', 'markdown': True}}]}})
 
     def test_SDKItemAnswer_suggestions_template(self):
@@ -748,7 +779,8 @@ class SDKRandomAnswer(unittest.TestCase):
             }
         }
         action = SDKAnswerToUser(items)
-        result = action.run(user, None)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(action.run(user, None))
         self.assertDictEqual(
             result[0].raw,
             {

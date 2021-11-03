@@ -18,6 +18,6 @@ class NothingFoundAction(Action):
         super(NothingFoundAction, self).__init__(items, id)
         self._action = StringAction({"command": NOTHING_FOUND})
 
-    def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
-        return self._action.run(user, text_preprocessing_result, params=params)
+    async def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
+        return await self._action.run(user, text_preprocessing_result, params=params)

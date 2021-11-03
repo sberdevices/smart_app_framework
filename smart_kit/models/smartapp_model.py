@@ -82,6 +82,6 @@ class SmartAppModel:
         if user.settings["template_settings"].get("debug_info"):
             set_debug_info(self.app_name, callback_action_params, error)
         exception_action = user.descriptions["external_actions"]["exception_action"]
-        commands = exception_action.run(user=user, text_preprocessing_result=None,
-                                        params=callback_action_params)
+        commands = await exception_action.run(user=user, text_preprocessing_result=None,
+                                              params=callback_action_params)
         return commands

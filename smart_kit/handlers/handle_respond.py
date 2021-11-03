@@ -53,7 +53,7 @@ class HandlerRespond(HandlerBase):
         log("text preprocessing result: '%(normalized_text)s'", user, params, level="DEBUG")
 
         action = user.descriptions["external_actions"][action_name]
-        return action.run(user, text_preprocessing_result, action_params)
+        return await action.run(user, text_preprocessing_result, action_params)
 
     @staticmethod
     def get_processing_time(user):

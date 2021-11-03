@@ -47,7 +47,7 @@ class DialogueManager:
 
                     smart_kit_metrics.counter_nothing_found(self.app_name, scenario_key, user)
 
-                    return self._nothing_found_action.run(user, text_preprocessing_result), False
+                    return await self._nothing_found_action.run(user, text_preprocessing_result), False
 
         return await self.run_scenario(scenario_key, text_preprocessing_result, user), True
 

@@ -24,8 +24,8 @@ class HTTPRequestAction(NodeAction):
                 headers[header_name] = str(header_value)
         return headers
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         behavior_description = user.descriptions["behaviors"][self.behavior]
 
         request_params = self.params
@@ -47,8 +47,8 @@ class HTTPRequestAction(NodeAction):
             with requests.request(**request_parameters) as response:
                 response.raise_for_status()
                 user.variables.set(self.store, response.json())
-                return behavior_description.success_action.run(user, text_preprocessing_result, None)
+                return await behavior_description.success_action.run(user, text_preprocessing_result, None)
         except requests.exceptions.Timeout:
-            return behavior_description.timeout_action.run(user, text_preprocessing_result, None)
+            return await behavior_description.timeout_action.run(user, text_preprocessing_result, None)
         except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
-            return behavior_description.fail_action.run(user, text_preprocessing_result, None)
+            return await behavior_description.fail_action.run(user, text_preprocessing_result, None)

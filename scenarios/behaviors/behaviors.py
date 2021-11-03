@@ -1,4 +1,5 @@
 # coding: utf-8
+import asyncio
 from time import time
 from collections import namedtuple
 from typing import Dict
@@ -133,7 +134,9 @@ class Behaviors:
                 callback_action_params,
             )
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            result = behavior.success_action.run(self._user, text_preprocessing_result, callback_action_params)
+            loop = asyncio.get_running_loop()
+            result = loop.run_until_complete(
+                behavior.success_action.run(self._user, text_preprocessing_result, callback_action_params))
         self._delete(callback_id)
         return result
 
@@ -152,7 +155,9 @@ class Behaviors:
                                smart_kit_metrics.counter_behavior_fail, "fail",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            result = behavior.fail_action.run(self._user, text_preprocessing_result, callback_action_params)
+            loop = asyncio.get_running_loop()
+            result = loop.run_until_complete(
+                behavior.fail_action.run(self._user, text_preprocessing_result, callback_action_params))
         self._delete(callback_id)
         return result
 
@@ -171,7 +176,9 @@ class Behaviors:
                                smart_kit_metrics.counter_behavior_timeout, "timeout",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            result = behavior.timeout_action.run(self._user, text_preprocessing_result, callback_action_params)
+            loop = asyncio.get_running_loop()
+            result = loop.run_until_complete(
+                behavior.timeout_action.run(self._user, text_preprocessing_result, callback_action_params))
         self._delete(callback_id)
         return result
 
@@ -190,7 +197,9 @@ class Behaviors:
                                smart_kit_metrics.counter_behavior_misstate, "misstate",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            result = behavior.misstate_action.run(self._user, text_preprocessing_result, callback_action_params)
+            loop = asyncio.get_running_loop()
+            result = loop.run_until_complete(
+                behavior.misstate_action.run(self._user, text_preprocessing_result, callback_action_params))
         self._delete(callback_id)
         return result
 

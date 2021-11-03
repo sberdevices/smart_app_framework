@@ -12,6 +12,7 @@ from smart_kit.start_points.main_loop_http import HttpMainLoop
 from smart_kit.testing.local import CLInterface
 from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
 from smart_kit.utils.cache import JSONCache
+from smart_kit.testing.suite import TestCase
 
 ENVIRONMENT_VARIABLE = "SMART_KIT_APP_CONFIG"
 
@@ -41,6 +42,7 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
     set_default(app_config, "REFERENCES_PATH", references_path)
 
     set_default(app_config, "LOCAL_TESTING", CLInterface)
+    set_default(app_config, "TEST_CASE", TestCase)
     set_default(app_config, "NORMALIZER_ADDRESS", "http://127.0.0.1:9000")
     set_default(app_config, "PPS_URL", "")
     set_default(app_config, "NORMALIZER", LocalTextNormalizer())

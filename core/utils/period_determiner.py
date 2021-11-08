@@ -326,7 +326,7 @@ class StateMachineForDateDetermining:
                     # всегда относительный текущего дня период
                     self._date_period[0] = self._current_date \
                         - timedelta(
-                            days=7 * self._quantifier if self._quantifier else 1
+                            days=7 * (self._quantifier if self._quantifier else 1)
                         )
 
                     self._quantifier = 0

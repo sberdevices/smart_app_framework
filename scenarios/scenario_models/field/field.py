@@ -1,6 +1,4 @@
 # coding: utf-8
-import asyncio
-
 from core.logging.logger_utils import log
 from core.model.registered import Registered
 

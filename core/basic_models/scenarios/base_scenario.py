@@ -54,7 +54,7 @@ class BaseScenario:
     def _log_params(self):
         return {log_const.KEY_NAME: log_const.SCENARIO_VALUE}
 
-    def text_fits(self, text_preprocessing_result, user):
+    async def text_fits(self, text_preprocessing_result, user):
         return False
 
     def get_no_commands_action(self, user, text_preprocessing_result, params: Dict[str, Any] = None):

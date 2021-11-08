@@ -93,7 +93,7 @@ class CompositeFiller(FieldFillerDescription):
                       user: User, params: Dict[str, Any] = None) -> Optional[Union[int, float, str, bool, List, Dict]]:
         extracted = None
         for filler in self.fillers:
-            extracted = filler.extract(text_preprocessing_result, user, params)
+            extracted = await filler.extract(text_preprocessing_result, user, params)
             if extracted is not None:
                 break
         return extracted
@@ -305,7 +305,7 @@ class PreviousMessagesFiller(FieldFillerDescription):
     @exc_handler(on_error_obj_method_name="on_extract_error")
     async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
                       params: Dict[str, Any] = None) -> Optional[str]:
-        result = self.filler.extract(text_preprocessing_result, user, params)
+        result = await self.filler.extract(text_preprocessing_result, user, params)
         if result is None:
             result = await self._try_extract_last_messages(user, params)
         return result

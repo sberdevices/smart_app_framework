@@ -38,11 +38,10 @@ class BasicField:
     def can_be_updated(self):
         return self.value is not None
 
-    def check_can_be_filled(self, text_preprocessing_result, user):
-        loop = asyncio.get_event_loop()
+    async def check_can_be_filled(self, text_preprocessing_result, user):
         return (
                 self.description.requirement.check(text_preprocessing_result, user) and
-                loop.run_until_complete(self.description.filler.run(user, text_preprocessing_result)) is not None
+                await self.description.filler.run(user, text_preprocessing_result) is not None
         )
 
     @property

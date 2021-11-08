@@ -226,14 +226,14 @@ class IntersectionRequirement(Requirement):
             id,
         )
 
-    def check(
+    async def check(
             self,
             text_preprocessing_result: TextPreprocessingResult,
             user: User,
             params: Dict[str, Any] = None
     ) -> bool:
         result = bool(
-            self.filler.extract(text_preprocessing_result, user, params),
+            await self.filler.extract(text_preprocessing_result, user, params),
         )
         return result
 

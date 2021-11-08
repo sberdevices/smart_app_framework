@@ -26,8 +26,8 @@ class FormFillingScenario(BaseScenario):
         form.refresh()
         return form
 
-    def text_fits(self, text_preprocessing_result, user):
-        return self._check_field(text_preprocessing_result, user, None)
+    async def text_fits(self, text_preprocessing_result, user):
+        return await self._check_field(text_preprocessing_result, user, None)
 
     def check_ask_again_requests(self, text_preprocessing_result, user, params):
         form = user.forms[self.form_type]
@@ -48,10 +48,10 @@ class FormFillingScenario(BaseScenario):
 
         return question.run(user, text_preprocessing_result, params)
 
-    def _check_field(self, text_preprocessing_result, user, params):
+    async def _check_field(self, text_preprocessing_result, user, params):
         form = user.forms[self.form_type]
         field = self._field(form, text_preprocessing_result, user, params)
-        return field.check_can_be_filled(text_preprocessing_result, user) if field else False
+        return await field.check_can_be_filled(text_preprocessing_result, user) if field else False
 
     def _field(self, form, text_preprocessing_result, user, params):
         return self._find_field(form, text_preprocessing_result, user, params)

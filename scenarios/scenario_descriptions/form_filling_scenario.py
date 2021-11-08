@@ -61,7 +61,7 @@ class FormFillingScenario(BaseScenario):
             field = form.fields[field_name]
             if not field.valid and field.description.has_requests and \
                     field.description.requirement.check(
-                    text_preprocessing_result, user, params
+                        text_preprocessing_result, user, params
                     ):
                 return field
 
@@ -75,7 +75,7 @@ class FormFillingScenario(BaseScenario):
     def _clean_key(self, key: str):
         return key.replace(" ", "")
 
-    def _extract_by_field_filler(self, field_key, field_descr, text_normalization_result, user, params):
+    async def _extract_by_field_filler(self, field_key, field_descr, text_normalization_result, user, params):
         result = {}
         check = field_descr.requirement.check(text_normalization_result, user, params)
         log_params = self._log_params()
@@ -85,7 +85,7 @@ class FormFillingScenario(BaseScenario):
         message = "FormFillingScenario.extract: field %(field_key)s requirement %(requirement)s return value: %(check)s"
         log(message, user, log_params)
         if check:
-            result[field_key] = field_descr.filler.run(user, text_normalization_result, params)
+            result[field_key] = await (field_descr.filler.run(user, text_normalization_result, params))
             event = Event(type=HistoryConstants.types.FIELD_EVENT,
                           scenario=self.root_id,
                           content={HistoryConstants.content_fields.FIELD: field_key},
@@ -93,7 +93,7 @@ class FormFillingScenario(BaseScenario):
             user.history.add_event(event)
         return result
 
-    def _extract_data(self, form, text_normalization_result, user, params):
+    async def _extract_data(self, form, text_normalization_result, user, params):
         result = {}
 
         callback_id = user.message.callback_id
@@ -103,14 +103,15 @@ class FormFillingScenario(BaseScenario):
             field = form.fields[request_field["id"]]
             field_descr = form.description.fields[request_field["id"]]
             if field.available:
-                result.update(self._extract_by_field_filler(request_field["id"], field_descr, text_normalization_result,
-                                                            user, params))
+                result.update(await self._extract_by_field_filler(request_field["id"], field_descr,
+                                                                  text_normalization_result,
+                                                                  user, params))
         else:
             for field_key, field_descr in form.description.fields.items():
                 field = form.fields[field_key]
                 if field.available and isinstance(field, QuestionField):
-                    result.update(self._extract_by_field_filler(field_key, field_descr,
-                                                                text_normalization_result, user, params))
+                    result.update(await self._extract_by_field_filler(field_key, field_descr,
+                                                                      text_normalization_result, user, params))
         return result
 
     def _validate_extracted_data(self, user, text_preprocessing_result, form, data_extracted, params):
@@ -180,7 +181,7 @@ class FormFillingScenario(BaseScenario):
         user.last_scenarios.add(self.id, text_preprocessing_result)
         user.preprocessing_messages_for_scenarios.add(text_preprocessing_result)
 
-        data_extracted = self._extract_data(form, text_preprocessing_result, user, params)
+        data_extracted = await self._extract_data(form, text_preprocessing_result, user, params)
         logging_params = {"data_extracted_str": str(data_extracted)}
         logging_params.update(self._log_params())
         log("Extracted data=%(data_extracted_str)s", user, logging_params)

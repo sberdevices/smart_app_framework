@@ -107,7 +107,7 @@ class TreeScenario(FormFillingScenario):
             for field_key, field_descr in internal_form.description.fields.items():
                 field = internal_form.fields[field_key]
                 if field.available:
-                    extracted = field_descr.filler.run(user, text_preprocessing_result, params)
+                    extracted = await field_descr.filler.run(user, text_preprocessing_result, params)
                     if extracted is not None:
                         event = Event(type=HistoryConstants.types.FIELD_EVENT,
                                       scenario=self.root_id,

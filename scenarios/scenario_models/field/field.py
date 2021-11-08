@@ -1,4 +1,6 @@
 # coding: utf-8
+import asyncio
+
 from core.logging.logger_utils import log
 from core.model.registered import Registered
 
@@ -37,9 +39,10 @@ class BasicField:
         return self.value is not None
 
     def check_can_be_filled(self, text_preprocessing_result, user):
+        loop = asyncio.get_event_loop()
         return (
                 self.description.requirement.check(text_preprocessing_result, user) and
-                self.description.filler.run(user, text_preprocessing_result) is not None
+                loop.run_until_complete(self.description.filler.run(user, text_preprocessing_result)) is not None
         )
 
     @property

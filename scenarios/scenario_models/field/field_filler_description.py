@@ -43,7 +43,7 @@ class FieldFillerDescription:
             "filler": self.__class__.__name__
         }
 
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
                 params: Dict[str, Any] = None) -> None:
         return None
 
@@ -53,9 +53,9 @@ class FieldFillerDescription:
             level="ERROR", exc_info=True)
         return None
 
-    def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Any]] = None) -> None:
-        return self.extract(text_preprocessing_result, user, params)
+    async def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Any]] = None) -> None:
+        return await self.extract(text_preprocessing_result, user, params)
 
     def _postprocessing(self, user: User, item: str) -> None:
         last_scenario_name = user.last_scenarios.last_scenario_name
@@ -70,10 +70,10 @@ class ExternalFieldFillerDescription(FieldFillerDescription):
         self.filler = items.get("filler")
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult,
-                user: User, params: Dict[str, Any] = None) -> Optional[Union[int, float, str, bool, List, Dict]]:
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult,
+                      user: User, params: Dict[str, Any] = None) -> Optional[Union[int, float, str, bool, List, Dict]]:
         filler = user.descriptions["external_field_fillers"][self.filler]
-        return filler.run(user, text_preprocessing_result, params)
+        return await filler.run(user, text_preprocessing_result, params)
 
 
 class CompositeFiller(FieldFillerDescription):
@@ -89,8 +89,8 @@ class CompositeFiller(FieldFillerDescription):
         return self._fillers
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult,
-                user: User, params: Dict[str, Any] = None) -> Optional[Union[int, float, str, bool, List, Dict]]:
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult,
+                      user: User, params: Dict[str, Any] = None) -> Optional[Union[int, float, str, bool, List, Dict]]:
         extracted = None
         for filler in self.fillers:
             extracted = filler.extract(text_preprocessing_result, user, params)
@@ -111,8 +111,8 @@ class AvailableInfoFiller(FieldFillerDescription):
         self.template: UnifiedTemplate = UnifiedTemplate(value)
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult,
-                user: User, params: Dict[str, Any] = None) -> Optional[Union[int, float, str, bool, List, Dict]]:
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult,
+                      user: User, params: Dict[str, Any] = None) -> Optional[Union[int, float, str, bool, List, Dict]]:
         params = params or {}
         collected = user.parametrizer.collect(text_preprocessing_result)
         params.update(collected)
@@ -136,8 +136,8 @@ class AvailableInfoFiller(FieldFillerDescription):
 
 class FirstNumberFiller(FieldFillerDescription):
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-                params: Dict[str, Any] = None) -> Optional[int]:
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                      params: Dict[str, Any] = None) -> Optional[int]:
         numbers = text_preprocessing_result.num_token_values
         if numbers:
             log_params = self._log_params()
@@ -150,8 +150,8 @@ class FirstNumberFiller(FieldFillerDescription):
 class FirstCurrencyFiller(FieldFillerDescription):
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-                params: Dict[str, Any] = None) -> Optional[str]:
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                      params: Dict[str, Any] = None) -> Optional[str]:
         currencies = text_preprocessing_result.ccy_token_values
         if currencies:
             log_params = self._log_params()
@@ -164,8 +164,8 @@ class FirstCurrencyFiller(FieldFillerDescription):
 class FirstOrgFiller(FieldFillerDescription):
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-                params: Dict[str, Any] = None) -> Optional[str]:
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                      params: Dict[str, Any] = None) -> Optional[str]:
         orgs = text_preprocessing_result.org_token_values
         if orgs:
             log_params = self._log_params()
@@ -178,8 +178,8 @@ class FirstOrgFiller(FieldFillerDescription):
 class FirstGeoFiller(FieldFillerDescription):
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-                params: Dict[str, Any] = None) -> Optional[str]:
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                      params: Dict[str, Any] = None) -> Optional[str]:
         geos = text_preprocessing_result.geo_token_values
         if geos:
             log_params = self._log_params()
@@ -199,8 +199,8 @@ class RegexpFieldFiller(FieldFillerDescription):
         self.delimiter = items.get("delimiter", ",")
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-                params: Dict[str, Any] = None) -> Optional[str]:
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                      params: Dict[str, Any] = None) -> Optional[str]:
         original_text = text_preprocessing_result.original_text
         match = re.findall(self.regexp, original_text)
         if match:
@@ -232,15 +232,16 @@ class RegexpAndStringOperationsFieldFiller(RegexpFieldFiller):
         return func(original_text, amount) if amount else func(original_text)
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-                params: Dict[str, Any] = None) -> Optional[str]:
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                      params: Dict[str, Any] = None) -> Optional[str]:
         original_text = text_preprocessing_result.original_text
         if self.operations:
             for op in self.operations:
                 original_text = self._operation(original_text, op["type"], op.get("amount"))
         text_preprocessing_result_copy = pickle_deepcopy(text_preprocessing_result)
         text_preprocessing_result_copy.original_text = original_text
-        return super(RegexpAndStringOperationsFieldFiller, self).extract(text_preprocessing_result_copy, user, params)
+        return await super(RegexpAndStringOperationsFieldFiller, self).extract(text_preprocessing_result_copy,
+                                                                               user, params)
 
 
 class AllRegexpsFieldFiller(FieldFillerDescription):
@@ -256,8 +257,8 @@ class AllRegexpsFieldFiller(FieldFillerDescription):
         self.original_text_lower = items.get("original_text_lower") or False
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-                params: Dict[str, Any] = None) -> Optional[str]:
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                      params: Dict[str, Any] = None) -> Optional[str]:
         original_text = text_preprocessing_result.original_text
         if self.original_text_lower:
             original_text = original_text.lower()
@@ -276,8 +277,8 @@ class AllRegexpsFieldFiller(FieldFillerDescription):
 class FirstPersonFiller(FieldFillerDescription):
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-                params: Dict[str, Any] = None) -> Optional[str]:
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                      params: Dict[str, Any] = None) -> Optional[str]:
         persons = text_preprocessing_result.person_token_values
         if persons:
             log_params = self._log_params()
@@ -302,19 +303,19 @@ class PreviousMessagesFiller(FieldFillerDescription):
         return self._filler
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-                params: Dict[str, Any] = None) -> Optional[str]:
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                      params: Dict[str, Any] = None) -> Optional[str]:
         result = self.filler.extract(text_preprocessing_result, user, params)
         if result is None:
-            result = self._try_extract_last_messages(user, params)
+            result = await self._try_extract_last_messages(user, params)
         return result
 
-    def _try_extract_last_messages(self, user, params):
+    async def _try_extract_last_messages(self, user, params):
         processed_items = user.preprocessing_messages_for_scenarios.processed_items
         count = self.count - 1 if self.count else len(processed_items)
         for preprocessing_result_raw in islice(processed_items, 0, count):
             preprocessing_result = TextPreprocessingResult(preprocessing_result_raw)
-            result = self.filler.extract(preprocessing_result, user, params)
+            result = await self.filler.extract(preprocessing_result, user, params)
             if result is not None:
                 return result
 
@@ -322,8 +323,8 @@ class PreviousMessagesFiller(FieldFillerDescription):
 class UserIdFiller(FieldFillerDescription):
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-                params: Dict[str, Any] = None) -> Optional[str]:
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                      params: Dict[str, Any] = None) -> Optional[str]:
         result = user.message.uuid.get('userId')
         return result
 
@@ -355,8 +356,8 @@ class IntersectionFieldFiller(FieldFillerDescription):
             self.normalized_cases.append((key, tokens_list))
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User,
-                params: Dict[str, Any] = None) -> Optional[str]:
+    async def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User,
+                      params: Dict[str, Any] = None) -> Optional[str]:
         tpr_tokenized_set = {norm.get("lemma") for norm in text_preprocessing_result.tokenized_elements_list_pymorphy if
                              norm.get("token_type") != "SENTENCE_ENDPOINT_TOKEN"}
         for key, tokens_list in self.normalized_cases:
@@ -390,8 +391,8 @@ class IntersectionOriginalTextFiller(FieldFillerDescription):
         return False
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User,
-                params: Dict[str, Any] = None) -> Optional[str]:
+    async def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User,
+                      params: Dict[str, Any] = None) -> Optional[str]:
         tpr_original_set = {*text_preprocessing_result.original_text.split()}
         for key, tokens_list in self.original_cases:
             for tokens in tokens_list:
@@ -428,8 +429,8 @@ class ApproveFiller(FieldFillerDescription):
         }
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User,
-                params: Dict[str, Any] = None) -> Optional[bool]:
+    async def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User,
+                      params: Dict[str, Any] = None) -> Optional[bool]:
         if text_preprocessing_result.tokenized_string in self.yes_words_normalized:
             params = self._log_params()
             params["tokenized_string"] = text_preprocessing_result.tokenized_string
@@ -451,9 +452,8 @@ class ApproveFiller(FieldFillerDescription):
 
 class ApproveRawTextFiller(ApproveFiller):
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(
-            self, text_preprocessing_result: TextPreprocessingResult, user: User, params: Dict[str, Any] = None
-    ) -> Optional[bool]:
+    async def extract(self, text_preprocessing_result: TextPreprocessingResult,
+                      user: User, params: Dict[str, Any] = None) -> Optional[bool]:
         original_text = ' '.join(text_preprocessing_result.original_text.split()).lower().rstrip('!.)')
         if original_text in self.set_yes_words:
             params = self._log_params()
@@ -493,8 +493,8 @@ class ClassifierFiller(FieldFillerDescription):
         return answers[0][self._cls_const_answer_key]
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-                params: Dict[str, Any] = None) -> Union[str, None, List[Dict[str, Union[str, float, bool]]]]:
+    async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                      params: Dict[str, Any] = None) -> Union[str, None, List[Dict[str, Union[str, float, bool]]]]:
         result = None
         classifier = self.classifier
         with StatsTimer() as timer:
@@ -515,6 +515,6 @@ class ClassifierFiller(FieldFillerDescription):
 
 class ClassifierFillerMeta(ClassifierFiller):
 
-    def _get_result(self, answers: List[Dict[str, Union[str, float, bool]]]) -> List[
-        Dict[str, Union[str, float, bool]]]:
+    def _get_result(self, answers: List[Dict[str, Union[str, float, bool]]])\
+            -> List[Dict[str, Union[str, float, bool]]]:
         return answers

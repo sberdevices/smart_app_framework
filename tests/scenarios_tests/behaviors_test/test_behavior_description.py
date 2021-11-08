@@ -7,7 +7,7 @@ from scenarios.behaviors.behavior_description import BehaviorDescription
 
 
 class MockAction(Action):
-    def run(self, user, text_preprocessing_result, params=None):
+    async def run(self, user, text_preprocessing_result, params=None):
         return []
 
 
@@ -16,7 +16,7 @@ class TestAction:
         self.id = '123-456-789'
         self.version = 21  # какая-то версия
 
-    def run(self, a, b, c):
+    async def run(self, a, b, c):
         return 123   # некий результат
 
 

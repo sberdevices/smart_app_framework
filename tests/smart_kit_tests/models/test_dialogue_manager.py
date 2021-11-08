@@ -37,9 +37,9 @@ class ModelsTest1(unittest.TestCase):
         self.test_scenario2.text_fits = lambda x, y: True
         self.test_scenario2.run = lambda x, y: y.name + x.name
         self.test_scenarios = TestScenarioDesc({1: self.test_scenario1, 2: self.test_scenario2})
-        self.TestAction = Mock()
+        self.TestAction = Mock()  # должно быть async?
         self.TestAction.description = "test_function"
-        self.TestAction.run = lambda x, y: x.name + y.name
+        self.TestAction.run = lambda x, y: x.name + y.name  # должно быть async?
         self.app_name = "test"
 
     def test_log_const(self):

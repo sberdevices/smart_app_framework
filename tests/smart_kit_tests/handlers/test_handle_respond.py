@@ -21,8 +21,8 @@ class HandlerTest4(unittest.TestCase):
         self.test_user1.message.app_info = {}
         self.test_user1.behaviors = MagicMock()
 
-        self.test_action = Mock('action')
-        self.test_action.run = lambda x, y, z: 10  # пусть что то возвращает
+        self.test_action = Mock('action')  # должно быть async?
+        self.test_action.run = lambda x, y, z: 10  # пусть что то возвращает. Должно быть async?
         self.test_user2 = MagicMock('user')
         self.test_user2.id = '123-345-678'  # пусть чему-то равняется
         self.test_user2.descriptions = {'external_actions': {'any action name': self.test_action}}

@@ -12,7 +12,7 @@ class MockAction:
         self.called = False
         self.command_name = command_name
 
-    def run(self, user, text_preprocessing_result, params):
+    async def run(self, user, text_preprocessing_result, params):
         self.called = True
         if self.command_name:
             return [Command(self.command_name)]
@@ -22,7 +22,7 @@ class BreakAction:
     def __init__(self, items=None):
         pass
 
-    def run(self, user, text_preprocessing_result, params):
+    async def run(self, user, text_preprocessing_result, params):
         user.scenario_models["some_id"].break_scenario = True
         return []
 

@@ -257,7 +257,7 @@ class IntersectionRequirement(Requirement):
             params: Dict[str, Any] = None
     ) -> bool:
         result = bool(
-            self.filler.extract(text_preprocessing_result, user, params),
+            await self.filler.extract(text_preprocessing_result, user, params),
         )
         return result
 

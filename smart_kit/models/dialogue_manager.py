@@ -38,7 +38,7 @@ class DialogueManager:
             if is_form_filling:
                 params = user.parametrizer.collect(text_preprocessing_result)
 
-                if not scenario.text_fits(text_preprocessing_result, user):
+                if not await scenario.text_fits(text_preprocessing_result, user):
 
                     if scenario.check_ask_again_requests(text_preprocessing_result, user, params):
                         reply = scenario.ask_again(text_preprocessing_result, user, params)

@@ -35,38 +35,38 @@ class TestRegexpStringOperationsFiller(TestCase):
         result = self._test_operation(field_value, type_op, amount)
         self.assertEqual(field_value.lstrip(amount), result)
 
-    def _test_extract(self, field_value):
+    async def _test_extract(self, field_value):
         text_preprocessing_result = PickableMock()
         text_preprocessing_result.original_text = field_value
 
         filler = RegexpAndStringOperationsFieldFiller(self.items)
-        return filler.extract(text_preprocessing_result, None)
+        return await filler.extract(text_preprocessing_result, None)
 
-    def test_extract_upper(self):
+    async def test_extract_upper(self):
         field_value = "1-rsar09a"
         self.items["operations"] = [{"type":"upper"}]
 
-        result = self._test_extract(field_value)
+        result = await self._test_extract(field_value)
         self.assertEqual(field_value.upper(), result)
 
-    def test_extract_rstrip(self):
+    async def test_extract_rstrip(self):
         field_value = "1-RSAR09A !)"
         self.items["operations"] = [{"type":"rstrip", "amount": "!) "}]
 
-        result = self._test_extract(field_value)
+        result = await self._test_extract(field_value)
         self.assertEqual(field_value.rstrip("!) "), result)
 
-    def test_extract_upper_rstrip(self):
+    async def test_extract_upper_rstrip(self):
         field_value = "1-rsar09a !)"
         self.items["operations"] = [ {"type":"upper"}, {"type":"rstrip", "amount": "!) "} ]
 
-        result = self._test_extract(field_value)
+        result = await self._test_extract(field_value)
         self.assertEqual(field_value.upper().rstrip("!) "), result)
 
-    def test_extract_no_operations(self):
+    async def test_extract_no_operations(self):
         field_value = "1-rsar09a !)"
         self.items["operations"] = []
 
-        result = self._test_extract(field_value)
+        result = await self._test_extract(field_value)
         self.assertIsNone(result)
 

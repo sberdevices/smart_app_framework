@@ -269,24 +269,21 @@ class SetVariableActionTest(unittest.TestCase):
         user.variables.set = Mock()
         self.user = user
 
-    def test_action(self):
+    async def test_action(self):
         action = SetVariableAction({"key": "some_key", "value": "some_value"})
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(self.user, None))
+        await action.run(self.user, None)
         self.user.variables.set.assert_called_with("some_key", "some_value", None)
 
-    def test_action_jinja_key_default(self):
+    async def test_action_jinja_key_default(self):
         self.user.message.payload = {"some_value": "some_value_test"}
         action = SetVariableAction({"key": "some_key", "value": "{{payload.some_value}}"})
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(self.user, None))
+        await action.run(self.user, None)
         self.user.variables.set.assert_called_with("some_key", "some_value_test", None)
 
-    def test_action_jinja_no_key(self):
+    async def test_action_jinja_no_key(self):
         self.user.message.payload = {"some_value": "some_value_test"}
         action = SetVariableAction({"key": "some_key", "value": "{{payload.no_key}}"})
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(self.user, None))
+        await action.run(self.user, None)
         self.user.variables.set.assert_called_with("some_key", "", None)
 
 

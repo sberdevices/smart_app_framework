@@ -5,6 +5,7 @@
 Дата: октябрь 2021 года
 """
 
+from typing import Optional
 from datetime import datetime, timedelta
 from core.utils.period_determiner import period_determiner
 from core.utils.period_determiner import extract_words_describing_period
@@ -381,6 +382,77 @@ def test_period_determiner_27():
     ]
     result = period_determiner(words_to_process)
     assert result == ('01.01.2020', '31.12.2020')
+
+
+def test_period_determiner_28():
+    # если используется корректная форма "за неделю"
+    # без указания количества недель
+    words_to_process = [
+        'неделю'
+    ]
+    result = period_determiner(words_to_process)
+    d1: datetime = current_date - timedelta(7)
+    assert result == ('{}.{}.{}'.format(str(d1.day).zfill(2),
+                                        str(d1.month).zfill(2),
+                                        d1.year),
+                      '{}.{}.{}'.format(str(current_date.day).zfill(2),
+                                        str(current_date.month).zfill(2),
+                                        current_date.year))
+
+
+def test_period_determiner_29():
+    # если используется форма "за квартал",
+    # без указания номера квартала, то имеем ввиду текущий квартал
+    words_to_process = [
+        'квартал'
+    ]
+
+    qvartal_nomer = 1
+    if current_date.month in [1, 2, 3]:
+        qvartal_nomer = 1
+    elif current_date.month in [4, 5, 6]:
+        qvartal_nomer = 2
+    elif current_date.month in [7, 8, 9]:
+        qvartal_nomer = 3
+    else:
+        qvartal_nomer = 4
+
+    d1 = datetime(
+        year=current_date.year,
+        month=3 * qvartal_nomer - 2,
+        day=1
+    )
+
+    d2: Optional[datetime] = None
+    if qvartal_nomer == 4:
+        d2 = datetime(
+            year=current_date.year + 1,
+            month=1,
+            day=1
+        ) - timedelta(days=1)
+    else:
+        d2 = datetime(
+            year=current_date.year,
+            month=3 * qvartal_nomer + 1,
+            day=1
+        ) - timedelta(days=1)
+
+    result = period_determiner(words_to_process, future_days_allowed=True)
+    assert result == ('{}.{}.{}'.format(str(d1.day).zfill(2),
+                                        str(d1.month).zfill(2),
+                                        d1.year),
+                      '{}.{}.{}'.format(str(d2.day).zfill(2),
+                                        str(d2.month).zfill(2),
+                                        d2.year))
+
+
+def test_period_determiner_30():
+    # если даты передана в формате d.m
+    words_to_process = [
+        '8.1'
+    ]
+    result = period_determiner(words_to_process)
+    assert result == ('08.01.{}'.format(current_date.year), '08.01.{}'.format(current_date.year))
 
 
 def test_extract_words_describing_period_1():

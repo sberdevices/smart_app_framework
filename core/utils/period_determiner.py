@@ -13,9 +13,9 @@ from datetime import datetime, timedelta
 # глобальный формат даты
 date_format: str = '%d.%m.%Y'
 # шаблоны регулярок для определения дат
-re_shortest_date_pattern = '^([0-9]{2}).([0-9]{2})$'
-re_short_date_pattern = '^([0-9]{2}).([0-9]{2}).([0-9]{2})$'
-re_long_date_pattern = '^([0-9]{2}).([0-9]{2}).([0-9]{4})$'
+re_shortest_date_pattern = '^([0-9]{1,2})\\.([0-9]{1,2})$'
+re_short_date_pattern = '^([0-9]{1,2})\\.([0-9]{1,2})\\.([0-9]{2})$'
+re_long_date_pattern = '^([0-9]{1,2})\\.([0-9]{1,2})\\.([0-9]{4})$'
 
 
 class IncorrectDateException(Exception):
@@ -250,7 +250,7 @@ class StateMachineForDateDetermining:
             # иначе если в КА прилетело слово
             else:
                 # год
-                if match_word_with_list(word, ['год']) != -1:
+                if match_word_with_list(word, ['год', 'лет']) != -1:
                     if self._quantifier:
                         # год должен быть 4х-значным и больще 1900 года
                         if self._quantifier > 1900:
@@ -337,34 +337,40 @@ class StateMachineForDateDetermining:
                     if self._quantifier:
                         if not (self._quantifier in [1, 2, 3, 4]):
                             self._is_error = True
-                        else:
-                            self._date_period[0] = \
-                                safe_datetime(
-                                    year=self._current_date.year,
-                                    month=3 * self._quantifier - 2,
-                                    day=1
-                                )
-
-                            if self._quantifier == 4:
-                                self._date_period[1] = \
-                                    safe_datetime(
-                                        year=self._current_date.year + 1,
-                                        month=1,
-                                        day=1
-                                    ) - timedelta(days=1)
-                            else:
-                                self._date_period[1] = \
-                                    safe_datetime(
-                                        year=self._current_date.year,
-                                        month=3 * self._quantifier + 1,
-                                        day=1
-                                    ) - timedelta(days=1)
-
-                        self._quantifier = 0
-                        self._is_determined = True
-                    # если не указан номер квартала, то это ошибка
                     else:
-                        self._is_error = True
+                        if self._current_date.month in [1, 2, 3]:
+                            self._quantifier = 1
+                        elif self._current_date.month in [4, 5, 6]:
+                            self._quantifier = 2
+                        elif self._current_date.month in [7, 8, 9]:
+                            self._quantifier = 3
+                        else:
+                            self._quantifier = 4
+
+                    self._date_period[0] = \
+                        safe_datetime(
+                            year=self._current_date.year,
+                            month=3 * self._quantifier - 2,
+                            day=1
+                        )
+
+                    if self._quantifier == 4:
+                        self._date_period[1] = \
+                            safe_datetime(
+                                year=self._current_date.year + 1,
+                                month=1,
+                                day=1
+                            ) - timedelta(days=1)
+                    else:
+                        self._date_period[1] = \
+                            safe_datetime(
+                                year=self._current_date.year,
+                                month=3 * self._quantifier + 1,
+                                day=1
+                            ) - timedelta(days=1)
+
+                    self._quantifier = 0
+                    self._is_determined = True
 
                 # другие слова
                 else:
@@ -527,32 +533,37 @@ def is_from_date_dictionary(word: str) -> bool:
         "дня",
         "месяц",
         "год",
+        "лет",
         "недел",
         "квартал",
-        "январь",
+        "январ",
         "феврал",
         "март",
-        "апрель",
-        "май",
-        "июнь",
-        "июль",
+        "апрел",
+        "ма",
+        "июн",
+        "июл",
         "август",
-        "сентябрь",
-        "октябрь",
-        "ноябрь",
-        "декабрь"
+        "сентябр",
+        "октябр",
+        "ноябр",
+        "декабр"
     ]
     if match_word_with_list(word, list_of_dictionary) == -1:
         return False
     return True
 
 
-def period_determiner(words_to_process: List[str], max_days_in_period: Optional[int] = None) -> Tuple[str, str]:
+def period_determiner(words_to_process: List[str],
+                      max_days_in_period: Optional[int] = None,
+                      future_days_allowed: bool = False) -> Tuple[str, str]:
     """
     Входная функция модуля, ее вызываем для получения дат.
     Она использует рабочую функцию date_determiner
 
     :param words_to_process: список слово в нижнем регистре
+    :param max_days_in_period: максимальное количество дней в периоде
+    :param future_days_allowed: нужно ли ограничивать период сегодняшним днем
     :return: кортеж строк дат в формате dd.mm.yyyy,
     если одна из них или обе ошибочные, то error
     """
@@ -618,6 +629,13 @@ def period_determiner(words_to_process: List[str], max_days_in_period: Optional[
                 t: timedelta = end_date - begin_date
                 if t.days > max_days_in_period:
                     return 'error', 'error'
+            # контроль будущих дат
+            if not future_days_allowed:
+                current_day: datetime = datetime.now()
+                if begin_date > current_day:
+                    return 'error', 'error'
+                if end_date > current_day:
+                    end_of_period = format_date(current_day)
 
     return begin_of_period, end_of_period
 

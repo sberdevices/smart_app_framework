@@ -20,7 +20,7 @@ class ExternalRequirement(Requirement):
         super(ExternalRequirement, self).__init__(items, id)
         self.requirement = items["requirement"]
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         requirement = user.descriptions["external_requirements"][self.requirement]
-        return requirement.check(text_preprocessing_result, user, params)
+        return await requirement.check(text_preprocessing_result, user, params)

@@ -1,8 +1,10 @@
 # coding: utf-8
+import asyncio
 import unittest
 from unittest.mock import Mock
 
-from scenarios.requirements.requirements import TemplateInArrayRequirement, ArrayItemInTemplateRequirement, RegexpInTemplateRequirement
+from scenarios.requirements.requirements import TemplateInArrayRequirement, ArrayItemInTemplateRequirement, \
+    RegexpInTemplateRequirement
 
 
 class MockRequirement:
@@ -10,7 +12,7 @@ class MockRequirement:
         items = items or {}
         self.cond = items.get("cond") or False
 
-    def check(self, text_preprocessing_result, user):
+    async def check(self, text_preprocessing_result, user):
         return self.cond
 
 
@@ -70,144 +72,145 @@ class RequirementTest(unittest.TestCase):
         user = Mock()
         user.parametrizer = Mock()
         user.parametrizer.collect = Mock(return_value=params)
-        self.assertTrue(requirement.check(None, user))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(None, user)))
 
     def test_template_in_array_req_true2(self):
-            items = {
-                "template": "{{ payload.message.strip() }}",
-                "items": ["AAA", "BBB", "CCC"]
-            }
-            requirement = TemplateInArrayRequirement(items)
-            params = {"payload": {
-                "userInfo": {
-                    "tbcode": "32"
-                },
-                "message": " BBB    "
-            }}
-            user = Mock()
-            user.parametrizer = Mock()
-            user.parametrizer.collect = Mock(return_value=params)
-            self.assertTrue(requirement.check(None, user))
+        items = {
+            "template": "{{ payload.message.strip() }}",
+            "items": ["AAA", "BBB", "CCC"]
+        }
+        requirement = TemplateInArrayRequirement(items)
+        params = {"payload": {
+            "userInfo": {
+                "tbcode": "32"
+            },
+            "message": " BBB    "
+        }}
+        user = Mock()
+        user.parametrizer = Mock()
+        user.parametrizer.collect = Mock(return_value=params)
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(None, user)))
 
     def test_template_in_array_req_false(self):
-            items = {
-                "template": "{{ payload.message.strip() }}",
-                "items": ["AAA", "CCC"]
-            }
-            requirement = TemplateInArrayRequirement(items)
-            params = {"payload": {
-                "userInfo": {
-                    "tbcode": "32",
-                },
-                "message": " BBB "
-            }}
-            user = Mock()
-            user.parametrizer = Mock()
-            user.parametrizer.collect = Mock(return_value=params)
-            self.assertFalse(requirement.check(None, user))
-
+        items = {
+            "template": "{{ payload.message.strip() }}",
+            "items": ["AAA", "CCC"]
+        }
+        requirement = TemplateInArrayRequirement(items)
+        params = {"payload": {
+            "userInfo": {
+                "tbcode": "32",
+            },
+            "message": " BBB "
+        }}
+        user = Mock()
+        user.parametrizer = Mock()
+        user.parametrizer.collect = Mock(return_value=params)
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(None, user)))
 
     def test_array_in_template_req_true(self):
-            items = {
-                "template": {
-                    "type": "unified_template",
-                    "template": "{{ payload.userInfo.departcode.split('/')|tojson }}",
-                    "loader": "json"
-                },
-                "items": ["111", "456"]
-            }
-            requirement = ArrayItemInTemplateRequirement(items)
-            params = {"payload": {
-                "userInfo": {
-                    "tbcode": "32",
-                    "departcode": "123/2345/456"
-                },
-                "message": " BBB "
-            }}
-            user = Mock()
-            user.parametrizer = Mock()
-            user.parametrizer.collect = Mock(return_value=params)
-            self.assertTrue(requirement.check(None, user))
-
+        items = {
+            "template": {
+                "type": "unified_template",
+                "template": "{{ payload.userInfo.departcode.split('/')|tojson }}",
+                "loader": "json"
+            },
+            "items": ["111", "456"]
+        }
+        requirement = ArrayItemInTemplateRequirement(items)
+        params = {"payload": {
+            "userInfo": {
+                "tbcode": "32",
+                "departcode": "123/2345/456"
+            },
+            "message": " BBB "
+        }}
+        user = Mock()
+        user.parametrizer = Mock()
+        user.parametrizer.collect = Mock(return_value=params)
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(None, user)))
 
     def test_array_in_template_req_true2(self):
-            items = {
-                "template": "{{ payload.message.strip() }}",
-                "items": ["AAA", "BBB"]
-            }
-            requirement = ArrayItemInTemplateRequirement(items)
-            params = {"payload": {
-                "userInfo": {
-                    "tbcode": "32",
-                    "departcode": "123/2345/456"
-                },
-                "message": " BBB "
-            }}
-            user = Mock()
-            user.parametrizer = Mock()
-            user.parametrizer.collect = Mock(return_value=params)
-            self.assertTrue(requirement.check(None, user))
-
+        items = {
+            "template": "{{ payload.message.strip() }}",
+            "items": ["AAA", "BBB"]
+        }
+        requirement = ArrayItemInTemplateRequirement(items)
+        params = {"payload": {
+            "userInfo": {
+                "tbcode": "32",
+                "departcode": "123/2345/456"
+            },
+            "message": " BBB "
+        }}
+        user = Mock()
+        user.parametrizer = Mock()
+        user.parametrizer.collect = Mock(return_value=params)
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(None, user)))
 
     def test_array_in_template_req_false(self):
-            items = {
-                "template": {
-                    "type": "unified_template",
-                    "template": "{{ payload.userInfo.departcode.split('/')|tojson }}",
-                    "loader": "json"
-                },
-                "items": ["111", "222"]
-            }
-            requirement = ArrayItemInTemplateRequirement(items)
-            params = {"payload": {
-                "userInfo": {
-                    "tbcode": "32",
-                    "departcode": "123/2345/456"
-                },
-                "message": " BBB "
-            }}
-            user = Mock()
-            user.parametrizer = Mock()
-            user.parametrizer.collect = Mock(return_value=params)
-            self.assertFalse(requirement.check(None, user))
-
+        items = {
+            "template": {
+                "type": "unified_template",
+                "template": "{{ payload.userInfo.departcode.split('/')|tojson }}",
+                "loader": "json"
+            },
+            "items": ["111", "222"]
+        }
+        requirement = ArrayItemInTemplateRequirement(items)
+        params = {"payload": {
+            "userInfo": {
+                "tbcode": "32",
+                "departcode": "123/2345/456"
+            },
+            "message": " BBB "
+        }}
+        user = Mock()
+        user.parametrizer = Mock()
+        user.parametrizer.collect = Mock(return_value=params)
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(None, user)))
 
     def test_regexp_in_template_req_true(self):
-            items = {
-                "template": "{{ payload.message.strip() }}",
-                "regexp": "(^|\s)[Фф](\.|-)?1(\-)?(у|У)?($|\s)"
-            }
-            requirement = RegexpInTemplateRequirement(items)
-            params = {"payload": {
-                "userInfo": {
-                    "tbcode": "32",
-                },
-                "message": "карточки ф1у"
-            }}
-            user = Mock()
-            user.parametrizer = Mock()
-            user.parametrizer.collect = Mock(return_value=params)
-            self.assertTrue(requirement.check(None, user))
-
+        items = {
+            "template": "{{ payload.message.strip() }}",
+            "regexp": "(^|\s)[Фф](\.|-)?1(\-)?(у|У)?($|\s)"
+        }
+        requirement = RegexpInTemplateRequirement(items)
+        params = {"payload": {
+            "userInfo": {
+                "tbcode": "32",
+            },
+            "message": "карточки ф1у"
+        }}
+        user = Mock()
+        user.parametrizer = Mock()
+        user.parametrizer.collect = Mock(return_value=params)
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(None, user)))
 
     def test_regexp_in_template_req_false(self):
-            items = {
-                "template": "{{ payload.message.strip() }}",
-                "regexp": "(^|\s)[Фф](\.|-)?1(\-)?(у|У)?($|\s)"
-            }
-            requirement = RegexpInTemplateRequirement(items)
-            params = {"payload": {
-                "userInfo": {
-                    "tbcode": "32",
-                },
-                "message": "карточки конг фу 1"
-            }}
-            user = Mock()
-            user.parametrizer = Mock()
-            user.parametrizer.collect = Mock(return_value=params)
-            self.assertFalse(requirement.check(None, user))
-
-
+        items = {
+            "template": "{{ payload.message.strip() }}",
+            "regexp": "(^|\s)[Фф](\.|-)?1(\-)?(у|У)?($|\s)"
+        }
+        requirement = RegexpInTemplateRequirement(items)
+        params = {"payload": {
+            "userInfo": {
+                "tbcode": "32",
+            },
+            "message": "карточки конг фу 1"
+        }}
+        user = Mock()
+        user.parametrizer = Mock()
+        user.parametrizer.collect = Mock(return_value=params)
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(None, user)))
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 # coding: utf-8
+import asyncio
 from typing import Dict, List, Optional, Any, Set
 
 from core.basic_models.operators.operators import Operator
@@ -14,7 +15,7 @@ class FieldRequirement:
     def __init__(self, items: Optional[Dict[str, Any]]) -> None:
         pass
 
-    def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
+    async def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
         return True
 
 
@@ -32,13 +33,27 @@ class CompositeFieldRequirement(FieldRequirement):
 
 
 class AndFieldRequirement(CompositeFieldRequirement):
-    def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
-        return all(requirement.check(field_value=field_value, params=params) for requirement in self.requirements)
+    async def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
+        return all(await requirement.check(field_value=field_value, params=params) for requirement in self.requirements)
+
+
+class GatherAndFieldRequirement(CompositeFieldRequirement):
+    async def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
+        check_results = await asyncio.gather(requirement.check(field_value=field_value, params=params)
+                                             for requirement in self.requirements)
+        return all(check_results)
 
 
 class OrFieldRequirement(CompositeFieldRequirement):
-    def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
-        return any(requirement.check(field_value=field_value, params=params) for requirement in self.requirements)
+    async def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
+        return any(await requirement.check(field_value=field_value, params=params) for requirement in self.requirements)
+
+
+class GatherOrFieldRequirement(CompositeFieldRequirement):
+    async def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
+        check_results = await asyncio.gather(requirement.check(field_value=field_value, params=params)
+                                             for requirement in self.requirements)
+        return any(check_results)
 
 
 class NotFieldRequirement(FieldRequirement):
@@ -53,8 +68,8 @@ class NotFieldRequirement(FieldRequirement):
     def build_requirement(self):
         return self._requirement
 
-    def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
-        return not self.requirement.check(field_value=field_value, params=params)
+    async def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
+        return not await self.requirement.check(field_value=field_value, params=params)
 
 
 class ComparisonFieldRequirement(FieldRequirement):
@@ -69,7 +84,7 @@ class ComparisonFieldRequirement(FieldRequirement):
     def build_operator(self):
         return self._operator
 
-    def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
+    async def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
         return self.operator.compare(field_value)
 
 
@@ -77,7 +92,7 @@ class IsIntFieldRequirement(FieldRequirement):
     def __init__(self, items: Optional[Dict[str, Any]]) -> None:
         super(IsIntFieldRequirement, self).__init__(items)
 
-    def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
+    async def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
         try:
             int(field_value)
             return True
@@ -92,7 +107,7 @@ class ValueInSetRequirement(FieldRequirement):
         super(ValueInSetRequirement, self).__init__(items)
         self.symbols: Set = set(items["symbols"])
 
-    def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
+    async def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
         return field_value in self.symbols
 
 
@@ -102,7 +117,7 @@ class TokenPartInSet(FieldRequirement):
         self.part = items['part']
         self.values = items['values']
 
-    def check(self, field_value: dict, params: Dict[str, Any] = None) -> bool:
+    async def check(self, field_value: dict, params: Dict[str, Any] = None) -> bool:
         return field_value[self.part] in self.values
 
 
@@ -115,5 +130,5 @@ class TextLengthFieldRequirement(FieldRequirement):
         self.min_field_length = items["min_field_length"]
         self.max_field_length = items["max_field_length"]
 
-    def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
+    async def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
         return self.min_field_length <= len(field_value) <= self.max_field_length

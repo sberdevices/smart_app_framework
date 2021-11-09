@@ -1,3 +1,4 @@
+import asyncio
 import os
 import unittest
 from time import time
@@ -34,7 +35,7 @@ class MockRequirement:
         items = items or {}
         self.cond = items.get("cond") or False
 
-    def check(self, text_preprocessing_result, user, params):
+    async def check(self, text_preprocessing_result, user, params):
         return self.cond
 
 
@@ -80,7 +81,8 @@ class EQMockOperator:
 class RequirementTest(unittest.TestCase):
     def test_base(self):
         requirement = Requirement(None)
-        assert requirement.check(None, None)
+        loop = asyncio.get_event_loop()
+        assert loop.run_until_complete(requirement.check(None, None))
 
     def test_composite(self):
         registered_factories[Requirement] = MockRequirement
@@ -89,7 +91,8 @@ class RequirementTest(unittest.TestCase):
             {"cond": True}
         ]})
         self.assertEqual(len(requirement.requirements), 2)
-        self.assertTrue(requirement.check(None, None))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(None, None)))
 
     def test_and_success(self):
         registered_factories[Requirement] = MockRequirement
@@ -97,7 +100,8 @@ class RequirementTest(unittest.TestCase):
             {"cond": True},
             {"cond": True}
         ]})
-        self.assertTrue(requirement.check(None, None))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(None, None)))
 
     def test_and_fail(self):
         registered_factories[Requirement] = MockRequirement
@@ -105,7 +109,8 @@ class RequirementTest(unittest.TestCase):
             {"cond": True},
             {"cond": False}
         ]})
-        self.assertFalse(requirement.check(None, None))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(None, None)))
 
     def test_or_success(self):
         registered_factories[Requirement] = MockRequirement
@@ -113,7 +118,8 @@ class RequirementTest(unittest.TestCase):
             {"cond": True},
             {"cond": False}
         ]})
-        self.assertTrue(requirement.check(None, None))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(None, None)))
 
     def test_or_fail(self):
         registered_factories[Requirement] = MockRequirement
@@ -121,17 +127,20 @@ class RequirementTest(unittest.TestCase):
             {"cond": False},
             {"cond": False}
         ]})
-        self.assertFalse(requirement.check(None, None))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(None, None)))
 
     def test_not_success(self):
         registered_factories[Requirement] = MockRequirement
         requirement = NotRequirement({"requirement": {"cond": False}})
-        self.assertTrue(requirement.check(None, None))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(None, None)))
 
     def test_not_fail(self):
         registered_factories[Requirement] = MockRequirement
         requirement = NotRequirement({"requirement": {"cond": True}})
-        self.assertFalse(requirement.check(None, None))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(None, None)))
 
     def test_channel_success(self):
         user = Mock()
@@ -139,7 +148,8 @@ class RequirementTest(unittest.TestCase):
         user.message = message
         requirement = ChannelRequirement({"channels": ["ch1"]})
         text_normalization_result = None
-        self.assertTrue(requirement.check(text_normalization_result, user))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(text_normalization_result, user)))
 
     def test_channel_fail(self):
         user = Mock()
@@ -147,15 +157,18 @@ class RequirementTest(unittest.TestCase):
         user.message = message
         requirement = ChannelRequirement({"channels": ["ch1"]})
         text_normalization_result = None
-        self.assertFalse(requirement.check(text_normalization_result, user))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(text_normalization_result, user)))
 
     def test_random_requirement_true(self):
         requirement = RandomRequirement({"percent": 100})
-        self.assertTrue(requirement.check(None, None))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(None, None)))
 
     def test_random_requirement_false(self):
         requirement = RandomRequirement({"percent": 0})
-        self.assertFalse(requirement.check(None, None))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(None, None)))
 
     def test_topic_requirement(self):
         requirement = TopicRequirement({"topics": ["test"]})
@@ -163,7 +176,8 @@ class RequirementTest(unittest.TestCase):
         message = Mock()
         message.topic_key = "test"
         user.message = message
-        self.assertTrue(requirement.check(None, user))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(None, user)))
 
     def test_counter_value_requirement(self):
         registered_factories[Operator] = MockAmountOperator
@@ -172,7 +186,8 @@ class RequirementTest(unittest.TestCase):
         counter.__gt__ = Mock(return_value=True)
         user.counters = {"test": counter}
         requirement = CounterValueRequirement({"operator": {"type": "equal", "amount": 2}, "key": "test"})
-        self.assertTrue(requirement.check(None, user))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(None, user)))
 
     def test_counter_time_requirement(self):
         registered_factories[Operator] = MockAmountOperator
@@ -181,7 +196,8 @@ class RequirementTest(unittest.TestCase):
         counter.update_time = int(time()) - 10
         user.counters = {"test": counter}
         requirement = CounterUpdateTimeRequirement({"operator": {"type": "more_or_equal", "amount": 5}, "key": "test"})
-        self.assertTrue(requirement.check(None, user))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(None, user)))
 
     def test_template_req_true(self):
         items = {
@@ -196,7 +212,8 @@ class RequirementTest(unittest.TestCase):
         user = Mock()
         user.parametrizer = Mock()
         user.parametrizer.collect = Mock(return_value=params)
-        self.assertTrue(requirement.check(None, user))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(None, user)))
 
     def test_template_req_false(self):
         items = {
@@ -207,7 +224,8 @@ class RequirementTest(unittest.TestCase):
         user = Mock()
         user.parametrizer = Mock()
         user.parametrizer.collect = Mock(return_value=params)
-        self.assertFalse(requirement.check(None, user))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(None, user)))
 
     def test_template_req_raise(self):
         items = {
@@ -225,14 +243,16 @@ class RequirementTest(unittest.TestCase):
         user.id = "353454"
         requirement = RollingRequirement({"percent": 100})
         text_normalization_result = None
-        self.assertTrue(requirement.check(text_normalization_result, user))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(text_normalization_result, user)))
 
     def test_rolling_requirement_false(self):
         user = Mock()
         user.id = "353454"
         requirement = RollingRequirement({"percent": 0})
         text_normalization_result = None
-        self.assertFalse(requirement.check(text_normalization_result, user))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(text_normalization_result, user)))
 
     def test_time_requirement_true(self):
         user = Mock()
@@ -254,7 +274,8 @@ class RequirementTest(unittest.TestCase):
             }
         )
         text_normalization_result = None
-        self.assertTrue(requirement.check(text_normalization_result, user))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(text_normalization_result, user)))
 
     def test_time_requirement_false(self):
         user = Mock()
@@ -276,7 +297,8 @@ class RequirementTest(unittest.TestCase):
             }
         )
         text_normalization_result = None
-        self.assertFalse(requirement.check(text_normalization_result, user))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(text_normalization_result, user)))
 
     def test_datetime_requirement_true(self):
         user = Mock()
@@ -295,7 +317,8 @@ class RequirementTest(unittest.TestCase):
             }
         )
         text_normalization_result = None
-        self.assertTrue(requirement.check(text_normalization_result, user))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(text_normalization_result, user)))
 
     def test_datetime_requirement_false(self):
         user = Mock()
@@ -314,7 +337,8 @@ class RequirementTest(unittest.TestCase):
             }
         )
         text_normalization_result = None
-        self.assertFalse(requirement.check(text_normalization_result, user))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(text_normalization_result, user)))
 
     @patch('smart_kit.configs.get_app_config')
     def test_intersection_requirement_true(self, mock_get_app_config):
@@ -334,7 +358,8 @@ class RequirementTest(unittest.TestCase):
             {'lemma': 'я'},
             {'lemma': 'хотеть'},
         ]
-        self.assertTrue(requirement.check(text_normalization_result, user))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(text_normalization_result, user)))
 
     @patch('smart_kit.configs.get_app_config')
     def test_intersection_requirement_false(self, mock_get_app_config):
@@ -355,7 +380,8 @@ class RequirementTest(unittest.TestCase):
             {'lemma': 'за'},
             {'lemma': 'что'},
         ]
-        self.assertFalse(requirement.check(text_normalization_result, user))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(text_normalization_result, user)))
 
     @patch.object(ExternalClassifier, "find_best_answer", return_value=[{"answer": "нет", "score": 1.0, "other": False}])
     def test_classifier_requirement_true(self, mock_classifier_model):
@@ -366,7 +392,8 @@ class RequirementTest(unittest.TestCase):
         classifier_requirement = ClassifierRequirement(test_items)
         mock_user = Mock()
         mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
-        result = classifier_requirement.check(Mock(), mock_user)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(classifier_requirement.check(Mock(), mock_user))
         self.assertTrue(result)
 
     @patch.object(ExternalClassifier, "find_best_answer", return_value=[])
@@ -376,7 +403,8 @@ class RequirementTest(unittest.TestCase):
         classifier_requirement = ClassifierRequirement(test_items)
         mock_user = Mock()
         mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
-        result = classifier_requirement.check(Mock(), mock_user)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(classifier_requirement.check(Mock(), mock_user))
         self.assertFalse(result)
 
     @patch.object(ExternalClassifier, "find_best_answer", return_value=[{"answer": "other", "score": 1.0, "other": True}])
@@ -386,7 +414,8 @@ class RequirementTest(unittest.TestCase):
         classifier_requirement = ClassifierRequirement(test_items)
         mock_user = Mock()
         mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
-        result = classifier_requirement.check(Mock(), mock_user)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(classifier_requirement.check(Mock(), mock_user))
         self.assertFalse(result)
 
     def test_form_field_value_requirement_true(self):
@@ -405,7 +434,8 @@ class RequirementTest(unittest.TestCase):
         user.forms[form_name].fields = {form_field: Mock(), "value": field_value}
         user.forms[form_name].fields[form_field].value = field_value
 
-        result = req_form_field_value.check(Mock(), user)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(req_form_field_value.check(Mock(), user))
         self.assertTrue(result)
 
     def test_form_field_value_requirement_false(self):
@@ -424,7 +454,8 @@ class RequirementTest(unittest.TestCase):
         user.forms[form_name].fields = {form_field: Mock(), "value": "OTHER_TEST_VAL"}
         user.forms[form_name].fields[form_field].value = "OTHER_TEST_VAL"
 
-        result = req_form_field_value.check(Mock(), user)
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(req_form_field_value.check(Mock(), user))
         self.assertFalse(result)
 
     @patch("smart_kit.configs.get_app_config")
@@ -432,14 +463,16 @@ class RequirementTest(unittest.TestCase):
         """Тест кейз проверяет что условие возвращает True, т.к среда исполнения из числа values."""
         patch_get_app_config(mock_get_app_config)
         environment_req = EnvironmentRequirement({"values": ["ift", "uat"]})
-        self.assertTrue(environment_req.check(Mock(), Mock()))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(environment_req.check(Mock(), Mock())))
 
     @patch("smart_kit.configs.get_app_config")
     def test_environment_requirement_false(self, mock_get_app_config):
         """Тест кейз проверяет что условие возвращает False, т.к среда исполнения НЕ из числа values."""
         patch_get_app_config(mock_get_app_config)
         environment_req = EnvironmentRequirement({"values": ["uat", "pt"]})
-        self.assertFalse(environment_req.check(Mock(), Mock()))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(environment_req.check(Mock(), Mock())))
 
     def test_any_substring_in_lowered_text_requirement_true(self):
         """Тест кейз проверяет что условие возвращает True, т.к нашлась подстрока из списка substrings, которая
@@ -448,7 +481,8 @@ class RequirementTest(unittest.TestCase):
         req = AnySubstringInLoweredTextRequirement({"substrings": ["искомая подстрока", "другое знанчение"]})
         text_preprocessing_result = Mock()
         text_preprocessing_result.raw = {"original_text": "КАКОЙ-ТО ТЕКСТ С ИСКОМАЯ ПОДСТРОКА"}
-        result = req.check(text_preprocessing_result, Mock())
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(req.check(text_preprocessing_result, Mock()))
         self.assertTrue(result)
 
     def test_any_substring_in_lowered_text_requirement_false(self):
@@ -458,7 +492,8 @@ class RequirementTest(unittest.TestCase):
         req = AnySubstringInLoweredTextRequirement({"substrings": ["искомая подстрока", "другая подстрока"]})
         text_preprocessing_result = Mock()
         text_preprocessing_result.raw = {"original_text": "КАКОЙ-ТО ТЕКСТ"}
-        result = req.check(text_preprocessing_result, Mock())
+        loop = asyncio.get_event_loop()
+        result = loop.run_until_complete(req.check(text_preprocessing_result, Mock()))
         self.assertFalse(result)
 
     def test_num_in_range_requirement_true(self):
@@ -466,28 +501,32 @@ class RequirementTest(unittest.TestCase):
         req = NumInRangeRequirement({"min_num": "5", "max_num": "10"})
         text_preprocessing_result = Mock()
         text_preprocessing_result.num_token_values = 7
-        self.assertTrue(req.check(text_preprocessing_result, Mock()))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(req.check(text_preprocessing_result, Mock())))
 
     def test_num_in_range_requirement_false(self):
         """Тест кейз проверяет что условие возвращает False, т.к число НЕ находится в заданном диапазоне."""
         req = NumInRangeRequirement({"min_num": "5", "max_num": "10"})
         text_preprocessing_result = Mock()
         text_preprocessing_result.num_token_values = 20
-        self.assertFalse(req.check(text_preprocessing_result, Mock()))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(req.check(text_preprocessing_result, Mock())))
 
     def test_phone_number_number_requirement_true(self):
         """Тест кейз проверяет что условие возвращает True, т.к кол-во номеров телефонов больше заданного."""
         req = PhoneNumberNumberRequirement({"operator": {"type": "more", "amount": 1}})
         text_preprocessing_result = Mock()
         text_preprocessing_result.get_token_values_by_type.return_value = ["89030478799", "89092534523"]
-        self.assertTrue(req.check(text_preprocessing_result, Mock()))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(req.check(text_preprocessing_result, Mock())))
 
     def test_phone_number_number_requirement_false(self):
         """Тест кейз проверяет что условие возвращает False, т.к кол-во номеров телефонов НЕ больше заданного."""
         req = PhoneNumberNumberRequirement({"operator": {"type": "more", "amount": 10}})
         text_preprocessing_result = Mock()
         text_preprocessing_result.get_token_values_by_type.return_value = ["89030478799"]
-        self.assertFalse(req.check(text_preprocessing_result, Mock()))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(req.check(text_preprocessing_result, Mock())))
 
     @patch("smart_kit.configs.get_app_config")
     def test_intersection_with_tokens_requirement_true(self, mock_get_app_config):
@@ -509,7 +548,8 @@ class RequirementTest(unittest.TestCase):
                 "part_of_speech": "NOUN"}, "lemma": "погода"}
             ]}
 
-        self.assertTrue(req.check(text_preprocessing_result, Mock()))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(req.check(text_preprocessing_result, Mock())))
 
     @patch("smart_kit.configs.get_app_config")
     def test_intersection_with_tokens_requirement_false(self, mock_get_app_config):
@@ -531,7 +571,8 @@ class RequirementTest(unittest.TestCase):
                 "part_of_speech": "NOUN"}, "lemma": "погода"}
         ]}
 
-        self.assertFalse(req.check(text_preprocessing_result, Mock()))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(req.check(text_preprocessing_result, Mock())))
 
     @patch("smart_kit.configs.get_app_config")
     def test_normalized_text_in_set_requirement_true(self, mock_get_app_config):
@@ -545,7 +586,8 @@ class RequirementTest(unittest.TestCase):
         text_preprocessing_result = Mock()
         text_preprocessing_result.raw = {"normalized_text": "погода ."}
 
-        self.assertTrue(req.check(text_preprocessing_result, Mock()))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(req.check(text_preprocessing_result, Mock())))
 
     @patch("smart_kit.configs.get_app_config")
     def test_normalized_text_in_set_requirement_false(self, mock_get_app_config):
@@ -559,7 +601,8 @@ class RequirementTest(unittest.TestCase):
         text_preprocessing_result = Mock()
         text_preprocessing_result.raw = {"normalized_text": "хотеть узнать ."}
 
-        self.assertFalse(req.check(text_preprocessing_result, Mock()))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(req.check(text_preprocessing_result, Mock())))
 
 
 if __name__ == '__main__':

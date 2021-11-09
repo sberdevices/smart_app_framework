@@ -1,3 +1,4 @@
+import asyncio
 import collections
 import copy
 import json
@@ -354,7 +355,52 @@ class ChoiceScenarioAction(Action):
         choice_is_made = False
 
         for scenario, requirement in zip(self._scenarios, self.requirement_items):
-            check_res = requirement.check(text_preprocessing_result, user, params)
+            check_res = await requirement.check(text_preprocessing_result, user, params)
+            if check_res:
+                result = await RunScenarioAction(items=scenario).run(user, text_preprocessing_result, params)
+                choice_is_made = True
+                break
+
+        if not choice_is_made and self._else_item:
+            result = await self.else_item.run(user, text_preprocessing_result, params)
+
+        return result
+
+
+class GatherChoiceScenarioAction(Action):
+    FIELD_SCENARIOS_KEY = "scenarios"
+    FIELD_ELSE_KEY = "else_action"
+    FIELD_REQUIREMENT_KEY = "requirement"
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(GatherChoiceScenarioAction, self).__init__(items, id)
+        self._else_item = items.get(self.FIELD_ELSE_KEY)
+        self._scenarios = items[self.FIELD_SCENARIOS_KEY]
+        self._requirements = [scenario.pop(self.FIELD_REQUIREMENT_KEY) for scenario in self._scenarios]
+
+        self.requirement_items = self.build_requirement_items()
+
+        if self._else_item:
+            self.else_item = self.build_else_item()
+        else:
+            self.else_item = None
+
+    @list_factory(Requirement)
+    def build_requirement_items(self):
+        return self._requirements
+
+    @factory(Action)
+    def build_else_item(self):
+        return self._else_item
+
+    async def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Union[None, str, List[Command]]:
+        result = None
+        choice_is_made = False
+
+        check_results = await asyncio.gather(requirement.check(text_preprocessing_result, user, params)
+                                             for requirement in self.requirement_items)
+        for scenario, check_res in zip(self._scenarios, check_results):
             if check_res:
                 result = await RunScenarioAction(items=scenario).run(user, text_preprocessing_result, params)
                 choice_is_made = True

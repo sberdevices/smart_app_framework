@@ -1,4 +1,5 @@
 # coding: utf-8
+import asyncio
 import unittest
 from scenarios.scenario_models.field_requirements.field_requirements import TokenPartInSet
 
@@ -22,7 +23,8 @@ class RequirementTest(unittest.TestCase):
                      'country': 'Португалия',
                      'country_hidden': False}
         requirement = TokenPartInSet(requirement_items)
-        self.assertFalse(requirement.check(token_val))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(token_val)))
 
     def test_token_part_in_set_requirement_equal_true(self):
         requirement_items ={
@@ -41,7 +43,8 @@ class RequirementTest(unittest.TestCase):
                      'country': 'Португалия',
                      'country_hidden': False}
         requirement = TokenPartInSet(requirement_items)
-        self.assertTrue(requirement.check(token_val))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(token_val)))
 
     def test_token_part_in_set_requirement_equal_False_double_empty(self):
         requirement_items ={
@@ -60,7 +63,8 @@ class RequirementTest(unittest.TestCase):
                      'country_hidden': False,
                      'locality_type': []}
         requirement = TokenPartInSet(requirement_items)
-        self.assertFalse(requirement.check(token_val))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(token_val)))
 
     def test_token_part_in_set_requirement_equal_False_empty_val_none(self):
         requirement_items ={
@@ -79,7 +83,8 @@ class RequirementTest(unittest.TestCase):
                      'country_hidden': False,
                      'locality_type': None}
         requirement = TokenPartInSet(requirement_items)
-        self.assertFalse(requirement.check(token_val))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(token_val)))
 
     def test_token_part_in_set_requirement_equal_False_string(self):
         requirement_items ={
@@ -97,7 +102,8 @@ class RequirementTest(unittest.TestCase):
                      'country': 'Португалия',
                      'country_hidden': False}
         requirement = TokenPartInSet(requirement_items)
-        self.assertFalse(requirement.check(token_val))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(token_val)))
 
     def test_token_part_in_set_requirement_equal_False(self):
         requirement_items ={
@@ -115,7 +121,8 @@ class RequirementTest(unittest.TestCase):
                      'country': 'Португалия',
                      'country_hidden': False}
         requirement = TokenPartInSet(requirement_items)
-        self.assertFalse(requirement.check(token_val))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(token_val)))
 
     def test_token_part_in_set_requirement_equal_False_val_int(self):
         requirement_items ={
@@ -133,7 +140,8 @@ class RequirementTest(unittest.TestCase):
                      'country': 'Португалия',
                      'country_hidden': False}
         requirement = TokenPartInSet(requirement_items)
-        self.assertFalse(requirement.check(token_val))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(token_val)))
 
     def test_token_part_in_set_requirement_equal_True_arr(self):
         requirement_items ={
@@ -151,7 +159,8 @@ class RequirementTest(unittest.TestCase):
                      'country': 'Португалия',
                      'country_hidden': False}
         requirement = TokenPartInSet(requirement_items)
-        self.assertTrue(requirement.check(token_val))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(requirement.check(token_val)))
 
     def test_token_part_in_set_requirement_equal_False_arr(self):
         requirement_items ={
@@ -169,4 +178,5 @@ class RequirementTest(unittest.TestCase):
                      'country': 'Португалия',
                      'country_hidden': False}
         requirement = TokenPartInSet(requirement_items)
-        self.assertFalse(requirement.check(token_val))
+        loop = asyncio.get_event_loop()
+        self.assertFalse(loop.run_until_complete(requirement.check(token_val)))

@@ -23,8 +23,8 @@ class BaseContainsRequirement(Requirement):
     def get_field(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser):
         return NotImplementedError
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         return self.get_field(text_preprocessing_result, user) in self.descr_to_check_in
 
 
@@ -51,8 +51,8 @@ class PlatformTypeRequirement(Requirement):
         items = items or {}
         self.platfrom_type = items["platfrom_type"]
 
-    def check(self, text_preprocessing_result: TextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: TextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         return user.message.device.platform_type == self.platfrom_type
 
 
@@ -67,8 +67,8 @@ class BasicVersionRequirement(ComparisonRequirement):
 
 class PlatformVersionRequirement(BasicVersionRequirement):
 
-    def check(self, text_preprocessing_result: TextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: TextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         platform_version = convert_version_to_list_of_int(user.message.device.platform_version)
         return self.operator.compare(platform_version) if platform_version is not None else False
 
@@ -80,15 +80,15 @@ class SurfaceRequirement(Requirement):
         items = items or {}
         self.surface = items["surface"]
 
-    def check(self, text_preprocessing_result: TextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: TextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         return user.message.device.surface == self.surface
 
 
 class SurfaceVersionRequirement(BasicVersionRequirement):
 
-    def check(self, text_preprocessing_result: TextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: TextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         surface_version = convert_version_to_list_of_int(user.message.device.surface_version)
         return self.operator.compare(surface_version) if surface_version is not None else False
 
@@ -100,8 +100,8 @@ class AppTypeRequirement(Requirement):
         items = items or {}
         self.app_type = items["app_type"]
 
-    def check(self, text_preprocessing_result: TextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: TextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         return self.app_type in user.message.device.features.get("appTypes", [])
 
 
@@ -112,6 +112,6 @@ class CapabilitiesPropertyAvailableRequirement(Requirement):
         items = items or {}
         self.property_type = items["property_type"]
 
-    def check(self, text_preprocessing_result: TextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: TextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         return user.message.device.capabilities.get(self.property_type, {}).get("available", False)

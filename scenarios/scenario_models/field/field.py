@@ -40,10 +40,10 @@ class BasicField:
 
     def check_can_be_filled(self, text_preprocessing_result, user):
         loop = asyncio.get_event_loop()
-        return (
-                self.description.requirement.check(text_preprocessing_result, user) and
-                loop.run_until_complete(self.description.filler.run(user, text_preprocessing_result)) is not None
-        )
+        check, run = loop.run_until_complete(asyncio.gather(
+            self.description.requirement.check(text_preprocessing_result, user),
+            self.description.filler.run(user, text_preprocessing_result)))
+        return check and run is not None
 
     @property
     def valid(self):

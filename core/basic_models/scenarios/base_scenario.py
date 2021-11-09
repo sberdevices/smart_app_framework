@@ -48,7 +48,7 @@ class BaseScenario:
 
     def check_available(self, text_preprocessing_result, user):
         if not self.switched_off:
-            return self.available_requirement.check(text_preprocessing_result, user)
+            return await self.available_requirement.check(text_preprocessing_result, user)
         return False
 
     def _log_params(self):

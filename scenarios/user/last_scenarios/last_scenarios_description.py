@@ -1,4 +1,6 @@
 # coding: utf-8
+import asyncio
+
 from lazy import lazy
 
 from core.basic_models.requirement.basic_requirements import Requirement
@@ -18,5 +20,7 @@ class LastScenariosDescription:
         return self._requirement
 
     def check(self, text_preprocessing_result, user):
-        return user.message.channel in self._channels and self.requirement.check(text_preprocessing_result, user) if \
-            self._channels else self.requirement.check(text_preprocessing_result, user)
+        loop = asyncio.get_event_loop()
+        return user.message.channel in self._channels and \
+            loop.run_until_complete(self.requirement.check(text_preprocessing_result, user)) if self._channels else \
+            loop.run_until_complete(self.requirement.check(text_preprocessing_result, user))

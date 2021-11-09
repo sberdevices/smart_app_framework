@@ -1,4 +1,5 @@
 # coding: utf-8
+import asyncio
 import unittest
 from unittest.mock import Mock
 from core.basic_models.requirement import device_requirements
@@ -31,8 +32,9 @@ class RequirementTest1(unittest.TestCase):
 
     def test_platform_type_requirement_check(self):
         obj1 = device_requirements.PlatformTypeRequirement(self.test_items1, self.test_id)
-        self.assertTrue(obj1.check(self.test_text_processing_result, self.test_user1))
-        self.assertTrue(not obj1.check(self.test_text_processing_result, self.test_user2))
+        loop = asyncio.get_event_loop()
+        self.assertTrue(loop.run_until_complete(obj1.check(self.test_text_processing_result, self.test_user1)))
+        self.assertTrue(not loop.run_until_complete(obj1.check(self.test_text_processing_result, self.test_user2)))
 
 
 class RequirementTest2(unittest.TestCase):

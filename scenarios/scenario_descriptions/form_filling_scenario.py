@@ -1,4 +1,5 @@
 # coding: utf-8
+import asyncio
 from typing import Dict, Any
 
 from core.basic_models.scenarios.base_scenario import BaseScenario
@@ -59,10 +60,10 @@ class FormFillingScenario(BaseScenario):
     def _find_field(self, form, text_preprocessing_result, user, params):
         for field_name in form.fields.descriptions:
             field = form.fields[field_name]
+            loop = asyncio.get_event_loop()
             if not field.valid and field.description.has_requests and \
-                    field.description.requirement.check(
-                        text_preprocessing_result, user, params
-                    ):
+                    loop.run_until_complete(
+                        field.description.requirement.check(text_preprocessing_result, user, params)):
                 return field
 
     def get_fields_data(self, form, form_key):
@@ -77,7 +78,7 @@ class FormFillingScenario(BaseScenario):
 
     async def _extract_by_field_filler(self, field_key, field_descr, text_normalization_result, user, params):
         result = {}
-        check = field_descr.requirement.check(text_normalization_result, user, params)
+        check = await field_descr.requirement.check(text_normalization_result, user, params)
         log_params = self._log_params()
         log_params["requirement"] = field_descr.requirement.__class__.__name__,
         log_params["check"] = check
@@ -118,8 +119,10 @@ class FormFillingScenario(BaseScenario):
         error_msgs = []
         for field_key, field in form.description.fields.items():
             value = data_extracted.get(field_key)
+            loop = asyncio.get_event_loop()
             # is not None is necessary, because 0 and False should be checked, None - shouldn't fill
-            if value is not None and not field.field_validator.requirement.check(value, params):
+            if value is not None and \
+                    not loop.run_until_complete(field.field_validator.requirement.check(value, params)):
                 log_params = {
                     log_const.KEY_NAME: log_const.SCENARIO_RESULT_VALUE,
                     "field_key": field_key

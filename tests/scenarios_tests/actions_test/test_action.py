@@ -1,4 +1,3 @@
-import asyncio
 import unittest
 from typing import Dict, Any, Union, Optional
 from unittest.mock import MagicMock, Mock, ANY
@@ -53,38 +52,35 @@ class MockParametrizer:
         return data
 
 
-class ClearFormIdActionTest(unittest.TestCase):
-    def test_run(self):
+class ClearFormIdActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run(self):
         action = ClearFormAction({"form": "form"})
         user = MagicMock()
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(user, None))
+        await action.run(user, None)
         user.forms.remove_item.assert_called_once_with("form")
 
 
-class RemoveCompositeFormFieldActionTest(unittest.TestCase):
-    def test_run(self):
+class RemoveCompositeFormFieldActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run(self):
         action = ClearInnerFormAction({"form": "form", "inner_form": "inner_form"})
         user, form = MagicMock(), MagicMock()
         user.forms.__getitem__.return_value = form
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(user, None))
+        await action.run(user, None)
         form.forms.remove_item.assert_called_once_with("inner_form")
 
 
-class BreakScenarioTest(unittest.TestCase):
-    def test_run_1(self):
+class BreakScenarioTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run_1(self):
         scenario_id = "test_id"
         action = BreakScenarioAction({"scenario_id": scenario_id})
         user = Mock()
         scenario_model = MagicMock()
         scenario_model.set_break = Mock(return_value=None)
         user.scenario_models = {scenario_id: scenario_model}
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(user, None))
+        await action.run(user, None)
         user.scenario_models[scenario_id].set_break.assert_called_once()
 
-    def test_run_2(self):
+    async def test_run_2(self):
         scenario_id = "test_id"
         action = BreakScenarioAction({})
         user = Mock()
@@ -92,13 +88,12 @@ class BreakScenarioTest(unittest.TestCase):
         scenario_model = MagicMock()
         scenario_model.set_break = Mock(return_value=None)
         user.scenario_models = {scenario_id: scenario_model}
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(user, None))
+        await action.run(user, None)
         user.scenario_models[scenario_id].set_break.assert_called_once()
 
 
-class AskAgainActionTest(unittest.TestCase):
-    def test_run(self):
+class AskAgainActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run(self):
         items = dict()
         user = Mock()
         last_scenario_name = "test_id"
@@ -108,33 +103,30 @@ class AskAgainActionTest(unittest.TestCase):
         scenarios = {last_scenario_name: scenario}
         user.descriptions = {"scenarios": scenarios}
         action = AskAgainAction(items)
-        loop = asyncio.get_event_loop()
-        tesult = loop.run_until_complete(action.run(user, None))
+        tesult = await action.run(user, None)
         self.assertEqual(tesult, "test_result")
 
 
-class RemoveFormFieldActionTest(unittest.TestCase):
-    def test_run(self):
+class RemoveFormFieldActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run(self):
         action = RemoveFormFieldAction({"form": "form", "field": "field"})
         user, form = MagicMock(), MagicMock()
         user.forms.__getitem__.return_value = form
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(user, None))
+        await action.run(user, None)
         form.fields.remove_item.assert_called_once_with("field")
 
 
-class RemoveCompositeFormFieldActionTest(unittest.TestCase):
-    def test_run(self):
+class RemoveCompositeFormFieldActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run(self):
         action = RemoveCompositeFormFieldAction({"form": "form", "inner_form": "form", "field": "field"})
         user, inner_form, form = MagicMock(), MagicMock(), MagicMock()
         form.forms.__getitem__.return_value = inner_form
         user.forms.__getitem__.return_value = form
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(user, None))
+        await action.run(user, None)
         inner_form.fields.remove_item.assert_called_once_with("field")
 
 
-class SaveBehaviorActionTest(unittest.TestCase):
+class SaveBehaviorActionTest(unittest.IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
         user = Mock()
@@ -145,7 +137,7 @@ class SaveBehaviorActionTest(unittest.TestCase):
         user.message.incremental_id = test_incremental_id
         cls.user = user
 
-    def test_save_behavior_scenario_name(self):
+    async def test_save_behavior_scenario_name(self):
         data = {"behavior": "test"}
         behavior = Mock()
         behavior.add = Mock()
@@ -153,13 +145,12 @@ class SaveBehaviorActionTest(unittest.TestCase):
         action = SaveBehaviorAction(data)
         tpr = Mock()
         tpr_raw = tpr.raw
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(self.user, tpr))
+        await action.run(self.user, tpr)
         self.user.behaviors.add.assert_called_once_with(self.user.message.generate_new_callback_id(), "test",
                                                         self.user.last_scenarios.last_scenario_name, tpr_raw,
                                                         action_params=None)
 
-    def test_save_behavior_without_scenario_name(self):
+    async def test_save_behavior_without_scenario_name(self):
         data = {"behavior": "test", "check_scenario": False}
         behavior = Mock()
         behavior.add = Mock()
@@ -167,18 +158,17 @@ class SaveBehaviorActionTest(unittest.TestCase):
         action = SaveBehaviorAction(data)
         text_preprocessing_result_raw = Mock()
         text_preprocessing_result = Mock(raw=text_preprocessing_result_raw)
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(self.user, text_preprocessing_result, None))
+        await action.run(self.user, text_preprocessing_result, None)
         self.user.behaviors.add.assert_called_once_with(self.user.message.generate_new_callback_id(), "test", None,
                                                         text_preprocessing_result_raw, action_params=None)
 
 
-class SelfServiceActionWithStateTest(unittest.TestCase):
+class SelfServiceActionWithStateTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self) -> None:
         self.user = Mock()
         self.user.settings = {"template_settings": {"self_service_with_state_save_messages": True}}
 
-    def test_action_1(self):
+    async def test_action_1(self):
         data = {"behavior": "test", "check_scenario": False, "command_action": {"command": "cmd_id", "nodes": {},
                                                                                 "request_data": {}}}
         registered_factories[Action] = action_factory
@@ -196,14 +186,13 @@ class SelfServiceActionWithStateTest(unittest.TestCase):
         action = SelfServiceActionWithState(data)
         text_preprocessing_result_raw = Mock()
         text_preprocessing_result = Mock(raw=text_preprocessing_result_raw)
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(self.user, text_preprocessing_result, None))
+        result = await action.run(self.user, text_preprocessing_result, None)
         behavior.check_got_saved_id.assert_called_once()
         behavior.add.assert_called_once()
         self.assertEqual(result[0].name, "cmd_id")
         self.assertEqual(result[0].raw, {'messageName': 'cmd_id', 'payload': {}})
 
-    def test_action_2(self):
+    async def test_action_2(self):
         data = {"behavior": "test", "check_scenario": False, "command_action": {"command": "cmd_id", "nodes": {}}}
         self.user.parametrizer = MockParametrizer(self.user, {})
         self.user.message = Mock()
@@ -213,12 +202,11 @@ class SelfServiceActionWithStateTest(unittest.TestCase):
         self.user.behaviors = behavior
         behavior.check_got_saved_id = Mock(return_value=True)
         action = SelfServiceActionWithState(data)
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(self.user, None))
+        result = await action.run(self.user, None)
         behavior.add.assert_not_called()
         self.assertIsNone(result)
 
-    def test_action_3(self):
+    async def test_action_3(self):
         data = {"behavior": "test", "command_action": {"command": "cmd_id", "nodes": {}, "request_data": {}}}
         registered_factories[Action] = action_factory
         actions["action_mock"] = MockAction
@@ -243,8 +231,7 @@ class SelfServiceActionWithStateTest(unittest.TestCase):
         action = SelfServiceActionWithState(data)
         text_preprocessing_result_raw = Mock()
         text_preprocessing_result = Mock(raw=text_preprocessing_result_raw)
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(self.user, text_preprocessing_result, None))
+        result = await action.run(self.user, text_preprocessing_result, None)
         behavior.check_got_saved_id.assert_called_once()
         behavior.add.assert_called_once()
         self.assertEqual(result[0].name, "cmd_id")
@@ -254,7 +241,7 @@ class SelfServiceActionWithStateTest(unittest.TestCase):
         )
 
 
-class SetVariableActionTest(unittest.TestCase):
+class SetVariableActionTest(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self):
         template = Mock()
@@ -287,7 +274,7 @@ class SetVariableActionTest(unittest.TestCase):
         self.user.variables.set.assert_called_with("some_key", "", None)
 
 
-class DeleteVariableActionTest(unittest.TestCase):
+class DeleteVariableActionTest(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self):
         user = Mock()
@@ -299,14 +286,13 @@ class DeleteVariableActionTest(unittest.TestCase):
         user.variables.delete = Mock()
         self.user = user
 
-    def test_action(self):
+    async def test_action(self):
         action = DeleteVariableAction({"key": "some_key_1"})
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(self.user, None))
+        await action.run(self.user, None)
         self.user.variables.delete.assert_called_with("some_key_1")
 
 
-class ClearVariablesActionTest(unittest.TestCase):
+class ClearVariablesActionTest(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self):
         self.var_value = {
@@ -322,16 +308,15 @@ class ClearVariablesActionTest(unittest.TestCase):
         user.variables.clear = Mock()
         self.user = user
 
-    def test_action(self):
+    async def test_action(self):
         action = ClearVariablesAction()
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(self.user, None))
+        await action.run(self.user, None)
         self.user.variables.clear.assert_called_with()
 
 
-class FillFieldActionTest(unittest.TestCase):
+class FillFieldActionTest(unittest.IsolatedAsyncioTestCase):
 
-    def test_fill_field(self):
+    async def test_fill_field(self):
         params = {"test_field": "test_data"}
         data = {"form": "test_form", "field": "test_field", "data_path": "{{test_field}}"}
         action = FillFieldAction(data)
@@ -341,14 +326,13 @@ class FillFieldActionTest(unittest.TestCase):
         field = Mock()
         field.fill = Mock()
         user.forms["test_form"].fields = {"test_field": field}
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(user, None))
+        await action.run(user, None)
         field.fill.assert_called_once_with(params["test_field"])
 
 
-class CompositeFillFieldActionTest(unittest.TestCase):
+class CompositeFillFieldActionTest(unittest.IsolatedAsyncioTestCase):
 
-    def test_fill_field(self):
+    async def test_fill_field(self):
         params = {"test_field": "test_data"}
         data = {"form": "test_form", "field": "test_field", "internal_form": "test_internal_form",
                 "data_path": "{{test_field}}", "parametrizer": {"data": params}}
@@ -362,13 +346,12 @@ class CompositeFillFieldActionTest(unittest.TestCase):
         field = Mock()
         field.fill = Mock()
         user.forms["test_form"].forms["test_internal_form"].fields = {"test_field": field}
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(user, None))
+        await action.run(user, None)
         field.fill.assert_called_once_with(params["test_field"])
 
 
-class ScenarioActionTest(unittest.TestCase):
-    def test_scenario_action(self):
+class ScenarioActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_scenario_action(self):
         action = RunScenarioAction({"scenario": "test"})
         user = Mock()
         user.parametrizer = MockParametrizer(user, {})
@@ -376,11 +359,10 @@ class ScenarioActionTest(unittest.TestCase):
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"test": scen}}
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(user, Mock()))
+        result = await action.run(user, Mock())
         self.assertEqual(result, scen_result)
 
-    def test_scenario_action_with_jinja_good(self):
+    async def test_scenario_action_with_jinja_good(self):
         params = {'next_scenario': 'ANNA.pipeline.scenario'}
         items = {"scenario": "{{next_scenario}}"}
 
@@ -391,11 +373,10 @@ class ScenarioActionTest(unittest.TestCase):
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"ANNA.pipeline.scenario": scen}}
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(user, Mock()))
+        result = await action.run(user, Mock())
         self.assertEqual(result, scen_result)
 
-    def test_scenario_action_no_scenario(self):
+    async def test_scenario_action_no_scenario(self):
         action = RunScenarioAction({"scenario": "{{next_scenario}}"})
         user = Mock()
         user.parametrizer = MockParametrizer(user, {})
@@ -403,11 +384,10 @@ class ScenarioActionTest(unittest.TestCase):
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"next_scenario": scen}}
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(user, Mock()))
+        result = await action.run(user, Mock())
         self.assertEqual(result, None)
 
-    def test_scenario_action_without_jinja(self):
+    async def test_scenario_action_without_jinja(self):
         action = RunScenarioAction({"scenario": "next_scenario"})
         user = Mock()
         user.parametrizer = MockParametrizer(user, {})
@@ -415,14 +395,13 @@ class ScenarioActionTest(unittest.TestCase):
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"next_scenario": scen}}
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(user, Mock()))
+        result = await action.run(user, Mock())
         self.assertEqual(result, scen_result)
 
 
-class RunLastScenarioActionTest(unittest.TestCase):
+class RunLastScenarioActionTest(unittest.IsolatedAsyncioTestCase):
 
-    def test_scenario_action(self):
+    async def test_scenario_action(self):
         action = RunLastScenarioAction({})
         user = Mock()
         scen = Mock()
@@ -433,15 +412,14 @@ class RunLastScenarioActionTest(unittest.TestCase):
         last_scenario_name = "test"
         user.last_scenarios.scenarios_names = [last_scenario_name]
         user.last_scenarios.last_scenario_name = last_scenario_name
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(user, Mock()))
+        result = await action.run(user, Mock())
         self.assertEqual(result, scen_result)
 
 
-class ChoiceScenarioActionTest(unittest.TestCase):
+class ChoiceScenarioActionTest(unittest.IsolatedAsyncioTestCase):
 
     @staticmethod
-    def mock_and_perform_action(test_items: Dict[str, Any], expected_result: Optional[str] = None,
+    async def mock_and_perform_action(test_items: Dict[str, Any], expected_result: Optional[str] = None,
                                 expected_scen: Optional[str] = None) -> Union[str, None]:
         action = ChoiceScenarioAction(test_items)
         user = Mock()
@@ -449,11 +427,9 @@ class ChoiceScenarioActionTest(unittest.TestCase):
         scen = Mock()
         scen.run.return_value = expected_result
         if expected_scen:
-            user.descriptions = {"scenarios": {expected_scen: scen}}
-        loop = asyncio.get_event_loop()
-        return loop.run_until_complete(action.run(user, Mock()))
+            return await action.run(user, Mock())
 
-    def test_choice_scenario_action(self):
+    async def test_choice_scenario_action(self):
         # Проверяем, что запустили нужный сценарий, в случае если выполнился его requirement
         test_items = {
             "scenarios": [
@@ -473,11 +449,11 @@ class ChoiceScenarioActionTest(unittest.TestCase):
             "else_action": {"type": "test", "result": "ELSE ACTION IS DONE"}
         }
         expected_scen_result = "test_N_done"
-        real_scen_result = self.mock_and_perform_action(
+        real_scen_result = await self.mock_and_perform_action(
             test_items, expected_result=expected_scen_result, expected_scen="test_N")
         self.assertEqual(real_scen_result, expected_scen_result)
 
-    def test_choice_scenario_action_no_else_action(self):
+    async def test_choice_scenario_action_no_else_action(self):
         # Проверяем, что вернули None в случае если ни один сценарий не запустился (requirement=False) и else_action нет
         test_items = {
             "scenarios": [
@@ -491,10 +467,10 @@ class ChoiceScenarioActionTest(unittest.TestCase):
                 }
             ]
         }
-        real_scen_result = self.mock_and_perform_action(test_items)
+        real_scen_result = await self.mock_and_perform_action(test_items)
         self.assertIsNone(real_scen_result)
 
-    def test_choice_scenario_action_with_else_action(self):
+    async def test_choice_scenario_action_with_else_action(self):
         # Проверяем, что выполняется else_action в случае если ни один сценарий не запустился т.к их requirement=False
         test_items = {
             "scenarios": [
@@ -510,13 +486,13 @@ class ChoiceScenarioActionTest(unittest.TestCase):
             "else_action": {"type": "test", "result": "ELSE ACTION IS DONE"}
         }
         expected_scen_result = "ELSE ACTION IS DONE"
-        real_scen_result = self.mock_and_perform_action(test_items, expected_result=expected_scen_result)
+        real_scen_result = await self.mock_and_perform_action(test_items, expected_result=expected_scen_result)
         self.assertEqual(real_scen_result, expected_scen_result)
 
 
 class ClearCurrentScenarioActionTest(unittest.TestCase):
 
-    def test_action(self):
+    async def test_action(self):
         scenario_name = "test_scenario"
         user = Mock()
         user.forms.remove_item = Mock()
@@ -528,13 +504,12 @@ class ClearCurrentScenarioActionTest(unittest.TestCase):
         user.descriptions = {"scenarios": {scenario_name: scenario}}
 
         action = ClearCurrentScenarioAction({})
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(user, {}, {}))
+        result = await action.run(user, {}, {})
         self.assertIsNone(result)
         user.last_scenarios.delete.assert_called_once()
         user.forms.remove_item.assert_called_once()
 
-    def test_action_with_empty_scenarios_names(self):
+    async def test_action_with_empty_scenarios_names(self):
         user = Mock()
         user.forms.remove_item = Mock()
 
@@ -542,16 +517,15 @@ class ClearCurrentScenarioActionTest(unittest.TestCase):
         user.last_scenarios.delete = Mock()
 
         action = ClearCurrentScenarioAction({})
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(user, {}, {}))
+        result = await action.run(user, {}, {})
         self.assertIsNone(result)
         user.last_scenarios.delete.assert_not_called()
         user.forms.remove_item.assert_not_called()
 
 
-class ClearScenarioByIdActionTest(unittest.TestCase):
+class ClearScenarioByIdActionTest(unittest.IsolatedAsyncioTestCase):
 
-    def test_action(self):
+    async def test_action(self):
         scenario_name = "test_scenario"
         user = Mock()
         user.forms = Mock()
@@ -562,28 +536,26 @@ class ClearScenarioByIdActionTest(unittest.TestCase):
         user.descriptions = {"scenarios": {scenario_name: scenario}}
 
         action = ClearScenarioByIdAction({"scenario_id": scenario_name})
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(user, {}, {}))
+        result = await action.run(user, {}, {})
         self.assertIsNone(result)
         user.last_scenarios.delete.assert_called_once()
         user.forms.remove_item.assert_called_once()
 
-    def test_action_with_empty_scenarios_names(self):
+    async def test_action_with_empty_scenarios_names(self):
         user = Mock()
         user.forms = Mock()
 
         user.last_scenarios.last_scenario_name = "test_scenario"
 
         action = ClearScenarioByIdAction({})
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(user, {}, {}))
+        result = await action.run(user, {}, {})
         self.assertIsNone(result)
         user.last_scenarios.delete.assert_not_called()
         user.forms.remove_item.assert_not_called()
 
 
-class ClearCurrentScenarioFormActionTest(unittest.TestCase):
-    def test_action(self):
+class ClearCurrentScenarioFormActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_action(self):
         scenario_name = "test_scenario"
         user = Mock()
         user.forms = Mock()
@@ -596,12 +568,11 @@ class ClearCurrentScenarioFormActionTest(unittest.TestCase):
         user.descriptions = {"scenarios": {scenario_name: scenario}}
 
         action = ClearCurrentScenarioFormAction({})
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(user, {}, {}))
+        result = await action.run(user, {}, {})
         self.assertIsNone(result)
         user.forms.clear_form.assert_called_once()
 
-    def test_action_with_empty_last_scenario(self):
+    async def test_action_with_empty_last_scenario(self):
         scenario_name = "test_scenario"
         user = Mock()
         user.forms = Mock()
@@ -614,14 +585,13 @@ class ClearCurrentScenarioFormActionTest(unittest.TestCase):
         user.descriptions = {"scenarios": {scenario_name: scenario}}
 
         action = ClearCurrentScenarioFormAction({})
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(user, {}, {}))
+        result = await action.run(user, {}, {})
         self.assertIsNone(result)
         user.forms.remove_item.assert_not_called()
 
 
-class ResetCurrentNodeActionTest(unittest.TestCase):
-    def test_action(self):
+class ResetCurrentNodeActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_action(self):
         user = Mock()
         user.forms = Mock()
         user.last_scenarios.last_scenario_name = 'test_scenario'
@@ -630,12 +600,11 @@ class ResetCurrentNodeActionTest(unittest.TestCase):
         user.scenario_models = {'test_scenario': scenario_model}
 
         action = ResetCurrentNodeAction({})
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(user, {}, {}))
+        result = await action.run(user, {}, {})
         self.assertIsNone(result)
         self.assertIsNone(user.scenario_models['test_scenario'].current_node)
 
-    def test_action_with_empty_last_scenario(self):
+    async def test_action_with_empty_last_scenario(self):
         user = Mock()
         user.forms = Mock()
         user.last_scenarios.last_scenario_name = None
@@ -644,12 +613,11 @@ class ResetCurrentNodeActionTest(unittest.TestCase):
         user.scenario_models = {'test_scenario': scenario_model}
 
         action = ResetCurrentNodeAction({})
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(user, {}, {}))
+        result = await action.run(user, {}, {})
         self.assertIsNone(result)
         self.assertEqual('some_node', user.scenario_models['test_scenario'].current_node)
 
-    def test_specific_target(self):
+    async def test_specific_target(self):
         user = Mock()
         user.forms = Mock()
         user.last_scenarios.last_scenario_name = 'test_scenario'
@@ -661,13 +629,12 @@ class ResetCurrentNodeActionTest(unittest.TestCase):
             'node_id': 'another_node'
         }
         action = ResetCurrentNodeAction(items)
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(user, {}, {}))
+        result = await action.run(user, {}, {})
         self.assertIsNone(result)
         self.assertEqual('another_node', user.scenario_models['test_scenario'].current_node)
 
 
-class AddHistoryEventActionTest(unittest.TestCase):
+class AddHistoryEventActionTest(unittest.IsolatedAsyncioTestCase):
 
     def setUp(self):
         main_form = Mock()
@@ -682,7 +649,7 @@ class AddHistoryEventActionTest(unittest.TestCase):
         self.user.history.add_event = Mock()
         self.user.last_scenarios.last_scenario_name = 'test_scenario'
 
-    def test_action_with_non_empty_scenario(self):
+    async def test_action_with_non_empty_scenario(self):
         scenario = Mock()
         scenario.id = 'name'
         scenario.version = '1.0'
@@ -701,13 +668,12 @@ class AddHistoryEventActionTest(unittest.TestCase):
         )
 
         action = AddHistoryEventAction(items)
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(self.user, None, None))
+        await action.run(self.user, None, None)
 
         self.user.history.add_event.assert_called_once()
         self.user.history.add_event.assert_called_once_with(expected)
 
-    def test_action_with_empty_scenario(self):
+    async def test_action_with_empty_scenario(self):
         self.user.descriptions = {'scenarios': {}}
         items = {
             'event_type': 'type',
@@ -716,12 +682,11 @@ class AddHistoryEventActionTest(unittest.TestCase):
         }
 
         action = AddHistoryEventAction(items)
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(self.user, None, None))
+        await action.run(self.user, None, None)
 
         self.user.history.add_event.assert_not_called()
 
-    def test_action_with_jinja(self):
+    async def test_action_with_jinja(self):
         scenario = Mock()
         scenario.id = 'name'
         scenario.version = '1.0'
@@ -740,8 +705,7 @@ class AddHistoryEventActionTest(unittest.TestCase):
         )
 
         action = AddHistoryEventAction(items)
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(action.run(self.user, None, None))
+        await action.run(self.user, None, None)
 
         self.user.history.add_event.assert_called_once()
         self.user.history.add_event.assert_called_once_with(expected)

@@ -28,5 +28,5 @@ class HandlerTimeout(HandlerBase):
                                                    user, app_info=app_info)
 
             callback_id = user.message.callback_id
-            result = user.behaviors.timeout(callback_id)
+            result = await user.behaviors.timeout(callback_id)
             return result

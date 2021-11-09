@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock
+from unittest.mock import Mock, AsyncMock
 
 from scenarios.scenario_models.field.field_filler_description import ExternalFieldFillerDescription
 
@@ -10,7 +10,7 @@ class TestExternalFieldFillerDescription(TestCase):
         expected = 5
         items = {"filler": "my_key"}
         mock_filler = Mock()
-        mock_filler.run = Mock(return_value=expected)
+        mock_filler.run = AsyncMock(return_value=expected)
 
         mock_user = Mock()
         mock_user.descriptions = {"external_field_fillers": {"my_key": mock_filler}}

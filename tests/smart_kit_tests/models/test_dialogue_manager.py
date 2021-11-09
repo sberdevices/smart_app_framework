@@ -1,6 +1,6 @@
 # coding: utf-8
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock, AsyncMock
 from smart_kit.models import dialogue_manager
 
 
@@ -9,7 +9,7 @@ class TestScenarioDesc(dict):
         return self.keys()
 
 
-class ModelsTest1(unittest.TestCase):
+class ModelsTest1(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.test_user1 = Mock()
         self.test_user1.name = "TestName"

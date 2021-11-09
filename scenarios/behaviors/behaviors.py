@@ -115,7 +115,7 @@ class Behaviors:
             user=self._user,
             params=log_params)
 
-    def success(self, callback_id: str):
+    async def success(self, callback_id: str):
         log(f"behavior.success started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
             params={log_const.KEY_NAME: log_const.BEHAVIOR_SUCCESS_VALUE,
@@ -134,13 +134,11 @@ class Behaviors:
                 callback_action_params,
             )
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            loop = asyncio.get_running_loop()
-            result = loop.run_until_complete(
-                behavior.success_action.run(self._user, text_preprocessing_result, callback_action_params))
+            await behavior.success_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
 
-    def fail(self, callback_id: str):
+    async def fail(self, callback_id: str):
         log(f"behavior.fail started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
             params={log_const.KEY_NAME: log_const.BEHAVIOR_FAIL_VALUE,
@@ -155,13 +153,11 @@ class Behaviors:
                                smart_kit_metrics.counter_behavior_fail, "fail",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            loop = asyncio.get_running_loop()
-            result = loop.run_until_complete(
-                behavior.fail_action.run(self._user, text_preprocessing_result, callback_action_params))
+            await behavior.fail_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
 
-    def timeout(self, callback_id: str):
+    async def timeout(self, callback_id: str):
         log(f"behavior.timeout started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
             params={log_const.KEY_NAME: log_const.BEHAVIOR_TIMEOUT_VALUE,
@@ -176,9 +172,7 @@ class Behaviors:
                                smart_kit_metrics.counter_behavior_timeout, "timeout",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            loop = asyncio.get_running_loop()
-            result = loop.run_until_complete(
-                behavior.timeout_action.run(self._user, text_preprocessing_result, callback_action_params))
+            await behavior.timeout_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
 

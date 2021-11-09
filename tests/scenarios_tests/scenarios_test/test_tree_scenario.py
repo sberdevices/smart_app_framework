@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock, MagicMock, AsyncMock
 
 from core.basic_models.actions.command import Command
 from core.model.registered import registered_factories
@@ -50,7 +50,7 @@ class TestTreeScenario(TestCase):
                  "scenario_nodes": {"node_1": node_mock}}
 
         field_descriptor = Mock(name="field_descriptor_mock")
-        field_descriptor.filler.extract = Mock(name="my_field_value_1", return_value=61)
+        field_descriptor.filler.extract = AsyncMock(name="my_field_value_1", return_value=61)
         field_descriptor.fill_other = False
         field_descriptor.field_validator.actions = []
 
@@ -107,7 +107,7 @@ class TestTreeScenario(TestCase):
                  "scenario_nodes": {"node_1": node_mock}, "actions": [{"type": "success"}]}
 
         field_descriptor = Mock(name="field_descriptor_mock")
-        field_descriptor.filler.extract = Mock(name="my_field_value_1", return_value=61)
+        field_descriptor.filler.extract = AsyncMock(name="my_field_value_1", return_value=61)
         field_descriptor.fill_other = False
         field_descriptor.field_validator.actions = []
         field_descriptor.on_filled_actions = [BreakAction(), MockAction(command_name="break action result")]

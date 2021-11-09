@@ -79,8 +79,9 @@ class AndRequirement(CompositeRequirement):
     async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
                     params: Dict[str, Any] = None) -> bool:
         return all(
-            await requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
-            for requirement in self.requirements)
+            [await requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
+                for requirement in self.requirements]
+        )
 
 
 class GatherOrRequirement(CompositeRequirement):
@@ -98,8 +99,9 @@ class OrRequirement(CompositeRequirement):
     async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
                     params: Dict[str, Any] = None) -> bool:
         return any(
-            await requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
-            for requirement in self.requirements)
+            [await requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
+                for requirement in self.requirements]
+        )
 
 
 class NotRequirement(Requirement):

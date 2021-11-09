@@ -2,11 +2,11 @@
 import unittest
 from collections import OrderedDict
 from collections import namedtuple
-from unittest.mock import Mock
+from unittest.mock import Mock, AsyncMock
 import scenarios.behaviors.behaviors
 
 
-class BehaviorsTest(unittest.TestCase):
+class BehaviorsTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.user = Mock()
         self.user.settings = Mock()
@@ -15,9 +15,9 @@ class BehaviorsTest(unittest.TestCase):
         self.description = Mock()
         self.description.timeout = Mock(return_value=10)
         self.success_action = Mock()
-        self.success_action.run = Mock()
-        self.fail_action = Mock()
-        self.timeout_action = Mock()
+        self.success_action.run = AsyncMock()
+        self.fail_action = AsyncMock()
+        self.timeout_action = AsyncMock()
 
         self.description.success_action = self.success_action
         self.description.fail_action = self.fail_action
@@ -25,7 +25,7 @@ class BehaviorsTest(unittest.TestCase):
         self.descriptions = {"test": self.description}
         self._callback = namedtuple('Callback', 'behavior_id expire_time scenario_id')
 
-    def test_success(self):
+    async def test_success(self):
         callback_id = "123"
         behavior_id = "test"
         item = {"behavior_id": behavior_id, "expire_time": 2554416000, "scenario_id": None,
@@ -33,38 +33,38 @@ class BehaviorsTest(unittest.TestCase):
         items = {str(callback_id): item}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
         behaviors.initialize()
-        behaviors.success(callback_id)
+        await behaviors.success(callback_id)
         # self.success_action.run.assert_called_once_with(self.user, TextPreprocessingResult({}))
         self.success_action.run.assert_called_once()
         self.assertDictEqual(behaviors.raw, {})
 
-    def test_success_2(self):
+    async def test_success_2(self):
         callback_id = "123"
         items = {}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
         behaviors.initialize()
-        behaviors.success(callback_id)
+        await behaviors.success(callback_id)
         self.success_action.run.assert_not_called()
 
-    def test_fail(self):
+    async def test_fail(self):
         callback_id = "123"
         behavior_id = "test"
         item = {"behavior_id": behavior_id, "expire_time": 2554416000, "scenario_id": None}
         items = {str(callback_id): item}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
         behaviors.initialize()
-        behaviors.fail(callback_id)
+        await behaviors.fail(callback_id)
         self.fail_action.run.assert_called_once()
         self.assertDictEqual(behaviors.raw, {})
 
-    def test_timeout(self):
+    async def test_timeout(self):
         callback_id = "123"
         behavior_id = "test"
         item = {"behavior_id": behavior_id, "expire_time": 2554416000, "scenario_id": None}
         items = {str(callback_id): item}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
         behaviors.initialize()
-        behaviors.timeout(callback_id)
+        await behaviors.timeout(callback_id)
         self.timeout_action.run.assert_called_once()
         self.assertDictEqual(behaviors.raw, {})
 

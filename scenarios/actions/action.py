@@ -541,9 +541,9 @@ class ProcessBehaviorAction(Action):
             return None
 
         if user.message.payload:
-            return user.behaviors.success(callback_id)
+            return await user.behaviors.success(callback_id)
 
-        return user.behaviors.fail(callback_id)
+        return await user.behaviors.fail(callback_id)
 
 
 class SelfServiceActionWithState(BasicSelfServiceActionWithState):

@@ -41,7 +41,7 @@ class BasicField:
     async def check_can_be_filled(self, text_preprocessing_result, user):
         check, run = await asyncio.gather(
             self.description.requirement.check(text_preprocessing_result, user),
-            self.description.filler.run(user, text_preprocessing_result))
+            await self.description.filler.run(user, text_preprocessing_result))
         return check and run is not None
 
     @property

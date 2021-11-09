@@ -23,7 +23,7 @@ class TestCompositeFiller(TestCase):
         field_filler_description["mock_filler"] = MockFiller
         TestCompositeFiller.user = Mock()
 
-    def test_first_filler(self):
+    async def test_first_filler(self):
         expected = "first"
         items = {
             "fillers": [
@@ -32,10 +32,10 @@ class TestCompositeFiller(TestCase):
             ]
         }
         filler = CompositeFiller(items)
-        result = filler.extract(None, self.user)
+        result = await filler.extract(None, self.user)
         self.assertEqual(expected, result)
 
-    def test_second_filler(self):
+    async def test_second_filler(self):
         expected = "second"
         items = {
             "fillers": [
@@ -44,10 +44,10 @@ class TestCompositeFiller(TestCase):
             ]
         }
         filler = CompositeFiller(items)
-        result = filler.extract(None, self.user)
+        result = await filler.extract(None, self.user)
         self.assertEqual(expected, result)
 
-    def test_not_fit(self):
+    async def test_not_fit(self):
         items = {
             "fillers": [
                 {"type": "mock_filler"},
@@ -55,5 +55,5 @@ class TestCompositeFiller(TestCase):
             ]
         }
         filler = CompositeFiller(items)
-        result = filler.extract(None, self.user)
+        result = await filler.extract(None, self.user)
         self.assertIsNone(result)

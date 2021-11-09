@@ -32,13 +32,13 @@ class RunScenarioByProjectNameActionTest1(unittest.TestCase):
         self.test_text_preprocessing_result = Mock('TextPreprocessingResult')
         self.items = {"any_key": "any value"}
 
-    def test_run_scenario_by_project_name_run(self):
+    async def test_run_scenario_by_project_name_run(self):
         obj1 = RunScenarioByProjectNameAction(self.items)
         # без оглядки на аннотации из PEP 484
-        self.assertTrue(obj1.run(self.test_user1, self.test_text_preprocessing_result, {'any_attr': {'any_data'}}) ==
+        self.assertTrue(await obj1.run(self.test_user1, self.test_text_preprocessing_result, {'any_attr': {'any_data'}}) ==
                         'result to run scenario')
         obj2 = RunScenarioByProjectNameAction(self.items)
-        self.assertIsNone(obj2.run(self.test_user2, self.test_text_preprocessing_result))
+        self.assertIsNone(await obj2.run(self.test_user2, self.test_text_preprocessing_result))
 
     def test_run_scenario_by_project_name_log_vars(self):
         obj = RunScenarioByProjectNameAction(self.items)

@@ -9,28 +9,28 @@ class TestFirstPersonFiller(TestCase):
         items = {}
         self.filler = FirstPersonFiller(items)
 
-    def test_1(self):
+    async def test_1(self):
         expected = {"name": "иван"}
 
         text_preprocessing_result = Mock()
         text_preprocessing_result.person_token_values = [{"name": "иван"}]
-        result = self.filler.extract(text_preprocessing_result, None)
+        result = await self.filler.extract(text_preprocessing_result, None)
 
         self.assertDictEqual(expected, result)
 
-    def test_2(self):
+    async def test_2(self):
         expected = {"name": "иван"}
 
         text_preprocessing_result = Mock()
         text_preprocessing_result.person_token_values = [{"name": "иван"}, {"name": "иван", "patronymic": "иванович"}]
-        result = self.filler.extract(text_preprocessing_result, None)
+        result = await self.filler.extract(text_preprocessing_result, None)
 
         self.assertDictEqual(expected, result)
 
-    def test_3(self):
+    async def test_3(self):
         text_preprocessing_result = Mock()
         text_preprocessing_result.person_token_values = []
 
-        result = self.filler.extract(text_preprocessing_result, None)
+        result = await self.filler.extract(text_preprocessing_result, None)
 
         self.assertIsNone(result)

@@ -22,7 +22,7 @@ def patch_get_app_config(mock_get_app_config):
 class TestIntersectionFieldFiller(TestCase):
 
     @patch('smart_kit.configs.get_app_config')
-    def test_1(self, mock_get_app_config):
+    async def test_1(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
         expected = 'лосось'
         items = {
@@ -46,12 +46,12 @@ class TestIntersectionFieldFiller(TestCase):
         ]
 
         filler = IntersectionFieldFiller(items)
-        result = filler.extract(text_preprocessing_result, None)
+        result = await filler.extract(text_preprocessing_result, None)
 
         self.assertEqual(expected, result)
 
     @patch('smart_kit.configs.get_app_config')
-    def test_2(self, mock_get_app_config):
+    async def test_2(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
         items = {
             'strict': True,
@@ -75,12 +75,12 @@ class TestIntersectionFieldFiller(TestCase):
         ]
 
         filler = IntersectionFieldFiller(items)
-        result = filler.extract(text_preprocessing_result, None)
+        result = await filler.extract(text_preprocessing_result, None)
 
         self.assertIsNone(result)
 
     @patch('smart_kit.configs.get_app_config')
-    def test_3(self, mock_get_app_config):
+    async def test_3(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
         expected = 'лосось'
         items = {
@@ -101,24 +101,24 @@ class TestIntersectionFieldFiller(TestCase):
         ]
 
         filler = IntersectionFieldFiller(items)
-        result = filler.extract(text_preprocessing_result, None)
+        result = await filler.extract(text_preprocessing_result, None)
 
         self.assertEqual(expected, result)
 
     @patch('smart_kit.configs.get_app_config')
-    def test_4(self, mock_get_app_config):
+    async def test_4(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
         items = {}
         text_preprocessing_result = Mock()
         text_preprocessing_result.tokenized_elements_list_pymorphy = []
 
         filler = IntersectionFieldFiller(items)
-        result = filler.extract(text_preprocessing_result, None)
+        result = await filler.extract(text_preprocessing_result, None)
 
         self.assertIsNone(result)
 
     @patch('smart_kit.configs.get_app_config')
-    def test_5(self, mock_get_app_config):
+    async def test_5(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
         expected = 'дефолтный тунец'
         items = {
@@ -142,14 +142,14 @@ class TestIntersectionFieldFiller(TestCase):
         ]
 
         filler = IntersectionFieldFiller(items)
-        result = filler.extract(text_preprocessing_result, None)
+        result = await filler.extract(text_preprocessing_result, None)
 
         self.assertEqual(expected, result)
 
 
 class TestIntersectionOriginalTextFiller(TestCase):
     @patch('smart_kit.configs.get_app_config')
-    def test_1(self, mock_get_app_config):
+    async def test_1(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
         items = {
             'cases': {
@@ -165,12 +165,12 @@ class TestIntersectionOriginalTextFiller(TestCase):
         text_preprocessing_result.original_text = 'всего хорошего и спасибо за рыбу'
 
         filler = IntersectionOriginalTextFiller(items)
-        result = filler.extract(text_preprocessing_result, None)
+        result = await filler.extract(text_preprocessing_result, None)
 
         self.assertIsNone(result)
 
     @patch('smart_kit.configs.get_app_config')
-    def test_2(self, mock_get_app_config):
+    async def test_2(self, mock_get_app_config):
         expected = 'лосось'
         patch_get_app_config(mock_get_app_config)
         items = {
@@ -187,12 +187,12 @@ class TestIntersectionOriginalTextFiller(TestCase):
         text_preprocessing_result.original_text = 'всего хорошая и спасибо за рыба'
 
         filler = IntersectionOriginalTextFiller(items)
-        result = filler.extract(text_preprocessing_result, None)
+        result = await filler.extract(text_preprocessing_result, None)
 
         self.assertEqual(expected, result)
 
     @patch('smart_kit.configs.get_app_config')
-    def test_3(self, mock_get_app_config):
+    async def test_3(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
         items = {
             'cases': {
@@ -211,6 +211,6 @@ class TestIntersectionOriginalTextFiller(TestCase):
         text_preprocessing_result.original_text = 'не это хорошая рыба'
 
         filler = IntersectionOriginalTextFiller(items)
-        result = filler.extract(text_preprocessing_result, None)
+        result = await filler.extract(text_preprocessing_result, None)
 
         self.assertIsNone(result)

@@ -66,7 +66,7 @@ class SmartAppModel:
 
         return commands
 
-    def on_answer_error(self, message, user):
+    async def on_answer_error(self, message, user):
         user.do_not_save = True
         smart_kit_metrics.counter_exception(self.app_name)
         params = {log_const.KEY_NAME: log_const.DIALOG_ERROR_VALUE,

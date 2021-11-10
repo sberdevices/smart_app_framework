@@ -201,6 +201,7 @@ class SmartAppResources(BaseConfig):
         ffd.field_filler_description["regexp_string_operations"] = ffd.RegexpAndStringOperationsFieldFiller
         ffd.field_filler_description["requirement"] = cffd.RequirementFiller
         ffd.field_filler_description["user_id"] = ffd.UserIdFiller
+        ffd.field_filler_description["date_period_filler"] = ffd.DatePeriodFiller
 
     def init_scenarios(self):
         scenarios[None] = BaseScenario

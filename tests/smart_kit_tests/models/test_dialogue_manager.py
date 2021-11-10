@@ -9,6 +9,22 @@ class TestScenarioDesc(dict):
         return self.keys()
 
 
+async def mock_scenario1_text_fits():
+    return False
+
+
+async def mock_scenario2_text_fits():
+    return True
+
+
+async def mock_scenario1_run(x, y):
+    return x.name + y.name
+
+
+async def mock_scenario2_run(x, y):
+    return y.name + x.name
+
+
 class ModelsTest1(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.test_user1 = Mock()
@@ -30,12 +46,12 @@ class ModelsTest1(unittest.IsolatedAsyncioTestCase):
         self.test_text_preprocessing_result.name = "Result"
         self.test_scenario1 = Mock()
         self.test_scenario1.scenario_description = "This is test scenario 1 desc"
-        self.test_scenario1.text_fits = lambda x, y: False
-        self.test_scenario1.run = lambda x, y: x.name + y.name
+        self.test_scenario1.text_fits = mock_scenario1_text_fits
+        self.test_scenario1.run = mock_scenario1_run
         self.test_scenario2 = Mock()
         self.test_scenario2.scenario_description = "This is test scenario 2 desc"
-        self.test_scenario2.text_fits = lambda x, y: True
-        self.test_scenario2.run = lambda x, y: y.name + x.name
+        self.test_scenario2.text_fits = mock_scenario2_text_fits
+        self.test_scenario2.run = mock_scenario2_run
         self.test_scenarios = TestScenarioDesc({1: self.test_scenario1, 2: self.test_scenario2})
         self.TestAction = Mock()  # должно быть async?
         self.TestAction.description = "test_function"
@@ -77,17 +93,30 @@ class ModelsTest1(unittest.IsolatedAsyncioTestCase):
                                                  'external_actions': {}}, self.app_name)
 
         # путь по умолчанию без выполнения условий
-        self.assertTrue(await obj1.run(self.test_text_preprocessing_result, self.test_user1) == ("TestNameResult", True))
-        self.assertTrue(await obj2.run(self.test_text_preprocessing_result, self.test_user1) == ("TestNameResult", True))
+        self.assertTrue(
+            await obj1.run(self.test_text_preprocessing_result, self.test_user1) == ("TestNameResult", True)
+        )
+        self.assertTrue(
+            await obj2.run(self.test_text_preprocessing_result, self.test_user1) == ("TestNameResult", True)
+        )
 
         # случай когда срабатоли оба условия
-        self.assertTrue(obj1.run(self.test_text_preprocessing_result, self.test_user2) == ("TestNameResult", True))
+        self.assertTrue(
+            await obj1.run(self.test_text_preprocessing_result, self.test_user2) == ("TestNameResult", True)
+        )
         # случай, когда 2-е условие не выполнено
-        self.assertTrue(obj2.run(self.test_text_preprocessing_result, self.test_user3) == ('TestNameResult', True))
+        self.assertTrue(
+            await obj2.run(self.test_text_preprocessing_result, self.test_user3) == ('TestNameResult', True)
+        )
 
     async def test_dialogue_manager_run_scenario(self):
         obj = dialogue_manager.DialogueManager({'scenarios': self.test_scenarios,
                                                 'external_actions': {'nothing_found_action': self.TestAction}},
                                                self.app_name)
-        self.assertTrue(await obj.run_scenario(1, self.test_text_preprocessing_result, self.test_user1) == "ResultTestName")
-        self.assertTrue(await obj.run_scenario(2, self.test_text_preprocessing_result, self.test_user1) == "TestNameResult")
+        print(await obj.run_scenario(1, self.test_text_preprocessing_result, self.test_user1))
+        self.assertTrue(
+            await obj.run_scenario(1, self.test_text_preprocessing_result, self.test_user1) == "ResultTestName"
+        )
+        self.assertTrue(
+            await obj.run_scenario(2, self.test_text_preprocessing_result, self.test_user1) == "TestNameResult"
+        )

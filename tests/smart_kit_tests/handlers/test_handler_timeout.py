@@ -4,7 +4,11 @@ from unittest.mock import Mock, MagicMock
 from smart_kit.handlers import handler_timeout
 
 
-class HandlerTest2(unittest.TestCase):
+async def mock_behaviors_timeout(x):
+    return 120
+
+
+class HandlerTest2(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.app_name = "TastAppName"
         self.test_user = Mock('user')
@@ -20,7 +24,7 @@ class HandlerTest2(unittest.TestCase):
         self.test_user.message.device.surface = "surface"
 
         self.test_user.behaviors = Mock('behaviors')
-        self.test_user.behaviors.timeout = lambda x: 120
+        self.test_user.behaviors.timeout = mock_behaviors_timeout
         self.test_user.behaviors.has_callback = lambda *x, **y: MagicMock()
         self.test_user.behaviors.get_callback_action_params = lambda *x, **y: {}
         self.test_payload = Mock('payload')

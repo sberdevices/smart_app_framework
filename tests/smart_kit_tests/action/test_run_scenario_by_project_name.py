@@ -11,7 +11,7 @@ class TestScenarioDesc(dict):
         return 'result to run scenario'
 
 
-class RunScenarioByProjectNameActionTest1(unittest.TestCase):
+class RunScenarioByProjectNameActionTest1(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.test_text_preprocessing_result = Mock('text_preprocessing_result')
         self.test_user1 = Mock('User')

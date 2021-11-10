@@ -5,7 +5,7 @@ from unittest.mock import Mock
 from core.basic_models.requirement import device_requirements
 
 
-class RequirementTest1(unittest.TestCase):
+class RequirementTest1(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.test_items1 = {"platfrom_type": "any platform"}  # PLATFROM - так задумано?
         self.test_items2 = {"platform_type": "any platform 2"}
@@ -30,11 +30,10 @@ class RequirementTest1(unittest.TestCase):
         with self.assertRaises(KeyError):
             obj3 = device_requirements.PlatformTypeRequirement(self.test_items2, self.test_id)
 
-    def test_platform_type_requirement_check(self):
+    async def test_platform_type_requirement_check(self):
         obj1 = device_requirements.PlatformTypeRequirement(self.test_items1, self.test_id)
-        loop = asyncio.get_event_loop()
-        self.assertTrue(loop.run_until_complete(obj1.check(self.test_text_processing_result, self.test_user1)))
-        self.assertTrue(not loop.run_until_complete(obj1.check(self.test_text_processing_result, self.test_user2)))
+        self.assertTrue(await obj1.check(self.test_text_processing_result, self.test_user1))
+        self.assertTrue(not await obj1.check(self.test_text_processing_result, self.test_user2))
 
 
 class RequirementTest2(unittest.TestCase):

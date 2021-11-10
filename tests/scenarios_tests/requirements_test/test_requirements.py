@@ -1,5 +1,4 @@
 # coding: utf-8
-import asyncio
 import unittest
 from unittest.mock import Mock
 
@@ -55,9 +54,9 @@ class EQMockOperator:
         return value == self.amount
 
 
-class RequirementTest(unittest.TestCase):
+class RequirementTest(unittest.IsolatedAsyncioTestCase):
 
-    def test_template_in_array_req_true(self):
+    async def test_template_in_array_req_true(self):
         items = {
             "template": "{{ payload.userInfo.tbcode }}",
             "items": ["32", "33"]
@@ -72,10 +71,9 @@ class RequirementTest(unittest.TestCase):
         user = Mock()
         user.parametrizer = Mock()
         user.parametrizer.collect = Mock(return_value=params)
-        loop = asyncio.get_event_loop()
-        self.assertTrue(loop.run_until_complete(requirement.check(None, user)))
+        self.assertTrue(await requirement.check(None, user))
 
-    def test_template_in_array_req_true2(self):
+    async def test_template_in_array_req_true2(self):
         items = {
             "template": "{{ payload.message.strip() }}",
             "items": ["AAA", "BBB", "CCC"]
@@ -90,10 +88,9 @@ class RequirementTest(unittest.TestCase):
         user = Mock()
         user.parametrizer = Mock()
         user.parametrizer.collect = Mock(return_value=params)
-        loop = asyncio.get_event_loop()
-        self.assertTrue(loop.run_until_complete(requirement.check(None, user)))
+        self.assertTrue(await requirement.check(None, user))
 
-    def test_template_in_array_req_false(self):
+    async def test_template_in_array_req_false(self):
         items = {
             "template": "{{ payload.message.strip() }}",
             "items": ["AAA", "CCC"]
@@ -108,10 +105,9 @@ class RequirementTest(unittest.TestCase):
         user = Mock()
         user.parametrizer = Mock()
         user.parametrizer.collect = Mock(return_value=params)
-        loop = asyncio.get_event_loop()
-        self.assertFalse(loop.run_until_complete(requirement.check(None, user)))
+        self.assertFalse(await requirement.check(None, user))
 
-    def test_array_in_template_req_true(self):
+    async def test_array_in_template_req_true(self):
         items = {
             "template": {
                 "type": "unified_template",
@@ -131,10 +127,9 @@ class RequirementTest(unittest.TestCase):
         user = Mock()
         user.parametrizer = Mock()
         user.parametrizer.collect = Mock(return_value=params)
-        loop = asyncio.get_event_loop()
-        self.assertTrue(loop.run_until_complete(requirement.check(None, user)))
+        self.assertTrue(await requirement.check(None, user))
 
-    def test_array_in_template_req_true2(self):
+    async def test_array_in_template_req_true2(self):
         items = {
             "template": "{{ payload.message.strip() }}",
             "items": ["AAA", "BBB"]
@@ -150,10 +145,9 @@ class RequirementTest(unittest.TestCase):
         user = Mock()
         user.parametrizer = Mock()
         user.parametrizer.collect = Mock(return_value=params)
-        loop = asyncio.get_event_loop()
-        self.assertTrue(loop.run_until_complete(requirement.check(None, user)))
+        self.assertTrue(await requirement.check(None, user))
 
-    def test_array_in_template_req_false(self):
+    async def test_array_in_template_req_false(self):
         items = {
             "template": {
                 "type": "unified_template",
@@ -173,10 +167,9 @@ class RequirementTest(unittest.TestCase):
         user = Mock()
         user.parametrizer = Mock()
         user.parametrizer.collect = Mock(return_value=params)
-        loop = asyncio.get_event_loop()
-        self.assertFalse(loop.run_until_complete(requirement.check(None, user)))
+        self.assertFalse(await requirement.check(None, user))
 
-    def test_regexp_in_template_req_true(self):
+    async def test_regexp_in_template_req_true(self):
         items = {
             "template": "{{ payload.message.strip() }}",
             "regexp": "(^|\s)[Фф](\.|-)?1(\-)?(у|У)?($|\s)"
@@ -191,10 +184,9 @@ class RequirementTest(unittest.TestCase):
         user = Mock()
         user.parametrizer = Mock()
         user.parametrizer.collect = Mock(return_value=params)
-        loop = asyncio.get_event_loop()
-        self.assertTrue(loop.run_until_complete(requirement.check(None, user)))
+        self.assertTrue(await requirement.check(None, user))
 
-    def test_regexp_in_template_req_false(self):
+    async def test_regexp_in_template_req_false(self):
         items = {
             "template": "{{ payload.message.strip() }}",
             "regexp": "(^|\s)[Фф](\.|-)?1(\-)?(у|У)?($|\s)"
@@ -209,8 +201,7 @@ class RequirementTest(unittest.TestCase):
         user = Mock()
         user.parametrizer = Mock()
         user.parametrizer.collect = Mock(return_value=params)
-        loop = asyncio.get_event_loop()
-        self.assertFalse(loop.run_until_complete(requirement.check(None, user)))
+        self.assertFalse(await requirement.check(None, user))
 
 
 if __name__ == '__main__':

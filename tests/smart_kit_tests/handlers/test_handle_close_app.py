@@ -9,7 +9,7 @@ class TestScenarioDesc(dict):
         return 'type'
 
 
-class HandlerTest6(unittest.TestCase):
+class HandlerTest6(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.test_text_preprocessing_result = Mock('text_preprocessing_result')
         self.test_user = Mock()

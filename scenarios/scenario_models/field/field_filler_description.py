@@ -374,6 +374,23 @@ class IntersectionFieldFiller(FieldFillerDescription):
 
 
 class DatePeriodFiller(FieldFillerDescription):
+    """
+    usage:
+      "вытащить_период_из_сообщения": {
+        "fields": {
+          "period": {
+            "required": true,
+            "available": true,
+            "filler": {
+              "type": "date_period_filler",
+              "max_days_in_period": 365,
+              "future_days_allowed": false
+            }
+          }
+        }
+      },
+    """
+
     def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str] = None) -> None:
         super(DatePeriodFiller, self).__init__(items, id)
         self.max_days_in_period = items.get('max_days_in_period', None)

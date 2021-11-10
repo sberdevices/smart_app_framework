@@ -7,7 +7,7 @@ from smart_kit.names.message_names import NOTHING_FOUND
 from core.basic_models.actions.command import Command
 
 
-class SystemAnswersTest1(unittest.TestCase):
+class SystemAnswersTest1(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.test_command_1 = Mock('Command')
         self.test_id = '123-345-678'  # пусть чему-то равняется

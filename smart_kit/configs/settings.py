@@ -19,7 +19,7 @@ class Settings(BaseConfig):
         self.app_name = kwargs.get("app_name")
         self.adapters = {Settings.CephAdapterKey: CephAdapter, self.OSAdapterKey: OSAdapter}
         self.repositories = [
-            FileRepository(
+            UpdatableFileRepository(
                 self.subfolder_path("template_config.yml"), loader=yaml.safe_load, key="template_settings"
             ),
             FileRepository(self.subfolder_secret_path("kafka_config.yml"), loader=yaml.safe_load, key="kafka"),

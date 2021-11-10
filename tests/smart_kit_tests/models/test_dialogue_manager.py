@@ -1,6 +1,6 @@
 # coding: utf-8
 import unittest
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import Mock
 from smart_kit.models import dialogue_manager
 
 
@@ -53,9 +53,9 @@ class ModelsTest1(unittest.IsolatedAsyncioTestCase):
         self.test_scenario2.text_fits = mock_scenario2_text_fits
         self.test_scenario2.run = mock_scenario2_run
         self.test_scenarios = TestScenarioDesc({1: self.test_scenario1, 2: self.test_scenario2})
-        self.TestAction = Mock()  # должно быть async?
+        self.TestAction = Mock()
         self.TestAction.description = "test_function"
-        self.TestAction.run = lambda x, y: x.name + y.name  # должно быть async?
+        self.TestAction.run = lambda x, y: x.name + y.name
         self.app_name = "test"
 
     def test_log_const(self):

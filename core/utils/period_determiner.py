@@ -135,7 +135,15 @@ class StateMachineForDateDetermining:
                 # для частного случая когда указан только год
                 if self._day == 0 and self._month == 0 and self._year:
                     self._date_period[0] = safe_datetime(self._year, 1, 1)
-                    self._date_period[1] = safe_datetime(self._year, 12, 31)
+
+                    # если имеем дело с периодом когда в начале фразы союз "с" или "со"
+                    if self._is_period:
+                        # берем текущий день в качестве окончания
+                        self._date_period[1] = self._current_date
+                    else:
+                        # иначе конец указанного года
+                        self._date_period[1] = safe_datetime(self._year, 12, 31)
+
                     return format_date(self._date_period[0]), format_date(self._date_period[1])
 
                 # если день не указан, тогда берем первый день

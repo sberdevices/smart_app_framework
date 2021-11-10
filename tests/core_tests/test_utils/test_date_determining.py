@@ -455,6 +455,18 @@ def test_period_determiner_30():
     assert result == ('08.01.{}'.format(current_date.year), '08.01.{}'.format(current_date.year))
 
 
+def test_period_determiner_31():
+    # если используется корректная форма к примеру "с 28 марта 2019",
+    # то период определится как  с 28 марта 2019 года по сегодня
+    words_to_process = [
+        'с',
+        '2019',
+        'года'
+    ]
+    result = period_determiner(words_to_process)
+    assert result == ('01.01.2019', '{}.{}.{}'.format(str(current_date.day).zfill(2), str(current_date.month).zfill(2), current_date.year))
+
+
 def test_extract_words_describing_period_1():
     words_from_intent = [
         "заказать",

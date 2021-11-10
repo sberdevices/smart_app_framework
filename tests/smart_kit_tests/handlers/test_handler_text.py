@@ -4,13 +4,21 @@ from unittest.mock import Mock
 from smart_kit.handlers import handler_text
 
 
-class HandlerTest5(unittest.TestCase):
+async def mock_dialogue_manager1_run(x, y):
+    return "TestAnswer", True
+
+
+async def mock_dialogue_manager2_run(x, y):
+    return "", False
+
+
+class HandlerTest5(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.app_name = "TestAppName"
         self.test_dialog_manager1 = Mock('dialog_manager')
-        self.test_dialog_manager1.run = lambda x, y: ("TestAnswer", True)
+        self.test_dialog_manager1.run = mock_dialogue_manager1_run
         self.test_dialog_manager2 = Mock('dialog_manager')
-        self.test_dialog_manager2.run = lambda x, y: ("", False)
+        self.test_dialog_manager2.run = mock_dialogue_manager2_run
         self.test_text_preprocessing_result = Mock('text_preprocessing_result')
         self.test_text_preprocessing_result.raw = 'any raw'
         self.test_user = Mock('User')

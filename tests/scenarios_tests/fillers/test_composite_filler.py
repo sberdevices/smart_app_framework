@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock
 from scenarios.scenario_models.field.field_filler_description import FieldFillerDescription, CompositeFiller
 
@@ -11,17 +11,17 @@ class MockFiller:
         items = items or {}
         self.result = items.get("result")
 
-    def extract(self, text_preprocessing_result, user, params):
+    async def extract(self, text_preprocessing_result, user, params):
         return self.result
 
 
-class TestCompositeFiller(TestCase):
+class TestCompositeFiller(IsolatedAsyncioTestCase):
 
     @classmethod
-    def setUpClass(cls):
+    def setUp(cls):
         registered_factories[FieldFillerDescription] = field_filler_factory
         field_filler_description["mock_filler"] = MockFiller
-        TestCompositeFiller.user = Mock()
+        cls.user = Mock()
 
     async def test_first_filler(self):
         expected = "first"

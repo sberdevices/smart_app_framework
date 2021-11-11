@@ -8,5 +8,5 @@ class CustomHandler(HandlerBase):
         Тут создаются Handlers, которые используются для запуска логики в зависимости от типа входяшего сообщения
     """
 
-    def run(cls, payload, user):
+    def run(self, payload, user):
         return []

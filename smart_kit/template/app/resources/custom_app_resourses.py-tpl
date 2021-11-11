@@ -13,10 +13,10 @@ from app.basic_entities.requirements import CustomRequirement
 
 class CustomAppResourses(SmartAppResources):
 
-        def __init__(cls, source, references_path, settings):
-            super(CustomAppResourses, cls).__init__(source, references_path, settings)
+        def __init__(self, source, references_path, settings):
+            super(CustomAppResourses, self).__init__(source, references_path, settings)
 
-        def override_repositories(cls, repositories: list):
+        def override_repositories(self, repositories: list):
             """
             Метод предназначен для переопределения репозиториев в дочерних классах.
             :param repositories: Список репозиториев родителя
@@ -24,19 +24,18 @@ class CustomAppResourses(SmartAppResources):
             """
             return repositories
 
-        def init_field_filler_description(cls):
-            super(CustomAppResourses, cls).init_field_filler_description()
+        def init_field_filler_description(self):
+            super(CustomAppResourses, self).init_field_filler_description()
             ffd.field_filler_description["simple_filler"] = CustomFieldFiller
 
-        def init_actions(cls):
-            super(CustomAppResourses, cls).init_actions()
+        def init_actions(self):
+            super(CustomAppResourses, self).init_actions()
             actions["custom_action"] = CustomAction
 
-        def init_requirements(cls):
-            super(CustomAppResourses, cls).init_requirements()
+        def init_requirements(self):
+            super(CustomAppResourses, self).init_requirements()
             requirements["sample_requirement"] = CustomRequirement
 
-        def init_db_adapters(cls):
-            super(CustomAppResourses, cls).init_db_adapters()
+        def init_db_adapters(self):
+            super(CustomAppResourses, self).init_db_adapters()
             db_adapters["custom_db_adapter"] = CustomDBAdapter
-

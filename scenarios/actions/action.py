@@ -222,7 +222,7 @@ class SetVariableAction(BaseSetVariableAction):
         super(SetVariableAction, self).__init__(items, id)
         self.ttl: int = items.get("ttl")
 
-    async def _set(self, user, value):
+    def _set(self, user, value):
         user.variables.set(self.key, value, self.ttl)
 
 
@@ -309,7 +309,9 @@ class RunScenarioAction(Action):
         else:
             params.update(user.parametrizer.collect(text_preprocessing_result))
         scenario_id = self.scenario.render(params)
-        scenario = user.descriptions["scenarios"].get(scenario_id)
+        scenario = user.descriptions
+        scenario = scenario["scenarios"]
+        scenario = scenario.get(scenario_id)
         if scenario:
             return scenario.run(text_preprocessing_result, user, params)
 

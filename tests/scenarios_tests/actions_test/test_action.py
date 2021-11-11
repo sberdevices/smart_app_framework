@@ -427,7 +427,8 @@ class ChoiceScenarioActionTest(unittest.IsolatedAsyncioTestCase):
         scen = Mock()
         scen.run.return_value = expected_result
         if expected_scen:
-            return await action.run(user, Mock())
+            user.descriptions = {"scenarios": {expected_scen: scen}}
+        return await action.run(user, Mock())
 
     async def test_choice_scenario_action(self):
         # Проверяем, что запустили нужный сценарий, в случае если выполнился его requirement

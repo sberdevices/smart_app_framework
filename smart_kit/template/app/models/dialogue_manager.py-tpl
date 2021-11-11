@@ -7,5 +7,5 @@ class CustomDialogueManager(DialogueManager):
         В собственном DialogManager можно переопределить логику, связанную с вызовом сценариев по входяшему интенту
     """
     
-    def __init__(self, scenario_descriptions, app_name, **kwargs):
-        super(CustomDialogueManager, self).__init__(scenario_descriptions, app_name, **kwargs)
+    def __init__(cls, scenario_descriptions, app_name, **kwargs):
+        super(CustomDialogueManager, cls).__init__(scenario_descriptions, app_name, **kwargs)

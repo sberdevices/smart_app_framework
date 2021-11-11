@@ -1,6 +1,6 @@
 import unittest
 from typing import Dict, Any, Union, Optional
-from unittest.mock import MagicMock, Mock, ANY
+from unittest.mock import MagicMock, Mock, ANY, AsyncMock
 
 from core.basic_models.actions.basic_actions import Action, action_factory, actions
 from core.model.registered import registered_factories
@@ -420,7 +420,7 @@ class ChoiceScenarioActionTest(unittest.IsolatedAsyncioTestCase):
 
     @staticmethod
     async def mock_and_perform_action(test_items: Dict[str, Any], expected_result: Optional[str] = None,
-                                expected_scen: Optional[str] = None) -> Union[str, None]:
+                                      expected_scen: Optional[str] = None) -> Union[str, None]:
         action = ChoiceScenarioAction(test_items)
         user = Mock()
         user.parametrizer = MockParametrizer(user, {})
@@ -451,7 +451,8 @@ class ChoiceScenarioActionTest(unittest.IsolatedAsyncioTestCase):
         }
         expected_scen_result = "test_N_done"
         real_scen_result = await self.mock_and_perform_action(
-            test_items, expected_result=expected_scen_result, expected_scen="test_N")
+            test_items, expected_result=expected_scen_result, expected_scen="test_N"
+        )
         self.assertEqual(real_scen_result, expected_scen_result)
 
     async def test_choice_scenario_action_no_else_action(self):

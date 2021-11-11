@@ -13,11 +13,11 @@ class CustomRequirement(Requirement):
         Тут можно создать собственные Requirements для использования их в сценариях
     """
 
-    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
-        super(CustomRequirement, self).__init__(items, id)
+    def __init__(cls, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(CustomRequirement, cls).__init__(items, id)
         items = items or {}
-        self.test_param = items.get("test_param")
+        cls.test_param = items.get("test_param")
 
-    async def check(self, text_preprocessing_result: TextPreprocessingResult,
+    async def check(cls, text_preprocessing_result: TextPreprocessingResult,
                     user: User, params: Dict[str, Any] = None) -> bool:
         return False

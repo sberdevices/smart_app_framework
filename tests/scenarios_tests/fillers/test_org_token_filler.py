@@ -1,10 +1,10 @@
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock
 
 from scenarios.scenario_models.field.field_filler_description import FirstOrgFiller
 
 
-class TestFirstOrgFiller(TestCase):
+class TestFirstOrgFiller(IsolatedAsyncioTestCase):
     def setUp(self):
         items = {}
         self.filler = FirstOrgFiller(items)

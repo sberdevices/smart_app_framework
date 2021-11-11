@@ -12,17 +12,17 @@ class CustomeUser(User):
         в метод fields можно добавляются собственные поля, для использования внутри базовых сущностей
     """
 
-    def __init__(self, id, message, db_data, settings, descriptions, parametrizer_cls, load_error=False):
-        super(CustomeUser, self).__init__(id, message, db_data, settings,
+    def __init__(cls, id, message, db_data, settings, descriptions, parametrizer_cls, load_error=False):
+        super(CustomeUser, cls).__init__(id, message, db_data, settings,
                                          descriptions, parametrizer_cls, load_error)
 
     @property
-    def fields(self):
-        return super(CustomeUser, self).fields + []
+    def fields(cls):
+        return super(CustomeUser, cls).fields + []
 
     @lazy
-    def parametrizer(self):
-        return CustomParametrizer(self, {})
+    def parametrizer(cls):
+        return CustomParametrizer(cls, {})
 
-    def expire(self):
-        super(CustomeUser, self).expire()
+    def expire(cls):
+        super(CustomeUser, cls).expire()

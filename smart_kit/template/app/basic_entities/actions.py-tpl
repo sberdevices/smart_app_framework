@@ -13,12 +13,12 @@ class CustomAction(Action):
         Тут можно создать собственные Actions для использования их в сценариях
     """
 
-    def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
-        super(CustomAction, self).__init__(items, id)
+    def __init__(cls, items: Dict[str, Any], id: Optional[str] = None):
+        super(CustomAction, cls).__init__(items, id)
         items = items or {}
-        self.test_param = items.get("test_param")
+        cls.test_param = items.get("test_param")
 
-    async def run(self, user: User, text_preprocessing_result: TextPreprocessingResult,
+    async def run(cls, user: User, text_preprocessing_result: TextPreprocessingResult,
                   params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
         print("Test Action")
         return None

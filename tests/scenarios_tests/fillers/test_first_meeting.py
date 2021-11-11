@@ -1,10 +1,10 @@
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock
 from scenarios.scenario_models.field.field_filler_description import FirstNumberFiller, \
      FirstCurrencyFiller
 
 
-class TestFirstNumberFiller(TestCase):
+class TestFirstNumberFiller(IsolatedAsyncioTestCase):
     async def test_1(self):
         expected = "5"
         items = {}
@@ -27,7 +27,7 @@ class TestFirstNumberFiller(TestCase):
         self.assertIsNone(result)
 
 
-class TestFirstCurrencyFiller(TestCase):
+class TestFirstCurrencyFiller(IsolatedAsyncioTestCase):
     async def test_1(self):
         expected = "ru"
         items = {}

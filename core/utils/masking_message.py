@@ -58,7 +58,7 @@ def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Iter
 
     for key, _ in key_gen:
         if (is_dict and key in masking_fields) or masking_on:  # пероверям, либо мы уже выше имеем включенный флаг маскировки либо мы встретили ключ в словаре для маскировки
-            if isinstance(data[key], MutableMapping) or isinstance(data[key], Iterable):  # проверяем наш элемент, является ли он словарем или списком
+            if isinstance(data[key], MutableMapping) or isinstance(data[key], Iterable) and not isinstance(data[key], str):  # проверяем наш элемент, является ли он словарем или списком
                 if deep_info:
                     masking(data[key], masking_fields, True, deep_info - 1)  # если глубина не превышена, идем внутрь с включенным флагом и уменьшаем глубину
                 else:
@@ -69,7 +69,7 @@ def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Iter
                 data[key] = '***'
         elif key in CARD_MASKING_FIELDS:  # проверка на реквизиты карты
             data[key] = regex_masking(data[key], card_regular, card_sub_func)
-        elif isinstance(data[key], MutableMapping) or isinstance(data[key], Iterable):  # если маскировка не нужна уходим глубже без включенного флага
+        elif isinstance(data[key], MutableMapping) or isinstance(data[key], Iterable) and not isinstance(data[key], str):  # если маскировка не нужна уходим глубже без включенного флага
             masking(data[key], masking_fields, False, deep_info)
 
 
@@ -91,7 +91,7 @@ def deep_mask(data: Union[MutableMapping, Iterable] , item_counter: Iterable, co
         key_gen = enumerate(data)
 
     for key, _ in key_gen:
-        if isinstance(data[key], MutableMapping) or isinstance(data[key], Iterable):
+        if isinstance(data[key], MutableMapping) or isinstance(data[key], Iterable) and not isinstance(data[key], str):
             collection_counter[0] += 1  # если встречаем коллекцию крутим счетчик коллекций и если глубина не превышена идем внутрь
             if available_depth > depth or available_depth == -1:
                 deep_mask(data[key],item_counter, collection_counter, max_depth, depth+1, available_depth)
@@ -99,10 +99,3 @@ def deep_mask(data: Union[MutableMapping, Iterable] , item_counter: Iterable, co
             item_counter[0] += 1
 
     return item_counter[0], collection_counter[0], max_depth[0]
-
-"""
-example 
-structure = {'token': [12,     12,   {'key': [12, 12]}],  'notoken': [12,{'token':12}]}
-after masking
-structure = {'token': ['***', '***', {'key': '*2*0*1*'}], 'notoken': [12, {'token': '***'}]}
-"""

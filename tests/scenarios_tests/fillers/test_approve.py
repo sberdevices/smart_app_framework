@@ -1,5 +1,5 @@
 import os
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock, patch
 
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
@@ -20,7 +20,7 @@ def patch_get_app_config(mock_get_app_config):
     mock_get_app_config.return_value = result
 
 
-class TestApproveFiller(TestCase):
+class TestApproveFiller(IsolatedAsyncioTestCase):
 
     @patch('smart_kit.configs.get_app_config')
     async def test_1(self, mock_get_app_config):
@@ -63,7 +63,7 @@ class TestApproveFiller(TestCase):
         self.assertIsNone(result)
 
 
-class TestApproveRawTextFiller(TestCase):
+class TestApproveRawTextFiller(IsolatedAsyncioTestCase):
 
     @patch('smart_kit.configs.get_app_config')
     async def test_1(self, mock_get_app_config):

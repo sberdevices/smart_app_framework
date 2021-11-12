@@ -1,6 +1,6 @@
 import unittest
 from typing import Dict, Any, Union, Optional
-from unittest.mock import MagicMock, Mock, ANY, AsyncMock
+from unittest.mock import MagicMock, Mock, ANY
 
 from core.basic_models.actions.basic_actions import Action, action_factory, actions
 from core.model.registered import registered_factories
@@ -128,7 +128,7 @@ class RemoveCompositeFormFieldActionTest(unittest.IsolatedAsyncioTestCase):
 
 class SaveBehaviorActionTest(unittest.IsolatedAsyncioTestCase):
     @classmethod
-    def setUpClass(cls):
+    def setUp(cls):
         user = Mock()
         user.message = Mock()
         user.parametrizer = MockParametrizer(user, {})
@@ -492,7 +492,7 @@ class ChoiceScenarioActionTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(real_scen_result, expected_scen_result)
 
 
-class ClearCurrentScenarioActionTest(unittest.TestCase):
+class ClearCurrentScenarioActionTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_action(self):
         scenario_name = "test_scenario"

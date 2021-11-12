@@ -1,4 +1,4 @@
-from unittest import TestCase 
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock
 from scenarios.scenario_models.field.field_filler_description import RegexpAndStringOperationsFieldFiller
 
@@ -8,7 +8,7 @@ class PickableMock(Mock):
         return (Mock, ())
 
 
-class TestRegexpStringOperationsFiller(TestCase):
+class TestRegexpStringOperationsFiller(IsolatedAsyncioTestCase):
     def setUp(self):
         self.items = {"exp": "1-[0-9A-Z]{7}"}
 

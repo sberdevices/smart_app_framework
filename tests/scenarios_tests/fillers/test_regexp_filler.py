@@ -1,9 +1,9 @@
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock
 from scenarios.scenario_models.field.field_filler_description import RegexpFieldFiller
 
 
-class TestRegexpFiller(TestCase):
+class TestRegexpFiller(IsolatedAsyncioTestCase):
     def setUp(self):
         self.items = {"exp": "1-[0-9A-Z]{7}"}
         self.user = Mock()

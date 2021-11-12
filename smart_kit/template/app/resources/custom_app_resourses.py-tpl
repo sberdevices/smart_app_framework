@@ -39,4 +39,3 @@ class CustomAppResourses(SmartAppResources):
         def init_db_adapters(self):
             super(CustomAppResourses, self).init_db_adapters()
             db_adapters["custom_db_adapter"] = CustomDBAdapter
-

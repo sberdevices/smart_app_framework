@@ -1,10 +1,10 @@
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock
 
 from scenarios.scenario_models.field.field_filler_description import AllRegexpsFieldFiller
 
 
-class Test_regexps_filler(TestCase):
+class Test_regexps_filler(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
         cls.items = {}

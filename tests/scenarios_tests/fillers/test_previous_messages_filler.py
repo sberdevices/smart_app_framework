@@ -10,11 +10,11 @@ class MockFiller:
     def __init__(self, items=None):
         self.count = 0
 
-    def extract(self, text_preprocessing_result, user, params):
+    async def extract(self, text_preprocessing_result, user, params):
         self.count += 1
 
 
-class PreviousMessagesFillerTest(unittest.TestCase):
+class PreviousMessagesFillerTest(unittest.IsolatedAsyncioTestCase):
     async def test_fill_1(self):
         registered_factories[FieldFillerDescription] = field_filler_factory
         field_filler_description["mock_filler"] = MockFiller

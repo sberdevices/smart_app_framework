@@ -1,10 +1,10 @@
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock
 
 from scenarios.scenario_models.field.field_filler_description import FirstPersonFiller
 
 
-class TestFirstPersonFiller(TestCase):
+class TestFirstPersonFiller(IsolatedAsyncioTestCase):
     def setUp(self):
         items = {}
         self.filler = FirstPersonFiller(items)

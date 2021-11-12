@@ -1,11 +1,11 @@
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock, patch
 
 from core.basic_models.classifiers.basic_classifiers import ExternalClassifier
 from scenarios.scenario_models.field.field_filler_description import ClassifierFiller, ClassifierFillerMeta
 
 
-class TestClassifierFiller(TestCase):
+class TestClassifierFiller(IsolatedAsyncioTestCase):
 
     def setUp(self):
         test_items = {
@@ -38,7 +38,7 @@ class TestClassifierFiller(TestCase):
         self.assertIsNone(actual_res)
 
 
-class TestClassifierFillerMeta(TestCase):
+class TestClassifierFillerMeta(IsolatedAsyncioTestCase):
 
     def setUp(self):
         test_items = {

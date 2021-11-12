@@ -1,10 +1,10 @@
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock, AsyncMock
 
 from scenarios.scenario_models.field.field_filler_description import ExternalFieldFillerDescription
 
 
-class TestExternalFieldFillerDescription(TestCase):
+class TestExternalFieldFillerDescription(IsolatedAsyncioTestCase):
 
     async def test_1(self):
         expected = 5

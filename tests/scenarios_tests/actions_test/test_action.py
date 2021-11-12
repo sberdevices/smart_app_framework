@@ -128,7 +128,7 @@ class RemoveCompositeFormFieldActionTest(unittest.IsolatedAsyncioTestCase):
 
 class SaveBehaviorActionTest(unittest.IsolatedAsyncioTestCase):
     @classmethod
-    def setUpClass(cls):
+    def setUp(cls):
         user = Mock()
         user.message = Mock()
         user.parametrizer = MockParametrizer(user, {})
@@ -420,7 +420,7 @@ class ChoiceScenarioActionTest(unittest.IsolatedAsyncioTestCase):
 
     @staticmethod
     async def mock_and_perform_action(test_items: Dict[str, Any], expected_result: Optional[str] = None,
-                                expected_scen: Optional[str] = None) -> Union[str, None]:
+                                      expected_scen: Optional[str] = None) -> Union[str, None]:
         action = ChoiceScenarioAction(test_items)
         user = Mock()
         user.parametrizer = MockParametrizer(user, {})
@@ -451,7 +451,8 @@ class ChoiceScenarioActionTest(unittest.IsolatedAsyncioTestCase):
         }
         expected_scen_result = "test_N_done"
         real_scen_result = await self.mock_and_perform_action(
-            test_items, expected_result=expected_scen_result, expected_scen="test_N")
+            test_items, expected_result=expected_scen_result, expected_scen="test_N"
+        )
         self.assertEqual(real_scen_result, expected_scen_result)
 
     async def test_choice_scenario_action_no_else_action(self):
@@ -491,7 +492,7 @@ class ChoiceScenarioActionTest(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(real_scen_result, expected_scen_result)
 
 
-class ClearCurrentScenarioActionTest(unittest.TestCase):
+class ClearCurrentScenarioActionTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_action(self):
         scenario_name = "test_scenario"

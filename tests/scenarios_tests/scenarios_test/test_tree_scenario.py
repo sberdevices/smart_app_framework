@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock, MagicMock, AsyncMock
 
 from core.basic_models.actions.command import Command
@@ -27,7 +27,7 @@ class BreakAction:
         return []
 
 
-class TestTreeScenario(TestCase):
+class TestTreeScenario(IsolatedAsyncioTestCase):
 
     async def test_1(self):
         """
@@ -88,7 +88,7 @@ class TestTreeScenario(TestCase):
         self.assertIsNone(current_node_mock.current_node)
         context_forms.new.assert_called_once_with(form_type)
 
-    async def test_breake(self):
+    async def test_break(self):
         """
         Тест проверяет выход из сценария если сработает флаг break_scenario
         """

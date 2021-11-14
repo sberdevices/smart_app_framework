@@ -127,15 +127,14 @@ class RemoveCompositeFormFieldActionTest(unittest.IsolatedAsyncioTestCase):
 
 
 class SaveBehaviorActionTest(unittest.IsolatedAsyncioTestCase):
-    @classmethod
-    def setUp(cls):
+    def setUp(self):
         user = Mock()
         user.message = Mock()
         user.parametrizer = MockParametrizer(user, {})
         user.last_scenarios.last_scenario_name = "scenario_id"
         test_incremental_id = "test_incremental_id"
         user.message.incremental_id = test_incremental_id
-        cls.user = user
+        self.user = user
 
     async def test_save_behavior_scenario_name(self):
         data = {"behavior": "test"}

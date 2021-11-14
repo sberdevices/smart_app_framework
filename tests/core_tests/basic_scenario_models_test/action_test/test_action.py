@@ -261,7 +261,7 @@ class ActionTest(unittest.IsolatedAsyncioTestCase):
             self.assertIsInstance(template, UnifiedTemplate)
         user = MagicMock()
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
-        output = await action.run(user=user, text_preprocessing_result=None)[0].payload["answer"]
+        output = (await action.run(user=user, text_preprocessing_result=None))[0].payload["answer"]
         self.assertEqual(output, expected)
 
     async def test_string_action_support_templates(self):
@@ -286,7 +286,7 @@ class ActionTest(unittest.IsolatedAsyncioTestCase):
         action = StringAction(items)
         user = MagicMock()
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
-        output = await action.run(user=user, text_preprocessing_result=None)[0].payload
+        output = (await action.run(user=user, text_preprocessing_result=None))[0].payload
         self.assertEqual(output, expected)
 
 

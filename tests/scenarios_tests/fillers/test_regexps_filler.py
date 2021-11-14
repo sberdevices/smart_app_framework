@@ -5,16 +5,15 @@ from scenarios.scenario_models.field.field_filler_description import AllRegexpsF
 
 
 class Test_regexps_filler(IsolatedAsyncioTestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.items = {}
-        cls.items["exps"] = ["номер[а-я]*\.?\s?(\d+)", "n\.?\s?(\d+)", "nn\.?\s?(\d+)", "#\.?\s?(\d+)",
+    def setUp(self):
+        self.items = {}
+        self.items["exps"] = ["номер[а-я]*\.?\s?(\d+)", "n\.?\s?(\d+)", "nn\.?\s?(\d+)", "#\.?\s?(\d+)",
                              "##\.?\s?(\d+)",
                              "№\.?\s?(\d+)", "№№\.?\s?(\d+)", "платеж[а-я]+\.?\s?(\d+)", "поручен[а-я]+\.?\s?(\d+)",
                              "п\\s?,\\s?п\.?\s?(\d+)", "п\\s?\\/\\s?п\.?\s?(\d+)"]
-        cls.items["delimiter"] = "|"
+        self.items["delimiter"] = "|"
 
-        cls.filler = AllRegexpsFieldFiller(cls.items)
+        self.filler = AllRegexpsFieldFiller(self.items)
 
     async def test_extract_1(self):
         field_value = "Просим отозвать платежное поручение 14 от 23.01.19 на сумму 3500 и вернуть деньги на расчетный счет."

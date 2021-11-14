@@ -56,7 +56,7 @@ class TestTreeScenario(IsolatedAsyncioTestCase):
 
         internal_form = Mock(name="internal_form_mock")
         internal_form.description.fields.items = Mock(return_value=[("age", field_descriptor)])
-        internal_form.field.field_validator.requirement.check = Mock(return_value=True)
+        internal_form.field.field_validator.requirement.check = AsyncMock(return_value=True)
         internal_form.fields = MagicMock()
         internal_form.fields.values.items = Mock(return_value={"age": 61})
         internal_form.is_valid = Mock(return_value=True)

@@ -6,9 +6,8 @@ from core.basic_models.parametrizers.parametrizer import BasicParametrizer
 
 class ParametrizerTest(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.user = Mock(message=Mock())
+    def setUp(self):
+        self.user = Mock(message=Mock())
 
     def test_get_user_data(self):
         expected = ["message"]

@@ -6,10 +6,9 @@ from scenarios.scenario_models.field_requirements.field_requirements import IsIn
 
 class IsIntFieldRequirementTest(IsolatedAsyncioTestCase):
 
-    @classmethod
-    def setUp(cls):
+    def setUp(self):
         items = {}
-        cls.requirement = IsIntFieldRequirement(items)
+        self.requirement = IsIntFieldRequirement(items)
 
     async def test_is_int_number_string(self):
         text = "123"

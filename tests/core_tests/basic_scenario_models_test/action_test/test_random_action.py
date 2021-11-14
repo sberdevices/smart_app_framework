@@ -6,8 +6,7 @@ from core.model.registered import registered_factories
 
 class TestRandomAction(IsolatedAsyncioTestCase):
 
-    @classmethod
-    def setUpClass(cls) -> None:
+    def setUp(self) -> None:
         registered_factories[Action] = action_factory
         actions["do_nothing"] = DoingNothingAction
 

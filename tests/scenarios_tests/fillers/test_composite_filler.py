@@ -17,11 +17,10 @@ class MockFiller:
 
 class TestCompositeFiller(IsolatedAsyncioTestCase):
 
-    @classmethod
-    def setUp(cls):
+    def setUp(self):
         registered_factories[FieldFillerDescription] = field_filler_factory
         field_filler_description["mock_filler"] = MockFiller
-        cls.user = Mock()
+        self.user = Mock()
 
     async def test_first_filler(self):
         expected = "first"

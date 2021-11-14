@@ -1,5 +1,4 @@
 # coding: utf-8
-import asyncio
 from typing import Dict, Any
 
 from core.basic_models.scenarios.base_scenario import BaseScenario
@@ -30,14 +29,14 @@ class FormFillingScenario(BaseScenario):
     async def text_fits(self, text_preprocessing_result, user):
         return await self._check_field(text_preprocessing_result, user, None)
 
-    def check_ask_again_requests(self, text_preprocessing_result, user, params):
+    async def check_ask_again_requests(self, text_preprocessing_result, user, params):
         form = user.forms[self.form_type]
-        question_field = self._field(form, text_preprocessing_result, user, params)
+        question_field = await self._field(form, text_preprocessing_result, user, params)
         return question_field.ask_again_counter < len(question_field.description.ask_again_requests)
 
-    def ask_again(self, text_preprocessing_result, user, params):
+    async def ask_again(self, text_preprocessing_result, user, params):
         form = user.forms[self.form_type]
-        question_field = self._field(form, text_preprocessing_result, user, params)
+        question_field = await self._field(form, text_preprocessing_result, user, params)
         question = question_field.description.ask_again_requests[question_field.ask_again_counter]
         question_field.ask_again_counter += 1
 
@@ -51,19 +50,17 @@ class FormFillingScenario(BaseScenario):
 
     async def _check_field(self, text_preprocessing_result, user, params):
         form = user.forms[self.form_type]
-        field = self._field(form, text_preprocessing_result, user, params)
+        field = await self._field(form, text_preprocessing_result, user, params)
         return await field.check_can_be_filled(text_preprocessing_result, user) if field else False
 
-    def _field(self, form, text_preprocessing_result, user, params):
-        return self._find_field(form, text_preprocessing_result, user, params)
+    async def _field(self, form, text_preprocessing_result, user, params):
+        return await self._find_field(form, text_preprocessing_result, user, params)
 
-    def _find_field(self, form, text_preprocessing_result, user, params):
+    async def _find_field(self, form, text_preprocessing_result, user, params):
         for field_name in form.fields.descriptions:
             field = form.fields[field_name]
-            loop = asyncio.get_event_loop()
             if not field.valid and field.description.has_requests and \
-                    loop.run_until_complete(
-                        field.description.requirement.check(text_preprocessing_result, user, params)):
+                    await field.description.requirement.check(text_preprocessing_result, user, params):
                 return field
 
     def get_fields_data(self, form, form_key):
@@ -115,14 +112,13 @@ class FormFillingScenario(BaseScenario):
                                                                       text_normalization_result, user, params))
         return result
 
-    def _validate_extracted_data(self, user, text_preprocessing_result, form, data_extracted, params):
+    async def _validate_extracted_data(self, user, text_preprocessing_result, form, data_extracted, params):
         error_msgs = []
         for field_key, field in form.description.fields.items():
             value = data_extracted.get(field_key)
-            loop = asyncio.get_event_loop()
             # is not None is necessary, because 0 and False should be checked, None - shouldn't fill
             if value is not None and \
-                    not loop.run_until_complete(field.field_validator.requirement.check(value, params)):
+                    not await field.field_validator.requirement.check(value, params):
                 log_params = {
                     log_const.KEY_NAME: log_const.SCENARIO_RESULT_VALUE,
                     "field_key": field_key
@@ -189,13 +185,14 @@ class FormFillingScenario(BaseScenario):
         logging_params.update(self._log_params())
         log("Extracted data=%(data_extracted_str)s", user, logging_params)
 
-        validation_error_msg = self._validate_extracted_data(user, text_preprocessing_result, form, data_extracted, params)
+        validation_error_msg = await self._validate_extracted_data(user, text_preprocessing_result,
+                                                                   form, data_extracted, params)
         if validation_error_msg:
             reply_messages = validation_error_msg
         else:
             reply_messages, is_break = self._fill_form(user, text_preprocessing_result, form, data_extracted)
             if not is_break:
-                field = self._field(form, text_preprocessing_result, user, params)
+                field = await self._field(form, text_preprocessing_result, user, params)
                 if field:
                     user.history.add_event(
                         Event(type=HistoryConstants.types.FIELD_EVENT,

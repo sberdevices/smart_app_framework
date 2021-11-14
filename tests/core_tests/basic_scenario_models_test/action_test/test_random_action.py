@@ -1,18 +1,17 @@
-import asyncio
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 
 from core.basic_models.actions.basic_actions import Action, action_factory, actions, DoingNothingAction, RandomAction
 from core.model.registered import registered_factories
 
 
-class TestRandomAction(TestCase):
+class TestRandomAction(IsolatedAsyncioTestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
         registered_factories[Action] = action_factory
         actions["do_nothing"] = DoingNothingAction
 
-    def test_1(self):
+    async def test_1(self):
 
         items = {
             "actions": [
@@ -33,11 +32,10 @@ class TestRandomAction(TestCase):
             ]
         }
         action = RandomAction(items, 5)
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(None, None))
+        result = await action.run(None, None)
         self.assertIsNotNone(result)
 
-    def test_2(self):
+    async def test_2(self):
         items = {
             "actions": [
                 {
@@ -50,6 +48,5 @@ class TestRandomAction(TestCase):
             ]
         }
         action = RandomAction(items, 5)
-        loop = asyncio.get_event_loop()
-        result = loop.run_until_complete(action.run(None, None))
+        result = await action.run(None, None)
         self.assertIsNotNone(result)

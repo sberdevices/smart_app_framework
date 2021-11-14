@@ -1,5 +1,4 @@
 # coding: utf-8
-import asyncio
 from typing import Dict, Any, List
 
 import core.logging.logger_constants as log_const
@@ -47,10 +46,9 @@ class BaseScenario:
     def build_available_requirement(self):
         return self._available_requirement
 
-    def check_available(self, text_preprocessing_result, user):
+    async def check_available(self, text_preprocessing_result, user):
         if not self.switched_off:
-            loop = asyncio.get_event_loop()
-            return loop.run_until_complete(self.available_requirement.check(text_preprocessing_result, user))
+            return await self.available_requirement.check(text_preprocessing_result, user)
         return False
 
     def _log_params(self):

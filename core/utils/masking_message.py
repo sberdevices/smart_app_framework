@@ -44,10 +44,13 @@ def check_value_is_collection(value):
     return isinstance(value, MutableMapping) or isinstance(value, Iterable) and not isinstance(value, str)
 
 
-def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Iterable] = None, masking_on: bool = False):
+def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Iterable] = None,
+            deep_level: int = 2, mask_available_depth: int = -1, masking_on: bool = False):
     """
     :param data: коллекция для маскирования приватных данных
     :param masking_fields: поля для обязательной маскировки независимо от уровня
+    :param deep_level: глубина сохранения структуры маскируемого поля
+    :param mask_available_depth: глубина глубокой маскировки полей без сохранения структуры (см ниже)
     :param masking_on: флаг о включенной выше маскировке, в случае маскировки вложенных полей
     """
     if masking_fields is None:
@@ -62,12 +65,57 @@ def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Iter
     for key, _ in key_gen:
         value_is_collection = check_value_is_collection(data[key])
         if key in masking_fields or masking_on:
-            if value_is_collection:  # уходим глубже и включаем маскировку
-                masking(data[key], masking_fields, masking_on=True)
+            if value_is_collection:
+                if deep_level > 0:
+                    # если глубина не превышена, идем внутрь с включенным флагом и уменьшаем глубину
+                    masking(data[key], masking_fields, deep_level - 1, masking_on=True)
+                else:
+                    # если глубина превышена маскируем составной маской
+                    item_counter, collection_counter, max_depth = deep_mask(
+                        data[key], depth=1, available_depth=mask_available_depth)
+                    data[key] = f'*{item_counter}*{collection_counter}*{max_depth}*'
             elif data[key] is not None:  # в случае простого элемента. маскируем как ***
                 data[key] = '***'
         elif key in CARD_MASKING_FIELDS:  # проверка на реквизиты карты
             data[key] = regex_masking(data[key], card_regular, card_sub_func)
         elif value_is_collection:
             # если маскировка не нужна уходим глубже без включенного флага
-            masking(data[key], masking_fields, masking_on=False)
+            masking(data[key], masking_fields, deep_level, masking_on=False)
+
+
+def deep_mask(data: Union[MutableMapping, Iterable], depth: int, available_depth: int = -1):
+    """
+    Функция глубокой максировки для вложенной структуры, tuple из 3х чисел:
+     1 - количество простых элементов,
+     2 - количество коллекций,
+     3 - максимальную глубину
+
+    :param data: структура маскируемая без сохранения структуры
+    :param depth: текущая глубина вложенности
+    :param available_depth: максимальная допустимая глубина, -1 неограниченная
+    """
+    item_counter = 0
+    collection_counter = 0
+    max_depth = 0
+
+    # в зависимости от листа или словаря создаем итератор
+    if isinstance(data, MutableMapping):
+        key_gen = data.items()
+    else:
+        key_gen = enumerate(data)
+
+    for key, _ in key_gen:
+        if check_value_is_collection(data[key]):
+            collection_counter += 1
+            # если встречаем коллекцию и глубина не превышена идем внутрь
+            if available_depth > depth or available_depth == -1:
+                items, collections, collection_depth = deep_mask(data[key], item_counter, collection_counter)
+                item_counter += items
+                collection_counter += collections
+                if collection_depth > max_depth:
+                    max_depth = collection_depth
+        else:
+            # если элемент простой крутим счетчик простых элементов
+            item_counter += 1
+
+    return item_counter, collection_counter, max_depth + 1

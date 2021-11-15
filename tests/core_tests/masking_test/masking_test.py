@@ -71,7 +71,7 @@ class MaskingTest(TestCase):
         message = SmartAppFromMessage(value=json_input_msg, headers=[])
 
         masked_message = json.loads(message.masked_value)
-        result_message = {'token': ['***', '***', {'key': '*2*0*1*'}], 'notoken': [12, {'token': '***'}]}
+        result_message = {'token': ['***', '***', {'key': ["***", "***"]}], 'notoken': [12, {'token': '***'}]}
 
         self.assertEqual(masked_message, result_message)
 
@@ -102,11 +102,11 @@ class MaskingTest(TestCase):
                 "message": {
                     "original_text": "Номер карты************3456 вот"
                 },
-                "profileId":['***', '***']
+                "profileId":["***", "***"]
             },
             "messageName": "MESSAGE_TO_SKILL",
             "data" :{
-                "refresh_token": ['***', '***', {'key': '*3*1*2*'}]
+                "refresh_token": ["***", "***", {"key": {"inner_dict" : ["***", "***", "***"]}}]
             }
         }
 

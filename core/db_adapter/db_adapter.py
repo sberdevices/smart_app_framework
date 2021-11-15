@@ -13,72 +13,70 @@ class DBAdapterException(Exception):
 
 
 class DBAdapter(Rerunable):
-    IS_ASYNC = False
-
     def __init__(self, config=None):
         super(DBAdapter, self).__init__(config)
         self._client = None
 
-    def _on_prepare(self):
+    async def _on_prepare(self):
         raise NotImplementedError
 
-    def connect(self):
+    async def connect(self):
         raise NotImplementedError
 
-    def _open(self, filename, *args, **kwargs):
+    async def _open(self, filename, *args, **kwargs):
         raise NotImplementedError
 
-    def _save(self, id, data):
+    async def _save(self, id, data):
         raise NotImplementedError
 
-    def _replace_if_equals(self, id, sample, data):
+    async def _replace_if_equals(self, id, sample, data):
         raise NotImplementedError
 
-    def _get(self, id):
+    async def _get(self, id):
         raise NotImplementedError
 
-    def _list_dir(self, path):
+    async def _list_dir(self, path):
         raise NotImplementedError
 
-    def _glob(self, path, pattern):
+    async def _glob(self, path, pattern):
         raise NotImplementedError
 
-    def _path_exists(self, path):
+    async def _path_exists(self, path):
         raise NotImplementedError
 
-    def _mtime(self, path):
+    async def _mtime(self, path):
         raise NotImplementedError
 
-    def open(self, filename, *args, **kwargs):
-        return self._run(self._open, filename, *args, **kwargs)
+    async def open(self, filename, *args, **kwargs):
+        return await self._run(self._open, filename, *args, **kwargs)
 
-    def glob(self, path, pattern):
-        return self._run(self._glob, path, pattern)
+    async def glob(self, path, pattern):
+        return await self._run(self._glob, path, pattern)
 
-    def path_exists(self, path):
-        return self._run(self._path_exists, path)
+    async def path_exists(self, path):
+        return await self._run(self._path_exists, path)
 
-    def mtime(self, path):
-        return self._run(self._mtime, path)
+    async def mtime(self, path):
+        return await self._run(self._mtime, path)
 
     @monitoring.got_histogram("save_time")
-    def save(self, id, data):
-        return self._run(self._save, id, data)
+    async def save(self, id, data):
+        return await self._run(self._save, id, data)
 
     @monitoring.got_histogram("save_time")
-    def replace_if_equals(self, id, sample, data):
-        return self._run(self._replace_if_equals, id, sample, data)
+    async def replace_if_equals(self, id, sample, data):
+        return await self._run(self._replace_if_equals, id, sample, data)
 
     @monitoring.got_histogram("get_time")
-    def get(self, id):
-        return self._run(self._get, id)
+    async def get(self, id):
+        return await self._run(self._get, id)
 
-    def list_dir(self, path):
-        return self._run(self._list_dir, path)
+    async def list_dir(self, path):
+        return await self._run(self._list_dir, path)
 
     @property
-    def _handled_exception(self):
+    async def _handled_exception(self):
         return Exception
 
-    def _on_all_tries_fail(self):
+    async def _on_all_tries_fail(self):
         raise

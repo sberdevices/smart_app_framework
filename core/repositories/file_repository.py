@@ -17,10 +17,10 @@ class FileRepository(ItemsRepository):
         self.save_target = save_target
         self._file_exist = False
 
-    def load(self):
+    async def load(self):
         if self.source.path_exists(self.filename):
             self._file_exist = True
-            with self.source.open(self.filename, 'rb') as stream:
+            with await self.source.open(self.filename, 'rb') as stream:
                 binary_data = stream.read()
                 data = binary_data.decode()
                 self.fill(self.loader(data))

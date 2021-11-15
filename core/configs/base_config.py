@@ -1,3 +1,4 @@
+import asyncio
 import os
 from typing import List
 
@@ -28,9 +29,11 @@ class BaseConfig:
         self.init_repositories()
 
     def init_repositories(self):
-        for rep in self.repositories:
-            rep.load()
-            self.registered_repositories[rep.key] = rep
+        await asyncio.gather([self._register_repo(rep) for rep in self.repositories])
+
+    async def _register_repo(self, rep):
+        await rep.load()
+        self.registered_repositories[rep.key] = rep
 
     def raw(self):
         items = self.registered_repositories

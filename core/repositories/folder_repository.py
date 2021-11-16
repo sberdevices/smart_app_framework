@@ -33,14 +33,14 @@ class FolderRepository(ShardRepository):
                 filename_to_data.update({shard: shard_data})
         return filename_to_data
 
-    def load(self):
-        shard_desc = self.get_shard_desc()
-        self.fill(self._form_file_upload_map(shard_desc))
-        super(FolderRepository, self).load()
+    async def load(self):
+        shard_desc = await self.get_shard_desc()
+        await self.fill(self._form_file_upload_map(shard_desc))
+        await super(FolderRepository, self).load()
 
-    def load_in_parts(self, count):
-        self.clear()
-        shard_desc = self.get_shard_desc()
+    async def load_in_parts(self, count):
+        await self.clear()
+        shard_desc = await self.get_shard_desc()
         for i in range(0, len(shard_desc), count):
             desc_slice = shard_desc[i: i + count]
             self.fill_on_top(self._form_file_upload_map(desc_slice))
@@ -48,10 +48,10 @@ class FolderRepository(ShardRepository):
                           params={"current_count": i + len(desc_slice),
                                   "all_count": len(shard_desc)},
                           level="WARNING")
-            super(FolderRepository, self).load()
+            await super(FolderRepository, self).load()
 
-    def get_shard_desc(self):
-        shard_desc = self.source.list_dir(self.path)
+    async def get_shard_desc(self):
+        shard_desc = await self.source.list_dir(self.path)
         if len(shard_desc) == 0:
             params = {
                 "error_repository_path": self.path,

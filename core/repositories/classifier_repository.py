@@ -60,7 +60,7 @@ class ClassifierRepository(BaseRepository):
             except KeyError:
                 raise Exception(f"Missing field: '{req_param}' for classifier {classifier_key} in classifiers.json")
 
-    def load(self) -> None:
+    async def load(self) -> None:
         if not self._folder_repository:
             return None
 
@@ -136,8 +136,8 @@ class ClassifierRepository(BaseRepository):
                 )
                 classifiers_dict[classifier_key] = SkipClassifier.get_nothing()
 
-        super(ClassifierRepository, self).fill(classifiers_dict)
+        await super(ClassifierRepository, self).fill(classifiers_dict)
         classifiers_initial_launch(classifiers_dict)
 
-    def save(self, save_parameters: Any) -> None:
+    async def save(self, save_parameters: Any) -> None:
         pass

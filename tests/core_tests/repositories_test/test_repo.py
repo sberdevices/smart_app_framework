@@ -22,9 +22,9 @@ class MockBaseRepository(BaseRepository):
     def __init__(self):
         super(MockBaseRepository, self).__init__(MockDescriptionItem)
 
-    def load(self):
-        self.fill({"test": {"value": 1}})
-        super(MockBaseRepository, self).load()
+    async def load(self):
+        await self.fill({"test": {"value": 1}})
+        await super(MockBaseRepository, self).load()
 
 
 class MockShardRepository(ShardRepository):

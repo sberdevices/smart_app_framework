@@ -1,3 +1,5 @@
+import asyncio
+
 import core.logging.logger_constants as log_const
 from core.logging.logger_utils import log
 from core.monitoring.monitoring import monitoring
@@ -11,24 +13,27 @@ class Rerunable():
         self.try_count = self.config.get("try_count") or self.DEFAULT_RERUNABLE_TRY_COUNT
 
     @property
-    def _handled_exception(self):
+    async def _handled_exception(self):
         raise NotImplementedError
 
-    def _on_prepare(self):
+    async def _on_prepare(self):
         raise NotImplementedError
 
-    def _on_all_tries_fail(self):
+    async def _on_all_tries_fail(self):
         raise NotImplementedError
 
     async def _run(self, action, *args, _try_count=None, **kwargs):
         if _try_count is None:
             _try_count = self.try_count
         if _try_count <= 0:
-            self._on_all_tries_fail()
+            await self._on_all_tries_fail()
         _try_count = _try_count - 1
         try:
-            result = await action(*args, **kwargs)
-        except self._handled_exception as e:
+            if asyncio.iscoroutinefunction(action):
+                result = await action(*args, **kwargs)
+            else:
+                result = action(*args, **kwargs)
+        except Exception as e:
             params = {
                 "class_name": str(self.__class__),
                 "exception": str(e),
@@ -45,5 +50,5 @@ class Rerunable():
                 monitoring.got_counter(f"{counter_name}_exception")
         return result
 
-    def _get_counter_name(self):
+    async def _get_counter_name(self):
         return

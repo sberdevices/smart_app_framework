@@ -7,9 +7,9 @@ class CSVRepository(BaseRepository):
         super(CSVRepository, self).__init__(source=source, *args, **kwargs)
         self.filename = filename
 
-    def load(self):
+    async def load(self):
         with self.source.open(self.filename, newline='') as stream:
             reader = csv.DictReader(stream)
             data = list(reader)
-            self.fill(data)
-        super(CSVRepository, self).load()
+            await self.fill(data)
+        await super(CSVRepository, self).load()

@@ -23,7 +23,7 @@ class FileRepository(ItemsRepository):
             with await self.source.open(self.filename, 'rb') as stream:
                 binary_data = stream.read()
                 data = binary_data.decode()
-                self.fill(self.loader(data))
+                await self.fill(self.loader(data))
         else:
             self._file_exist = False
             params = {
@@ -32,7 +32,7 @@ class FileRepository(ItemsRepository):
             }
             log("FileRepository.load loading failed with file %(error_repository_path)s",
                 params=params, level="WARNING")
-        super(FileRepository, self).load()
+        await super(FileRepository, self).load()
 
     def save(self, save_parameters):
         with self.source.open(self.save_target, 'wb') as stream:
@@ -60,8 +60,8 @@ class UpdatableFileRepository(FileRepository):
             self.load()
         return self._data
 
-    def load(self):
-        super().load()
+    async def load(self):
+        await super().load()
         if self._file_exist:
             self._last_mtime = self.source.mtime(self.filename)
         self._last_update_time = time.time()

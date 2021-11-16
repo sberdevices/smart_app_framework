@@ -9,14 +9,14 @@ class ItemsRepository(BaseRepository):
         self.data = dict()
 
     @BaseRepository.data.setter
-    def data(self, value):
+    async def data(self, value):
         if value is None:
             self._data = dict()
         else:
             self._data = value
 
-    def load(self):
-        super(ItemsRepository, self).load()
+    async def load(self):
+        await super(ItemsRepository, self).load()
 
     def __iter__(self):
         return iter(self.data)

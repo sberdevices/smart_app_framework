@@ -11,6 +11,7 @@ class BaseConfig:
         self.registered_repositories = Registered()
         self.repositories = []
         self.source = kwargs.get("source")
+        self.loop = asyncio.get_event_loop()
 
     def __getitem__(self, key):
         return self.registered_repositories[key].data
@@ -26,14 +27,12 @@ class BaseConfig:
         return os.path.join(self._subfolder, filename)
 
     def init(self):
-        self.init_repositories()
+        self.loop.run_until_complete(self.init_repositories())
 
-    def init_repositories(self):
-        await asyncio.gather([self._register_repo(rep) for rep in self.repositories])
-
-    async def _register_repo(self, rep):
-        await rep.load()
-        self.registered_repositories[rep.key] = rep
+    async def init_repositories(self):
+        for rep in self.repositories:
+            await rep.load()
+            self.registered_repositories[rep.key] = rep
 
     def raw(self):
         items = self.registered_repositories

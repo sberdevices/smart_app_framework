@@ -83,7 +83,7 @@ class MainLoop(BaseMainLoop):
 
             log("%(class_name)s.__init__ completed.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                               "class_name": self.__class__.__name__})
-        except:
+        except Exception:
             log("%(class_name)s.__init__ exception.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                               "class_name": self.__class__.__name__},
                 level="ERROR", exc_info=True)
@@ -109,7 +109,7 @@ class MainLoop(BaseMainLoop):
         await asyncio.gather(*tasks)
 
     async def healthcheck_coro(self):
-        while True:
+        while self.is_work:
             if not self.health_check_server_future or self.health_check_server_future.done() or \
                     self.health_check_server_future.cancelled():
                 self.health_check_server_future = self.loop.run_in_executor(None, self.health_check_server.iterate)
@@ -532,8 +532,6 @@ class MainLoop(BaseMainLoop):
             log("Kafka publisher connection is closed", level="WARNING")
         log("Kafka handler is stopped", level="WARNING")
         self.is_work = False
-
-        sys.exit()
 
     async def do_behavior_timeout(self, db_uid, callback_id, mq_message, kafka_key):
         if not self.is_work:

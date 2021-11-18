@@ -8,9 +8,9 @@ class FolderRepository(ShardRepository):
     def __init__(self, path, loader, source=None, *args, **kwargs):
         super(FolderRepository, self).__init__(path, loader, source, *args, **kwargs)
 
-    def _load_item(self, name):
+    async def _load_item(self, name):
         try:
-            with self.source.open(name, mode='rb') as shard_stream:
+            with await self.source.open(name, mode='rb') as shard_stream:
                 shard_binary_data = shard_stream.read()
                 shard_data = shard_binary_data.decode()
                 loaded_data = self.loader(shard_data)
@@ -25,17 +25,17 @@ class FolderRepository(ShardRepository):
             raise
         return loaded_data
 
-    def _form_file_upload_map(self, shard_desc):
+    async def _form_file_upload_map(self, shard_desc):
         filename_to_data = {}
         for shard in shard_desc:
-            shard_data = self._load_item(shard)
+            shard_data = await self._load_item(shard)
             if shard_data:
                 filename_to_data.update({shard: shard_data})
         return filename_to_data
 
     async def load(self):
         shard_desc = await self.get_shard_desc()
-        await self.fill(self._form_file_upload_map(shard_desc))
+        await self.fill(await self._form_file_upload_map(shard_desc))
         await super(FolderRepository, self).load()
 
     async def load_in_parts(self, count):

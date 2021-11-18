@@ -9,7 +9,7 @@ class ItemsRepository(BaseRepository):
         self.data = dict()
 
     @BaseRepository.data.setter
-    async def data(self, value):
+    def data(self, value):
         if value is None:
             self._data = dict()
         else:

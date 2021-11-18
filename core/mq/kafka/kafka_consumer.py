@@ -62,7 +62,8 @@ class KafkaConsumer(BaseKafkaConsumer):
         topics = topics or list(self._config["topics"].values())
 
         self._consumer.subscribe(topics,
-                                 on_assign=self.get_on_assign_callback() if self.assign_offset_end else KafkaConsumer.on_assign_log)
+                                 on_assign=self.get_on_assign_callback() if self.assign_offset_end else
+                                 KafkaConsumer.on_assign_log)
 
     def get_on_assign_callback(self):
         if "cooperative" in self._config["conf"].get("partition.assignment.strategy", ""):

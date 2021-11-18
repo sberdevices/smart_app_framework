@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Iterable, Mapping, Union, Pattern, Match, MutableMapping, List
+from typing import Callable, Optional, Iterable, Mapping, Union, Pattern, Match, MutableMapping
 import re
 
 MASK = "***"
@@ -73,7 +73,7 @@ def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Iter
                     # если глубина превышена маскируем составной маской
                     item_counter, collection_counter, max_depth = deep_mask(
                         data[key], depth=1, available_depth=mask_available_depth)
-                    data[key] = f'*items-{item_counter}*collections-{collection_counter}*maxdepth{max_depth}*'
+                    data[key] = f'*items-{item_counter}*collections-{collection_counter}*maxdepth-{max_depth}*'
             elif data[key] is not None:  # в случае простого элемента. маскируем как ***
                 data[key] = '***'
         elif key in CARD_MASKING_FIELDS:  # проверка на реквизиты карты

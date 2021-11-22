@@ -17,7 +17,8 @@ def exc_handler(on_error_obj_method_name=None, handled_exceptions=None):
                     try:
                         on_error = getattr(obj, on_error_obj_method_name) if \
                             on_error_obj_method_name else (lambda *x: None)
-                        result = on_error(*args, **kwarg)
+                        result = on_error(*args, **kwarg) if not asyncio.iscoroutinefunction(on_error) else \
+                            await on_error(*args, **kwarg)
                     except:
                         print(sys.exc_info())
                 return result

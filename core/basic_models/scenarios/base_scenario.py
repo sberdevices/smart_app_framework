@@ -97,4 +97,4 @@ class BaseScenario:
         return {"scenario_path": [{"scenario": self.id, "node": None}]}
 
     async def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
-        return self.get_action_results(user, text_preprocessing_result, self.actions, params)
+        return await self.get_action_results(user, text_preprocessing_result, self.actions, params)

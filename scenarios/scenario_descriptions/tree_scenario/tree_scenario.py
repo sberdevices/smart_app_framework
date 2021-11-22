@@ -131,8 +131,8 @@ class TreeScenario(FormFillingScenario):
                             validation_error_msg = validation_error_msg or _validation_error_msg
                         else:
                             data_extracted.update(field_data)
-            on_filled_node_actions, is_break = self._fill_form(user, text_preprocessing_result,
-                                                               internal_form, data_extracted)
+            on_filled_node_actions, is_break = await self._fill_form(user, text_preprocessing_result,
+                                                                     internal_form, data_extracted)
             if is_break:
                 return on_filled_node_actions
             on_filled_actions.extend(on_filled_node_actions)
@@ -170,7 +170,7 @@ class TreeScenario(FormFillingScenario):
                           content={HistoryConstants.content_fields.FIELD: field.description.id},
                           results=HistoryConstants.event_results.ASK_QUESTION)
             user.history.add_event(event)
-        _command = self.get_reply(user, text_preprocessing_result, current_node.actions, field, main_form)
+        _command = await self.get_reply(user, text_preprocessing_result, current_node.actions, field, main_form)
         reply_commands.extend(_command)
 
         if not reply_commands:

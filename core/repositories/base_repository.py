@@ -16,7 +16,7 @@ class BaseRepository:
         return self._data
 
     @data.setter
-    async def data(self, value):
+    def data(self, value):
         self._data = value
 
     async def load(self):

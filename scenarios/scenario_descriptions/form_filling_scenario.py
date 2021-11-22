@@ -126,11 +126,11 @@ class FormFillingScenario(BaseScenario):
                 message = "Field is not valid: %(field_key)s"
                 log(message, user, log_params)
                 actions = field.field_validator.actions
-                error_msgs = self.get_action_results(user, text_preprocessing_result, actions)
+                error_msgs = await self.get_action_results(user, text_preprocessing_result, actions)
                 break
         return error_msgs
 
-    def _fill_form(self, user, text_preprocessing_result, form, data_extracted):
+    async def _fill_form(self, user, text_preprocessing_result, form, data_extracted):
         on_filled_actions = []
         fields = form.fields
         scenario_model = user.scenario_models[self.id]
@@ -140,15 +140,15 @@ class FormFillingScenario(BaseScenario):
             value = data_extracted.get(key)
             field = fields[key]
             if field.fill(value):
-                _action = self.get_action_results(user=user, text_preprocessing_result=text_preprocessing_result,
-                                                  actions=field.description.on_filled_actions)
+                _action = await self.get_action_results(user=user, text_preprocessing_result=text_preprocessing_result,
+                                                        actions=field.description.on_filled_actions)
                 on_filled_actions.extend(_action)
                 if scenario_model.break_scenario:
                     is_break = True
                     return _action, is_break
         return on_filled_actions, is_break
 
-    def get_reply(self, user, text_preprocessing_result, reply_actions, field, form):
+    async def get_reply(self, user, text_preprocessing_result, reply_actions, field, form):
         action_params = {}
         if field:
             field.set_available()
@@ -160,7 +160,7 @@ class FormFillingScenario(BaseScenario):
             message = "Ask question on field: %(field)s"
             log(message, user, params)
             action_params[REQUEST_FIELD] = {"type": field.description.type, "id": field.description.id}
-            action_messages = self.get_action_results(user, text_preprocessing_result, actions, action_params)
+            action_messages = await self.get_action_results(user, text_preprocessing_result, actions, action_params)
         else:
             actions = reply_actions
             params = {
@@ -170,7 +170,7 @@ class FormFillingScenario(BaseScenario):
             message = "Finished scenario: %(id)s"
             log(message, user, params)
             user.preprocessing_messages_for_scenarios.clear()
-            action_messages = self.get_action_results(user, text_preprocessing_result, actions, action_params)
+            action_messages = await self.get_action_results(user, text_preprocessing_result, actions, action_params)
             user.last_scenarios.delete(self.id)
         return action_messages
 
@@ -190,7 +190,7 @@ class FormFillingScenario(BaseScenario):
         if validation_error_msg:
             reply_messages = validation_error_msg
         else:
-            reply_messages, is_break = self._fill_form(user, text_preprocessing_result, form, data_extracted)
+            reply_messages, is_break = await self._fill_form(user, text_preprocessing_result, form, data_extracted)
             if not is_break:
                 field = await self._field(form, text_preprocessing_result, user, params)
                 if field:
@@ -199,7 +199,7 @@ class FormFillingScenario(BaseScenario):
                               scenario=self.root_id,
                               content={HistoryConstants.content_fields.FIELD: field.description.id},
                               results=HistoryConstants.event_results.ASK_QUESTION))
-                reply = self.get_reply(user, text_preprocessing_result, self.actions, field, form)
+                reply = await self.get_reply(user, text_preprocessing_result, self.actions, field, form)
                 reply_messages.extend(reply)
 
         if not reply_messages:

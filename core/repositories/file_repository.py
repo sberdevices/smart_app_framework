@@ -18,7 +18,7 @@ class FileRepository(ItemsRepository):
         self._file_exist = False
 
     async def load(self):
-        if self.source.path_exists(self.filename):
+        if await self.source.path_exists(self.filename):
             self._file_exist = True
             with await self.source.open(self.filename, 'rb') as stream:
                 binary_data = stream.read()

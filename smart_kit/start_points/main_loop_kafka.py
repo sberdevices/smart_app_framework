@@ -1,6 +1,9 @@
 # coding=utf-8
 import asyncio
+import cProfile
 import json
+import pstats
+import signal
 import time
 import sys
 from collections import namedtuple
@@ -72,14 +75,11 @@ class MainLoop(BaseMainLoop):
             for key in self.consumers:
                 self.consumers[key].subscribe()
             self.publishers = publishers
+            self.concurrent_messages = 0
 
-            # is needed? start #
             self.behaviors_timeouts_value_cls = namedtuple('behaviors_timeouts_value',
                                                            'db_uid, callback_id, mq_message, kafka_key')
             self.behaviors_timeouts = HeapqKV(value_to_key_func=lambda val: val.callback_id)
-            # is needed? end #
-
-            self.concurrent_messages = 0
 
             log("%(class_name)s.__init__ completed.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                               "class_name": self.__class__.__name__})
@@ -94,16 +94,20 @@ class MainLoop(BaseMainLoop):
         await self.iterate_behavior_timeouts()
 
     def run(self):
+        signal.signal(signal.SIGINT, self.stop)
+        signal.signal(signal.SIGTERM, self.stop)
         log("%(class_name)s.run started", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                   "class_name": self.__class__.__name__})
         try:
-            self.loop.run_until_complete(self.main_coro())
+            self.loop.run_until_complete(self.general_coro())
         except (SystemExit,):
+            self.loop.stop()
+            log("MainLoop stopped")
             log("%(class_name)s.run stopped", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                       "class_name": self.__class__.__name__})
 
-    async def main_coro(self):
-        tasks = [self.main_work(kafka_key) for kafka_key in self.consumers]
+    async def general_coro(self):
+        tasks = [self.process_consumer(kafka_key) for kafka_key in self.consumers]
         if self.health_check_server is not None:
             tasks.append(self.healthcheck_coro())
         await asyncio.gather(*tasks)
@@ -115,65 +119,96 @@ class MainLoop(BaseMainLoop):
                 self.health_check_server_future = self.loop.run_in_executor(None, self.health_check_server.iterate)
             await asyncio.sleep(0.5)
 
-    async def main_work(self, kafka_key):
+    async def process_consumer(self, kafka_key):
         consumer = self.consumers[kafka_key]
-        message_value = None
-
+        loop = asyncio.get_event_loop()
         max_concurrent_messages = self.settings["template_settings"].get("max_concurrent_messages", 10)
-        max_concurrent_messages_delay = self.settings["template_settings"].get("max_concurrent_messages_delay", 0.1)
-        last_poll_begin_time = time.time()
-        while self.is_work:
-            from_last_poll_begin_ms = int((time.time() - last_poll_begin_time) * 1000)
-            stats = "From last poll time: {} msecs\n".format(from_last_poll_begin_ms)
-            log_params = {
-                log_const.KEY_NAME: "timings",
-                "from_last_poll_begin_ms": from_last_poll_begin_ms
-            }
-            last_poll_begin_time = time.time()
-            if self.concurrent_messages >= max_concurrent_messages:
-                log(f"main_loop.main_work: max {max_concurrent_messages} concurrent messages occured",
-                    params={log_const.KEY_NAME: "max_concurrent_messages"}, level='WARNING')
-                await asyncio.sleep(max_concurrent_messages_delay)
-                total_delay = log_params.get("waiting_max_concurrent_messages", 0)
-                total_delay += max_concurrent_messages_delay
-                log_params["waiting_max_concurrent_messages"] = total_delay
-                continue
-            try:
-                self.concurrent_messages += 1
-                mq_message = None
-                with StatsTimer() as poll_timer:
-                    # Max delay between polls configured in consumer.poll_timeout param
-                    mq_message = await self.loop.run_in_executor(None, consumer.poll)
-                if mq_message:
-                    headers = mq_message.headers()
-                    if headers is None:
-                        raise Exception("No incoming message headers found.")
-                    stats += "Polling time: {} msecs\n".format(poll_timer.msecs)
-                    log_params["kafka_polling"] = poll_timer.msecs
-                    message_value = json.loads(mq_message.value())
-                    await self.process_message(mq_message, consumer, kafka_key, stats, log_params)
+        total_messages = 0
 
-            except KafkaException as kafka_exp:
-                self.concurrent_messages -= 1
-                log("kafka error: %(kafka_exp)s.",
-                    params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                            "kafka_exp": str(kafka_exp),
-                            log_const.REQUEST_VALUE: str(message_value)},
-                    level="ERROR", exc_info=True)
-            except Exception:
-                self.concurrent_messages -= 1
-                log("%(class_name)s iterate error. Kafka key %(kafka_key)s",
-                    params={log_const.KEY_NAME: "worker_exception",
-                            "kafka_key": kafka_key,
-                            log_const.REQUEST_VALUE: str(message_value)},
-                    level="ERROR", exc_info=True)
+        # in DP is absent start
+        max_concurrent_messages_delay = self.settings["template_settings"].get("max_concurrent_messages_delay", 0.1)
+        # in DP is absent end
+
+        async def msg_loop(iteration):
+            nonlocal total_messages
+            message_value = None
+            last_poll_begin_time = time.time()
+            print(f"\n-- Starting {iteration} iter\n")
+
+            while self.is_work:
+                from_last_poll_begin_ms = int((time.time() - last_poll_begin_time) * 1000)
+                stats = "From last poll time: {} msecs\n".format(from_last_poll_begin_ms)
+                log_params = {
+                    log_const.KEY_NAME: "timings",
+                    "from_last_poll_begin_ms": from_last_poll_begin_ms
+                }
+                last_poll_begin_time = time.time()
+
+                # in DP is absent start
+                if self.concurrent_messages >= max_concurrent_messages:
+                    log(f"main_loop.main_work: max {max_concurrent_messages} concurrent messages occured",
+                        params={log_const.KEY_NAME: "max_concurrent_messages"}, level='WARNING')
+                    await asyncio.sleep(max_concurrent_messages_delay)
+                    total_delay = log_params.get("waiting_max_concurrent_messages", 0)
+                    total_delay += max_concurrent_messages_delay
+                    log_params["waiting_max_concurrent_messages"] = total_delay
+                    continue
+                # in DP is absent end
+
                 try:
-                    consumer.commit_offset(mq_message)
+                    self.concurrent_messages += 1
+                    mq_message = None
+                    with StatsTimer() as poll_timer:
+                        # Max delay between polls configured in consumer.poll_timeout param
+                        mq_message = await loop.run_in_executor(None, consumer.poll)
+                    if mq_message:
+                        print(f"\n-- Processing {self.concurrent_messages} msgs at {iteration} iter\n")
+                        total_messages += 1
+                        headers = mq_message.headers()
+                        if headers is None:
+                            raise Exception("No incoming message headers found.")
+                        stats += "Polling time: {} msecs\n".format(poll_timer.msecs)
+                        log_params["kafka_polling"] = poll_timer.msecs
+                        message_value = json.loads(mq_message.value())
+                        await self.process_message(mq_message, consumer, kafka_key, stats, log_params)
+
+                except KafkaException as kafka_exp:
+                    self.concurrent_messages -= 1
+                    log("kafka error: %(kafka_exp)s.",
+                        params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
+                                "kafka_exp": str(kafka_exp),
+                                log_const.REQUEST_VALUE: str(message_value)},
+                        level="ERROR", exc_info=True)
+
                 except Exception:
-                    log("Error handling worker fail exception.", level="ERROR", exc_info=True)
-                    raise
-            else:
-                self.concurrent_messages -= 1
+                    self.concurrent_messages -= 1
+                    log("%(class_name)s iterate error. Kafka key %(kafka_key)s",
+                        params={log_const.KEY_NAME: "worker_exception",
+                                "kafka_key": kafka_key,
+                                log_const.REQUEST_VALUE: str(message_value)},
+                        level="ERROR", exc_info=True)
+                    try:
+                        consumer.commit_offset(mq_message)
+                    except Exception:
+                        log("Error handling worker fail exception.", level="ERROR", exc_info=True)
+                        raise
+                else:
+                    self.concurrent_messages -= 1
+
+        print(f"-- Process Consumer enter with {max_concurrent_messages} loops")
+        start_time = time.time()
+        pr = cProfile.Profile()
+        pr.enable()
+
+        await asyncio.gather(*(msg_loop(i) for i in range(max_concurrent_messages)))
+
+        time_delta = time.time() - start_time
+        print(f"-- Process Consumer exit: {total_messages} msg in {int(time_delta)} sec")
+        pr.disable()
+        stats = pstats.Stats(pr)
+        stats.sort_stats(pstats.SortKey.TIME)
+        stats.print_stats(10)
+        stats.dump_stats(filename="dp.prof.log")
 
     def _generate_answers(self, user, commands, message, **kwargs):
         topic_key = kwargs["topic_key"]
@@ -273,10 +308,10 @@ class MainLoop(BaseMainLoop):
         return self.default_topic_key(kafka_key) or topic_names_2_key[mq_message.topic()]
 
     async def process_message(self, mq_message, consumer, kafka_key, stats, log_params):
+        user = None
         topic_key = self._get_topic_key(mq_message, kafka_key)
         save_tries = 0
         user_save_ok = False
-        user = None
         db_uid = None
         validation_failed = False
         while save_tries < self.user_save_collisions_tries and not user_save_ok:
@@ -297,26 +332,12 @@ class MainLoop(BaseMainLoop):
 
                 stats += "Mid: {}\n".format(message.incremental_id)
                 log_params[MESSAGE_ID_STR] = message.incremental_id
+
                 smart_kit_metrics.sampling_mq_waiting_time(self.app_name, waiting_message_time / 1000)
 
                 if self._is_message_timeout_to_skip(message, waiting_message_time):
                     skip_timeout = True
                     break
-
-                self.check_message_key(message, mq_message.key(), user)
-                log("INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %(incoming_data)s",
-                    params={log_const.KEY_NAME: "incoming_message",
-                            "topic": mq_message.topic(),
-                            "message_partition": mq_message.partition(),
-                            "message_key": mq_message.key(),
-                            "kafka_key": kafka_key,
-                            "incoming_data": str(message.masked_value),
-                            "headers": str(mq_message.headers()),
-                            "waiting_message": waiting_message_time,
-                            "surface": message.device.surface,
-                            MESSAGE_ID_STR: message.incremental_id},
-                    user=user
-                    )
 
                 db_uid = message.db_uid
 
@@ -326,17 +347,35 @@ class MainLoop(BaseMainLoop):
                     with self.tracer.start_span('Loading time', child_of=scope.span) as span:
                         with StatsTimer() as load_timer:
                             user = await self.load_user(db_uid, message)
+                    self.check_message_key(message, mq_message.key(), user)
+                    stats += "Loading time from DB time: {} msecs\n".format(load_timer.msecs)
+                    log_params["user_loading"] = load_timer.msecs
+                    smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
 
-                    with self.tracer.start_span('Loading time', child_of=scope.span) as span:
-                        smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
-                        stats += "Loading time: {} msecs\n".format(load_timer.msecs)
+                    log(
+                        "INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %("
+                        "incoming_data)s",
+                        params={log_const.KEY_NAME: "incoming_message",
+                                "topic": mq_message.topic(),
+                                "message_partition": mq_message.partition(),
+                                "message_key": mq_message.key(),
+                                "kafka_key": kafka_key,
+                                "incoming_data": str(message.masked_value),
+                                "headers": str(mq_message.headers()),
+                                "waiting_message": waiting_message_time,
+                                "surface": message.device.surface,
+                                MESSAGE_ID_STR: message.incremental_id},
+                        user=user
+                        )
+
+                    with self.tracer.start_span('Script time', child_of=scope.span) as span:
                         with StatsTimer() as script_timer:
                             commands = await self.model.answer(message, user)
 
-                    with self.tracer.start_span('Script time', child_of=scope.span) as span:
                         answers = self._generate_answers(user=user, commands=commands, message=message,
                                                          topic_key=topic_key,
                                                          kafka_key=kafka_key)
+
                         stats += "Script time: {} msecs\n".format(script_timer.msecs)
                         log_params["script_time"] = script_timer.msecs
                         smart_kit_metrics.sampling_script_time(self.app_name, script_timer.secs)
@@ -364,8 +403,6 @@ class MainLoop(BaseMainLoop):
                     if answers:
                         self.save_behavior_timeouts(user, mq_message, kafka_key)
 
-                if mq_message.headers() is None:
-                    mq_message.set_headers([])
                 self.tracer.inject(span_context=span.context, format=jaeger_kafka_codec.KAFKA_MAP,
                                    carrier=mq_message.headers())
 
@@ -374,7 +411,7 @@ class MainLoop(BaseMainLoop):
                         with StatsTimer() as publish_timer:
                             self._send_request(user, answer, mq_message)
                             smart_kit_metrics.counter_outgoing(self.app_name, answer.command.name, answer, user)
-                        stats += "Publishing time: {} msecs".format(publish_timer.msecs)
+                        stats += "Publishing to Kafka time: {} msecs".format(publish_timer.msecs)
                         log_params["kafka_publishing"] = publish_timer.msecs
                         log(stats)
             else:
@@ -391,7 +428,7 @@ class MainLoop(BaseMainLoop):
         if stats:
             log(stats, user=user, params=log_params)
 
-        if user and not user_save_ok and not validation_failed:
+        if user and not user_save_ok and not validation_failed and not skip_timeout:
             log("MainLoop.iterate: db_save collision all tries left on uid %(uid)s db_version %(db_version)s.",
                 user=user,
                 params={log_const.KEY_NAME: "ignite_collision",

@@ -43,9 +43,9 @@ class Rerunable():
             log("%(class_name)s run failed with %(exception)s.\n Got %(try_count)s tries left.",
                 params=params,
                 level="ERROR")
-            self._on_prepare()
+            await self._on_prepare()
             result = await self._run(action, *args, _try_count=_try_count, **kwargs)
-            counter_name = self._get_counter_name()
+            counter_name = await self._get_counter_name()
             if counter_name:
                 monitoring.got_counter(f"{counter_name}_exception")
         return result

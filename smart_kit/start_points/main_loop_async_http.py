@@ -86,13 +86,13 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
                         await self.db_adapter.save(db_uid, str_data)
                 else:
                     if user.initial_db_data and self.user_save_check_for_collisions:
-                        no_collisions = self.db_adapter.replace_if_equals(
+                        no_collisions = await self.db_adapter.replace_if_equals(
                             db_uid,
                             sample=user.initial_db_data,
                             data=str_data
                         )
                     else:
-                        self.db_adapter.save(db_uid, str_data)
+                        await self.db_adapter.save(db_uid, str_data)
             except (DBAdapterException, ValueError):
                 log("Failed to set user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                        log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")

@@ -34,7 +34,7 @@ class FileRepository(ItemsRepository):
                 params=params, level="WARNING")
         await super(FileRepository, self).load()
 
-    def save(self, save_parameters):
+    async def save(self, save_parameters):
         with self.source.open(self.save_target, 'wb') as stream:
             stream.write(self.saver(self.data, **save_parameters).encode())
 
@@ -49,21 +49,22 @@ class UpdatableFileRepository(FileRepository):
             raise Exception(f"{self.__class__.__name__} support only OSAdapter")
 
     @FileRepository.data.getter
-    def data(self):
-        if self._is_outdated:
+    # TODO: добавить await везде, где используется
+    async def data(self):
+        if await self._is_outdated:
             params = {
                 "filename": self.filename
             }
             log("FileRepository.data %(filename)s is outdated. Data will be reloaded.",
                 params=params, level="INFO")
 
-            self.load()
+            await self.load()
         return self._data
 
     async def load(self):
         await super().load()
         if self._file_exist:
-            self._last_mtime = self.source.mtime(self.filename)
+            self._last_mtime = await self.source.mtime(self.filename)
         self._last_update_time = time.time()
 
     @property
@@ -71,7 +72,7 @@ class UpdatableFileRepository(FileRepository):
         return self._last_update_time + self.update_cooldown < time.time()
 
     @property
-    def _is_outdated(self):
+    async def _is_outdated(self):
         if self._file_exist and self.expired:
-            return self.source.mtime(self.filename) > self._last_mtime
+            return await self.source.mtime(self.filename) > self._last_mtime
         return False

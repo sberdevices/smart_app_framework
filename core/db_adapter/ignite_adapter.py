@@ -106,7 +106,7 @@ class IgniteAdapter(DBAdapter):
         if _try_count is None:
             _try_count = self.try_count
         if _try_count <= 0:
-            self._on_all_tries_fail()
+            await self._on_all_tries_fail()
         _try_count = _try_count - 1
         try:
             result = await action(*args, **kwargs)

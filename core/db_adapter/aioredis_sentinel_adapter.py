@@ -28,7 +28,6 @@ class AIORedisSentinelAdapter(DBAdapter):
     async def save(self, id, data):
         return await self._run(self._save, id, data)
 
-
     @monitoring.got_histogram("save_time")
     async def replace_if_equals(self, id, sample, data):
         return await self._run(self._replace_if_equals, id, sample, data)

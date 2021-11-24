@@ -25,9 +25,9 @@ class CephIO(Rerunable):
         return self.bucket.get_key(self.filename)
 
     def __enter__(self):
-        key = self._run(self._get_bucket_keys)
+        key = await self._run(self._get_bucket_keys)
         if key:
-            data = self._run(key.get_contents_as_string)
+            data = await self._run(key.get_contents_as_string)
             io_stream = None
             if self.mode == "r":
                 io_stream = io.StringIO(data.decode("utf-8"))

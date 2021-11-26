@@ -48,7 +48,6 @@ class TestRerunable(TestCase):
         self.rerunable.run(self.action, self.param, **self.param1)
         self.action.assert_called_once_with(self.param, **self.param1)
 
-    # TODO: починить тест
     def test_wrong_exception(self):
         self.action = Mock(side_effect=CustomException())
         with self.assertRaises(CustomException) as context:

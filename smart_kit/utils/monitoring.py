@@ -164,6 +164,13 @@ class Metrics:
         c.labels(request_message_name, status).inc()
 
     @silence_it
+    def counter_host_has_changed(self, app_name):
+        monitoring_msg = '{}_host_has_changed'.format(app_name)
+        c = self._get_or_create_counter(monitoring_msg,
+                                        "Count of host has changed events within one message_id")
+        c.inc()
+
+    @silence_it
     def counter_mq_long_waiting(self, app_name):
         monitoring_msg = "{}_mq_long_waiting".format(app_name)
         c = self._get_or_create_counter(_filter_monitoring_msg(monitoring_msg), "(Now - creation_time) is greater than threshold")

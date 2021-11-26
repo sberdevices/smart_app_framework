@@ -30,7 +30,7 @@ class Rerunable():
         _try_count = _try_count - 1
         try:
             result = action(*args, **kwargs)
-        except Exception as e:
+        except self._handled_exception as e:
             params = {
                 "class_name": str(self.__class__),
                 "exception": str(e),

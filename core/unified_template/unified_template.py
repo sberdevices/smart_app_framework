@@ -32,7 +32,16 @@ class UnifiedTemplate:
         elif isinstance(input, dict):
             if input.get("type") != UNIFIED_TEMPLATE_TYPE_NAME:
                 raise Exception("template must be string or dict with type='{}'".format(UNIFIED_TEMPLATE_TYPE_NAME))
-            self.template = jinja2.Template(input["template"], extensions=input.get("extensions", ()))
+            if input.get("file"):
+                from smart_kit.configs import get_app_config
+                app_config = get_app_config()
+                template_loader = FileSystemLoader(app_config.JINJA2_TEMPLATES_PATH)
+                file_name = input["file"]
+                self.jinja2_environment = Environment(loader=template_loader, trim_blocks=True, lstrip_blocks=True)
+                self.template = self.jinja2_environment.get_template(file_name)
+                log("UnifiedTemplateLoader: File, file_name: %(file_name)s", params={"file_name": file_name})
+            else:
+                self.template = jinja2.Template(input["template"], extensions=input.get("extensions", ()))
             self.loader = UnifiedTemplate.loaders[input.get("loader", "str")]
             self.support_templates = {k: UnifiedTemplate(t) for k, t in input.get("support_templates", dict()).items()}
         else:

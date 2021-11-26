@@ -40,6 +40,8 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
     set_default(app_config, "SECRET_PATH", os.path.join(static_path, "./configs"))
     references_path = os.path.join(static_path, "./references")
     set_default(app_config, "REFERENCES_PATH", references_path)
+    jinja2_templates_path = os.path.join(references_path, "./templates")
+    set_default(app_config, "JINJA2_TEMPLATES_PATH", jinja2_templates_path)
 
     set_default(app_config, "LOCAL_TESTING", CLInterface)
     set_default(app_config, "TEST_CASE", TestCase)

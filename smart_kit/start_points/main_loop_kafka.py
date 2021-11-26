@@ -122,12 +122,8 @@ class MainLoop(BaseMainLoop):
     async def process_consumer(self, kafka_key):
         consumer = self.consumers[kafka_key]
         loop = asyncio.get_event_loop()
-        max_concurrent_messages = self.settings["template_settings"].get("max_concurrent_messages", 10)
+        max_concurrent_messages = self.settings["template_settings"].get("max_concurrent_messages", 1)
         total_messages = 0
-
-        # in DP is absent start
-        max_concurrent_messages_delay = self.settings["template_settings"].get("max_concurrent_messages_delay", 0.1)
-        # in DP is absent end
 
         async def msg_loop(iteration):
             nonlocal total_messages
@@ -143,17 +139,6 @@ class MainLoop(BaseMainLoop):
                     "from_last_poll_begin_ms": from_last_poll_begin_ms
                 }
                 last_poll_begin_time = time.time()
-
-                # in DP is absent start
-                if self.concurrent_messages >= max_concurrent_messages:
-                    log(f"main_loop.main_work: max {max_concurrent_messages} concurrent messages occured",
-                        params={log_const.KEY_NAME: "max_concurrent_messages"}, level='WARNING')
-                    await asyncio.sleep(max_concurrent_messages_delay)
-                    total_delay = log_params.get("waiting_max_concurrent_messages", 0)
-                    total_delay += max_concurrent_messages_delay
-                    log_params["waiting_max_concurrent_messages"] = total_delay
-                    continue
-                # in DP is absent end
 
                 try:
                     self.concurrent_messages += 1

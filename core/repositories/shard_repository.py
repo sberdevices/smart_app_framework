@@ -30,10 +30,10 @@ class ShardRepository(BaseRepository):
                     f" data type {t}")
         return t
 
-    async def load(self):
-        await super(ShardRepository, self).load()
+    def load(self):
+        super(ShardRepository, self).load()
 
-    async def fill(self, data):
+    def fill(self, data):
         res = None
         t = self._get_data_type(data)
         if t == dict:
@@ -54,5 +54,5 @@ class ShardRepository(BaseRepository):
             elif t == list:
                 self.data.extend(v)
 
-    async def save(self, save_parameters):
+    def save(self, save_parameters):
         raise NotImplementedError

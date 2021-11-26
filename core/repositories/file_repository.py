@@ -17,13 +17,13 @@ class FileRepository(ItemsRepository):
         self.save_target = save_target
         self._file_exist = False
 
-    async def load(self):
-        if await self.source.path_exists(self.filename):
+    def load(self):
+        if self.source.path_exists(self.filename):
             self._file_exist = True
-            with await self.source.open(self.filename, 'rb') as stream:
+            with self.source.open(self.filename, 'rb') as stream:
                 binary_data = stream.read()
                 data = binary_data.decode()
-                await self.fill(self.loader(data))
+                self.fill(self.loader(data))
         else:
             self._file_exist = False
             params = {
@@ -32,9 +32,9 @@ class FileRepository(ItemsRepository):
             }
             log("FileRepository.load loading failed with file %(error_repository_path)s",
                 params=params, level="WARNING")
-        await super(FileRepository, self).load()
+        super(FileRepository, self).load()
 
-    async def save(self, save_parameters):
+    def save(self, save_parameters):
         with self.source.open(self.save_target, 'wb') as stream:
             stream.write(self.saver(self.data, **save_parameters).encode())
 
@@ -49,22 +49,21 @@ class UpdatableFileRepository(FileRepository):
             raise Exception(f"{self.__class__.__name__} support only OSAdapter")
 
     @FileRepository.data.getter
-    # TODO: добавить await везде, где используется
-    async def data(self):
-        if await self._is_outdated:
+    def data(self):
+        if self._is_outdated:
             params = {
                 "filename": self.filename
             }
             log("FileRepository.data %(filename)s is outdated. Data will be reloaded.",
                 params=params, level="INFO")
 
-            await self.load()
+            self.load()
         return self._data
 
-    async def load(self):
-        await super().load()
+    def load(self):
+        super().load()
         if self._file_exist:
-            self._last_mtime = await self.source.mtime(self.filename)
+            self._last_mtime = self.source.mtime(self.filename)
         self._last_update_time = time.time()
 
     @property
@@ -72,7 +71,7 @@ class UpdatableFileRepository(FileRepository):
         return self._last_update_time + self.update_cooldown < time.time()
 
     @property
-    async def _is_outdated(self):
+    def _is_outdated(self):
         if self._file_exist and self.expired:
-            return await self.source.mtime(self.filename) > self._last_mtime
+            return self.source.mtime(self.filename) > self._last_mtime
         return False

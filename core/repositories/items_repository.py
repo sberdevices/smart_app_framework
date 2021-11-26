@@ -15,8 +15,8 @@ class ItemsRepository(BaseRepository):
         else:
             self._data = value
 
-    async def load(self):
-        await super(ItemsRepository, self).load()
+    def load(self):
+        super(ItemsRepository, self).load()
 
     def __iter__(self):
         return iter(self.data)

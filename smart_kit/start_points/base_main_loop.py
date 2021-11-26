@@ -72,6 +72,10 @@ class BaseMainLoop:
 
     def get_db(self):
         db_adapter = db_adapter_factory(self.settings["template_settings"].get("db_adapter", {}))
+        if not db_adapter.IS_ASYNC:
+            raise Exception(
+                f"Blocking adapter {db_adapter.__class__.__name__} is not good for {self.__class__.__name__}"
+            )
         self.loop.run_until_complete(db_adapter.connect())
         return db_adapter
 

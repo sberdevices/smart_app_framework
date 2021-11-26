@@ -8,34 +8,34 @@ class MemoryAdapter(DBAdapter):
         super(DBAdapter, self).__init__(config)
         self.memory_storage = {}
 
-    async def _glob(self, path, pattern):
+    def _glob(self, path, pattern):
         raise error.NotSupportedOperation
 
-    async def _path_exists(self, path):
+    def _path_exists(self, path):
         raise error.NotSupportedOperation
 
-    async def _on_prepare(self):
+    def _on_prepare(self):
         pass
 
-    async def connect(self):
+    def connect(self):
         pass
 
-    async def _open(self, filename, *args, **kwargs):
+    def _open(self, filename, *args, **kwargs):
         pass
 
-    async def _save(self, id, data):
+    def _save(self, id, data):
         self.memory_storage[id] = data
 
-    async def _replace_if_equals(self, id, sample, data):
+    def _replace_if_equals(self, id, sample, data):
         stored_data = self.memory_storage.get(id)
         if stored_data == sample:
             self.memory_storage[id] = data
             return True
         return False
 
-    async def _get(self, id):
+    def _get(self, id):
         data = self.memory_storage.get(id)
         return data
 
-    async def _list_dir(self, path):
+    def _list_dir(self, path):
         pass

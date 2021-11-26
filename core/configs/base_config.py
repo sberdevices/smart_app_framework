@@ -1,4 +1,3 @@
-import asyncio
 import os
 from typing import List
 
@@ -11,7 +10,6 @@ class BaseConfig:
         self.registered_repositories = Registered()
         self.repositories = []
         self.source = kwargs.get("source")
-        self.loop = asyncio.get_event_loop()
 
     def __getitem__(self, key):
         return self.registered_repositories[key].data
@@ -27,11 +25,11 @@ class BaseConfig:
         return os.path.join(self._subfolder, filename)
 
     def init(self):
-        self.loop.run_until_complete(self.init_repositories())
+        self.init_repositories()
 
-    async def init_repositories(self):
+    def init_repositories(self):
         for rep in self.repositories:
-            await rep.load()
+            rep.load()
             self.registered_repositories[rep.key] = rep
 
     def raw(self):

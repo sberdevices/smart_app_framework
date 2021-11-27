@@ -62,6 +62,9 @@ class Settings(BaseConfig):
         adapter_settings = self.registered_repositories[
             adapter_key].data if adapter_key != Settings.OSAdapterKey else None
         adapter = self.adapters[adapter_key](adapter_settings)
-        self.loop.run_until_complete(adapter.connect())
+        if asyncio.iscoroutinefunction(adapter.connect):
+            self.loop.run_until_complete(adapter.connect())
+        else:
+            adapter.connect()
         source = adapter.source
         return source

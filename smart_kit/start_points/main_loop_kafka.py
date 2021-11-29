@@ -5,7 +5,7 @@ import json
 import pstats
 import signal
 import time
-import sys
+import concurrent.futures
 from collections import namedtuple
 from functools import lru_cache
 
@@ -48,6 +48,9 @@ class MainLoop(BaseMainLoop):
                                                         "class_name": self.__class__.__name__})
         self.health_check_server_future = None
         super().__init__(*args, **kwargs)
+        # We have many async loops for messages processing in main thread
+        # And 1 thread for independent consecutive Kafka reading
+        self.kafka_executor_pool = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
         try:
             kafka_config = _enrich_config_from_secret(
@@ -122,7 +125,7 @@ class MainLoop(BaseMainLoop):
     async def process_consumer(self, kafka_key):
         consumer = self.consumers[kafka_key]
         loop = asyncio.get_event_loop()
-        max_concurrent_messages = self.settings["template_settings"].get("max_concurrent_messages", 1)
+        max_concurrent_messages = self.settings["template_settings"].get("max_concurrent_messages", 10)
         total_messages = 0
 
         async def msg_loop(iteration):
@@ -145,7 +148,7 @@ class MainLoop(BaseMainLoop):
                     mq_message = None
                     with StatsTimer() as poll_timer:
                         # Max delay between polls configured in consumer.poll_timeout param
-                        mq_message = await loop.run_in_executor(None, consumer.poll)
+                        mq_message = await loop.run_in_executor(self.kafka_executor_pool, consumer.poll)
                     if mq_message:
                         print(f"\n-- Processing {self.concurrent_messages} msgs at {iteration} iter\n")
                         total_messages += 1

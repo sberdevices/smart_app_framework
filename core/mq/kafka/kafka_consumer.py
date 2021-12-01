@@ -59,7 +59,7 @@ class KafkaConsumer(BaseKafkaConsumer):
         log("KafkaConsumer.subscribe<on_assign>: assign %(partitions)s %(log_level)s", params=params, level=log_level)
 
     def subscribe(self, topics=None):
-        topics = topics or list(self._config["topics"].values())
+        topics = list(set(topics or list(self._config["topics"].values())))
 
         self._consumer.subscribe(topics,
                                  on_assign=self.get_on_assign_callback() if self.assign_offset_end else

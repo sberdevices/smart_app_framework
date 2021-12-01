@@ -1,5 +1,6 @@
 import yaml
 import os
+import asyncio
 
 from core.configs.base_config import BaseConfig
 from core.db_adapter.ceph.ceph_adapter import CephAdapter
@@ -18,6 +19,7 @@ class Settings(BaseConfig):
         self.secret_path = kwargs.get("secret_path")
         self.app_name = kwargs.get("app_name")
         self.adapters = {Settings.CephAdapterKey: CephAdapter, self.OSAdapterKey: OSAdapter}
+        self.loop = asyncio.get_event_loop()
         self.repositories = [
             FileRepository(
                 self.subfolder_path("template_config.yml"), loader=yaml.safe_load, key="template_settings"
@@ -60,6 +62,9 @@ class Settings(BaseConfig):
         adapter_settings = self.registered_repositories[
             adapter_key].data if adapter_key != Settings.OSAdapterKey else None
         adapter = self.adapters[adapter_key](adapter_settings)
-        self.loop.run_until_complete(adapter.connect())
+        if asyncio.iscoroutinefunction(adapter.connect):
+            self.loop.run_until_complete(adapter.connect())
+        else:
+            adapter.connect()
         source = adapter.source
         return source

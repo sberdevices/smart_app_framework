@@ -8,9 +8,9 @@ class FolderRepository(ShardRepository):
     def __init__(self, path, loader, source=None, *args, **kwargs):
         super(FolderRepository, self).__init__(path, loader, source, *args, **kwargs)
 
-    async def _load_item(self, name):
+    def _load_item(self, name):
         try:
-            with await self.source.open(name, mode='rb') as shard_stream:
+            with self.source.open(name, mode='rb') as shard_stream:
                 shard_binary_data = shard_stream.read()
                 shard_data = shard_binary_data.decode()
                 loaded_data = self.loader(shard_data)
@@ -25,22 +25,22 @@ class FolderRepository(ShardRepository):
             raise
         return loaded_data
 
-    async def _form_file_upload_map(self, shard_desc):
+    def _form_file_upload_map(self, shard_desc):
         filename_to_data = {}
         for shard in shard_desc:
-            shard_data = await self._load_item(shard)
+            shard_data = self._load_item(shard)
             if shard_data:
                 filename_to_data.update({shard: shard_data})
         return filename_to_data
 
-    async def load(self):
-        shard_desc = await self.get_shard_desc()
-        await self.fill(await self._form_file_upload_map(shard_desc))
-        await super(FolderRepository, self).load()
+    def load(self):
+        shard_desc = self.get_shard_desc()
+        self.fill(self._form_file_upload_map(shard_desc))
+        super(FolderRepository, self).load()
 
-    async def load_in_parts(self, count):
-        await self.clear()
-        shard_desc = await self.get_shard_desc()
+    def load_in_parts(self, count):
+        self.clear()
+        shard_desc = self.get_shard_desc()
         for i in range(0, len(shard_desc), count):
             desc_slice = shard_desc[i: i + count]
             self.fill_on_top(self._form_file_upload_map(desc_slice))
@@ -48,10 +48,10 @@ class FolderRepository(ShardRepository):
                           params={"current_count": i + len(desc_slice),
                                   "all_count": len(shard_desc)},
                           level="WARNING")
-            await super(FolderRepository, self).load()
+            super(FolderRepository, self).load()
 
-    async def get_shard_desc(self):
-        shard_desc = await self.source.list_dir(self.path)
+    def get_shard_desc(self):
+        shard_desc = self.source.list_dir(self.path)
         if len(shard_desc) == 0:
             params = {
                 "error_repository_path": self.path,

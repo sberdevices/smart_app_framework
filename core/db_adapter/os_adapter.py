@@ -7,44 +7,44 @@ from core.db_adapter import error
 
 
 class OSAdapter(DBAdapter):
-    async def _save(self, id, data):
+    def _save(self, id, data):
         raise error.NotSupportedOperation
 
-    async def _replace_if_equals(self, id, sample, data):
+    def _replace_if_equals(self, id, sample, data):
         raise error.NotSupportedOperation
 
-    async def _get(self, id):
+    def _get(self, id):
         raise error.NotSupportedOperation
 
-    async def connect(self):
+    def connect(self):
         pass
 
-    async def _on_prepare(self):
+    def _on_prepare(self):
         pass
 
     @property
     def source(self):
         return self
 
-    async def _list_dir(self, path):
+    def _list_dir(self, path):
         result = []
         for path, subdirs, files in os.walk(path):
             result.extend([os.path.join(path, name) for name in files if not name.startswith(".")])
         return result
 
-    async def _open(self, filename, *args, **kwargs):
+    def _open(self, filename, *args, **kwargs):
         return io.open(filename, *args, **kwargs)
 
-    async def _get_counter_name(self):
+    def _get_counter_name(self):
         return "os_adapter"
 
-    async def _glob(self, path, pattern):
+    def _glob(self, path, pattern):
         files_list = self._list_dir(path)
         filtered = fnmatch.filter(files_list, pattern)
         return filtered
 
-    async def _path_exists(self, path):
+    def _path_exists(self, path):
         return os.path.exists(path)
 
-    async def _mtime(self, path):
+    def _mtime(self, path):
         return os.path.getmtime(path)

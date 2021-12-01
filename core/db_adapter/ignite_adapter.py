@@ -9,13 +9,12 @@ from pyignite.exceptions import ReconnectError, SocketError
 
 import core.logging.logger_constants as log_const
 from core.db_adapter import error
-from core.db_adapter.db_adapter import DBAdapter
+from core.db_adapter.db_adapter import AsyncDBAdapter
 from core.logging.logger_utils import log
 from core.monitoring.monitoring import monitoring
 
 
-class IgniteAdapter(DBAdapter):
-    IS_ASYNC = True
+class IgniteAdapter(AsyncDBAdapter):
     _client: AioClient
     _cache = AioCache
 
@@ -89,40 +88,3 @@ class IgniteAdapter(DBAdapter):
 
     def _get_counter_name(self):
         return "ignite_async_adapter"
-
-    @monitoring.got_histogram("save_time")
-    async def save(self, id, data):
-        return await self._async_run(self._save, id, data)
-
-    @monitoring.got_histogram("save_time")
-    async def replace_if_equals(self, id, sample, data):
-        return await self._async_run(self._replace_if_equals, id, sample, data)
-
-    @monitoring.got_histogram("get_time")
-    async def get(self, id):
-        return await self._async_run(self._get, id)
-
-    async def _async_run(self, action, *args, _try_count=None, **kwargs):
-        if _try_count is None:
-            _try_count = self.try_count
-        if _try_count <= 0:
-            await self._on_all_tries_fail()
-        _try_count = _try_count - 1
-        try:
-            result = await action(*args, **kwargs)
-        except self._handled_exception as e:
-            params = {
-                "class_name": str(self.__class__),
-                "exception": str(e),
-                "try_count": _try_count,
-                log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE
-            }
-            log("%(class_name)s run failed with %(exception)s.\n Got %(try_count)s tries left.",
-                params=params,
-                level="ERROR")
-            self._on_prepare()
-            result = await self._async_run(action, *args, _try_count=_try_count, **kwargs)
-            counter_name = self._get_counter_name()
-            if counter_name:
-                monitoring.got_counter(f"{counter_name}_exception")
-        return result

@@ -3,15 +3,14 @@ import copy
 import aioredis
 import typing
 
-from core.db_adapter.db_adapter import DBAdapter
+from core.db_adapter.db_adapter import AsyncDBAdapter
 from core.db_adapter import error
 from core.monitoring.monitoring import monitoring
 
 from core.logging.logger_utils import log
 
 
-class AIORedisAdapter(DBAdapter):
-    IS_ASYNC = True
+class AIORedisAdapter(AsyncDBAdapter):
 
     def __init__(self, config=None):
         super().__init__(config)
@@ -21,21 +20,6 @@ class AIORedisAdapter(DBAdapter):
             del self.config["type"]
         except KeyError:
             pass
-
-    @monitoring.got_histogram("save_time")
-    async def save(self, id, data):
-        return await self._run(self._save, id, data)
-
-    @monitoring.got_histogram("save_time")
-    async def replace_if_equals(self, id, sample, data):
-        return await self._run(self._replace_if_equals, id, sample, data)
-
-    @monitoring.got_histogram("get_time")
-    async def get(self, id):
-        return await self._run(self._get, id)
-
-    async def path_exists(self, path):
-        return await self._run(self._path_exists, path)
 
     async def connect(self):
         print("Here is the content of REDIS_CONFIG:", self.config)

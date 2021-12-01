@@ -1,4 +1,4 @@
-from unittest import IsolatedAsyncioTestCase
+from unittest import TestCase
 from unittest.mock import Mock
 
 from core.utils.rerunable import Rerunable
@@ -22,20 +22,20 @@ class RerunableOne(Rerunable):
         self._on_prepare_mock = Mock()
 
     @property
-    async def _handled_exception(self):
+    def _handled_exception(self):
         return HandledException
 
-    async def _on_prepare(self):
+    def _on_prepare(self):
         self._on_prepare_mock()
 
-    async def _on_all_tries_fail(self):
+    def _on_all_tries_fail(self):
         raise AllFailedException
 
-    async def run(self, *args, **kwargs):
-        return await self._run(*args, **kwargs)
+    def run(self, *args, **kwargs):
+        return self._run(*args, **kwargs)
 
 
-class TestRerunable(IsolatedAsyncioTestCase):
+class TestRerunable(TestCase):
     def setUp(self):
         self.try_count = 2
         self.rerunable = RerunableOne(self.try_count)
@@ -43,36 +43,35 @@ class TestRerunable(IsolatedAsyncioTestCase):
         self.param = Mock()
         self.param1 = {"param1_name": Mock()}
 
-    async def test_pass(self):
+    def test_pass(self):
         self.action = Mock()
-        await self.rerunable.run(self.action, self.param, **self.param1)
+        self.rerunable.run(self.action, self.param, **self.param1)
         self.action.assert_called_once_with(self.param, **self.param1)
 
-    # TODO: починить тест
-    async def test_wrong_exception(self):
+    def test_wrong_exception(self):
         self.action = Mock(side_effect=CustomException())
         with self.assertRaises(CustomException) as context:
-            await self.rerunable.run(self.action, self.param, **self.param1)
+            self.rerunable.run(self.action, self.param, **self.param1)
         self.action.assert_called_once_with(self.param, **self.param1)
 
-    async def test_all_retry_failed(self):
+    def test_all_retry_failed(self):
         self.action = Mock(side_effect=HandledException())
         with self.assertRaises(AllFailedException) as context:
-            await self.rerunable.run(self.action, self.param, **self.param1)
+            self.rerunable.run(self.action, self.param, **self.param1)
         self.action.assert_called_with(self.param, **self.param1)
         self.assertEqual(self.action.call_count, self.try_count)
 
-    async def test_first_try_failed(self):
+    def test_first_try_failed(self):
         self.param = Mock()
         self.param1 = {"param1_name": Mock()}
         self.action = Mock(side_effect=[HandledException(), self.expected_value])
-        result = await self.rerunable.run(self.action, self.param, **self.param1)
+        result = self.rerunable.run(self.action, self.param, **self.param1)
         self.action.assert_called_with(self.param, **self.param1)
         self.assertEqual(self.action.call_count, self.try_count)
         self.assertEqual(result, self.expected_value)
 
-    async def test_first_try_ok(self):
+    def test_first_try_ok(self):
         self.action = Mock(return_value=self.expected_value)
-        result = await self.rerunable.run(self.action, self.param, **self.param1)
+        result = self.rerunable.run(self.action, self.param, **self.param1)
         self.action.assert_called_once_with(self.param, **self.param1)
         self.assertEqual(result, self.expected_value)

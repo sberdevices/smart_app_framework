@@ -19,13 +19,13 @@ class DillRepository(BaseRepository):
         self.filename = filename
         self.required = required
 
-    async def load(self):
+    def load(self):
         dill._dill._reverse_typemap['ClassType'] = type
         try:
 
             with self.source.open(self.filename, 'rb') as stream:
                 data = dill.load(stream)
-                await self.fill(data)
+                self.fill(data)
         except FileNotFoundError as error:
             params = {
                 'error': str(error),
@@ -34,4 +34,4 @@ class DillRepository(BaseRepository):
             log('DillRepository.load loading failed. Error %(error)s', params=params, level='WARNING')
             if self.required:
                 raise
-        await super(DillRepository, self).load()
+        super(DillRepository, self).load()

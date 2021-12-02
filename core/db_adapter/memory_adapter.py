@@ -1,11 +1,11 @@
 from core.db_adapter import error
-from core.db_adapter.db_adapter import DBAdapter
+from core.db_adapter.db_adapter import AsyncDBAdapter
 
 
-class MemoryAdapter(DBAdapter):
+class MemoryAdapter(AsyncDBAdapter):
 
     def __init__(self, config=None):
-        super(DBAdapter, self).__init__(config)
+        super(AsyncDBAdapter, self).__init__(config)
         self.memory_storage = {}
 
     def _glob(self, path, pattern):
@@ -17,7 +17,7 @@ class MemoryAdapter(DBAdapter):
     def _on_prepare(self):
         pass
 
-    def connect(self):
+    async def connect(self):
         pass
 
     def _open(self, filename, *args, **kwargs):

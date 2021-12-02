@@ -35,4 +35,4 @@ class HandlerServerAction(HandlerBase):
 
         action_id = self.get_action_name(payload, user)
         action = user.descriptions["external_actions"][action_id]
-        return action.run(user, TextPreprocessingResult({}), action_params)
+        return await action.run(user, TextPreprocessingResult({}), action_params)

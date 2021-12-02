@@ -1,6 +1,6 @@
 import unittest
 from typing import Dict, Any, Union, Optional
-from unittest.mock import MagicMock, Mock, ANY
+from unittest.mock import MagicMock, Mock, ANY, AsyncMock
 
 from core.basic_models.actions.basic_actions import Action, action_factory, actions
 from core.model.registered import registered_factories
@@ -354,7 +354,7 @@ class ScenarioActionTest(unittest.IsolatedAsyncioTestCase):
         action = RunScenarioAction({"scenario": "test"})
         user = Mock()
         user.parametrizer = MockParametrizer(user, {})
-        scen = Mock()
+        scen = AsyncMock()
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"test": scen}}
@@ -368,7 +368,7 @@ class ScenarioActionTest(unittest.IsolatedAsyncioTestCase):
         action = RunScenarioAction(items)
         user = Mock()
         user.parametrizer = MockParametrizer(user, {"data": params})
-        scen = Mock()
+        scen = AsyncMock()
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"ANNA.pipeline.scenario": scen}}
@@ -390,7 +390,7 @@ class ScenarioActionTest(unittest.IsolatedAsyncioTestCase):
         action = RunScenarioAction({"scenario": "next_scenario"})
         user = Mock()
         user.parametrizer = MockParametrizer(user, {})
-        scen = Mock()
+        scen = AsyncMock()
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"next_scenario": scen}}
@@ -403,7 +403,7 @@ class RunLastScenarioActionTest(unittest.IsolatedAsyncioTestCase):
     async def test_scenario_action(self):
         action = RunLastScenarioAction({})
         user = Mock()
-        scen = Mock()
+        scen = AsyncMock()
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"test": scen}}
@@ -423,7 +423,7 @@ class ChoiceScenarioActionTest(unittest.IsolatedAsyncioTestCase):
         action = ChoiceScenarioAction(test_items)
         user = Mock()
         user.parametrizer = MockParametrizer(user, {})
-        scen = Mock()
+        scen = AsyncMock()
         scen.run.return_value = expected_result
         if expected_scen:
             user.descriptions = {"scenarios": {expected_scen: scen}}

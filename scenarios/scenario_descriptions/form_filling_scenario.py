@@ -46,7 +46,7 @@ class FormFillingScenario(BaseScenario):
                   content={HistoryConstants.content_fields.FIELD: question_field.description.id},
                   results=HistoryConstants.event_results.ASK_QUESTION))
 
-        return question.run(user, text_preprocessing_result, params)
+        return await question.run(user, text_preprocessing_result, params)
 
     async def _check_field(self, text_preprocessing_result, user, params):
         form = user.forms[self.form_type]

@@ -311,7 +311,7 @@ class RunScenarioAction(Action):
         scenario_id = self.scenario.render(params)
         scenario = user.descriptions["scenarios"].get(scenario_id)
         if scenario:
-            return scenario.run(text_preprocessing_result, user, params)
+            return await scenario.run(text_preprocessing_result, user, params)
 
 
 class RunLastScenarioAction(Action):
@@ -320,7 +320,7 @@ class RunLastScenarioAction(Action):
         last_scenario_id = user.last_scenarios.last_scenario_name
         scenario = user.descriptions["scenarios"].get(last_scenario_id)
         if scenario:
-            return scenario.run(text_preprocessing_result, user, params)
+            return await scenario.run(text_preprocessing_result, user, params)
 
 
 class ChoiceScenarioAction(Action):
@@ -515,7 +515,7 @@ class RunScenarioByProjectNameAction(Action):
         scenario_id = user.message.project_name
         scenario = user.descriptions["scenarios"].get(scenario_id)
         if scenario:
-            return scenario.run(text_preprocessing_result, user, params)
+            return await scenario.run(text_preprocessing_result, user, params)
         else:
             log("%(class_name)s warning: %(scenario_id)s isn't exist",
                 params={log_const.KEY_NAME: "warning_in_RunScenarioByProjectNameAction",

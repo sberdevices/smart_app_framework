@@ -7,7 +7,7 @@ from scenarios.actions.action import RunScenarioByProjectNameAction
 
 
 class TestScenarioDesc(dict):
-    def run(self, argv1, argv2, params):
+    async def run(self, argv1, argv2, params):
         return 'result to run scenario'
 
 

@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 from csv import DictWriter, QUOTE_MINIMAL
@@ -34,7 +35,7 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
             csv_case_callback = csv_file_callback(test_case)
         else:
             csv_case_callback = None
-        if TestCase(
+        if asyncio.get_event_loop().run_until_complete(TestCase(
                 app_model,
                 settings,
                 user_cls,
@@ -44,7 +45,7 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
                 storaged_predefined_fields=storaged_predefined_fields,
                 interactive=interactive,
                 csv_case_callback=csv_case_callback,
-        ).run():
+        ).run()):
             print(f"[+] {test_case} OK")
             success += 1
     print(f"[+] {file} {success}/{len(json_obj)}")

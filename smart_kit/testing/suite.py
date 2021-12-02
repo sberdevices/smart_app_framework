@@ -145,7 +145,7 @@ class TestCase:
         self.__user_cls = user_cls
         self.__from_msg_cls = from_msg_cls
 
-    def run(self) -> bool:
+    async def run(self) -> bool:
         success = True
 
         app_callback_id = None
@@ -172,7 +172,7 @@ class TestCase:
                 parametrizer_cls=self.__parametrizer_cls
             )
 
-            commands = self.app_model.answer(message, user) or []
+            commands = await self.app_model.answer(message, user) or []
 
             answers = self._generate_answers(
                 user=user, commands=commands, message=message

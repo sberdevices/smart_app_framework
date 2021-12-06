@@ -152,7 +152,7 @@ class Behaviors:
                                smart_kit_metrics.counter_behavior_fail, "fail",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            await behavior.fail_action.run(self._user, text_preprocessing_result, callback_action_params)
+            result = await behavior.fail_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
 
@@ -171,7 +171,7 @@ class Behaviors:
                                smart_kit_metrics.counter_behavior_timeout, "timeout",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            await behavior.timeout_action.run(self._user, text_preprocessing_result, callback_action_params)
+            result = await behavior.timeout_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
 

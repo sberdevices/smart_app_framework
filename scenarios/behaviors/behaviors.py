@@ -133,7 +133,7 @@ class Behaviors:
                 callback_action_params,
             )
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            await behavior.success_action.run(self._user, text_preprocessing_result, callback_action_params)
+            result = await behavior.success_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
 

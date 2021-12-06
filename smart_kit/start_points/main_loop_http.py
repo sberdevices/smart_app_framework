@@ -1,3 +1,4 @@
+import asyncio
 import json
 import typing
 from collections import defaultdict
@@ -69,7 +70,7 @@ class BaseHttpMainLoop(BaseMainLoop):
             user = self.load_user(db_uid, message)
         stats += "Loading time: {} msecs\n".format(load_timer.msecs)
         with StatsTimer() as script_timer:
-            commands = self.model.answer(message, user)
+            commands = asyncio.get_event_loop().run_until_complete(self.model.answer(message, user))
             if commands:
                 answer = self._generate_answers(user, commands, message)
             else:

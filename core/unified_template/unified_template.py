@@ -35,9 +35,11 @@ class UnifiedTemplate:
             if input.get("file"):
                 from smart_kit.configs import get_app_config
                 app_config = get_app_config()
-                template_loader = FileSystemLoader(app_config.JINJA2_TEMPLATES_PATH)
+                template_loader = jinja2.FileSystemLoader(app_config.JINJA2_TEMPLATES_PATH)
                 file_name = input["file"]
-                self.jinja2_environment = Environment(loader=template_loader, trim_blocks=True, lstrip_blocks=True)
+                self.jinja2_environment = jinja2.Environment(
+                    loader=template_loader, trim_blocks=True, lstrip_blocks=True
+                )
                 self.template = self.jinja2_environment.get_template(file_name)
                 log("UnifiedTemplateLoader: File, file_name: %(file_name)s", params={"file_name": file_name})
             else:

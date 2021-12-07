@@ -28,6 +28,7 @@ from core.basic_models.requirement.counter_requirements import CounterValueRequi
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirements
+from core.basic_models.requirement.project_requirements import SettingsRequirement
 from core.basic_models.requirement.user_text_requirements import AnySubstringInLoweredTextRequirement, \
     IntersectionWithTokensSetRequirement, NormalizedTextInSetRequirement, \
     PhoneNumberNumberRequirement, NumInRangeRequirement
@@ -42,7 +43,7 @@ from core.db_adapter.memory_adapter import MemoryAdapter
 from core.db_adapter.redis_adapter import RedisAdapter
 from core.descriptions.descriptions import registered_description_factories
 from core.model.queued_objects.limited_queued_hashable_objects_description import \
-    LimitedQueuedHashableObjectsDescriptions
+    LimitedQueuedHashableObjectsDescriptionsItems
 from core.model.registered import registered_factories
 from core.repositories.classifier_repository import ClassifierRepository
 from core.repositories.file_repository import FileRepository
@@ -82,11 +83,13 @@ from scenarios.scenario_models.history import HistoryDescription, \
     EventFormatter, formatters, formatters_factory, HistoryEventFormatter
 from scenarios.scenario_models.scenario_models import scenario_models, scenario_model_factory, BaseScenarioModel, \
     TreeScenarioModel, FormFillingScenarioModel
-from scenarios.user.last_scenarios.last_scenarios_descriptions import LastScenariosDescriptions
+from scenarios.user.last_scenarios.last_scenarios_descriptions import LastScenariosDescriptionsItems
 from scenarios.user.preprocessing_messages.preprocessing_messages_description import \
     PreprocessingMessagesDescription
 from smart_kit.action.http import HTTPRequestAction
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
+
+from core.db_adapter.aioredis_sentinel_adapter import AIORedisSentinelAdapter
 
 
 class SmartAppResources(BaseConfig):
@@ -251,13 +254,13 @@ class SmartAppResources(BaseConfig):
         registered_description_factories["forms"] = FormsDescription
         registered_description_factories["scenarios"] = ScenariosDescriptions
         registered_description_factories["preprocessing_messages_for_scenarios"] = PreprocessingMessagesDescription
-        registered_description_factories["last_scenarios"] = LastScenariosDescriptions
+        registered_description_factories["last_scenarios"] = LastScenariosDescriptionsItems
         registered_description_factories["external_actions"] = ExternalActions
         registered_description_factories["behaviors"] = BehaviorDescriptions
         registered_description_factories["history"] = HistoryDescription
         registered_description_factories["external_requirements"] = ExternalRequirements
         registered_description_factories["external_field_fillers"] = ExternalFieldFillerDescriptions
-        registered_description_factories["last_action_ids"] = LimitedQueuedHashableObjectsDescriptions
+        registered_description_factories["last_action_ids"] = LimitedQueuedHashableObjectsDescriptionsItems
         registered_description_factories["external_classifiers"] = ExternalClassifiers
 
     def init_actions(self):
@@ -336,6 +339,7 @@ class SmartAppResources(BaseConfig):
         requirements["template"] = TemplateRequirement
         requirements["template_in_array"] = TemplateInArrayRequirement
         requirements["time"] = TimeRequirement
+        requirements["settings"] = SettingsRequirement
 
     def init_sdk_items(self):
         answer_items["bubble_text"] = BubbleText
@@ -383,6 +387,7 @@ class SmartAppResources(BaseConfig):
         db_adapters["memory"] = MemoryAdapter
         db_adapters["redis"] = RedisAdapter
         db_adapters["aioredis"] = AIORedisAdapter
+        db_adapters["aioredis_sentinel"] = AIORedisSentinelAdapter
 
     def init_classifiers(self):
         classifiers[None] = Classifier

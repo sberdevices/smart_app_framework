@@ -6,7 +6,6 @@ from core.basic_models.requirement.basic_requirements import Requirement, Compar
 from core.logging.logger_utils import log
 from core.model.base_user import BaseUser
 from core.text_preprocessing.base import BaseTextPreprocessingResult
-from core.text_preprocessing.helpers import TokenizeHelper
 from scenarios.user.user_model import User
 
 
@@ -40,7 +39,7 @@ class NormalizedInputWordsRequirement(Requirement):
         self.input_words = set(items["input_words"])
         self.normalized_input_words = set([
             norm_res["normalized_text"].replace(".", "").strip()
-            for norm_res in self.normalizer.normalize_sequence(self.input_words)
+            for norm_res in self.normalizer.normalize_sequence(list(self.input_words))
         ])
 
 
@@ -53,7 +52,7 @@ class IntersectionWithTokensSetRequirement(NormalizedInputWordsRequirement):
     def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
               params: Dict[str, Any] = None) -> bool:
         words_normalized_set = set([
-            token["lemma"] for token in text_preprocessing_result.raw["tokenized_elements_list"]
+            token["lemma"] for token in text_preprocessing_result.raw["tokenized_elements_list_pymorphy"]
             if not token.get("token_type") == "SENTENCE_ENDPOINT_TOKEN"
         ])
         result = bool(self.normalized_input_words.intersection(words_normalized_set))

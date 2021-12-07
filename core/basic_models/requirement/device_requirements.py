@@ -7,7 +7,7 @@ from typing import List, Optional, Dict, Any
 
 from core.model.factory import factory
 
-from core.basic_models.requirement.basic_requirements import Requirement
+from core.basic_models.requirement.basic_requirements import Requirement, ComparisonRequirement
 from core.basic_models.operators.operators import Operator
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 
@@ -56,15 +56,10 @@ class PlatformTypeRequirement(Requirement):
         return user.message.device.platform_type == self.platfrom_type
 
 
-class BasicVersionRequirement(Requirement):
+class BasicVersionRequirement(ComparisonRequirement):
 
-    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
-        super(BasicVersionRequirement, self).__init__(items, id)
-        self._operator = items["operator"]
-
-    @lazy
     @factory(Operator)
-    def operator(self):
+    def build_operator(self):
         operator = dict(self._operator)
         operator["amount"] = convert_version_to_list_of_int(operator["amount"])
         return operator

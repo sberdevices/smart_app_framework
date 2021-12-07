@@ -1,6 +1,7 @@
 import json
 import os
-from typing import AnyStr, Optional, Tuple, Any, Dict
+from csv import DictWriter, QUOTE_MINIMAL
+from typing import AnyStr, Optional, Tuple, Any, Dict, Callable
 
 from lazy import lazy
 
@@ -15,39 +16,67 @@ from smart_kit.utils.diff import partial_diff
 
 
 def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings: Settings, user_cls: type,
-                 parametrizer_cls: type, from_msg_cls: type, storaged_predefined_fields: Dict[str, Any],
+                 parametrizer_cls: type, from_msg_cls: type, test_case_cls: type, storaged_predefined_fields: Dict[str, Any],
+                 csv_file_callback: Optional[Callable[[str], Callable[[Any], None]]],
                  interactive: bool = False) -> Tuple[int, int]:
     test_file_path = os.path.join(path, file)
     if not os.path.isfile(test_file_path) or not test_file_path.endswith('.json'):
         raise FileNotFoundError
     with open(test_file_path, "r") as test_file:
         json_obj = json.load(test_file)
-        success = 0
-        for test_case in json_obj:
-            test_params = json_obj[test_case]
-            if isinstance(test_params, list):
-                test_params = {"messages": test_params, "user": {}}
-            print(f"[+] Processing test case {test_case} from {test_file_path}")
-            if TestCase(
-                    app_model,
-                    settings,
-                    user_cls,
-                    parametrizer_cls,
-                    from_msg_cls,
-                    **test_params,
-                    storaged_predefined_fields=storaged_predefined_fields,
-                    interactive=interactive,
-            ).run():
-                print(f"[+] {test_case} OK")
-                success += 1
-        print(f"[+] {file} {success}/{len(json_obj)}")
+    success = 0
+    for test_case in json_obj:
+        test_params = json_obj[test_case]
+        if isinstance(test_params, list):
+            test_params = {"messages": test_params, "user": {}}
+        print(f"[+] Processing test case {test_case} from {test_file_path}")
+        if csv_file_callback:
+            csv_case_callback = csv_file_callback(test_case)
+        else:
+            csv_case_callback = None
+        if test_case_cls(
+                app_model,
+                settings,
+                user_cls,
+                parametrizer_cls,
+                from_msg_cls,
+                **test_params,
+                storaged_predefined_fields=storaged_predefined_fields,
+                interactive=interactive,
+                csv_case_callback=csv_case_callback,
+        ).run():
+            print(f"[+] {test_case} OK")
+            success += 1
+    print(f"[+] {file} {success}/{len(json_obj)}")
     return len(json_obj), success
 
 
 class TestSuite:
-    def __init__(self, path: AnyStr, app_config: Any, predefined_fields_storage: AnyStr):
+    def __init__(self, path: AnyStr, app_config: Any, predefined_fields_storage: AnyStr, make_csv: bool):
         self.path = path
         self.app_config = app_config
+
+        self.csv_callback = None
+        if make_csv:
+            field_names = ['file', 'test_case', 'success', 'diff']
+            results_csv_writer = DictWriter(
+                open(os.path.join(path, f'tests_results.csv'), 'wt'),
+                fieldnames=field_names,
+                quoting=QUOTE_MINIMAL
+            )
+            results_csv_writer.writeheader()
+
+            def __csv_file_callback(file):
+                def __csv_test_case_callback(test_case_name):
+                    def __write_csv_line(diff):
+                        results_csv_writer.writerow(dict(zip(
+                            field_names,
+                            [file, test_case_name, 0 if diff else 1, diff.serialize()]
+                        )))
+                    return __write_csv_line
+                return __csv_test_case_callback
+            self.csv_callback = __csv_file_callback
+
         with open(predefined_fields_storage, "r") as f:
             self.storaged_predefined_fields = json.load(f)
 
@@ -78,6 +107,10 @@ class TestSuite:
             for file in files:
                 if not file.endswith(".json"):
                     continue
+                if self.csv_callback:
+                    csv_file_callback = self.csv_callback(file)
+                else:
+                    csv_file_callback = None
                 file_total, file_success = run_testfile(
                     path,
                     file,
@@ -86,7 +119,9 @@ class TestSuite:
                     self.app_config.USER,
                     self.app_config.PARAMETRIZER,
                     self.app_config.FROM_MSG,
-                    self.storaged_predefined_fields
+                    self.app_config.TEST_CASE,
+                    self.storaged_predefined_fields,
+                    csv_file_callback
                 )
                 total += file_total
                 total_success += file_success
@@ -97,7 +132,7 @@ class TestSuite:
 class TestCase:
     def __init__(self, app_model: SmartAppModel, settings: Settings, user_cls: type, parametrizer_cls: type,
                  from_msg_cls: type, messages: dict, storaged_predefined_fields: Dict[str, Any], interactive: bool,
-                 user: Optional[dict] = None):
+                 csv_case_callback: Optional[Callable[[Any], None]] = None, user: Optional[dict] = None):
         self.messages = messages
         self.user_state = json.dumps(user)
         self.interactive = interactive
@@ -105,6 +140,7 @@ class TestCase:
         self.app_model = app_model
         self.settings = settings
         self.storaged_predefined_fields = storaged_predefined_fields
+        self.csv_case_callback = csv_case_callback
 
         self.__parametrizer_cls = parametrizer_cls
         self.__user_cls = user_cls
@@ -114,18 +150,18 @@ class TestCase:
         success = True
 
         app_callback_id = None
-        for index, message in enumerate(self.messages):
+        for index, message_ in enumerate(self.messages):
             print('Шаг', index)
             if index and self.interactive:
                 print("Нажмите ENTER, чтобы продолжить...")
                 input()
 
-            request = message["request"]
-            response = message["response"]
+            request = message_["request"]
+            response = message_["response"]
 
             # Если использован флаг linkPreviousByCallbackId и после предыдущего сообщения был сохранен app_callback_id,
             # сообщению добавляются заголовки. Таким образом, сработает behavior, созданный предыдущим запросом
-            if message.get(LINK_BEHAVIOR_FLAG) and app_callback_id:
+            if message_.get(LINK_BEHAVIOR_FLAG) and app_callback_id:
                 headers = [(self.__from_msg_cls.CALLBACK_ID_HEADER_NAME, app_callback_id.encode())]
             else:
                 headers = [('kafka_correlationId', 'test_123')]
@@ -136,6 +172,8 @@ class TestCase:
                 descriptions=self.app_model.scenario_descriptions,
                 parametrizer_cls=self.__parametrizer_cls
             )
+
+            self.post_setup_user(user)
 
             commands = self.app_model.answer(message, user) or []
 
@@ -151,7 +189,7 @@ class TestCase:
 
             if len(commands) != len(response["messages"]):
                 print(
-                    f"[!] Expected quantity of mesages differ from received.\n"
+                    f"[!] Expected quantity of messages differ from received.\n"
                     f" Expected: {len(response['messages'])}. Actual: {len(answers)}."
                 )
                 success = False
@@ -164,7 +202,9 @@ class TestCase:
                 if diff:
                     success = False
                     print(diff)
-                # Последний app_callback_id в answers, испольуется в заголовках следующего сообщения
+                if self.csv_case_callback:
+                    self.csv_case_callback(diff)
+                # Последний app_callback_id в answers, используется в заголовках следующего сообщения
                 app_callback_id = actual.request.values.get(self.__from_msg_cls.CALLBACK_ID_HEADER_NAME, app_callback_id)
 
             user_diff = partial_diff(expected_user, user.raw)
@@ -219,3 +259,6 @@ class TestCase:
             del response["pronounce_texts"]
 
         return response
+
+    def post_setup_user(self, user):
+        pass

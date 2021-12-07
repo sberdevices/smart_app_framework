@@ -16,16 +16,6 @@ from smart_kit.start_points.main_loop_http import BaseHttpMainLoop
 from smart_kit.utils.monitoring import smart_kit_metrics
 
 
-def run_in_loop(corofn, *args):
-    loop = asyncio.new_event_loop()
-    try:
-        coro = corofn(*args)
-        asyncio.set_event_loop(loop)
-        return loop.run_until_complete(coro)
-    finally:
-        loop.close()
-
-
 class AIOHttpMainLoop(BaseHttpMainLoop):
     def __init__(self, *args, **kwargs):
         self.app = aiohttp.web.Application()
@@ -125,7 +115,7 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         if not message.validate():
             return 400, "BAD REQUEST", SmartAppToMessage(self.BAD_REQUEST_COMMAND, message=message, request=None)
 
-        answer, stats = await self.app.loop.run_in_executor(self.pool, run_in_loop, self.process_message, message)
+        answer, stats = await self.process_message(message)
         if not answer:
             return 204, "NO CONTENT", SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None)
 
@@ -139,15 +129,15 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
 
     async def process_message(self, message: SmartAppFromMessage, *args, **kwargs):
         stats = ""
-        log("INCOMING DATA: {}".format(message.masked_value),
-            params={log_const.KEY_NAME: "incoming_policy_message"})
+        log("INCOMING DATA: %(masked_message)s",
+            params={log_const.KEY_NAME: "incoming_policy_message", "masked_message": message.masked_value})
         db_uid = message.db_uid
 
         with StatsTimer() as load_timer:
             user = await self.load_user(db_uid, message)
         stats += "Loading time: {} msecs\n".format(load_timer.msecs)
         with StatsTimer() as script_timer:
-            commands = self.model.answer(message, user)
+            commands = await self.app.loop.run_in_executor(self.pool, self.model.answer, message, user)
             if commands:
                 answer = self._generate_answers(user, commands, message)
             else:
@@ -159,9 +149,6 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         stats += "Saving time: {} msecs\n".format(save_timer.msecs)
         log(stats, params={log_const.KEY_NAME: "timings"})
         return answer, stats
-
-    async def get_answer_in_thread(self, message, user):
-        return await self.app.loop.run_in_executor(self.pool, self.model.answer, message, user)
 
     async def iterate(self, request: aiohttp.web.Request):
         headers = self._get_headers(request.headers)

@@ -43,8 +43,9 @@ class Requirement:
         return True
 
     def on_check_error(self, text_preprocessing_result, user):
-        log("exc_handler: Requirement failed to check. Return False. MESSAGE: {}.".format(user.message.masked_value),
-            user, {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
+        log("exc_handler: Requirement failed to check. Return False. MESSAGE: %(masked_message)s.",
+            user, {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE,
+                   "masked_message": user.message.masked_value},
             level="ERROR", exc_info=True)
         return False
 
@@ -55,10 +56,10 @@ class CompositeRequirement(Requirement):
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         super(CompositeRequirement, self).__init__(items, id)
         self._requirements = items["requirements"]
+        self.requirements = self.build_requirements()
 
-    @lazy
     @list_factory(Requirement)
-    def requirements(self):
+    def build_requirements(self):
         return self._requirements
 
 
@@ -84,10 +85,10 @@ class NotRequirement(Requirement):
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         super(NotRequirement, self).__init__(items, id)
         self._requirement = items["requirement"]
+        self.requirement = self.build_requirement()
 
-    @lazy
     @factory(Requirement)
-    def requirement(self):
+    def build_requirement(self):
         return self._requirement
 
     def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
@@ -101,10 +102,10 @@ class ComparisonRequirement(Requirement):
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         super(ComparisonRequirement, self).__init__(items, id)
         self._operator = items["operator"]
+        self.operator = self.build_operator()
 
-    @lazy
     @factory(Operator)
-    def operator(self):
+    def build_operator(self):
         return self._operator
 
 
@@ -183,9 +184,8 @@ class TimeRequirement(ComparisonRequirement):
         message_time = datetime.fromtimestamp(message_timestamp_sec, tz=timezone.utc).time()
         return self.operator.compare(message_time)
 
-    @lazy
     @factory(Operator)
-    def operator(self):
+    def build_operator(self):
         operator = dict(self._operator)
         amount_time = datetime.strptime(operator["amount"], '%H:%M:%S').time()
         operator["amount"] = amount_time

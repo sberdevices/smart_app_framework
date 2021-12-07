@@ -242,7 +242,10 @@ class MainLoop(BaseMainLoop):
                             "incoming_data": str(message.masked_value),
                             "headers": str(mq_message.headers()),
                             "waiting_message": waiting_message_time,
-                            MESSAGE_ID_STR: message.incremental_id})
+                            "surface": message.device.surface,
+                            MESSAGE_ID_STR: message.incremental_id},
+                    user=user
+                )
 
                 db_uid = message.db_uid
 
@@ -411,6 +414,7 @@ class MainLoop(BaseMainLoop):
         log("OUTGOING TO TOPIC_KEY: %(topic_key)s",
             params={log_const.KEY_NAME: "outgoing_message",
                     "topic_key": request.topic_key,
+                    "headers": str(request._get_new_headers(original_mq_message)),
                     "data": answer.masked_value}, user=user)
 
     @lru_cache()

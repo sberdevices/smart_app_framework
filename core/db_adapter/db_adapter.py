@@ -46,6 +46,9 @@ class DBAdapter(Rerunable):
     def _path_exists(self, path):
         raise NotImplementedError
 
+    def _mtime(self, path):
+        raise NotImplementedError
+
     def open(self, filename, *args, **kwargs):
         return self._run(self._open, filename, *args, **kwargs)
 
@@ -54,6 +57,9 @@ class DBAdapter(Rerunable):
 
     def path_exists(self, path):
         return self._run(self._path_exists, path)
+
+    def mtime(self, path):
+        return self._run(self._mtime, path)
 
     @monitoring.got_histogram("save_time")
     def save(self, id, data):

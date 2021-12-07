@@ -1,8 +1,10 @@
 # coding: utf-8
+import socket
 import unittest
 from collections import OrderedDict
 from collections import namedtuple
 from unittest.mock import Mock
+
 import scenarios.behaviors.behaviors
 
 
@@ -91,7 +93,8 @@ class BehaviorsTest(unittest.TestCase):
 
         exp = OrderedDict(behavior_id=behavior_id, expire_time=_time, scenario_id=None,
                           text_preprocessing_result=text_preprocessing_result,
-                          action_params={'local_vars': {'test_local_var_key': 'test_local_var_value'}})
+                          action_params={'local_vars': {'test_local_var_key': 'test_local_var_value'}},
+                          hostname=socket.gethostname())
         self.assertDictEqual(behaviors.raw, {callback_id: exp})
 
     @unittest.mock.patch.object(scenarios.behaviors.behaviors, "time", return_value=9999999999)
@@ -108,7 +111,8 @@ class BehaviorsTest(unittest.TestCase):
         _time = int(time()) + self.description.timeout(None) + scenarios.behaviors.behaviors.Behaviors.EXPIRATION_DELAY
         exp = OrderedDict(behavior_id=behavior_id, expire_time=_time, scenario_id=scenario_id,
                           text_preprocessing_result=text_preprocessing_result,
-                          action_params={'local_vars': {'test_local_var_key': 'test_local_var_value'}})
+                          action_params={'local_vars': {'test_local_var_key': 'test_local_var_value'}},
+                          hostname=socket.gethostname())
         self.assertDictEqual(behaviors.raw, {callback_id: exp})
 
     def test_check_1(self):
@@ -167,5 +171,6 @@ class BehaviorsTest(unittest.TestCase):
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
         behaviors.initialize()
         expected = OrderedDict(behavior_id=behavior_id, expire_time=1548079039, scenario_id=scenario_id,
-                               text_preprocessing_result=text_preprocessing_result, action_params={})
+                               text_preprocessing_result=text_preprocessing_result, action_params={},
+                               hostname=None)
         self.assertEqual(behaviors.raw, {callback_id: expected})

@@ -7,10 +7,10 @@ from core.text_preprocessing.base import BaseTextPreprocessingResult
 
 from core.basic_models.actions.basic_actions import action_factory
 from core.basic_models.actions.basic_actions import CommandAction
-from core.descriptions.smart_updatable_lazy_descriptions import SmartUpdatableLazyDescriptions
+from core.descriptions.smart_updatable_descriptions_items import SmartUpdatableDescriptionsItems
 
 
-class ExternalActions(SmartUpdatableLazyDescriptions):
+class ExternalActions(SmartUpdatableDescriptionsItems):
     def __init__(self, items):
         super(ExternalActions, self).__init__(action_factory, items)
 

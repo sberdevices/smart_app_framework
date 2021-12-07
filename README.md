@@ -9,7 +9,8 @@
      * [Инструменты фреймворка](#Инструменты)
      * [Рекомендованные требования](#Рекомендованные)
    * [Настройка фреймворка](#Настройка)
-     * [Установка проекта](#Установка)
+     * [Обновление фреймворка](#Обновление)
+     * [Установка фреймворка](#Установка)
      * [Создание проекта](#Создание)
      * [Тестирование онлайн](#Тестирование) 
      * [Тестирование офлайн](#Тестирование)    
@@ -41,7 +42,7 @@ ____
 
 * Linux, Mac OS или Windows (необходима установка [Conda](https://docs.conda.io/en/latest/)).
 * 512 МБ свободной памяти.
-* Python 3.6.8 - 3.7.8.
+* Python 3.6.8 - 3.9.6.
 
 ____
 
@@ -49,10 +50,20 @@ ____
 
 # Настройка фреймворка
 
+## Обновление фреймворка
 
-## Установка проекта
+Для перехода на новую версию фреймворка выполните в терминале следующие команды:
 
-Для установки проекта выполните в терминале следующую команду:
+```bash
+python3 -m pip uninstall -y smart-app-framework
+python3 -m pip install git+https://github.com/sberdevices/smart_app_framework@main
+```
+
+При переходе на версию фреймворка >=1.0.7.rc4 со старым смартапом необходимо в директории смартапа из файла ```static/.text_normalizer_resources/static_workdata.json``` удалить строки 'Ё на Е'.
+
+## Установка фреймворка
+
+Для установки фреймворка выполните в терминале следующую команду:
 
 ```bash
 python3 -m pip install git+https://github.com/sberdevices/smart_app_framework@main
@@ -106,10 +117,11 @@ ____
 
 # Документация
 
-Вы можете ознакомиться с подробной документацией по работе со SmartApp Framework в [справочнике разработчика](https://developer.sberdevices.ru/docs/ru/developer_tools/framework/overview.md).
+Вы можете ознакомиться с подробной документацией по работе со SmartApp Framework в [справочнике разработчика](https://developers.sber.ru/docs/ru/salute/python-framework/overview).
 
 
 
 # Обратная связь
 
-C вопросами и предложениями пишите нам по адресу developer@sberdevices.ru или вступайте в наш Telegram канал - [SmartApp Studio Community](https://t.me/smartapp_studio). 
+C вопросами и предложениями пишите нам по адресу developer@sberdevices.ru или вступайте в 
+наш Telegram канал - [SmartMarket Community](https://t.me/smartmarket_community). 

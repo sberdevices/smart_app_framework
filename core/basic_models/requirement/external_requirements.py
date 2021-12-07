@@ -5,10 +5,10 @@ from core.model.base_user import BaseUser
 
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 
-from core.descriptions.smart_updatable_lazy_descriptions import SmartUpdatableLazyDescriptions
+from core.descriptions.smart_updatable_descriptions_items import SmartUpdatableDescriptionsItems
 
 
-class ExternalRequirements(SmartUpdatableLazyDescriptions):
+class ExternalRequirements(SmartUpdatableDescriptionsItems):
     def __init__(self, items):
         super(ExternalRequirements, self).__init__(requirement_factory, items, ordered=True)
 

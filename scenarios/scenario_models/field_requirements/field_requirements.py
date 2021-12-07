@@ -1,11 +1,9 @@
 # coding: utf-8
-from lazy import lazy
 from typing import Dict, List, Optional, Any, Set
 
+from core.basic_models.operators.operators import Operator
 from core.model.factory import factory, build_factory, list_factory
 from core.model.registered import Registered
-from core.basic_models.operators.operators import Operator
-
 
 field_requirements = Registered()
 
@@ -26,10 +24,10 @@ class CompositeFieldRequirement(FieldRequirement):
     def __init__(self, items: Optional[Dict[str, Any]]) -> None:
         super(CompositeFieldRequirement, self).__init__(items)
         self._requirements: List[Dict[str, Any]] = items["requirements"]
+        self.requirements = self.build_requirements()
 
-    @lazy
     @list_factory(FieldRequirement)
-    def requirements(self):
+    def build_requirements(self):
         return self._requirements
 
 
@@ -49,10 +47,10 @@ class NotFieldRequirement(FieldRequirement):
     def __init__(self, items: Optional[Dict[str, Any]]) -> None:
         super(NotFieldRequirement, self).__init__(items)
         self._requirement: Dict[str, Any] = items["requirement"]
+        self.requirement = self.build_requirement()
 
-    @lazy
     @factory(FieldRequirement)
-    def requirement(self):
+    def build_requirement(self):
         return self._requirement
 
     def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:
@@ -65,10 +63,10 @@ class ComparisonFieldRequirement(FieldRequirement):
     def __init__(self, items: Optional[Dict[str, Any]]) -> None:
         super(ComparisonFieldRequirement, self).__init__(items)
         self._operator: Dict[str, Any] = items["operator"]
+        self.operator = self.build_operator()
 
-    @lazy
     @factory(Operator)
-    def operator(self):
+    def build_operator(self):
         return self._operator
 
     def check(self, field_value: str, params: Dict[str, Any] = None) -> bool:

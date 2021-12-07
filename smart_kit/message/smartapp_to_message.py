@@ -6,6 +6,7 @@ from copy import copy
 from core.utils.pickle_copy import pickle_deepcopy
 from core.utils.masking_message import masking
 from core.message.msg_validator import MessageValidator
+from smart_kit.utils import SmartAppToMessage_pb2
 
 
 class SmartAppToMessage:
@@ -46,15 +47,35 @@ class SmartAppToMessage:
         fields.update(self.root_nodes)
         return fields
 
+    @staticmethod
+    def as_protobuf_message(data_as_dict):
+        message = SmartAppToMessage_pb2.SmartAppToMessage()
+        message.messageId = data_as_dict["messageId"]
+        message.sessionId = data_as_dict["sessionId"]
+        message.messageName = data_as_dict["messageName"]
+        message.payload = data_as_dict["payload"]
+        uuid = message.uuid.add()
+        uuid.userId = data_as_dict["uuid"]["userId"]
+        uuid.userChannel = data_as_dict["uuid"]["userChannel"]
+        return message
+
     @lazy
     def masked_value(self):
         data = pickle_deepcopy(self.as_dict)
         masking(data, self.masking_fields)
-        return json.dumps(data, ensure_ascii=False)
+        if self.command.loader == "json.dumps":
+            return json.dumps(data, ensure_ascii=False)
+        elif self.command.loader == "protobuf":
+            protobuf_message = self.as_protobuf_message(data)
+            return protobuf_message.SerializeToString()
 
     @lazy
     def value(self):
-        return json.dumps(self.as_dict, ensure_ascii=False)
+        if self.command.loader == "json.dumps":
+            return json.dumps(self.as_dict, ensure_ascii=False)
+        elif self.command.loader == "protobuf":
+            protobuf_message = self.as_protobuf_message(self.as_dict)
+            return protobuf_message.SerializeToString()
 
     def validate(self):
         for validator in self.validators:

@@ -1,6 +1,6 @@
 import unittest
 
-from core.descriptions.lazy_descriptions import LazyDescriptions
+from core.descriptions.descriptions_items import DescriptionsItems
 
 
 class MockFactory():
@@ -15,7 +15,7 @@ class MockFactory():
 
 class DescriptionsTest(unittest.TestCase):
     def setUp(self):
-        self.descr = LazyDescriptions(MockFactory, dict(id1=["raw_data_value1"], id2=["raw_data_value2"]))
+        self.descr = DescriptionsItems(MockFactory, dict(id1=["raw_data_value1"], id2=["raw_data_value2"]))
 
     def test_getitem(self):
         obj1 = self.descr["id1"]
@@ -46,12 +46,13 @@ class DescriptionsTest(unittest.TestCase):
         items = dict(id1=["raw_data_value11"], id3=["raw_data_value3"])
         expected = items
         self.descr.update_data(items)
-        self.assertEqual(len(self.descr._items), 0)
+        self.assertEqual(len(self.descr._items), 2)
         self.assertEqual(set(self.descr._raw_items), set(expected))
 
     def test_update_item(self):
         id = "id1"
         expected = "raw_data_value11"
+        print(self.descr._raw_items)
         self.descr.update_item(id, expected)
         self.assertEqual(self.descr._raw_items[id], expected)
 

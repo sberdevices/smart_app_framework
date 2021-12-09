@@ -1,6 +1,7 @@
 # coding: utf-8
 from core.logging.logger_utils import log
 from core.model.registered import Registered
+from core.utils.masking_message import masking
 
 import scenarios.logging.logger_constants as log_const
 
@@ -23,6 +24,7 @@ class BasicField:
         self._available = items.get("available", self.description.available)
         self._user = user
         self._lifetime = lifetime
+        self._masking_fields = user.settings["template_settings"].get("masking_fields")
 
     @property
     def value(self):
@@ -57,10 +59,12 @@ class BasicField:
 
     def _set_value(self, value):
         self._value = value
+        dict_value = {f"{self.description.name}": value}
+        masking(dict_value, self._masking_fields)
         message = "BasicField: %(description_id)s filled by value: %(field_value)s"
         params = {log_const.KEY_NAME: log_const.FILLER_RESULT_VALUE,
                   "description_id": self.description.id,
-                  "field_value": str(value)}
+                  "field_value": str(dict_value[f"{self.description.name}"])}
         log(message, None, params)
 
     def set_available(self):
@@ -112,10 +116,12 @@ class QuestionField(BasicField):
 
     def _set_value(self, value):
         self._value = value
+        dict_value = {f"{self.description.name}": value}
+        masking(dict_value, self._masking_fields)
         message = "Field: %(description_id)s filled by value: %(field_value)s"
         params = {log_const.KEY_NAME: log_const.FILLER_RESULT_VALUE,
                   "description_id": self.description.id,
-                  "field_value": str(value)}
+                  "field_value": str(dict_value[f"{self.description.name}"])}
         log(message, None, params)
         if self.description.need_save_context:
             self._user.last_fields[self.description.id].value = value

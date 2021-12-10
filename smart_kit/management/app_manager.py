@@ -33,7 +33,7 @@ class LocalTestingCommand(AppCommand):
         self._local_testing_wrapper = app_config.LOCAL_TESTING(
             configs_path=app_config.CONFIGS_PATH, secret_path=app_config.SECRET_PATH,
             settings_cls=app_config.SETTINGS, references_path=app_config.REFERENCES_PATH,
-            resources_cls=app_config.RESOURCES, model_cls=app_config.MODEL,
+            resources_cls=app_config.RESOURCES, model_cls=app_config.MODEL, test_case_cls=app_config.TEST_CASE,
             dialogue_manager_cls=app_config.DIALOGUE_MANAGER, user_cls=app_config.USER,
             parametrizer_cls=app_config.PARAMETRIZER, from_msg_cls=app_config.FROM_MSG, app_name=app_config.APP_NAME
         )

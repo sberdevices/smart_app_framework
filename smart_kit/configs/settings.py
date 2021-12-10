@@ -21,7 +21,7 @@ class Settings(BaseConfig):
         self.adapters = {Settings.CephAdapterKey: CephAdapter, self.OSAdapterKey: OSAdapter}
         self.loop = asyncio.get_event_loop()
         self.repositories = [
-            FileRepository(
+            UpdatableFileRepository(
                 self.subfolder_path("template_config.yml"), loader=yaml.safe_load, key="template_settings"
             ),
             FileRepository(self.subfolder_secret_path("kafka_config.yml"), loader=yaml.safe_load, key="kafka"),

@@ -1,16 +1,16 @@
 # coding: utf-8
-from time import time
+import socket
 from collections import namedtuple
+from time import time
 from typing import Dict
 
+import scenarios.logging.logger_constants as log_const
 from core.logging.logger_utils import log
 from core.names.field import APP_INFO
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from core.utils.pickle_copy import pickle_deepcopy
-from smart_kit.utils.monitoring import smart_kit_metrics
-
 from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, LOCAL_VARS
-import scenarios.logging.logger_constants as log_const
+from smart_kit.utils.monitoring import smart_kit_metrics
 
 
 class Behaviors:
@@ -20,8 +20,10 @@ class Behaviors:
         self._items = items or {}
         self.descriptions = descriptions
         self._user = user
-        self.Callback = namedtuple('Callback',
-                                   'behavior_id expire_time scenario_id text_preprocessing_result action_params')
+        self.Callback = namedtuple(
+            'Callback',
+            'behavior_id expire_time scenario_id text_preprocessing_result action_params hostname')
+
         self._callbacks = {}
         self._behavior_timeouts = []
         self._returned_callbacks = []
@@ -31,6 +33,7 @@ class Behaviors:
         for key, callback in self._items.items():
             callback.setdefault("text_preprocessing_result", {})
             callback.setdefault("action_params", {})
+            callback.setdefault("hostname", None)
             self._callbacks[key] = self.Callback(**callback)
 
         callback_id = self._user.message.callback_id
@@ -54,6 +57,7 @@ class Behaviors:
 
     def add(self, callback_id: str, behavior_id, scenario_id=None, text_preprocessing_result_raw=None,
             action_params=None):
+        host = socket.gethostname()
         text_preprocessing_result_raw = text_preprocessing_result_raw or {}
         # behavior will be removed after timeout + EXPIRATION_DELAY
         expiration_time = (
@@ -70,6 +74,7 @@ class Behaviors:
             scenario_id=scenario_id,
             text_preprocessing_result=text_preprocessing_result_raw,
             action_params=action_params,
+            hostname=host
         )
         self._callbacks[callback_id] = callback
         log(f"behavior.add: adding behavior %({log_const.BEHAVIOR_ID_VALUE})s with scenario_id"
@@ -122,6 +127,7 @@ class Behaviors:
         callback = self._get_callback(callback_id)
         result = None
         if callback:
+            self._check_hostname(callback_id, callback)
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
@@ -145,6 +151,7 @@ class Behaviors:
         callback = self._get_callback(callback_id)
         result = None
         if callback:
+            self._check_hostname(callback_id, callback)
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
@@ -183,6 +190,7 @@ class Behaviors:
         callback = self._get_callback(callback_id)
         result = None
         if callback:
+            self._check_hostname(callback_id, callback)
             self._add_returned_callback(callback_id)
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
@@ -231,8 +239,7 @@ class Behaviors:
     def expire(self):
         callback_id_for_delete = []
         for callback_id, (
-                behavior_id, expiration_time, scenario_id, text_preprocessing_result,
-                action_params) in self._callbacks.items():
+                behavior_id, expiration_time, *_) in self._callbacks.items():
             if expiration_time <= time():
                 callback_id_for_delete.append(callback_id)
         for callback_id in callback_id_for_delete:
@@ -252,8 +259,7 @@ class Behaviors:
 
     def check_got_saved_id(self, behavior_id):
         if self.descriptions[behavior_id].loop_def:
-            for callback_id, (_behavior_id, expiration_time, scenario_id, text_preprocessing_result,
-                              action_params) in self._callbacks.items():
+            for callback_id, (_behavior_id, *_) in self._callbacks.items():
                 if _behavior_id == behavior_id:
                     log(
                         f"behavior.check_got_saved_id == True: already got saved behavior %({log_const.BEHAVIOR_ID_VALUE})s for callback_id %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s",
@@ -275,3 +281,21 @@ class Behaviors:
         callback_action_params = self.get_callback_action_params(callback_id) or {}
         to_message_name = callback_action_params.get(TO_MESSAGE_NAME)
         return to_message_name
+
+    def _check_hostname(self, callback_id, callback) -> None:
+        host: str = socket.gethostname()
+        if callback.hostname != host:
+            log(
+                f"behavior.check_hostname: current %({log_const.HOSTNAME})s and "
+                f"last %({log_const.LAST_HOSTNAME})s hostname are not equal on the same message_id.",
+                user=self._user,
+                params={log_const.KEY_NAME: log_const.CHECK_HOSTNAME,
+                        log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id,
+                        log_const.BEHAVIOR_ID_VALUE: callback.behavior_id,
+                        log_const.CHOSEN_SCENARIO_VALUE: callback.scenario_id,
+                        log_const.MESSAGE_ID: self._user.message.logging_uuid,
+                        log_const.HOSTNAME: host,
+                        log_const.LAST_HOSTNAME: callback.hostname,
+                        }
+            )
+            smart_kit_metrics.counter_host_has_changed(self._user.settings.app_name)

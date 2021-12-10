@@ -21,7 +21,7 @@ class CLInterface(cmd.Cmd):
 
     def __init__(
             self, configs_path, secret_path, settings_cls, references_path,
-            resources_cls, model_cls, dialogue_manager_cls, user_cls, parametrizer_cls,
+            resources_cls, model_cls, test_case_cls, dialogue_manager_cls, user_cls, parametrizer_cls,
             from_msg_cls, app_name,
     ):
         super().__init__()
@@ -41,6 +41,7 @@ class CLInterface(cmd.Cmd):
         self.__user_cls = user_cls
         self.__parametrizer_cls = parametrizer_cls
         self.__from_msg_cls = from_msg_cls
+        self.__test_case_cls = test_case_cls
 
         predefined_fields_storage_path = os.path.join(self.references_path, "./predefined_fields_storage.json")
         if os.path.exists(predefined_fields_storage_path):
@@ -117,6 +118,7 @@ class CLInterface(cmd.Cmd):
                 self.__user_cls,
                 self.__parametrizer_cls,
                 self.__from_msg_cls,
+                self.__test_case_cls,
                 self.storaged_predefined_fields,
                 interactive=True,
             )

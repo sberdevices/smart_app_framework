@@ -17,7 +17,7 @@ from smart_kit.utils.diff import partial_diff
 
 
 def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings: Settings, user_cls: type,
-                 parametrizer_cls: type, from_msg_cls: type, storaged_predefined_fields: Dict[str, Any],
+                 parametrizer_cls: type, from_msg_cls: type, test_case_cls: type, storaged_predefined_fields: Dict[str, Any],
                  csv_file_callback: Optional[Callable[[str], Callable[[Any], None]]],
                  interactive: bool = False) -> Tuple[int, int]:
     test_file_path = os.path.join(path, file)
@@ -36,15 +36,15 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
         else:
             csv_case_callback = None
         if asyncio.get_event_loop().run_until_complete(TestCase(
-                app_model,
-                settings,
-                user_cls,
-                parametrizer_cls,
-                from_msg_cls,
-                **test_params,
-                storaged_predefined_fields=storaged_predefined_fields,
-                interactive=interactive,
-                csv_case_callback=csv_case_callback,
+            app_model,
+            settings,
+            user_cls,
+            parametrizer_cls,
+            from_msg_cls,
+            **test_params,
+            storaged_predefined_fields=storaged_predefined_fields,
+            interactive=interactive,
+            csv_case_callback=csv_case_callback,
         ).run()):
             print(f"[+] {test_case} OK")
             success += 1
@@ -120,6 +120,7 @@ class TestSuite:
                     self.app_config.USER,
                     self.app_config.PARAMETRIZER,
                     self.app_config.FROM_MSG,
+                    self.app_config.TEST_CASE,
                     self.storaged_predefined_fields,
                     csv_file_callback
                 )
@@ -172,6 +173,8 @@ class TestCase:
                 descriptions=self.app_model.scenario_descriptions,
                 parametrizer_cls=self.__parametrizer_cls
             )
+
+            self.post_setup_user(user)
 
             commands = await self.app_model.answer(message, user) or []
 
@@ -257,3 +260,6 @@ class TestCase:
             del response["pronounce_texts"]
 
         return response
+
+    def post_setup_user(self, user):
+        pass

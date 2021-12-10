@@ -25,7 +25,7 @@ class BasicField:
         self._available = items.get("available", self.description.available)
         self._user = user
         self._lifetime = lifetime
-        self._masking_fields = (user or {}).get("settings", {}).get("template_settings", {}).get("masking_fields", [])
+        self._masking_fields = user.settings["template_settings"].get("masking_fields") if user is not None else []
 
     @property
     def value(self):

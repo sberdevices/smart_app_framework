@@ -113,38 +113,25 @@ class ScenarioHistoryTest(TestCase):
                 {
                     'type': 'event_type_1',
                     'content': {'foo': 'bar'},
-                    'created_time': now + 7
+                    'created_time': now - 1
                 },
                 {
                     'type': 'event_type_2',
                     'content': {'foo': 'bar'},
-                    'created_time': now + 6
-                },
-                {
-                    'type': 'event_type_3',
-                    'content': {'foo': 'bar'},
                     'created_time': now - 5
                 }
             ]
         }
-        expected = {
-            'events': [
-                {
-                    'type': 'event_type_3',
-                    'content': {'foo': 'bar'},
-                    'node': None,
-                    'results': None,
-                    'scenario': None,
-                    'scenario_version': None,
-                    'created_time': now - 5
-                }
-            ]
-        }
+        expected_keys = {'event_type_1',}
 
         history = History(items, descriptions, None)
         history.expire()
 
-        self.assertDictEqual(history.raw, expected)
+        history_raw = history.raw
+        events_raw = history_raw["events"]
+        event_keys = {event_raw.get("type") for event_raw in events_raw}
+
+        self.assertSetEqual(event_keys, expected_keys)
 
     def test_history_event_formatter(self):
         events = [

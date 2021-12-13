@@ -60,6 +60,6 @@ class History:
         now = time()
         non_expired = []
         for event in self._events:
-            if event.created_time + self._description.event_expiration_delay < now:
+            if event.created_time + self._description.event_expiration_delay > now:
                 non_expired.append(event)
         self._events = non_expired

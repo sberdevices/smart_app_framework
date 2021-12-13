@@ -50,13 +50,13 @@ class TestTreeScenario(IsolatedAsyncioTestCase):
                  "scenario_nodes": {"node_1": node_mock}}
 
         field_descriptor = Mock(name="field_descriptor_mock")
-        field_descriptor.filler.extract = AsyncMock(name="my_field_value_1", return_value=61)
+        field_descriptor.filler.run = AsyncMock(name="my_field_value_1", return_value=61)
         field_descriptor.fill_other = False
         field_descriptor.field_validator.actions = []
+        field_descriptor.field_validator.requirement.check = AsyncMock(return_value=True)
 
         internal_form = Mock(name="internal_form_mock")
         internal_form.description.fields.items = Mock(return_value=[("age", field_descriptor)])
-        internal_form.field.field_validator.requirement.check = AsyncMock(return_value=True)
         internal_form.fields = MagicMock()
         internal_form.fields.values.items = Mock(return_value={"age": 61})
         internal_form.is_valid = Mock(return_value=True)
@@ -97,6 +97,7 @@ class TestTreeScenario(IsolatedAsyncioTestCase):
         actions["test"] = MockAction
         actions["break"] = MockAction
         actions["success"] = MockAction
+        actions["external"] = MockAction
 
         form_type = "form for doing smth"
         internal_form_key = "my form key"
@@ -107,15 +108,15 @@ class TestTreeScenario(IsolatedAsyncioTestCase):
                  "scenario_nodes": {"node_1": node_mock}, "actions": [{"type": "success"}]}
 
         field_descriptor = Mock(name="field_descriptor_mock")
-        field_descriptor.filler.extract = AsyncMock(name="my_field_value_1", return_value=61)
+        field_descriptor.filler.run = AsyncMock(name="my_field_value_1", return_value=61)
         field_descriptor.fill_other = False
         field_descriptor.field_validator.actions = []
+        field_descriptor.field_validator.requirement.check = AsyncMock(return_value=True)
         field_descriptor.on_filled_actions = [BreakAction(), MockAction(command_name="break action result")]
         field_descriptor.id = "age"
 
         internal_form = Mock(name="internal_form_mock")
         internal_form.description.fields.items = Mock(return_value=[("age", field_descriptor)])
-        internal_form.field.field_validator.requirement.check = Mock(return_value=True)
         field = Mock()
         field.description = field_descriptor
         field.value = 61

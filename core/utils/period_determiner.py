@@ -16,7 +16,7 @@ date_format: str = '%d.%m.%Y'
 re_shortest_date_pattern = '^([0-9]{1,2})\\.([0-9]{1,2})$'
 re_short_date_pattern = '^([0-9]{1,2})\\.([0-9]{1,2})\\.([0-9]{2})$'
 re_long_date_pattern = '^([0-9]{1,2})\\.([0-9]{1,2})\\.([0-9]{4})$'
-
+ERROR_VALUE = 'error'
 
 class IncorrectDateException(Exception):
     pass
@@ -30,9 +30,6 @@ class StateMachineForDateDetermining:
     и КА понимает какой период времени пытаемся сообщить,
     а также КА может понять, что дата определена некорректно
     """
-
-    # начальное пустое состояние автомата до прихода первого слова
-    _empty_state: bool
 
     # Истина, если используется период до текущего дня
     # иначе конкретная дата (день, месяц, квартал, год)
@@ -59,12 +56,14 @@ class StateMachineForDateDetermining:
     _relative_descriptor: int
 
     # при поступлении числа в КА мы еще не понимаем к чему относится число,
-    # поэтому сохраняем его в self._quantifier, но как только мы его использовали,
+    # поэтому сохраняем его в self._quantifier,
+    # но как только мы его использовали,
     # то сразу его обнуляем для приему следующего числа
     _quantifier: int
 
     def __init__(self):
-        self._empty_state = True
+        # кол-во слов обработанных автоматом
+        self._words_processed = 0
         self._is_period = False
         self._current_date = datetime.now()
         self._date_period = [None, None]
@@ -83,13 +82,14 @@ class StateMachineForDateDetermining:
     @property
     def result(self) -> Tuple[Optional[str], Optional[str]]:
         if self._is_error:
-            return 'error', 'error'
+            return ERROR_VALUE, ERROR_VALUE
 
         if self._is_determined:
-            # если дата считается определенной, но остался неиспользуемый квантификатор,
+            # если дата считается определенной,
+            # но остался неиспользуемый квантификатор,
             # то это ошибка
             if self._quantifier:
-                return 'error', 'error'
+                return ERROR_VALUE, ERROR_VALUE
 
             # если указали 1ую дату в периоде
             if self._date_period[0]:
@@ -102,7 +102,7 @@ class StateMachineForDateDetermining:
                             day=self._date_period[0].day
                         )
                     except IncorrectDateException:
-                        return 'error', 'error'
+                        return ERROR_VALUE, ERROR_VALUE
 
                 # если работаем с периодом или дата относительна текущей даты,
                 # то конец периода всегда окончивается текущей датой
@@ -122,12 +122,13 @@ class StateMachineForDateDetermining:
                                     day=self._date_period[1].day
                                 )
                             except IncorrectDateException:
-                                return 'error', 'error'
+                                return ERROR_VALUE, ERROR_VALUE
                     else:
                         # если она пустая, то берем текущую дату
                         self._date_period[1] = self._current_date
 
-                return format_date(self._date_period[0]), format_date(self._date_period[1])
+                return format_date(self._date_period[0]),\
+                       format_date(self._date_period[1])
 
             else:
                 # Иначе строим дату начала на основе года, месяца и дня,
@@ -136,7 +137,8 @@ class StateMachineForDateDetermining:
                 if self._day == 0 and self._month == 0 and self._year:
                     self._date_period[0] = safe_datetime(self._year, 1, 1)
 
-                    # если имеем дело с периодом когда в начале фразы союз "с" или "со"
+                    # если имеем дело с периодом когда
+                    # в начале фразы союз "с" или "со"
                     if self._is_period:
                         # берем текущий день в качестве окончания
                         self._date_period[1] = self._current_date
@@ -144,7 +146,8 @@ class StateMachineForDateDetermining:
                         # иначе конец указанного года
                         self._date_period[1] = safe_datetime(self._year, 12, 31)
 
-                    return format_date(self._date_period[0]), format_date(self._date_period[1])
+                    return format_date(self._date_period[0]),\
+                           format_date(self._date_period[1])
 
                 # если день не указан, тогда берем первый день
                 if self._day == 0:
@@ -157,27 +160,32 @@ class StateMachineForDateDetermining:
                     self._year = self._current_date.year
 
                 try:
-                    self._date_period[0] = safe_datetime(self._year, self._month, self._day)
+                    self._date_period[0] = safe_datetime(self._year,
+                                                         self._month,
+                                                         self._day)
                 except IncorrectDateException:
-                    return 'error', 'error'
+                    return ERROR_VALUE, ERROR_VALUE
 
                 # берем текущий день в качестве окончания
                 self._date_period[1] = self._current_date
 
-                return format_date(self._date_period[0]), format_date(self._date_period[1])
+                return format_date(self._date_period[0]), \
+                       format_date(self._date_period[1])
 
         return '', ''
 
     def input(self, word: str):
         """
-        Ключевой метод КА принимающий слова и меняющий свое состояние в зависимости от этого
+        Ключевой метод КА принимающий слова
+        и меняющий свое состояние в зависимости от этого
         """
-
+        # считаем сколько слов обработал наш автомат
+        self._words_processed += 1
         try:
-
-            # если предлоги "от" или "с" идут не первыми словами, то это ошибка
+            # если предлоги "от" или "с" идут не первыми словами,
+            # то это ошибка
             if word == 'с' or word == 'со' or word == 'от':
-                if self._empty_state:
+                if self._words_processed == 1:
                     # зафиксировали что имеем дело с периодом
                     self._is_period = True
                     return
@@ -185,23 +193,21 @@ class StateMachineForDateDetermining:
                     self._is_error = True
                     return
 
-            # после прихода первого слова начальное состояние теряется
-            if self._empty_state:
-                self._empty_state = False
-
             # если в КА ошибка, то он больше не обрабатывает слова
             if self._is_error:
                 return
 
-            # если ждем какое-то слово
+            # если ожидаем какие-то слова
             if self._next_expected_words:
+                # если встреченного слова нет в списке этих слов 
                 if word not in self._next_expected_words:
                     self._is_error = True
                     return
+                # иначе сбрасываем список в None и обрабатываем его
                 self._next_expected_words = None
-            # если _next_expected_words пустой список,
-            # то больше не ждем никаких слов
-            # и любое пришедшее слово приводит к ошибке
+            # если _next_expected_words ИМЕННО пустой список,
+            # то это означает, чтобольше не ждем никаких слов
+            # и любое пришедшее слово является ошибкой
             elif self._next_expected_words == []:
                 self._is_error = True
                 return
@@ -270,12 +276,16 @@ class StateMachineForDateDetermining:
                             self._year = self._current_date.year
                         else:
                             # квантификатор нужен для примера: 2 прошлых года
-                            self._year = self._current_date.year - 1 * (self._quantifier if self._quantifier else 1)
+                            self._year = \
+                                self._current_date.year - 1 \
+                                * (self._quantifier if self._quantifier else 1)
                             self._quantifier = 0
                     else:
                         # если относительный период не указан,
-                        # то период определяем как (365 * self._quanifier) дней ранее
-                        # пример: за год - значит с периода 365 дней ранее по сегодня
+                        # то период определяем как
+                        # (365 * self._quanifier) дней ранее
+                        # пример: за год - значит с периода 365 дней
+                        # ранее по сегодня
                         if self._month == 0 and self._year == 0:
                             self._date_period[0] = \
                                 self._current_date \
@@ -302,8 +312,10 @@ class StateMachineForDateDetermining:
                         self._quantifier = 0
                     else:
                         # если относительный период не указан,
-                        # то период определяем как (30 * self._quanifier) дней ранее
-                        # пример: за месяц - значит с периода 30 дней ранее по сегодня
+                        # то период определяем как (30 * self._quanifier)
+                        # дней ранее
+                        # пример:
+                        # за месяц - значит с периода 30 дней ранее по сегодня
                         self._date_period[0] = \
                             self._current_date \
                             - timedelta(
@@ -423,11 +435,12 @@ class StateMachineForDateDetermining:
                                 self._quantifier = 0
 
                             if self._day:
-                                self._date_period[0] = self._date_period[1] = safe_datetime(
-                                    year=self._current_date.year,
-                                    month=self._month,
-                                    day=self._day
-                                )
+                                self._date_period[0] = self._date_period[1] =\
+                                    safe_datetime(
+                                        year=self._current_date.year,
+                                        month=self._month,
+                                        day=self._day
+                                    )
                             else:
                                 self._date_period[0] = safe_datetime(
                                     year=self._current_date.year,
@@ -468,9 +481,11 @@ class StateMachineForDateDetermining:
 
 
 def format_date(date: Optional[datetime]) -> str:
-    if date:
-        return date.strftime(date_format)
-    return 'error'
+    """
+    Форматирует переданое значение в строку,
+    в случае если передали None возвращает ERROR_VALUE
+    """
+    return date.strftime(date_format) if date else ERROR_VALUE
 
 
 def safe_datetime(year: int, month: int, day: int) -> Optional[datetime]:
@@ -488,7 +503,8 @@ def safe_datetime(year: int, month: int, day: int) -> Optional[datetime]:
             raise IncorrectDateException('Некорректная дата') from exc
 
 
-def match_word_with_list(word_to_check: str, list_of_pattern_words: List[str]) -> int:
+def match_word_with_list(word_to_check: str,
+                         list_of_pattern_words: List[str]) -> int:
     """
     Проверяем слово на вхождение в список слов, указанных без окончания.
     Примеры:
@@ -562,31 +578,30 @@ def is_from_date_dictionary(word: str) -> bool:
     return True
 
 
-def period_determiner(words_to_process: List[str],
+def period_determiner(words: List[str],
                       max_days_in_period: Optional[int] = None,
                       future_days_allowed: bool = False) -> Tuple[str, str]:
     """
     Входная функция модуля, ее вызываем для получения дат.
     Она использует рабочую функцию date_determiner
 
-    :param words_to_process: список слово в нижнем регистре
+    :param words: список слово в нижнем регистре
     :param max_days_in_period: максимальное количество дней в периоде
     :param future_days_allowed: нужно ли ограничивать период сегодняшним днем
     :return: кортеж строк дат в формате dd.mm.yyyy,
-    если одна из них или обе ошибочные, то error
+    если одна из них или обе ошибочные, то ERROR_VALUE
     """
 
-    # проверяем не указаны ли начало и конец периода
-    # с помощью слов "по" или "до"
-    i = 0
+    # индекс слова "по" или "до" в списке переданных слов
+    index_of_the_word_till = -1
     try:
-        i = words_to_process.index('по')
+        index_of_the_word_till = words.index('по')
     except ValueError as exc:
         pass
 
-    if not i:
+    if index_of_the_word_till == -1:
         try:
-            i = words_to_process.index('до')
+            index_of_the_word_till = words.index('до')
         except ValueError as exc:
             pass
 
@@ -594,35 +609,33 @@ def period_determiner(words_to_process: List[str],
     end_of_period: str = ''
 
     # указаны начало и конец периода с помощью слов "по" или "до",
-    if i:
-        begin_of_period, _ = date_determiner(words_to_process[:i])
-        _, end_of_period = date_determiner(words_to_process[i+1:])
+    if index_of_the_word_till != -1:
+        begin_of_period, _ = date_determiner(words[:index_of_the_word_till])
+        _, end_of_period = date_determiner(words[index_of_the_word_till + 1:])
 
         # в русском языке период можно выбрать еще вот как:
         # с 2 по 13 апреля 2021 - первый период номером дня,
         # а вторая дата в обучной форме.
         # Обрабатываем этот случай после КА
-        if (begin_of_period == 'error' or begin_of_period == '') and \
-                end_of_period != '' and end_of_period != 'error':
-            j: int = len(words_to_process[:i])
+        if (begin_of_period == ERROR_VALUE or begin_of_period == '') and \
+                end_of_period != '' and end_of_period != ERROR_VALUE:
+            j: int = len(words[:index_of_the_word_till])
             if j <= 2:
-                if words_to_process[j-1].isnumeric():
-                    d1 = int(words_to_process[j-1])
+                if words[j - 1].isnumeric():
+                    d1 = int(words[j - 1])
                     m = re.match(re_long_date_pattern, end_of_period)
                     if m:
                         d2 = int(m.group(1))
                         m2 = m.group(2)
                         y2 = m.group(3)
                         if d1 > d2:
-                            return 'error', 'error'
+                            return ERROR_VALUE, ERROR_VALUE
                         else:
                             begin_of_period = '{}.{}.{}'\
                                 .format(d1 if d1 > 9 else '0' + str(d1), m2, y2)
-
-
     # иначе имеем дело со словами, указывающих на единственную дату
     else:
-        begin_of_period, end_of_period = date_determiner(words_to_process)
+        begin_of_period, end_of_period = date_determiner(words)
 
     # дата начала не должна быть больше даты окончания периода
     if re.match(re_long_date_pattern, begin_of_period) \
@@ -630,38 +643,42 @@ def period_determiner(words_to_process: List[str],
         begin_date: datetime = datetime.strptime(begin_of_period, date_format)
         end_date: datetime = datetime.strptime(end_of_period, date_format)
         if begin_date > end_date:
-            return 'error', 'error'
+            return ERROR_VALUE, ERROR_VALUE
         else:
             # контроль максимального количества дней в выбранном периоде
             if max_days_in_period:
                 t: timedelta = end_date - begin_date
                 if t.days > max_days_in_period:
-                    return 'error', 'error'
+                    return ERROR_VALUE, ERROR_VALUE
             # контроль будущих дат
             if not future_days_allowed:
                 current_day: datetime = datetime.now()
                 if begin_date > current_day:
-                    return 'error', 'error'
+                    return ERROR_VALUE, ERROR_VALUE
                 if end_date > current_day:
                     end_of_period = format_date(current_day)
 
     return begin_of_period, end_of_period
 
 
-def date_determiner(words_to_process: List[str]) -> Tuple[Optional[str], Optional[str]]:
+def date_determiner(words: List[str]) -> Tuple[Optional[str], Optional[str]]:
     """
-    Функция определяет дату на основе переданных слов на русском языке
     Краеугольная функция всего модуля.
+    Функция определяет дату на основе переданных слов на русском языке.
+    Если в списке слов идет речь о конкретной дате,
+    то функция вернет кортеж из этой даты   - date1, date1
+    В случае если имеем дело с периодом, то - date1, date2
 
-    :param words_to_process:
-    :return: картеж дат в формате dd.mm.yyyy или error, error в случае ошибки
+    :param words: список слов, описывающих дату или период
+    :return: картеж дат в формате dd.mm.yyyy
+    или ERROR_VALUE, ERROR_VALUE в случае ошибки
     """
 
     state_machine = StateMachineForDateDetermining()
-    for word in words_to_process:
+    for word in words:
         state_machine.input(word)
         if state_machine.has_errors():
-            return 'error', 'error'
+            return ERROR_VALUE, ERROR_VALUE
 
     return state_machine.result
 

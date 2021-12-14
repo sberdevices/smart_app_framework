@@ -23,8 +23,11 @@ class CreateAppCommand(AppCommand):
 
     TEMPLATE_FOLDER = "template"
 
-    def __init__(self, extensions=".py"):
-        self.extensions = extensions
+    def __init__(self, extensions: tuple = None):
+        if extensions:
+            self.extensions = extensions
+        else:
+            self.extensions = (".py", ".yml")
 
     def execute(self, *args, **kwargs):
         app_name = args[0]

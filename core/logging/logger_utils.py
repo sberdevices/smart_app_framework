@@ -43,26 +43,28 @@ def _make_message(user=None, params=None, cls_name='', log_store_for=0):
     return params
 
 
-app_logger = logging.getLogger(log_const.APP_LOGGER_NAME)
+default_logger = logging.getLogger()
 
 
 def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_for=0):
     try:
         level_name = logging.getLevelName(level)
         current_frame = inspect.currentframe()
-        previous_frame = current_frame.f_back.f_locals
-        instance = previous_frame.get('self', None)
+        previous_frame = current_frame.f_back
+        module_name = previous_frame.f_globals["__name__"]
+        logger = logging.getLogger(module_name)
+        instance = previous_frame.f_locals.get('self', None)
         if instance is not None:
             params = _make_message(user, params, instance.__class__.__name__, log_store_for)
         else:
             params = _make_message(user, params, log_store_for=log_store_for)
 
-        app_logger.log(level_name, message, params, exc_info=exc_info)
+        logger.log(level_name, message, params, exc_info=exc_info)
     except timeout_decorator.TimeoutError:
         raise
     except:
-        app_logger.log(logging.getLevelName("ERROR"), "Failed to write a log. Exception occurred",
-                       params, exc_info=True)
+        default_logger.log(logging.getLevelName("ERROR"), "Failed to write a log. Exception occurred",
+                           params, exc_info=True)
 
 
 def log_classifier_result(classification_res: List[Dict[str, Union[str, float, bool]]], user,

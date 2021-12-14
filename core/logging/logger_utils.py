@@ -18,6 +18,44 @@ CLASS_NAME = "class_name"
 LOG_STORE_FOR = "log_store_for"
 
 
+class LoggerMessageCreator:
+    ART_NAMES = [
+        "channel", "type", "device_channel", "device_channel_version", "device_platform", "group",
+        "device_platform_version", "device_platform_client_type", "csa_profile_id", "test_deploy"
+    ]
+
+    @classmethod
+    def update_user_params(cls, user, params):
+        message = user.message
+        for name in cls.ART_NAMES:
+            param = getattr(message, name, None)
+            if param:
+                params[name] = param
+
+    @classmethod
+    def update_other_params(cls, user, params, cls_name='', log_store_for=0):
+        message_id, uuid, logging_uuid = None, None, None
+        if user:
+            message = user.message
+            message_id = message.incremental_id
+            uuid = user.id
+            logging_uuid = message.logging_uuid
+        params[UID_STR] = uuid
+        params[MESSAGE_ID_STR] = message_id
+        params[LOGGING_UUID] = logging_uuid
+        params[CLASS_NAME] = cls_name
+        params[LOG_STORE_FOR] = log_store_for
+
+    @classmethod
+    def make_message(cls, user=None, params=None, cls_name='', log_store_for=0):
+        params = params or {}
+        if user:
+            cls.update_user_params(user, params)
+        params = LogMasker.mask_structure(params, LogMasker.percent_fix)
+        cls.update_other_params(user, params, cls_name, log_store_for)
+        return params
+
+
 def _make_message(user=None, params=None, cls_name='', log_store_for=0):
     message_id = None
     uuid = None
@@ -44,6 +82,11 @@ def _make_message(user=None, params=None, cls_name='', log_store_for=0):
 
 
 default_logger = logging.getLogger()
+message_creator = None
+
+
+def get_message_creator() -> LoggerMessageCreator:
+    return message_creator if message_creator else LoggerMessageCreator
 
 
 def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_for=0):
@@ -55,9 +98,9 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         logger = logging.getLogger(module_name)
         instance = previous_frame.f_locals.get('self', None)
         if instance is not None:
-            params = _make_message(user, params, instance.__class__.__name__, log_store_for)
+            params = get_message_creator().make_message(user, params, instance.__class__.__name__, log_store_for)
         else:
-            params = _make_message(user, params, log_store_for=log_store_for)
+            params = get_message_creator().make_message(user, params, log_store_for=log_store_for)
 
         logger.log(level_name, message, params, exc_info=exc_info)
     except timeout_decorator.TimeoutError:

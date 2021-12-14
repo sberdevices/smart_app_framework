@@ -1,6 +1,7 @@
 import logging.config
 from collections import namedtuple
 
+from core.logging import logger_utils
 from smart_kit.configs.logger_config import LOGGING_CONFIG
 from smart_kit.configs.logger_config import LoggerConfig
 from smart_kit.management.base import HelpCommand
@@ -15,6 +16,7 @@ def init_logger(app_config):
     logger_config = LoggerConfig(app_config.CONFIGS_PATH)
     logger_config.init()
     config = logger_config[LOGGING_CONFIG]
+    logger_utils.message_creator = app_config.LOGGER_MESSAGE_CREATOR
     logging.config.dictConfig(config)
 
 

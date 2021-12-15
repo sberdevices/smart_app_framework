@@ -56,31 +56,6 @@ class LoggerMessageCreator:
         return params
 
 
-def _make_message(user=None, params=None, cls_name='', log_store_for=0):
-    message_id = None
-    uuid = None
-    logging_uuid = None
-    params = params or {}
-    if user:
-        message = user.message
-        message_id = message.incremental_id
-        uuid = user.id
-        logging_uuid = message.logging_uuid
-        atr_names = ["channel", "type", "device_channel", "device_channel_version", "device_platform", "group",
-                     "device_platform_version", "device_platform_client_type", "csa_profile_id", "test_deploy"]
-        for name in atr_names:
-            param = getattr(message, name, None)
-            if param:
-                params[name] = param
-    params = LogMasker.mask_structure(params, LogMasker.percent_fix)
-    params[UID_STR] = uuid
-    params[MESSAGE_ID_STR] = message_id
-    params[LOGGING_UUID] = logging_uuid
-    params[CLASS_NAME] = cls_name
-    params[LOG_STORE_FOR] = log_store_for
-    return params
-
-
 default_logger = logging.getLogger()
 message_creator = None
 

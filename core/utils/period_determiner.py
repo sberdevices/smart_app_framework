@@ -20,6 +20,7 @@ re_long_date_pattern = '^([0-9]{1,2})\\.([0-9]{1,2})\\.([0-9]{4})$'
 ERROR_VALUE = 'error'
 UNRECOGNIZED_DATE_VALUE = ''
 
+
 class IncorrectDateException(Exception):
     pass
 

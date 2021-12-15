@@ -10,7 +10,6 @@ from core.utils.period_determiner import period_determiner
 from core.utils.period_determiner import extract_words_describing_period
 
 
-__author__ = 'out-nurmanov-as'
 current_date: datetime = datetime.now()
 
 

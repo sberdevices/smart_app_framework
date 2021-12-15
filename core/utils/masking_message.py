@@ -12,7 +12,7 @@ class Counter(object):
     def __init__(self):
         self.items = 0
         self.collections = 0
-        self.max_depth = 1
+        self.max_depth = 0
 
 
 def luhn_checksum(card_number: str) -> bool:
@@ -68,22 +68,23 @@ def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Unio
             if value_is_collection:
                 # если глубина не превышена, идем внутрь с включенным флагом и уменьшаем глубину
                 if masking_on and deep_level > 0:
-                    masking(data[key], masking_fields, deep_level - 1, masking_on=True)
+                    masking(data[key], masking_fields, deep_level - 1, mask_available_depth, masking_on=True)
                 elif key in masking_fields and masking_fields[key] > 0:
-                    masking(data[key], masking_fields, masking_fields[key], masking_on=True)
+                    masking(data[key], masking_fields, masking_fields[key] - 1, mask_available_depth, masking_on=True)
                 else:
                     counter = deep_mask(data[key], depth=1, available_depth=mask_available_depth)
-                    data[
-                        key] = f'*items-{counter.items}*collections-{counter.collections}*maxdepth-{counter.max_depth}*'
+                    data[key] = f'*items-{counter.items}*collections-{counter.collections}*maxdepth-{counter.max_depth}*'
             elif data[key] is not None:  # в случае простого элемента. маскируем как ***
                 data[key] = '***'
         elif card_masking_on and isinstance(data[key], str):  # проверка на реквизиты карты
             data[key] = card_regular.sub(card_sub_func, data[key])
         elif key in CARD_MASKING_FIELDS:  # проверка на реквизиты карты
-            masking(data[key], masking_fields, deep_level, masking_on=masking_on, card_masking_on=True)
+            masking(data[key], masking_fields, deep_level, mask_available_depth, masking_on=False,
+                    card_masking_on=True)
         elif value_is_collection:
             # если маскировка не нужна уходим глубже без включенного флага
-            masking(data[key], masking_fields, deep_level, masking_on=False, card_masking_on=card_masking_on)
+            masking(data[key], masking_fields, deep_level, mask_available_depth,
+                    masking_on=False, card_masking_on=card_masking_on)
 
 
 def deep_mask(data: Union[MutableMapping, Iterable], depth: int, available_depth: int = -1,
@@ -113,7 +114,7 @@ def deep_mask(data: Union[MutableMapping, Iterable], depth: int, available_depth
         if check_value_is_collection(data[key]):
             counter.collections += 1
             # если встречаем коллекцию и глубина не превышена идем внутрь
-            if depth < available_depth or depth == -1:
+            if depth < available_depth or available_depth == -1:
                 deep_mask(data[key], depth + 1, available_depth, counter)
         else:
             # если элемент простой крутим счетчик простых элементов

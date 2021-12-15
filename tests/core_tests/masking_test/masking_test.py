@@ -95,7 +95,7 @@ class MaskingTest(TestCase):
         message = SmartAppFromMessage(value=json_input_msg, headers=[])
 
         masked_message = json.loads(message.masked_value)
-        result_message = input_msg = {
+        result_message = {
             "messageId": 2,
             "uuid": {"userChannel": "B2C", "epkId": "***", "sub": "sub"},
             "payload": {

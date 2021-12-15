@@ -1,13 +1,11 @@
 """
 Модуль для модульного тестирования работы period_determiner
-
-Автор: Нурманов Алишер
-Дата: октябрь 2021 года
 """
 
 from typing import Optional
 from datetime import datetime, timedelta
 from core.utils.period_determiner import ERROR_VALUE
+from core.utils.period_determiner import UNRECOGNIZED_DATE_VALUE
 from core.utils.period_determiner import period_determiner
 from core.utils.period_determiner import extract_words_describing_period
 
@@ -213,7 +211,7 @@ def test_period_determiner_14():
         'sdfdasq0',
     ]
     result = period_determiner(words_to_process)
-    assert result == ('', '')
+    assert result == (UNRECOGNIZED_DATE_VALUE, UNRECOGNIZED_DATE_VALUE)
 
 
 def test_period_determiner_15():

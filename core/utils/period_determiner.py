@@ -16,7 +16,9 @@ date_format: str = '%d.%m.%Y'
 re_shortest_date_pattern = '^([0-9]{1,2})\\.([0-9]{1,2})$'
 re_short_date_pattern = '^([0-9]{1,2})\\.([0-9]{1,2})\\.([0-9]{2})$'
 re_long_date_pattern = '^([0-9]{1,2})\\.([0-9]{1,2})\\.([0-9]{4})$'
+# константы для ошибки и не распознанной даты
 ERROR_VALUE = 'error'
+UNRECOGNIZED_DATE_VALUE = ''
 
 class IncorrectDateException(Exception):
     pass
@@ -81,6 +83,13 @@ class StateMachineForDateDetermining:
 
     @property
     def result(self) -> Tuple[Optional[str], Optional[str]]:
+        """
+        Возвращает результат работы конечного автомата:
+        - кортеж из даты начала и окончания периода в случае успеха;
+        - в случае ошибки одно из значений или оба могут быть ERROR_VALUE;
+        - если дату не удалось распознать вернет пару UNRECOGNIZED_DATE_VALUE
+        """
+
         if self._is_error:
             return ERROR_VALUE, ERROR_VALUE
 
@@ -172,7 +181,7 @@ class StateMachineForDateDetermining:
                 return format_date(self._date_period[0]), \
                        format_date(self._date_period[1])
 
-        return '', ''
+        return UNRECOGNIZED_DATE_VALUE, UNRECOGNIZED_DATE_VALUE
 
     def input(self, word: str):
         """
@@ -489,18 +498,14 @@ def format_date(date: Optional[datetime]) -> str:
 
 
 def safe_datetime(year: int, month: int, day: int) -> Optional[datetime]:
-    # исправление ошибки для февраля високосного года:
-    # в невисокрсный год (не кратный 4) не может быть дня 29 февраля
-    if year % 4 != 0 and month == 2 and day == 29:
-        return datetime(year=year, month=month, day=28)
-    # для всех остальных случаев в случае
-    # при передачи некорректой комбинации года, месяца и дня
-    # будем возвращать None
-    else:
-        try:
-            return datetime(year=year, month=month, day=day)
-        except ValueError as exc:
-            raise IncorrectDateException('Некорректная дата') from exc
+    """
+    Строит datetime из комбинации года, месяца и дня.
+    Возбуждает исключение IncorrectDateException, в случае некорректной даты
+    """
+    try:
+        return datetime(year=year, month=month, day=day)
+    except ValueError as exc:
+        raise IncorrectDateException('Некорректная дата') from exc
 
 
 def match_word_with_list(word_to_check: str,
@@ -588,8 +593,9 @@ def period_determiner(words: List[str],
     :param words: список слово в нижнем регистре
     :param max_days_in_period: максимальное количество дней в периоде
     :param future_days_allowed: нужно ли ограничивать период сегодняшним днем
-    :return: кортеж строк дат в формате dd.mm.yyyy,
-    если одна из них или обе ошибочные, то ERROR_VALUE
+    :return: кортеж дат в виде строки формата dd.mm.yyyy,
+    если одна из них дата или обе ошибочные, то пара из ERROR_VALUE,
+    а также пара из UNRECOGNIZED_DATE_VALUE - если дату не удалось распознать
     """
 
     # индекс слова "по" или "до" в списке переданных слов
@@ -605,8 +611,8 @@ def period_determiner(words: List[str],
         except ValueError as exc:
             pass
 
-    begin_of_period: str = ''
-    end_of_period: str = ''
+    begin_of_period: str = UNRECOGNIZED_DATE_VALUE
+    end_of_period: str = UNRECOGNIZED_DATE_VALUE
 
     # указаны начало и конец периода с помощью слов "по" или "до",
     if index_of_the_word_till != -1:

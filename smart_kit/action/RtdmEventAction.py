@@ -1,9 +1,12 @@
-from core.basic_models.actions.string_actions import NodeAction
 from abc import ABCMeta, abstractmethod
-from typing import Optional, Type, TypeVar, Iterable
+from typing import Optional, Type, TypeVar, Iterable, Dict, Any, Union, List
 
 from attr import dataclass
 
+from core.basic_models.actions.basic_actions import Action
+from core.model.base_user import BaseUser
+from core.text_preprocessing.base import BaseTextPreprocessingResult
+from core.basic_models.actions.command import Command
 
 TComponent = TypeVar('TComponent')
 
@@ -41,13 +44,6 @@ class ISession(metaclass=ABCMeta):
 
         :return: TComponent
         """
-
-
-
-class IAction(metaclass=ABCMeta):
-
-    @abstractmethod
-    async def run(self, session: ISession): ...
 
 
 @dataclass(slots=True)
@@ -187,8 +183,7 @@ class RtdmService:
         return spec.load(RtdmInfoResponse, response["data"])
 
 
-@dataclass(slots=True)
-class RtdmEventAction(IAction):
+class RtdmEventAction(Action):
     """
     Экшен обратного потока, для отправки пользовательских событий в RTDM.
 
@@ -202,8 +197,13 @@ class RtdmEventAction(IAction):
         }
     """
 
-    class Meta:
-        name = "rtdm_info_event_action"
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
+        super(RtdmEventAction, self).__init__(items, id)
+        self.notification_id: str = items["notification_id"]
+        self.feedback_status: str = items["feedback_status"]
+        if self.feedback_status not in self.ALLOWED_FEEDBACK_STATUSES:
+            raise
+        self.description: str = items.get("description")
 
     ALLOWED_FEEDBACK_STATUSES = {"FS", "QS", "FA", "QA", "FI", "QI"}
 
@@ -213,25 +213,36 @@ class RtdmEventAction(IAction):
     feedback_status: UnifiedTemplate
     description: Optional[UnifiedTemplate] = None
 
-    async def run(self, session: ISession):
-        rtdm_info = session.get_component(RtdmData)
-        params = collect_template_params(session)
-        notification_id = self.notification_id.render(params)
-        offer_or_service = rtdm_info.get_item(notification_id=notification_id)
-        if offer_or_service:
-            description = self.description.render(params) if self.description else None
-            feedback_status = self.feedback_status.render(params)
-            if feedback_status not in RtdmEventAction.ALLOWED_FEEDBACK_STATUSES:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
+        """
+        Получ
+        До этого принимались аргументы self, session: ISession
+
+        :param user:
+        :param text_preprocessing_result:
+        :param params:
+        :return:
+        """
+        rtdm_info = session.get_component(RtdmData)  # получить объект с offers: List[RtdmInfoOffer], services:
+        # List[RtdmInfoService], last_updated: float, lifetime: float
+        params = collect_template_params(session)  # получить все компоненты сессии типа ITemplateParametersProvider
+        notification_id = self.notification_id.render(params)  # вставить невставленные Jinja-вставки в notification_id
+        offer_or_service = rtdm_info.get_item(notification_id=notification_id)  #
+        if offer_or_service:  #
+            description = self.description.render(params) if self.description else None  #
+            feedback_status = self.feedback_status.render(params)  #
+            if feedback_status not in RtdmEventAction.ALLOWED_FEEDBACK_STATUSES:  #
                 raise ValueError(
                     f'Invalid RTDM event response. '
                     f'Feedback status should be one of '
                     f'{RtdmEventAction.ALLOWED_FEEDBACK_STATUSES}'
-                )
-            request = session.get_component(IRequest)
+                )  #
+            request = session.get_component(IRequest)  #
             await self.service.send_notification_direct(
                 request=request,
                 notification_id=notification_id,
                 notification_code=offer_or_service.get_notification_code(),
                 feedback_status=feedback_status,
                 description=description
-            )
+            )  #

@@ -237,10 +237,20 @@ class RtdmEventAction(Action):
                     f'{RtdmEventAction.ALLOWED_FEEDBACK_STATUSES}'
                 )  # кинуть ошибку если фидбек не валиден
             request = session.get_component(IRequest)  # получить запрос из сессии
-            await self.service.send_notification_direct(
-                request=request,
-                notification_id=notification_id,
-                notification_code=offer_or_service.get_notification_code(),
-                feedback_status=feedback_status,
-                description=description
-            )  # сформировать сообщение (нотификейшн) и отправить в Real-Time Decision Manager
+            # сформировать сообщение (нотификейшн) и отправить в Real-Time Decision Manager
+            # original type: RtdmEventMessage
+            body = {
+                "messageId": request.get_data().message_id,
+                "userId": request.get_data().uuid.userId,
+                "userChannel": request.get_data().uuid.userChannel,
+                "notificationId": notification_id,
+                "notificationCode": offer_or_service.get_notification_code(),
+                "feedbackStatus": feedback_status,
+                "description": description
+            }
+            # original type: TransportMessage
+            transport_message = {
+                "key": request.get_data().key,
+                "body": body
+            }
+            await self.direct_transport_sender.send(transport_message)  # could be KafkaSender.send

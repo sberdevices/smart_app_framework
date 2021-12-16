@@ -43,6 +43,12 @@ def check_value_is_collection(value):
 
 def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Union[MutableMapping, Iterable]] = None,
             depth_level: int = 2, mask_available_depth: int = -1):
+    """
+    :param data: коллекция для маскирования приватных данных
+    :param masking_fields: поля для обязательной маскировки независимо от уровня
+    :param depth_level: глубина сохранения структуры маскируемого поля
+    :param mask_available_depth: глубина глубокой маскировки полей без сохранения структуры (см ниже)
+    """
     if masking_fields is None:
         masking_fields = DEFAULT_MASKING_FIELDS
 
@@ -55,14 +61,7 @@ def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Unio
 def _masking(data: Union[MutableMapping, Iterable], masking_fields: Union[MutableMapping, Iterable],
              depth_level: int = 2, mask_available_depth: int = -1, masking_on: bool = False,
              card_masking_on: bool = False):
-    """
-    :param data: коллекция для маскирования приватных данных
-    :param masking_fields: поля для обязательной маскировки независимо от уровня
-    :param depth_level: глубина сохранения структуры маскируемого поля
-    :param mask_available_depth: глубина глубокой маскировки полей без сохранения структуры (см ниже)
-    :param masking_on: флаг о включенной выше маскировке, в случае маскировки вложенных полей
-    :param card_masking_on: флаг о вкюченном маскировании карт
-    """
+
     # тут в зависимости от листа или словаря создаем итератор
     if isinstance(data, MutableMapping):
         key_gen = data.items()

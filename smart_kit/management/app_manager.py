@@ -16,7 +16,6 @@ def init_logger(app_config):
     logger_config = LoggerConfig(app_config.CONFIGS_PATH)
     logger_config.init()
     config = logger_config[LOGGING_CONFIG]
-    logger_utils.message_creator = app_config.LOGGER_MESSAGE_CREATOR
     logging.config.dictConfig(config)
 
 

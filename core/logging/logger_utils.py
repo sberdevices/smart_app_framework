@@ -57,11 +57,6 @@ class LoggerMessageCreator:
 
 
 default_logger = logging.getLogger()
-message_creator = None
-
-
-def get_message_creator() -> LoggerMessageCreator:
-    return message_creator if message_creator else LoggerMessageCreator
 
 
 def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_for=0):
@@ -72,10 +67,15 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         module_name = previous_frame.f_globals["__name__"]
         logger = logging.getLogger(module_name)
         instance = previous_frame.f_locals.get('self', None)
+
+        from smart_kit.configs import get_app_config
+        app_config = get_app_config()
+        message_maker = app_config.LOGGER_MESSAGE_CREATOR
+
         if instance is not None:
-            params = get_message_creator().make_message(user, params, instance.__class__.__name__, log_store_for)
+            params = message_maker.make_message(user, params, instance.__class__.__name__, log_store_for)
         else:
-            params = get_message_creator().make_message(user, params, log_store_for=log_store_for)
+            params = message_maker.make_message(user, params, log_store_for=log_store_for)
 
         logger.log(level_name, message, params, exc_info=exc_info)
     except timeout_decorator.TimeoutError:

@@ -28,7 +28,7 @@ setup(
         "dawg==0.8.0",
         "dill==0.3.3",
         "ics==0.6",
-        "jaeger_client==4.3.0",
+        "jaeger_client==4.6.0",
         "Jinja2==2.10.1",
         "keras==2.6.0",
         "lazy",
@@ -53,7 +53,8 @@ setup(
         "tensorflow==2.6.0",
         "timeout-decorator==0.4.1",
         "tqdm",
-        "Twisted"
+        "Twisted",
+        "pyinstaller=4.5",
     ],
     classifiers=[
         "Programming Language :: Python :: 3.6",

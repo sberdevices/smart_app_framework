@@ -201,8 +201,6 @@ class RtdmEventAction(Action):
         super(RtdmEventAction, self).__init__(items, id)
         self.notification_id: str = items["notification_id"]
         self.feedback_status: str = items["feedback_status"]
-        if self.feedback_status not in self.ALLOWED_FEEDBACK_STATUSES:
-            raise
         self.description: str = items.get("description")
 
     ALLOWED_FEEDBACK_STATUSES = {"FS", "QS", "FA", "QA", "FI", "QI"}
@@ -228,21 +226,21 @@ class RtdmEventAction(Action):
         # List[RtdmInfoService], last_updated: float, lifetime: float
         params = collect_template_params(session)  # получить все компоненты сессии типа ITemplateParametersProvider
         notification_id = self.notification_id.render(params)  # вставить невставленные Jinja-вставки в notification_id
-        offer_or_service = rtdm_info.get_item(notification_id=notification_id)  #
-        if offer_or_service:  #
-            description = self.description.render(params) if self.description else None  #
-            feedback_status = self.feedback_status.render(params)  #
-            if feedback_status not in RtdmEventAction.ALLOWED_FEEDBACK_STATUSES:  #
+        offer_or_service = rtdm_info.get_item(notification_id=notification_id)  # получить оффер или сервис по айди
+        if offer_or_service:  # если оффер или сервис был получен
+            description = self.description.render(params) if self.description else None  # сформировать описание акшна
+            feedback_status = self.feedback_status.render(params)  # срендерить джинджу фидбек статуса
+            if feedback_status not in RtdmEventAction.ALLOWED_FEEDBACK_STATUSES:  # проверить валидность фидбек статуса
                 raise ValueError(
                     f'Invalid RTDM event response. '
                     f'Feedback status should be one of '
                     f'{RtdmEventAction.ALLOWED_FEEDBACK_STATUSES}'
-                )  #
-            request = session.get_component(IRequest)  #
+                )  # кинуть ошибку если фидбек не валиден
+            request = session.get_component(IRequest)  # получить запрос из сессии
             await self.service.send_notification_direct(
                 request=request,
                 notification_id=notification_id,
                 notification_code=offer_or_service.get_notification_code(),
                 feedback_status=feedback_status,
                 description=description
-            )  #
+            )  # сформировать сообщение (нотификейшн) и отправить в Real-Time Decision Manager

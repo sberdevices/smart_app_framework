@@ -23,6 +23,7 @@ from core.unified_template.unified_template import UnifiedTemplate
 from core.utils.exception_handlers import exc_handler
 from core.utils.pickle_copy import pickle_deepcopy
 from core.utils.stats_timer import StatsTimer
+from core.utils.period_determiner import extract_words_describing_period, period_determiner
 from scenarios.user.user_model import User
 
 field_filler_description = Registered()
@@ -370,6 +371,61 @@ class IntersectionFieldFiller(FieldFillerDescription):
                     return key
         if self.default:
             return self.default
+
+
+class DatePeriodFiller(FieldFillerDescription):
+    """
+    usage:
+      "вытащить_период_из_сообщения": {
+        "fields": {
+          "period": {
+            "required": true,
+            "available": true,
+            "filler": {
+              "type": "date_period_filler",
+              "max_days_in_period": 365,
+              "future_days_allowed": false
+            }
+          }
+        }
+      },
+    """
+
+    def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str] = None) -> None:
+        super(DatePeriodFiller, self).__init__(items, id)
+        self.max_days_in_period = items.get('max_days_in_period', None)
+        self.future_days_allowed = items.get('future_days_allowed', False)
+
+    def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User,
+                params: Optional[Dict[str, Union[str, float, int]]] = None) -> Dict:
+        if text_preprocessing_result\
+            .words_tokenized_set\
+            .intersection(
+                [
+                    'TIME_DATE_TOKEN',
+                    'TIME_DATE_INTERVAL_TOKEN',
+                    'PERIOD_TOKEN'
+                ]):
+            words_from_intent: List[Optional[str]] = text_preprocessing_result.human_normalized_text.lower().split()
+        else:
+            words_from_intent: List[Optional[str]] = text_preprocessing_result.original_text.lower().split()
+
+        words_to_process: List[Optional[str]] = extract_words_describing_period(words_from_intent)
+        begin_str, end_str = period_determiner(words_to_process, self.max_days_in_period, self.future_days_allowed)
+
+        is_determined: bool = False
+        is_error: bool = False
+        if not (begin_str == '' or begin_str == 'error'
+            or end_str == '' or end_str == 'error'):
+            is_determined = True
+
+        if begin_str == 'error' or end_str == 'error':
+            is_error = True
+
+        user.variables.set('date_period__is_determined', str(is_determined))
+        user.variables.set('date_period__is_error', str(is_error))
+        user.variables.set('date_period__begin_date', begin_str)
+        user.variables.set('date_period__end_date', end_str)
 
 
 class IntersectionOriginalTextFiller(FieldFillerDescription):

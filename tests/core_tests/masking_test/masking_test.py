@@ -197,3 +197,28 @@ class MaskingTest(TestCase):
         }
 
         self.assertEqual(masked_message, result_message)
+
+    def test_8(self):
+        input_msg = {
+            "messageId": 2,
+            "uuid": {"userChannel": "B2C", "epkId": ["1234567890123456", "secret", {"key1": 123, "key2": 456}], "sub": "sub"},
+            "payload": {
+                "message": "Номер карты1234567890123456 вот",
+                "profileId": [123, 456]
+            }
+        }
+
+        json_input_msg = json.dumps(input_msg, ensure_ascii=False)
+        message = SmartAppFromMessage(value=json_input_msg, headers=[])
+
+        masked_message = json.loads(message.masked_value)
+        result_message = {
+            "messageId": 2,
+            "uuid": {"userChannel": "B2C", "epkId": ['***', '***', {'key1': '***', 'key2': '***'}], "sub": "sub"},
+            "payload": {
+                "message": "Номер карты************3456 вот",
+                "profileId": ['***', '***']
+            }
+        }
+
+        self.assertEqual(masked_message, result_message)

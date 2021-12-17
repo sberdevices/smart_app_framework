@@ -7,6 +7,8 @@ from core.basic_models.actions.basic_actions import Action
 from core.model.base_user import BaseUser
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.basic_models.actions.command import Command
+from core.message.message_constants import MSG_USERID_KEY
+from core.message.message_constants import MSG_USERCHANNEL_KEY
 
 TComponent = TypeVar('TComponent')
 
@@ -211,6 +213,7 @@ class RtdmEventAction(Action):
     feedback_status: UnifiedTemplate
     description: Optional[UnifiedTemplate] = None
 
+    @preprocess_fields(self, user, text_preprocessing_result, params)
     async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         """
@@ -224,25 +227,29 @@ class RtdmEventAction(Action):
         """
         rtdm_info = session.get_component(RtdmData)  # получить объект с offers: List[RtdmInfoOffer], services:
         # List[RtdmInfoService], last_updated: float, lifetime: float
-        params = collect_template_params(session)  # получить все компоненты сессии типа ITemplateParametersProvider
+        # params = collect_template_params(session)  # получить все компоненты сессии типа ITemplateParametersProvider
+        if params is None:
+            params = user.parametrizer.collect(text_preprocessing_result)
+        else:
+            params.update(user.parametrizer.collect(text_preprocessing_result))
         notification_id = self.notification_id.render(params)  # вставить невставленные Jinja-вставки в notification_id
         offer_or_service = rtdm_info.get_item(notification_id=notification_id)  # получить оффер или сервис по айди
         if offer_or_service:  # если оффер или сервис был получен
             description = self.description.render(params) if self.description else None  # сформировать описание акшна
-            feedback_status = self.feedback_status.render(params)  # срендерить джинджу фидбек статуса
+            feedback_status = self.feedback_status.render(params)  # срендерить джинджу фидбек статуса  |  все ли акшны во фрейме рендрят аргументы?
             if feedback_status not in RtdmEventAction.ALLOWED_FEEDBACK_STATUSES:  # проверить валидность фидбек статуса
                 raise ValueError(
                     f'Invalid RTDM event response. '
                     f'Feedback status should be one of '
                     f'{RtdmEventAction.ALLOWED_FEEDBACK_STATUSES}'
                 )  # кинуть ошибку если фидбек не валиден
-            request = session.get_component(IRequest)  # получить запрос из сессии
+            # request = session.get_component(IRequest)  # получить запрос из сессии
             # сформировать сообщение (нотификейшн) и отправить в Real-Time Decision Manager
             # original type: RtdmEventMessage
             body = {
-                "messageId": request.get_data().message_id,
-                "userId": request.get_data().uuid.userId,
-                "userChannel": request.get_data().uuid.userChannel,
+                "messageId": user.message.as_dict[user.message.MESSAGE_ID],  # original: request.get_data().message_id
+                "userId": user.message.as_dict.uuid[MSG_USERID_KEY],  # original: request.get_data().uuid.userId
+                "userChannel": user.message.as_dict.uuid[MSG_USERCHANNEL_KEY],  # original: request.get_data().uuid.userChannel
                 "notificationId": notification_id,
                 "notificationCode": offer_or_service.get_notification_code(),
                 "feedbackStatus": feedback_status,
@@ -250,7 +257,7 @@ class RtdmEventAction(Action):
             }
             # original type: TransportMessage
             transport_message = {
-                "key": request.get_data().key,
+                "key": user.message.as_dict[user.message.MESSAGE_NAME],  # original: request.get_data().key  |  correct replacement?
                 "body": body
             }
             await self.direct_transport_sender.send(transport_message)  # could be KafkaSender.send

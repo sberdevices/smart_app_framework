@@ -62,8 +62,9 @@ class BasicField:
         self._value = value
         dict_value = {self.description.name: copy.deepcopy(value)}
         masking(dict_value, self._masking_fields)
-        message = "BasicField: %(description_id)s filled by value: %(field_value)s"
+        message = "%(class_name)s: %(description_id)s filled by value: %(field_value)s"
         params = {log_const.KEY_NAME: log_const.FILLER_RESULT_VALUE,
+                  "class_name": self.__class__.__name__,
                   "description_id": self.description.id,
                   "field_value": str(dict_value[self.description.name])}
         log(message, None, params)
@@ -116,14 +117,7 @@ class QuestionField(BasicField):
         return filled
 
     def _set_value(self, value):
-        self._value = value
-        dict_value = {self.description.name: copy.deepcopy(value)}
-        masking(dict_value, self._masking_fields)
-        message = "Field: %(description_id)s filled by value: %(field_value)s"
-        params = {log_const.KEY_NAME: log_const.FILLER_RESULT_VALUE,
-                  "description_id": self.description.id,
-                  "field_value": str(dict_value[self.description.name])}
-        log(message, None, params)
+        super()._set_value(value)
         if self.description.need_save_context:
             self._user.last_fields[self.description.id].value = value
             self._user.last_fields[self.description.id].set_remove_time(self._lifetime)

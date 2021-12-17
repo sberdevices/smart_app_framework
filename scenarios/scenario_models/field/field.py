@@ -49,10 +49,13 @@ class BasicField:
     def valid(self):
         return self.value is not None or not self.description.required
 
+    def is_fill_need(self, value, origin_value):
+        return value is not None
+
     def fill(self, origin_value):
         filled = False
         value = origin_value if origin_value is not None else self.description.default_value
-        if value is not None:
+        if self.is_fill_need(value, origin_value):
             self._set_value(value)
             self.reset_available()
             filled = True
@@ -104,17 +107,10 @@ class QuestionField(BasicField):
                 return prev_value
         return self.description.default_value
 
-    def fill(self, origin_value):
-        filled = False
-        value = origin_value if origin_value is not None else self.default_value
+    def is_fill_need(self, value, origin_value):
         check_new_field_value = self._value != value and origin_value is not None
         can_set = value is not None and (self._value is None or check_new_field_value)
-
-        if self.available and can_set:
-            self._set_value(value)
-            self.reset_available()
-            filled = True
-        return filled
+        return self.available and can_set
 
     def _set_value(self, value):
         super()._set_value(value)

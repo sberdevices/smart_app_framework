@@ -1,6 +1,9 @@
 import random
 from typing import Dict, Any
+from lazy import lazy
+
 from core.model.base_user import BaseUser as User
+from core.unified_template.unified_template import UnifiedTemplate
 
 
 class ReplySelector:
@@ -25,6 +28,7 @@ class ReplySelector:
             f".{self.character_key}",
             ""
         ]
+        self._user = user
 
     def get_text_by_key(self, bundle_name: str, reply_key="") -> str:
         result = ""
@@ -37,7 +41,9 @@ class ReplySelector:
                 if reply_list:
                     break
             if reply_list:
-                result = random.choice(reply_list)
+                params = self._user.parametrizer.collect()  # TODO give run-time action parameters to collect call
+                result_str = random.choice(reply_list)
+                result = UnifiedTemplate(result_str).render(params)
             else:
                 raise KeyError("Key not found")
         return result

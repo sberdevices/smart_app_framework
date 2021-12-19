@@ -499,7 +499,7 @@ class RequirementTest(unittest.TestCase):
         req = IntersectionWithTokensSetRequirement({"input_words": ["погода", "время"]})
 
         text_preprocessing_result = Mock()
-        text_preprocessing_result.raw = {"tokenized_elements_list": [
+        text_preprocessing_result.raw = {"tokenized_elements_list_pymorphy": [
             {"text": "прогноз", "grammem_info": {
                 "animacy": "inan", "case": "acc", "gender": "masc", "number": "sing", "raw_gram_info":
                     "animacy=inan|case=acc|gender=masc|number=sing", "part_of_speech": "NOUN"}, "lemma": "прогноз"},
@@ -521,7 +521,7 @@ class RequirementTest(unittest.TestCase):
         req = IntersectionWithTokensSetRequirement({"input_words": ["время"]})
 
         text_preprocessing_result = Mock()
-        text_preprocessing_result.raw = {"tokenized_elements_list": [
+        text_preprocessing_result.raw = {"tokenized_elements_list_pymorphy": [
             {"text": "прогноз", "grammem_info": {
                 "animacy": "inan", "case": "acc", "gender": "masc", "number": "sing", "raw_gram_info":
                     "animacy=inan|case=acc|gender=masc|number=sing", "part_of_speech": "NOUN"}, "lemma": "прогноз"},

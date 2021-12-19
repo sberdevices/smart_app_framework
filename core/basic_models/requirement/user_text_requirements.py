@@ -52,7 +52,7 @@ class IntersectionWithTokensSetRequirement(NormalizedInputWordsRequirement):
     def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
               params: Dict[str, Any] = None) -> bool:
         words_normalized_set = set([
-            token["lemma"] for token in text_preprocessing_result.raw["tokenized_elements_list"]
+            token["lemma"] for token in text_preprocessing_result.raw["tokenized_elements_list_pymorphy"]
             if not token.get("token_type") == "SENTENCE_ENDPOINT_TOKEN"
         ])
         result = bool(self.normalized_input_words.intersection(words_normalized_set))

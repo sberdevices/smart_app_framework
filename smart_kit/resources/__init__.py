@@ -88,6 +88,8 @@ from scenarios.user.preprocessing_messages.preprocessing_messages_description im
 from smart_kit.action.http import HTTPRequestAction
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
 
+from core.db_adapter.aioredis_sentinel_adapter import AIORedisSentinelAdapter
+
 
 class SmartAppResources(BaseConfig):
     def __init__(self, source, references_path, settings):
@@ -199,6 +201,7 @@ class SmartAppResources(BaseConfig):
         ffd.field_filler_description["regexp_string_operations"] = ffd.RegexpAndStringOperationsFieldFiller
         ffd.field_filler_description["requirement"] = cffd.RequirementFiller
         ffd.field_filler_description["user_id"] = ffd.UserIdFiller
+        ffd.field_filler_description["date_period_filler"] = ffd.DatePeriodFiller
 
     def init_scenarios(self):
         scenarios[None] = BaseScenario
@@ -382,6 +385,7 @@ class SmartAppResources(BaseConfig):
         db_adapters["memory"] = MemoryAdapter
         db_adapters["redis"] = RedisAdapter
         db_adapters["aioredis"] = AIORedisAdapter
+        db_adapters["aioredis_sentinel"] = AIORedisSentinelAdapter
 
     def init_classifiers(self):
         classifiers[None] = Classifier

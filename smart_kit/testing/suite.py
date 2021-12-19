@@ -16,7 +16,7 @@ from smart_kit.utils.diff import partial_diff
 
 
 def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings: Settings, user_cls: type,
-                 parametrizer_cls: type, from_msg_cls: type, storaged_predefined_fields: Dict[str, Any],
+                 parametrizer_cls: type, from_msg_cls: type, test_case_cls: type, storaged_predefined_fields: Dict[str, Any],
                  csv_file_callback: Optional[Callable[[str], Callable[[Any], None]]],
                  interactive: bool = False) -> Tuple[int, int]:
     test_file_path = os.path.join(path, file)
@@ -34,7 +34,7 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
             csv_case_callback = csv_file_callback(test_case)
         else:
             csv_case_callback = None
-        if TestCase(
+        if test_case_cls(
                 app_model,
                 settings,
                 user_cls,
@@ -119,6 +119,7 @@ class TestSuite:
                     self.app_config.USER,
                     self.app_config.PARAMETRIZER,
                     self.app_config.FROM_MSG,
+                    self.app_config.TEST_CASE,
                     self.storaged_predefined_fields,
                     csv_file_callback
                 )
@@ -149,18 +150,18 @@ class TestCase:
         success = True
 
         app_callback_id = None
-        for index, message in enumerate(self.messages):
+        for index, message_ in enumerate(self.messages):
             print('Шаг', index)
             if index and self.interactive:
                 print("Нажмите ENTER, чтобы продолжить...")
                 input()
 
-            request = message["request"]
-            response = message["response"]
+            request = message_["request"]
+            response = message_["response"]
 
             # Если использован флаг linkPreviousByCallbackId и после предыдущего сообщения был сохранен app_callback_id,
             # сообщению добавляются заголовки. Таким образом, сработает behavior, созданный предыдущим запросом
-            if message.get(LINK_BEHAVIOR_FLAG) and app_callback_id:
+            if message_.get(LINK_BEHAVIOR_FLAG) and app_callback_id:
                 headers = [(self.__from_msg_cls.CALLBACK_ID_HEADER_NAME, app_callback_id.encode())]
             else:
                 headers = [('kafka_correlationId', 'test_123')]
@@ -171,6 +172,8 @@ class TestCase:
                 descriptions=self.app_model.scenario_descriptions,
                 parametrizer_cls=self.__parametrizer_cls
             )
+
+            self.post_setup_user(user)
 
             commands = self.app_model.answer(message, user) or []
 
@@ -256,3 +259,6 @@ class TestCase:
             del response["pronounce_texts"]
 
         return response
+
+    def post_setup_user(self, user):
+        pass

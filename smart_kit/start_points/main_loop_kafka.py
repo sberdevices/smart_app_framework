@@ -13,8 +13,6 @@ from confluent_kafka.cimpl import KafkaException
 from lazy import lazy
 
 import scenarios.logging.logger_constants as log_const
-from core.jaeger_custom_client import jaeger_utils
-from core.jaeger_custom_client import kafka_codec as jaeger_kafka_codec
 from core.logging.logger_utils import log, UID_STR, MESSAGE_ID_STR
 
 from core.message.from_message import SmartAppFromMessage
@@ -329,70 +327,61 @@ class MainLoop(BaseMainLoop):
 
                 db_uid = message.db_uid
 
-                span = jaeger_utils.get_incoming_spam(self.tracer, message, mq_message)
+                with StatsTimer() as load_timer:
+                    user = await self.load_user(db_uid, message)
+                self.check_message_key(message, mq_message.key(), user)
+                stats += "Loading time from DB time: {} msecs\n".format(load_timer.msecs)
+                log_params["user_loading"] = load_timer.msecs
+                smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
 
-                with self.tracer.scope_manager.activate(span, True) as scope:
-                    with self.tracer.start_span('Loading time', child_of=scope.span) as span:
-                        with StatsTimer() as load_timer:
-                            user = await self.load_user(db_uid, message)
-                    self.check_message_key(message, mq_message.key(), user)
-                    stats += "Loading time from DB time: {} msecs\n".format(load_timer.msecs)
-                    log_params["user_loading"] = load_timer.msecs
-                    smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
+                log(
+                    "INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %("
+                    "incoming_data)s",
+                    params={log_const.KEY_NAME: "incoming_message",
+                            "topic": mq_message.topic(),
+                            "message_partition": mq_message.partition(),
+                            "message_key": mq_message.key(),
+                            "kafka_key": kafka_key,
+                            "incoming_data": str(message.masked_value),
+                            "headers": str(mq_message.headers()),
+                            "waiting_message": waiting_message_time,
+                            "surface": message.device.surface,
+                            MESSAGE_ID_STR: message.incremental_id},
+                    user=user
+                    )
 
-                    log(
-                        "INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %("
-                        "incoming_data)s",
-                        params={log_const.KEY_NAME: "incoming_message",
-                                "topic": mq_message.topic(),
-                                "message_partition": mq_message.partition(),
+                with StatsTimer() as script_timer:
+                    commands = await self.model.answer(message, user)
+
+                answers = self._generate_answers(user=user, commands=commands, message=message,
+                                                 topic_key=topic_key,
+                                                 kafka_key=kafka_key)
+
+                stats += "Script time: {} msecs\n".format(script_timer.msecs)
+                log_params["script_time"] = script_timer.msecs
+                smart_kit_metrics.sampling_script_time(self.app_name, script_timer.secs)
+
+                with StatsTimer() as save_timer:
+                    user_save_ok = await self.save_user(db_uid, user, message)
+
+                stats += "Saving user to DB time: {} msecs\n".format(save_timer.msecs)
+                log_params["user_saving"] = save_timer.msecs
+                smart_kit_metrics.sampling_save_time(self.app_name, save_timer.secs)
+                if not user_save_ok:
+                    log("MainLoop.iterate: save user got collision on uid %(uid)s db_version %(db_version)s.",
+                        user=user,
+                        params={log_const.KEY_NAME: "ignite_collision",
+                                "db_uid": db_uid,
                                 "message_key": mq_message.key(),
+                                "message_partition": mq_message.partition(),
                                 "kafka_key": kafka_key,
-                                "incoming_data": str(message.masked_value),
-                                "headers": str(mq_message.headers()),
-                                "waiting_message": waiting_message_time,
-                                "surface": message.device.surface,
-                                MESSAGE_ID_STR: message.incremental_id},
-                        user=user
-                        )
+                                "uid": user.id,
+                                "db_version": str(user.variables.get(user.USER_DB_VERSION))},
+                        level="WARNING")
+                    continue
 
-                    with self.tracer.start_span('Script time', child_of=scope.span) as span:
-                        with StatsTimer() as script_timer:
-                            commands = await self.model.answer(message, user)
-
-                        answers = self._generate_answers(user=user, commands=commands, message=message,
-                                                         topic_key=topic_key,
-                                                         kafka_key=kafka_key)
-
-                        stats += "Script time: {} msecs\n".format(script_timer.msecs)
-                        log_params["script_time"] = script_timer.msecs
-                        smart_kit_metrics.sampling_script_time(self.app_name, script_timer.secs)
-
-                    with self.tracer.start_span('Saving time', child_of=scope.span) as span:
-                        with StatsTimer() as save_timer:
-                            user_save_ok = await self.save_user(db_uid, user, message)
-
-                    stats += "Saving user to DB time: {} msecs\n".format(save_timer.msecs)
-                    log_params["user_saving"] = save_timer.msecs
-                    smart_kit_metrics.sampling_save_time(self.app_name, save_timer.secs)
-                    if not user_save_ok:
-                        log("MainLoop.iterate: save user got collision on uid %(uid)s db_version %(db_version)s.",
-                            user=user,
-                            params={log_const.KEY_NAME: "ignite_collision",
-                                    "db_uid": db_uid,
-                                    "message_key": mq_message.key(),
-                                    "message_partition": mq_message.partition(),
-                                    "kafka_key": kafka_key,
-                                    "uid": user.id,
-                                    "db_version": str(user.variables.get(user.USER_DB_VERSION))},
-                            level="WARNING")
-                        continue
-
-                    if answers:
-                        self.save_behavior_timeouts(user, mq_message, kafka_key)
-
-                self.tracer.inject(span_context=span.context, format=jaeger_kafka_codec.KAFKA_MAP,
-                                   carrier=mq_message.headers())
+                if answers:
+                    self.save_behavior_timeouts(user, mq_message, kafka_key)
 
                 if answers:
                     for answer in answers:

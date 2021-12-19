@@ -278,7 +278,7 @@ class FirstPersonFiller(FieldFillerDescription):
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
     async def extract(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-                      params: Dict[str, Any] = None) -> Optional[str]:
+                      params: Dict[str, Any] = None) -> Optional[Dict[str, str]]:
         persons = text_preprocessing_result.person_token_values
         if persons:
             log_params = self._log_params()

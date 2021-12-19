@@ -10,16 +10,16 @@ def get_meminfo():
 
 
 def show_growth(file=None):
-    objgraph.show_growth(file=file)
+    objgraph.show_growth(file=file, shortnames=False)
 
 
 def show_most_common_types(file=None, limit=20):
-    objgraph.show_most_common_types(limit=limit, file=file)
+    objgraph.show_most_common_types(limit=limit, shortnames=False, file=file)
 
 
 def get_leaking_objects(file=None, limit=5):
     roots = objgraph.get_leaking_objects()
-    objgraph.show_refs(roots[:limit], refcounts=True, output=file)
+    objgraph.show_refs(roots[:limit], refcounts=True, shortnames=False, output=file)
 
 
 if __name__ == "__main__":

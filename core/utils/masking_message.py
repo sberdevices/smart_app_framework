@@ -82,11 +82,11 @@ def _masking(data: Union[MutableMapping, Iterable], masking_fields: Union[Mutabl
                     data[key] = f'*items-{counter.items}*collections-{counter.collections}*maxdepth-{counter.max_depth}*'
             elif data[key] is not None:  # в случае простого элемента. маскируем как ***
                 data[key] = '***'
-        elif card_masking_on and isinstance(data[key], str):  # проверка на реквизиты карты
-            data[key] = card_regular.sub(card_sub_func, data[key])
-        elif key in CARD_MASKING_FIELDS:  # проверка на реквизиты карты
-            _masking(data[key], masking_fields, depth_level, mask_available_depth, masking_on=False,
-                     card_masking_on=True)
+        elif key in CARD_MASKING_FIELDS or card_masking_on:  # проверка на реквизиты карты
+            if value_is_collection:
+                _masking(data[key], masking_fields, depth_level, mask_available_depth, masking_on,card_masking_on=True)
+            elif isinstance(data[key], str):
+                data[key] = card_regular.sub(card_sub_func, data[key])
         elif value_is_collection:
             # если маскировка не нужна уходим глубже без включенного флага
             _masking(data[key], masking_fields, depth_level, mask_available_depth,

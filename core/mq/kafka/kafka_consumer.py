@@ -52,7 +52,7 @@ class KafkaConsumer(BaseKafkaConsumer):
             if p.error:
                 log_level = "ERROR"
         params = {
-            "partitions": str(partitions),
+            "partitions": str(list([str(partition) for partition in partitions or []])),
             log_const.KEY_NAME: log_const.KAFKA_ON_ASSIGN_VALUE,
             "log_level": log_level
         }

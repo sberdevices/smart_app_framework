@@ -88,7 +88,10 @@ def _masking(data: Union[MutableMapping, Iterable], masking_fields: Union[Mutabl
             elif isinstance(data[key], str):
                 data[key] = card_regular.sub(card_sub_func, data[key])
             elif isinstance(data[key], int):
-                return card_regular.sub(card_sub_func, str(data[key]))
+                str_value = str(data[key])
+                masked_value = card_regular.sub(card_sub_func, str_value)
+                if masked_value != str_value:
+                    data[key] = masked_value
         elif value_is_collection:
             # если маскировка не нужна уходим глубже без включенного флага
             _masking(data[key], masking_fields, depth_level, mask_available_depth,

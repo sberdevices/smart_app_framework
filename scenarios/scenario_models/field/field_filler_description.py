@@ -397,16 +397,16 @@ class DatePeriodFiller(FieldFillerDescription):
         self.max_days_in_period = items.get('max_days_in_period', None)
         self.future_days_allowed = items.get('future_days_allowed', False)
 
-    def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User,
-                params: Optional[Dict[str, Union[str, float, int]]] = None) -> Dict:
-        if text_preprocessing_result\
-            .words_tokenized_set\
-            .intersection(
-                [
-                    'TIME_DATE_TOKEN',
-                    'TIME_DATE_INTERVAL_TOKEN',
-                    'PERIOD_TOKEN'
-                ]):
+    async def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User,
+                      params: Optional[Dict[str, Union[str, float, int]]] = None) -> Dict:
+        if text_preprocessing_result \
+            .words_tokenized_set \
+                .intersection(
+                    [
+                        'TIME_DATE_TOKEN',
+                        'TIME_DATE_INTERVAL_TOKEN',
+                        'PERIOD_TOKEN'
+                    ]):
             words_from_intent: List[Optional[str]] = text_preprocessing_result.human_normalized_text.lower().split()
         else:
             words_from_intent: List[Optional[str]] = text_preprocessing_result.original_text.lower().split()
@@ -417,7 +417,7 @@ class DatePeriodFiller(FieldFillerDescription):
         is_determined: bool = False
         is_error: bool = False
         if not (begin_str == '' or begin_str == 'error'
-            or end_str == '' or end_str == 'error'):
+                or end_str == '' or end_str == 'error'):
             is_determined = True
 
         if begin_str == 'error' or end_str == 'error':
@@ -571,6 +571,6 @@ class ClassifierFiller(FieldFillerDescription):
 
 class ClassifierFillerMeta(ClassifierFiller):
 
-    def _get_result(self, answers: List[Dict[str, Union[str, float, bool]]])\
+    def _get_result(self, answers: List[Dict[str, Union[str, float, bool]]]) \
             -> List[Dict[str, Union[str, float, bool]]]:
         return answers

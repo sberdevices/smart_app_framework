@@ -3,7 +3,7 @@ import re
 
 MASK = "***"
 DEFAULT_MASKING_FIELDS = ["token", "access_token", "refresh_token", "epkId", "profileId"]
-CARD_MASKING_FIELDS = ["message", "debug_info", "normalizedMessage", "incoming_text", "annotations"]
+CARD_MASKING_FIELDS = ["message", "debug_info", "normalizedMessage", "incoming_text", "annotations", "inner_entities"]
 
 card_regular = re.compile(r"(?:(\d{18})|(\d{16})|(?:\d{4} ){3}(\d{4})(\s?\d{2})?)")
 
@@ -87,6 +87,11 @@ def _masking(data: Union[MutableMapping, Iterable], masking_fields: Union[Mutabl
                 _masking(data[key], masking_fields, depth_level, mask_available_depth, masking_on,card_masking_on=True)
             elif isinstance(data[key], str):
                 data[key] = card_regular.sub(card_sub_func, data[key])
+            elif isinstance(data[key], int):
+                str_value = str(data[key])
+                masked_value = card_regular.sub(card_sub_func, str_value)
+                if masked_value != str_value:
+                    data[key] = masked_value
         elif value_is_collection:
             # если маскировка не нужна уходим глубже без включенного флага
             _masking(data[key], masking_fields, depth_level, mask_available_depth,

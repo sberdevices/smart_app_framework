@@ -33,7 +33,7 @@ field_filler_factory = build_factory(field_filler_description)
 
 class FieldFillerDescription:
 
-    def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str] = None) -> None:
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         items = items or {}
         self.id = id
         self.version = items.get("version", -1)

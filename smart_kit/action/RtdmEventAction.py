@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from copy import copy
 from typing import Optional, Type, TypeVar, Iterable, Dict, Any, Union, List
 
 from attr import dataclass
@@ -9,9 +10,12 @@ from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.basic_models.actions.command import Command
 from core.message.message_constants import MSG_USERID_KEY
 from core.message.message_constants import MSG_USERCHANNEL_KEY
+from core.unified_template.unified_template import UnifiedTemplate
+from smart_kit.request.kafka_request import SmartKitKafkaRequest
 
 TComponent = TypeVar('TComponent')
 
+RTDM = "RTDM"
 
 class ISession(metaclass=ABCMeta):
     """ `ISession` - объект-сессия, представленный в виде набора компонентов.
@@ -185,6 +189,49 @@ class RtdmService:
         return spec.load(RtdmInfoResponse, response["data"])
 
 
+@dataclass(slots=True, frozen=True)
+class KafkaSender(ITransportSender):
+    class Meta:
+        name = "kafka"
+
+    name: str
+    topic: str
+    producer: AIOKafkaProducer
+
+    def get_name(self) -> str:
+        return self.name
+
+    @traceable
+    @execution_time(KAFKA_PUBLISH_TIME)
+    async def send(self, message: ITransportMessage):
+        response_body = message.get_body()
+        response_uuid = response_body.get_uuid()
+        response_user_channel = response_uuid.get_user_channel()
+        response_message_name = response_body.get_message_name()
+
+        if isinstance(response_body, IDialogPolicyResponseMessage):
+            response_intent = response_body.get_intent()
+            response_is_finished = response_body.is_finished()
+        else:
+            response_intent = None
+            response_is_finished = None
+
+        OUTGOING_MESSAGES_TOTAL_COUNTER.labels(
+            channel=response_user_channel,
+            message_name=response_message_name,
+            intent=response_intent
+        ).inc()
+
+        await self.producer.send_and_wait(topic=self.topic,
+                                          key=message.get_key(),
+                                          value=response_body.to_bytes(),
+                                          headers=message.get_headers().raw)
+        _logger.info(f"Outgoing {response_message_name} to topic: {self.topic} "
+                     f"(intent: {response_intent}, "
+                     f"finished: {response_is_finished})",
+                     {"headers": message.get_headers(), "message": response_body.to_dict()})
+
+
 class RtdmEventAction(Action):
     """
     Экшен обратного потока, для отправки пользовательских событий в RTDM.
@@ -199,11 +246,17 @@ class RtdmEventAction(Action):
         }
     """
 
-    def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
-        super(RtdmEventAction, self).__init__(items, id)
-        self.notification_id: str = items["notification_id"]
-        self.feedback_status: str = items["feedback_status"]
-        self.description: str = items.get("description")
+    DEFAULT_REQUEST_DATA = {
+        "topic_key": "rtdm",
+        "kafka_key": "main",
+        SmartKitKafkaRequest.KAFKA_EXTRA_HEADERS: None
+    }
+    DEFAULT_EXTRA_HEADERS = {
+        "request-id": "{{ uuid4() }}",
+        "sender-id": "{{ uuid4() }}",
+        "simple": "true"
+    }
+    EX_HEADERS_NAME = SmartKitKafkaRequest.KAFKA_EXTRA_HEADERS
 
     ALLOWED_FEEDBACK_STATUSES = {"FS", "QS", "FA", "QA", "FI", "QI"}
 
@@ -212,6 +265,25 @@ class RtdmEventAction(Action):
     notification_id: UnifiedTemplate
     feedback_status: UnifiedTemplate
     description: Optional[UnifiedTemplate] = None
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
+        super(RtdmEventAction, self).__init__(items, id)
+        self.notification_id: str = items["notification_id"]
+        self.feedback_status: str = items["feedback_status"]
+        self.description: str = items.get("description")
+        request_data = items.get("request_data") or self.DEFAULT_REQUEST_DATA
+        request_data[self.EX_HEADERS_NAME] = request_data.get(self.EX_HEADERS_NAME) or self.DEFAULT_EXTRA_HEADERS
+        items["request_data"] = request_data
+        items["command"] = RTDM
+
+    def _render_request_data(self, action_params):
+        # копируем прежде чем рендерить шаблон хэдеров, чтобы не затереть его
+        request_data = copy(self.request_data)
+        request_data[self.EX_HEADERS_NAME] = {
+            key: UnifiedTemplate(value).render(action_params)
+            for key, value in request_data.get(self.EX_HEADERS_NAME).items()
+        }
+        return request_data
 
     @preprocess_fields(self, user, text_preprocessing_result, params)
     async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,

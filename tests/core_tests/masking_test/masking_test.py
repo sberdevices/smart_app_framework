@@ -94,3 +94,18 @@ class MaskingTest(TestCase):
         masking(input_, masking_fields, depth_level)
         self.assertEqual(input_, expected)
 
+    def test_int_card(self):
+        input_msg = {'message': 1234567890123456}
+        expected = {'message': '************3456'}
+        masking(input_msg)
+        self.assertEqual(input_msg, expected)
+
+        input_msg = {'message': {'card':1234567890123456}}
+        expected = {'message': {'card':'************3456'}}
+        masking(input_msg)
+        self.assertEqual(input_msg, expected)
+
+        input_msg = {'message': 1234}
+        expected = {'message': 1234}
+        masking(input_msg)
+        self.assertEqual(input_msg, expected)

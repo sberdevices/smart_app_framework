@@ -8,6 +8,7 @@ from confluent_kafka.cimpl import KafkaException
 from lazy import lazy
 
 import scenarios.logging.logger_constants as log_const
+from core.basic_models.actions.push_action import PUSH_NOTIFY
 from core.logging.logger_utils import log, UID_STR, MESSAGE_ID_STR
 
 from core.message.from_message import SmartAppFromMessage
@@ -17,6 +18,7 @@ from core.mq.kafka.kafka_publisher import KafkaPublisher
 from core.utils.stats_timer import StatsTimer
 from core.basic_models.actions.command import Command
 from smart_kit.compatibility.commands import combine_commands
+from smart_kit.message.smart_app_push_message import SmartAppPushToMessage
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.names import message_names
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
@@ -116,9 +118,10 @@ class MainLoop(BaseMainLoop):
         for command in commands:
             request = SmartKitKafkaRequest(id=None, items=command.request_data)
             request.update_empty_items({"topic_key": topic_key, "kafka_key": kafka_key})
-            answer = SmartAppToMessage(command=command, message=message, request=request,
-                                       masking_fields=self.masking_fields,
-                                       validators=self.to_msg_validators)
+            handler_cls = self._get_message_handler(command.name)
+            answer = handler_cls(command=command, message=message, request=request,
+                                 masking_fields=self.masking_fields,
+                                 validators=self.to_msg_validators)
             if answer.validate():
                 answers.append(answer)
             else:
@@ -127,6 +130,13 @@ class MainLoop(BaseMainLoop):
             smart_kit_metrics.counter_outgoing(self.app_name, command.name, answer, user)
 
         return answers
+
+    @staticmethod
+    def _get_message_handler(command_name):
+        default = SmartAppToMessage
+        return {
+            PUSH_NOTIFY: SmartAppPushToMessage
+        }.get(command_name, default)
 
     def _get_timeout_from_message(self, orig_message_raw, callback_id, headers):
         orig_message_raw = json.dumps(orig_message_raw)

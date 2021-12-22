@@ -4,9 +4,9 @@ from typing import Union, Dict, List, Any, Optional
 
 from core.basic_models.actions.command import Command
 from core.basic_models.actions.string_actions import StringAction
-from core.model.base_user import BaseUser
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.unified_template.unified_template import UnifiedTemplate
+from scenarios.user.user_model import User
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
 
 PUSH_NOTIFY = "PUSH_NOTIFY"
@@ -19,6 +19,7 @@ class PushAction(StringAction):
         {
           "push_advertising_offer": {
             "type": "push",
+            "surface": "COMPANION", // не обязательное, по дефолту "COMPANION", без шаблонной генерации
             "push_data": {
                 "notificationHeader": "{% if day_time = 'morning' %}Время завтракать!{% else %}Хотите что нибудь заказать?{% endif %}",
                 "fullText": "В нашем магазине большой ассортимент{% if day_time = 'evening' %}. Успей заказать!{% endif %}",
@@ -48,6 +49,7 @@ class PushAction(StringAction):
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         request_data = items.get("request_data") or self.DEFAULT_REQUEST_DATA
         request_data[self.EX_HEADERS_NAME] = request_data.get(self.EX_HEADERS_NAME) or self.DEFAULT_EXTRA_HEADERS
+        self.surface = items.get("surface", self.COMPANION)
         items["request_data"] = request_data
         items["command"] = PUSH_NOTIFY
         items["nodes"] = items.get("push_data") or {}
@@ -62,12 +64,13 @@ class PushAction(StringAction):
         }
         return request_data
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+    def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
         params = params or {}
         command_params = {
-            "surface": self.COMPANION,
-            "content": self._generate_command_context(user, text_preprocessing_result, params)
+            "surface": self.surface,
+            "content": self._generate_command_context(user, text_preprocessing_result, params),
+            "project_id": user.settings["template_settings"]["project_id"]
         }
         requests_data = self._render_request_data(params)
         commands = [Command(self.command, command_params, self.id, request_type=self.request_type,

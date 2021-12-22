@@ -298,6 +298,7 @@ class ActionTest(unittest.TestCase):
             "deep_link_url": "some_url",
             "icon_url": "some_icon_url"
         }
+        settings = {"template_settings": {"project_id": "project_id"}}
         items = {
             "push_data": {
                 "notificationHeader": "{% if day_time == 'morning' %}Время завтракать!{% else %}Хотите что нибудь заказать?{% endif %}",
@@ -311,6 +312,7 @@ class ActionTest(unittest.TestCase):
         }
         expected = {
             "surface": "COMPANION",
+            "project_id": "project_id",
             "content": {
                 "notificationHeader": "Время завтракать!",
                 "fullText": "В нашем магазине большой ассортимент",
@@ -324,6 +326,7 @@ class ActionTest(unittest.TestCase):
         action = PushAction(items)
         user = MagicMock()
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
+        user.settings = settings
         command = action.run(user=user, text_preprocessing_result=None)[0]
         self.assertEqual(command.payload, expected)
         # проверяем наличие кастомных хэдеров для сервиса пушей

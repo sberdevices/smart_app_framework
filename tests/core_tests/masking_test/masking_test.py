@@ -57,55 +57,56 @@ class MaskingTest(TestCase):
         self.assertEqual(input_msg, expected)
 
     def test_masking(self):
-        input_message = {"refresh_token": '123456'}
-        expected = {"refresh_token": '***'}
-        masking(input_message)
+        masking_fields = {'spec_token': 2}
+        input_message = {"spec_token": '123456'}
+        expected = {"spec_token": '***'}
+        masking(input_message, masking_fields)
         self.assertEqual(input_message, expected)
 
         # все простые типы маскируются как '***'
-        input_message = {"refresh_token": {'int': 123, 'str': 'str', 'bool': True}}
-        expected = {"refresh_token": {'int': '***', 'str': '***', 'bool': '***'}}
-        masking(input_message)
+        input_message = {"spec_token": {'int': 123, 'str': 'str', 'bool': True}}
+        expected = {"spec_token": {'int': '***', 'str': '***', 'bool': '***'}}
+        masking(input_message, masking_fields)
         self.assertEqual(input_message, expected)
 
         # если маскируемое поле окажется внутри банковского поля - то оно маскируется с заданной вложеностью
-        input_msg = {'message': {'token': ['12', ['12', {'data': {'key': '12'}}]]}}
-        expected = {'message': {'token': ['***', ['***', '*items-1*collections-1*maxdepth-2*']]}}
-        masking(input_msg, masking_fields={'token': 2})
+        input_msg = {'message': {'spec_token': ['12', ['12', {'data': {'key': '12'}}]]}}
+        expected = {'message': {'spec_token': ['***', ['***', '*items-1*collections-1*maxdepth-2*']]}}
+        masking(input_msg, masking_fields)
         self.assertEqual(input_msg, expected)
 
     def test_depth(self):
         # вложенность любой длины не маскируется пока не встретим ключ для маскировки
-        masking_fields = ['token']
+        masking_fields = ['spec_token']
         depth_level = 0
-        input_msg = {'a': {'b': {'c': 1, 'token': '123456'}}}
-        expected = {'a': {'b': {'c': 1, 'token': '***'}}}
+        input_msg = {'a': {'b': {'c': 1, 'spec_token': '123456'}}}
+        expected = {'a': {'b': {'c': 1, 'spec_token': '***'}}}
         masking(input_msg, masking_fields, depth_level)
         self.assertEqual(input_msg, expected)
 
         # проверка вложенной маскировки
-        input_msg = {'token': [12, 12, {'key': [12, 12]}]}
+        input_msg = {'spec_token': [12, 12, {'key': [12, 12]}]}
 
         depth_level = 3
-        expected = {'token': ['***', '***', {'key': ['***', '***']}]}
+        expected = {'spec_token': ['***', '***', {'key': ['***', '***']}]}
         input_ = copy.deepcopy(input_msg)
         masking(input_, masking_fields, depth_level)
-        self.assertEqual(input_, expected)
+        self.assertEqual(expected, input_)
 
         depth_level = 2
-        expected = {'token': ['***', '***', {'key': '*items-2*collections-0*maxdepth-1*'}]}
+        expected = {'spec_token': ['***', '***', {'key': '*items-2*collections-0*maxdepth-1*'}]}
         input_ = copy.deepcopy(input_msg)
         masking(input_, masking_fields, depth_level)
         self.assertEqual(input_, expected)
 
         depth_level = 1
-        expected = {'token': ['***', '***', '*items-2*collections-1*maxdepth-2*']}
+        expected = {'spec_token': ['***', '***', '*items-2*collections-1*maxdepth-2*']}
         input_ = copy.deepcopy(input_msg)
         masking(input_, masking_fields, depth_level)
         self.assertEqual(input_, expected)
 
         depth_level = 0
-        expected = {'token': '*items-4*collections-2*maxdepth-3*'}
+        expected = {'spec_token': '*items-4*collections-2*maxdepth-3*'}
         input_ = copy.deepcopy(input_msg)
         masking(input_, masking_fields, depth_level)
         self.assertEqual(input_, expected)

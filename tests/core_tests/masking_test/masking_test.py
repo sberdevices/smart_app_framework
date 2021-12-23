@@ -110,3 +110,14 @@ class MaskingTest(TestCase):
         input_msg = copy.deepcopy(input_)
         masking(input_msg, masking_fields, depth_level)
         self.assertEqual(expected, input_msg)
+
+    def test_check_set_components(self):
+        input_message = {"set": {12, 13, 14}}
+        expected = {"set": [12, 13, 14]}
+        masking(input_message)
+        self.assertEqual(input_message, expected)
+
+        input_message = {"token": {12, 13, 14}}
+        expected = {"token": "*items-3*collections-0*maxdepth-1*"}
+        masking(input_message)
+        self.assertEqual(input_message, expected)

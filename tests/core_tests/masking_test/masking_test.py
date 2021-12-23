@@ -115,9 +115,14 @@ class MaskingTest(TestCase):
         input_message = {"set": {12, 13, 14}}
         expected = {"set": [12, 13, 14]}
         masking(input_message)
-        self.assertEqual(input_message, expected)
+        self.assertEqual(expected, input_message)
 
         input_message = {"token": {12, 13, 14}}
         expected = {"token": "*items-3*collections-0*maxdepth-1*"}
         masking(input_message)
-        self.assertEqual(input_message, expected)
+        self.assertEqual(expected, input_message)
+
+        input_message = {"masked": {12, 13, 14}}
+        expected = {"masked": ["***","***","***"]}
+        masking(input_message, masking_fields={"masked":2})
+        self.assertEqual(expected, input_message)

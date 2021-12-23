@@ -423,8 +423,8 @@ class DatePeriodFiller(FieldFillerDescription):
             is_error = True
 
         return {
-            'date_period__is_determined': str(is_determined),
-            'date_period__is_error': str(is_error),
+            'date_period__is_determined': is_determined,
+            'date_period__is_error': is_error,
             'date_period__begin_date': begin_str,
             'date_period__end_date': end_str
         }

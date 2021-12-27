@@ -7,6 +7,9 @@ from core.text_preprocessing.base import BaseTextPreprocessingResult
 from scenarios.user.user_model import User
 
 
+RTDM_RESPONSE = "RTDM_RESPONSE"
+
+
 class RtdmSendResponseToPpAction(CommandAction):
     """
     Action отправки отклика на ПП.
@@ -45,7 +48,6 @@ class RtdmSendResponseToPpAction(CommandAction):
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
         command_params = {
-            "messageId": user.message.as_dict[user.message.MESSAGE_ID],
             "messageName": "RTDM_VIEWED_EVENTS",
             "userChannel": user.message.as_dict[user.message.UUID]["userChannel"],
             "nextSystem": "RTDM Adapter",

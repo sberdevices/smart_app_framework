@@ -9,6 +9,7 @@ from lazy import lazy
 
 import scenarios.logging.logger_constants as log_const
 from core.basic_models.actions.push_action import PUSH_NOTIFY
+from core.basic_models.actions.rtdm_send_response_to_pp_action import RTDM_RESPONSE
 from core.logging.logger_utils import log, UID_STR, MESSAGE_ID_STR
 
 from core.message.from_message import SmartAppFromMessage
@@ -19,6 +20,7 @@ from core.utils.stats_timer import StatsTimer
 from core.basic_models.actions.command import Command
 from smart_kit.compatibility.commands import combine_commands
 from smart_kit.message.smart_app_push_message import SmartAppPushToMessage
+from smart_kit.message.smartapp_rtdm_to_message import SmartAppRtdmToMessage
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.names import message_names
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
@@ -135,7 +137,8 @@ class MainLoop(BaseMainLoop):
     def _get_message_handler(command_name):
         default = SmartAppToMessage
         return {
-            PUSH_NOTIFY: SmartAppPushToMessage
+            PUSH_NOTIFY: SmartAppPushToMessage,
+            RTDM_RESPONSE: SmartAppRtdmToMessage
         }.get(command_name, default)
 
     def _get_timeout_from_message(self, orig_message_raw, callback_id, headers):

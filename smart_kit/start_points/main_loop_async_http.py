@@ -2,7 +2,6 @@ import typing
 import os
 
 import asyncio
-import concurrent.futures
 import aiohttp
 import aiohttp.web
 
@@ -18,14 +17,13 @@ from smart_kit.utils.monitoring import smart_kit_metrics
 
 class AIOHttpMainLoop(BaseHttpMainLoop):
     def __init__(self, *args, **kwargs):
-        self.app = aiohttp.web.Application()
-        self.app.add_routes([aiohttp.web.route('*', '/{tail:.*}', self.iterate)])
         super().__init__(*args, **kwargs)
         max_workers = self.settings["template_settings"].get("max_workers", (os.cpu_count() or 1) * 5)
-        self.pool = concurrent.futures.ThreadPoolExecutor(max_workers=max_workers)
+        self.app = aiohttp.web.Application()
+        self.app.add_routes([aiohttp.web.route('*', '/health', self.get_health_check)])
+        self.app.add_routes([aiohttp.web.route('*', '/{tail:.*}', self.iterate)])
 
-    async def async_init(self):
-        await self.db_adapter.connect()
+    async def async_init(self):await self.db_adapter.connect()
 
     def get_db(self):
         db_adapter = db_adapter_factory(self.settings["template_settings"].get("db_adapter", {}))
@@ -113,19 +111,33 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
 
     async def handle_message(self, message: SmartAppFromMessage) -> typing.Tuple[int, str, SmartAppToMessage]:
         if not message.validate():
-            return 400, "BAD REQUEST", SmartAppToMessage(self.BAD_REQUEST_COMMAND, message=message, request=None)
+            answer = SmartAppToMessage(self.BAD_REQUEST_COMMAND, message=message, request=None)
+            code = 400
+            log(f"OUTGOING DATA: {answer.value} with code: {code}",
+                params={log_const.KEY_NAME: "outgoing_policy_message", "msg_id": message.incremental_id})
+            return code, "BAD REQUEST", answer
 
-        answer, stats = await self.process_message(message)
+        answer, stats, user = await self.process_message(message)
         if not answer:
-            return 204, "NO CONTENT", SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None)
+            answer = SmartAppToMessage(self.NO_ANSWER_COMMAND, message=message, request=None)
+            code = 204
+            log(f"OUTGOING DATA: {answer.value} with code: {code}",
+                params={log_const.KEY_NAME: "outgoing_policy_message"}, user=user)
+            return code, "NO CONTENT", answer
 
-        answer_message = SmartAppToMessage(
-            answer, message, request=None,
-            validators=self.to_msg_validators)
+        answer_message = SmartAppToMessage(answer, message, request=None, validators=self.to_msg_validators)
         if answer_message.validate():
-            return 200, "OK", answer_message
+            code = 200
+            log_answer = str(answer_message.value).replace("%", "%%")
+            log(f"OUTGOING DATA: {log_answer} with code: {code}",
+                params={log_const.KEY_NAME: "outgoing_policy_message"}, user=user)
+            return code, "OK", answer_message
         else:
-            return 500, "BAD ANSWER", SmartAppToMessage(self.BAD_ANSWER_COMMAND, message=message, request=None)
+            code = 500
+            answer = SmartAppToMessage(self.BAD_ANSWER_COMMAND, message=message, request=None)
+            log(f"OUTGOING DATA: {answer.value} with code: {code}",
+                params={log_const.KEY_NAME: "outgoing_policy_message"}, user=user)
+            return code, "BAD ANSWER", answer
 
     async def process_message(self, message: SmartAppFromMessage, *args, **kwargs):
         stats = ""
@@ -137,7 +149,7 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
             user = await self.load_user(db_uid, message)
         stats += "Loading time: {} msecs\n".format(load_timer.msecs)
         with StatsTimer() as script_timer:
-            commands = await self.app.loop.run_in_executor(self.pool, self.model.answer, message, user)
+            commands = await self.model.answer(message, user)
             if commands:
                 answer = self._generate_answers(user, commands, message)
             else:
@@ -148,7 +160,13 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
             await self.save_user(db_uid, user, message)
         stats += "Saving time: {} msecs\n".format(save_timer.msecs)
         log(stats, params={log_const.KEY_NAME: "timings"})
-        return answer, stats
+        return answer, stats, user
+
+    async def get_health_check(self, request: aiohttp.web.Request):
+        status, reason, answer = 200, "OK", "ok"
+        return aiohttp.web.json_response(
+            status=status, reason=reason, data=answer,
+        )
 
     async def iterate(self, request: aiohttp.web.Request):
         headers = self._get_headers(request.headers)

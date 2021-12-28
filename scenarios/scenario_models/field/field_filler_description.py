@@ -398,7 +398,7 @@ class DatePeriodFiller(FieldFillerDescription):
         self.future_days_allowed = items.get('future_days_allowed', False)
 
     async def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User,
-                      params: Optional[Dict[str, Union[str, float, int]]] = None) -> Dict:
+                      params: Optional[Dict[str, Union[str, float, int]]] = None) -> Dict[str, str]:
         if text_preprocessing_result \
             .words_tokenized_set \
                 .intersection(
@@ -423,10 +423,12 @@ class DatePeriodFiller(FieldFillerDescription):
         if begin_str == 'error' or end_str == 'error':
             is_error = True
 
-        user.variables.set('date_period__is_determined', str(is_determined))
-        user.variables.set('date_period__is_error', str(is_error))
-        user.variables.set('date_period__begin_date', begin_str)
-        user.variables.set('date_period__end_date', end_str)
+        return {
+            'date_period__is_determined': is_determined,
+            'date_period__is_error': is_error,
+            'date_period__begin_date': begin_str,
+            'date_period__end_date': end_str
+        }
 
 
 class IntersectionOriginalTextFiller(FieldFillerDescription):

@@ -4,6 +4,8 @@ import uuid
 from unittest.mock import Mock, MagicMock, patch
 
 from core.basic_models.actions.push_action import PushAction
+from core.basic_models.actions.rtdm_get_pp_and_events_action import RtdmGetPpAndEventsAction
+from core.basic_models.actions.rtdm_send_response_to_pp_action import RtdmSendResponseToPpAction, RTDM_RESPONSE
 from core.basic_models.answer_items.answer_items import SdkAnswerItem, items_factory, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink
 from core.unified_template.unified_template import UnifiedTemplate, UNIFIED_TEMPLATE_TYPE_NAME
@@ -17,6 +19,7 @@ from core.basic_models.actions.external_actions import ExternalAction
 from core.basic_models.actions.command import Command
 from core.basic_models.requirement.basic_requirements import requirement_factory, Requirement, requirements
 from core.model.registered import registered_factories
+from smart_kit.message.smartapp_rtdm_to_message import SmartAppRtdmToMessage
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
 
 
@@ -338,6 +341,107 @@ class ActionTest(unittest.TestCase):
         self.assertTrue(uuid.UUID(headers.get('sender-id'), version=4))
         self.assertEqual(command.name, "PUSH_NOTIFY")
 
+    # def test_rtdm_get_action(self):
+    #     settings = {"template_settings": {"system_name": "nlpSystem"}}
+    #     items = {
+    #         "channel": "F",
+    #         "mode": "offerParam,serviceParam",
+    #         "epkId": 34234608109
+    #     }
+    #     expected_request = {
+    #         "rqUid": "5c975471-ecb1-4301-b1ee-a8ddb9de0c3a",
+    #         "rqTm": "20-08-2020T14:05:00",
+    #         "systemName": "nlpSystem",
+    #         "channel": "F",
+    #         "epkId": 34234608109,
+    #         "mode": "offerParam,serviceParam"
+    #     }
+    #     expected_answer = {
+    #         "rqUid": "5a999111-eeb1-0001-b1ee-a7ddd9de0c3a",
+    #         "rqTm": "2021-03-04T10:05:00",
+    #         "systemName": "nlpsystem",
+    #         "channel": "F",
+    #         "epkId": "00000000001",
+    #         "offers": [],
+    #         "service": [],
+    #         "status": {
+    #             "code": 0,
+    #             "message": "Успешно"
+    #         }
+    #     }
+    #     action = RtdmGetPpAndEventsAction(items)
+    #     user = MagicMock()
+    #     user.parametrizer = MockSimpleParametrizer(user)
+    #     user.settings = settings
+    #     # TODO: refactor below code for rtdm
+    #     command = action.run(user=user, text_preprocessing_result=None)[0]
+    #     self.assertEqual(command.payload, expected)
+    #     # проверяем наличие кастомных хэдеров для сервиса пушей
+    #     self.assertTrue(SmartKitKafkaRequest.KAFKA_EXTRA_HEADERS in command.request_data)
+    #     headers = command.request_data.get(SmartKitKafkaRequest.KAFKA_EXTRA_HEADERS)
+    #     self.assertTrue('request-id' in headers)
+    #     self.assertTrue('sender-id' in headers)
+    #     self.assertTrue(uuid.UUID(headers.get('request-id'), version=4))
+    #     self.assertTrue(uuid.UUID(headers.get('sender-id'), version=4))
+    #     self.assertEqual(command.name, "PUSH_NOTIFY")
+
+    def test_rtdm_send_action(self):
+        items = {
+            "notificationId": "1594098519616",
+            "notificationCode": "CREDIT",
+            "feedbackStatus": "FS",
+            "description": "Клик FS"
+        }
+        expected = {
+            "messageName": "RTDM_VIEWED_EVENTS",
+            "nextSystem": "RTDM Adapter",
+            "handlerName": "AI_HANDLER",
+            "notificationId": "1594098519616",
+            "notificationCode": "CREDIT",
+            "feedbackStatus": "FS",
+            "description": "Клик FS"
+        }
+        action = RtdmSendResponseToPpAction(items)
+        user = MagicMock()
+        command = action.run(user=user, text_preprocessing_result=None)[0]
+        self.assertEqual(command.payload, expected)
+        self.assertEqual(command.name, RTDM_RESPONSE)
+
+    def test_rtdm_send_action_message(self):
+        items = {
+            "notificationId": "1594098519616",
+            "notificationCode": "CREDIT",
+            "feedbackStatus": "FS",
+            "description": "Клик FS"
+        }
+        expected = {
+            "messageId": 10000001,
+            "messageName": "RTDM_VIEWED_EVENTS",
+            "userChannel": "SBOL",
+            "nextSystem": "RTDM Adapter",
+            "handlerName": "AI_HANDLER",
+            "userId": "1594098519615",
+            "chatId": "",
+            "notificationId": "1594098519616",
+            "notificationCode": "CREDIT",
+            "feedbackStatus": "FS",
+            "description": "Клик FS"
+        }
+        action = RtdmSendResponseToPpAction(items)
+        user = MagicMock()
+        command = action.run(user=user, text_preprocessing_result=None)[0]
+        message = MagicMock()
+        message.incremental_id = 10000001
+        message.channel = "SBOL"
+        message.uid = "1594098519615"
+        request = Mock()
+        masking_fields = []
+        to_msg_validators = []
+        fields = SmartAppRtdmToMessage(command=command, message=message, request=request,
+                                       masking_fields=masking_fields,
+                                       validators=to_msg_validators).as_dict
+        self.assertEqual(fields, expected)
+
 
 class NonRepeatingActionTest(unittest.TestCase):
     def setUp(self):
@@ -511,37 +615,37 @@ class CardAnswerActionTest(unittest.TestCase):
             "nodes": {
                 "pronounceText": ["pronounceText1", "{{payload.personInfo.name}}"],
                 "items": [
-                  {
-                    "bubble": {
-                      "text": ["Text1", "Text2"]
-                    }
-                  },
-                  {
-                    "card": {
-                      "type": "simple_list",
-                      "header": "1 доллар США ",
-                      "items": [
-                        {
-                          "title": "Купить",
-                          "body": "67.73 RUR"
-                        },
-                        {
-                          "title": "Продать",
-                          "body": "64.56 RUR"
+                    {
+                        "bubble": {
+                            "text": ["Text1", "Text2"]
                         }
-                      ],
-                      "footer": "{{payload.personInfo.name}} Сбербанк Онлайн на сегодня 17:53 при обмене до 1000 USD"
+                    },
+                    {
+                        "card": {
+                            "type": "simple_list",
+                            "header": "1 доллар США ",
+                            "items": [
+                                {
+                                    "title": "Купить",
+                                    "body": "67.73 RUR"
+                                },
+                                {
+                                    "title": "Продать",
+                                    "body": "64.56 RUR"
+                                }
+                            ],
+                            "footer": "{{payload.personInfo.name}} Сбербанк Онлайн на сегодня 17:53 при обмене до 1000 USD"
+                        }
                     }
-                  }
                 ],
                 "suggestions": {
-                     "buttons": [{
+                    "buttons": [{
                         "title": ["Отделения"],
                         "action": {
-                          "text": "Где ближайщие отделения сбера?",
-                          "type": "text"
+                            "text": "Где ближайщие отделения сбера?",
+                            "type": "text"
                         }
-                     }]
+                    }]
                 }
             }
         }
@@ -555,7 +659,6 @@ class CardAnswerActionTest(unittest.TestCase):
             result = action.run(user, None)
             self.assertEqual("ANSWER_TO_USER", result[0].name)
             self.assertTrue(str(result[0].raw) in expect_arr)
-
 
     def test_typical_answer_without_items(self):
         user = Mock()
@@ -585,26 +688,26 @@ class CardAnswerActionTest(unittest.TestCase):
         user.message = Mock()
         user.message.payload = {"personInfo": {"name": "Ivan Ivanov"}}
         items = {
-                "type": "sdk_answer",
-                "pronounceText": ["pronounceText1"],
-                "suggestions": {
-                    "buttons": [
-                        {
-                            "title": ["{{payload.personInfo.name}}", "отделения2"],
-                            "action": {
-                                "text": "отделения",
-                                "type": "text"
-                            }
-                        },
-                        {
-                            "title": ["кредит1", "кредит2"],
-                            "action": {
-                                "text": "кредит",
-                                "type": "text"
-                            }
+            "type": "sdk_answer",
+            "pronounceText": ["pronounceText1"],
+            "suggestions": {
+                "buttons": [
+                    {
+                        "title": ["{{payload.personInfo.name}}", "отделения2"],
+                        "action": {
+                            "text": "отделения",
+                            "type": "text"
                         }
-                    ]
-                }
+                    },
+                    {
+                        "title": ["кредит1", "кредит2"],
+                        "action": {
+                            "text": "кредит",
+                            "type": "text"
+                        }
+                    }
+                ]
+            }
         }
         exp1 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'suggestions': {'buttons': [{'title': 'Ivan Ivanov', 'action': {'text': 'отделения', 'type': 'text'}}, {'title': 'кредит1', 'action': {'text': 'кредит', 'type': 'text'}}]}}}"
         exp2 = "{'messageName': 'ANSWER_TO_USER', 'payload': {'pronounceText': 'pronounceText1', 'suggestions': {'buttons': [{'title': 'Ivan Ivanov', 'action': {'text': 'отделения', 'type': 'text'}}, {'title': 'кредит2', 'action': {'text': 'кредит', 'type': 'text'}}]}}}"
@@ -717,7 +820,6 @@ class SDKRandomAnswer(unittest.TestCase):
         answer_items["suggest_text"] = SuggestText
         answer_items["suggest_deeplink"] = SuggestDeepLink
 
-
         user = Mock()
         user.parametrizer = MockParametrizer(user, {})
         user.message = Mock()
@@ -776,7 +878,8 @@ class SDKRandomAnswer(unittest.TestCase):
         }
         action = SDKAnswerToUser(items)
         result = action.run(user, None)
-        self.assertDictEqual(result[0].raw, {'messageName': 'ANSWER_TO_USER', 'payload': {'items': [{'bubble': {'text': '42', 'markdown': True}}]}})
+        self.assertDictEqual(result[0].raw, {'messageName': 'ANSWER_TO_USER',
+                                             'payload': {'items': [{'bubble': {'text': '42', 'markdown': True}}]}})
 
     def test_SDKItemAnswer_suggestions_template(self):
 

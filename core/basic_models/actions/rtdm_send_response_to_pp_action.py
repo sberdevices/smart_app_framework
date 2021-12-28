@@ -38,7 +38,7 @@ class RtdmSendResponseToPpAction(CommandAction):
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super().__init__(items, id)
-        self.command = "RTDM_COMMAND"
+        self.command = RTDM_RESPONSE
         self.request_data = items.get("request_data") or self.DEFAULT_REQUEST_DATA
         self.notification_id = items["notificationId"]
         self.notification_code = items["notificationCode"]
@@ -49,11 +49,8 @@ class RtdmSendResponseToPpAction(CommandAction):
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
         command_params = {
             "messageName": "RTDM_VIEWED_EVENTS",
-            "userChannel": user.message.as_dict[user.message.UUID]["userChannel"],
             "nextSystem": "RTDM Adapter",
             "handlerName": "AI_HANDLER",
-            "userId": user.message.as_dict[user.message.UUID]["userId"],
-            "chatId": user.message.as_dict[user.message.UUID]["chatId"],
             "notificationId": self.notification_id,
             "notificationCode": self.notification_code,
             "feedbackStatus": self.feedback_status,

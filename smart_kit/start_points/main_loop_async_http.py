@@ -18,7 +18,6 @@ from smart_kit.utils.monitoring import smart_kit_metrics
 class AIOHttpMainLoop(BaseHttpMainLoop):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        max_workers = self.settings["template_settings"].get("max_workers", (os.cpu_count() or 1) * 5)
         self.app = aiohttp.web.Application()
         self.app.add_routes([aiohttp.web.route('*', '/health', self.get_health_check)])
         self.app.add_routes([aiohttp.web.route('*', '/{tail:.*}', self.iterate)])

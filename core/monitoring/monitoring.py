@@ -6,6 +6,7 @@ class Monitoring:
     COUNTER = "counter"
     HISTOGRAM = "histogram"
     DEFAULT_ENABLED = True
+    DEFAULT_DISABLED_METRICS = []
 
     def __init__(self):
         self._enabled = self.DEFAULT_ENABLED
@@ -25,12 +26,18 @@ class Monitoring:
     def turn_off(self):
         self._enabled = False
 
-    def got_counter(self, name):
-        if self.check_enabled(name):
-            counter = self._monitoring_items[self.COUNTER]
-            if not counter.get(name):
-                counter[name] = Counter(name, name)
-            counter[name].inc()
+    def get_counter(self, name, description=None, labels=()):
+        if not self.check_enabled(name):
+            return None
+        counter = self._monitoring_items[self.COUNTER]
+        if not counter.get(name):
+            counter[name] = Counter(name, description or name, labels)
+        return counter[name]
+
+    def got_counter(self, name, description=None, labels=()):
+        counter = self.get_counter(name, description, labels)
+        if counter:
+            counter.inc()
 
     def got_histogram(self, name):
         def decor(func):
@@ -59,7 +66,7 @@ class Monitoring:
 
     def apply_config(self, config):
         self._enabled = config.get("enabled", self.DEFAULT_ENABLED)
-        self.disabled_metrics = config.get("disabled_metrics", [])
+        self.disabled_metrics = config.get("disabled_metrics", self.DEFAULT_DISABLED_METRICS)
 
 
 monitoring = Monitoring()

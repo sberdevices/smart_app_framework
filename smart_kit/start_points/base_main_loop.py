@@ -91,8 +91,7 @@ class BaseMainLoop:
     def _init_monitoring_config(self, template_settings):
         monitoring_config = template_settings["monitoring"]
         monitoring.apply_config(monitoring_config)
-        if monitoring_config.get("enabled"):
-            smart_kit_metrics.init_metrics(app_name=self.app_name)
+        smart_kit_metrics.init_metrics(app_name=self.app_name)
 
     def load_user(self, db_uid, message):
         db_data = None

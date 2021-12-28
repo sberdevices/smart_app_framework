@@ -41,7 +41,7 @@ class Metrics(Monitoring):
     def _get_or_create_counter(self, monitoring_msg, descr, labels=()):
         counter = self.get_counter(monitoring_msg, descr, labels)
         if counter is None:
-            raise ValueError('counter disabled')
+            raise MetricDisabled('counter disabled')
         return counter
 
     @silence_it

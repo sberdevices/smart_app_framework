@@ -9,12 +9,13 @@ from core.basic_models.actions.basic_actions import Action
 from core.basic_models.actions.command import Command
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 from scenarios.user.user_model import User
+from smart_kit.action.http import HTTPRequestAction
 
 
 class RtdmGetPpAndEventsAction(Action):
     """
     Action получения ПП и событий из RTDM. Полученные данные сохраняются в user-переменную
-    rtdm_get_pp_and_events_response.
+    rtdm_get_response.
 
     Пример отправляемого запроса:
     {
@@ -92,21 +93,28 @@ class RtdmGetPpAndEventsAction(Action):
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super().__init__(items, id)
-        self.channel: str = items["channel"]
         self.mode: str = items["mode"]
-        self.epkId: str = items["epkId"]
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         command_params = {
-            "rqUid": uuid4(),
+            "rqUid": user.message.incremental_id,
             "rqTm": datetime.datetime.now().replace(microsecond=0).isoformat(),
             "systemName": user.settings["template_settings"]["system_name"],
-            "channel": self.channel,
-            "epkId": self.epkId,
-            "mode": self.mode
+            "channel": "F",
+            "epkId": user.message.payload["epkId"],
+            "mode": self.mode,
         }
-        pull_api_service_response = requests.post("http://localhost:8088/api/v1/search/epkId",
-                                                  json.dumps(command_params))
-        pull_api_service_response_dict = json.loads(pull_api_service_response.text)
-        user.variables.set("rtdm_get_pp_and_events_response", pull_api_service_response_dict)
+        items = {
+            "params": {
+                "url": "http://localhost:8088/api/v1/search/epkId",
+                "method": "post",
+                "json": command_params,
+                "headers": {
+                  "Content-Type": "application/json"
+                }
+            },
+            "store": "rtdm_get_response",
+            "behavior": "common_behavior"
+        }
+        return HTTPRequestAction(items).run(user, text_preprocessing_result, params)

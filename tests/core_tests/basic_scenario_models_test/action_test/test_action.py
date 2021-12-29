@@ -1,13 +1,18 @@
 # coding: utf-8
+import datetime
+import json
 import unittest
 import uuid
 from unittest.mock import Mock, MagicMock, patch
+
+import pytest
 
 from core.basic_models.actions.push_action import PushAction
 from core.basic_models.actions.rtdm_get_pp_and_events_action import RtdmGetPpAndEventsAction
 from core.basic_models.actions.rtdm_send_response_to_pp_action import RtdmSendResponseToPpAction, RTDM_RESPONSE
 from core.basic_models.answer_items.answer_items import SdkAnswerItem, items_factory, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink
+from core.basic_models.variables.variables import Variables
 from core.unified_template.unified_template import UnifiedTemplate, UNIFIED_TEMPLATE_TYPE_NAME
 from core.basic_models.actions.basic_actions import Action, DoingNothingAction, action_factory, RequirementAction, \
     actions, ChoiceAction, ElseAction, CompositeAction, NonRepeatingAction
@@ -341,49 +346,31 @@ class ActionTest(unittest.TestCase):
         self.assertTrue(uuid.UUID(headers.get('sender-id'), version=4))
         self.assertEqual(command.name, "PUSH_NOTIFY")
 
-    # def test_rtdm_get_action(self):
-    #     settings = {"template_settings": {"system_name": "nlpSystem"}}
-    #     items = {
-    #         "channel": "F",
-    #         "mode": "offerParam,serviceParam",
-    #         "epkId": 34234608109
-    #     }
-    #     expected_request = {
-    #         "rqUid": "5c975471-ecb1-4301-b1ee-a8ddb9de0c3a",
-    #         "rqTm": "20-08-2020T14:05:00",
-    #         "systemName": "nlpSystem",
-    #         "channel": "F",
-    #         "epkId": 34234608109,
-    #         "mode": "offerParam,serviceParam"
-    #     }
-    #     expected_answer = {
-    #         "rqUid": "5a999111-eeb1-0001-b1ee-a7ddd9de0c3a",
-    #         "rqTm": "2021-03-04T10:05:00",
-    #         "systemName": "nlpsystem",
-    #         "channel": "F",
-    #         "epkId": "00000000001",
-    #         "offers": [],
-    #         "service": [],
-    #         "status": {
-    #             "code": 0,
-    #             "message": "Успешно"
-    #         }
-    #     }
-    #     action = RtdmGetPpAndEventsAction(items)
-    #     user = MagicMock()
-    #     user.parametrizer = MockSimpleParametrizer(user)
-    #     user.settings = settings
-    #     # TODO: refactor below code for rtdm
-    #     command = action.run(user=user, text_preprocessing_result=None)[0]
-    #     self.assertEqual(command.payload, expected)
-    #     # проверяем наличие кастомных хэдеров для сервиса пушей
-    #     self.assertTrue(SmartKitKafkaRequest.KAFKA_EXTRA_HEADERS in command.request_data)
-    #     headers = command.request_data.get(SmartKitKafkaRequest.KAFKA_EXTRA_HEADERS)
-    #     self.assertTrue('request-id' in headers)
-    #     self.assertTrue('sender-id' in headers)
-    #     self.assertTrue(uuid.UUID(headers.get('request-id'), version=4))
-    #     self.assertTrue(uuid.UUID(headers.get('sender-id'), version=4))
-    #     self.assertEqual(command.name, "PUSH_NOTIFY")
+    @patch('requests.request')
+    def test_rtdm_get_action(self, request_fun):
+        settings = {"template_settings": {"system_name": "nlpSystem"}}
+        items = {
+            "mode": "offerParam,serviceParam"
+        }
+        action = RtdmGetPpAndEventsAction(items)
+        user = MagicMock()
+        user.settings = settings
+        user.message = MagicMock()
+        user.message.payload = {"epkId": 34234608109}
+        user.message.incremental_id = "5c975471-ecb1-4301-b1ee-a8ddb9de0c3a"
+        expected_request = {
+            "rqUid": "5c975471-ecb1-4301-b1ee-a8ddb9de0c3a",
+            "rqTm": datetime.datetime.now().replace(microsecond=0).isoformat(),
+            "systemName": "nlpSystem",
+            "channel": "F",
+            "epkId": 34234608109,
+            "mode": "offerParam,serviceParam"
+        }
+        user.descriptions = {"behaviors": {"common_behavior": MagicMock(timeout=lambda x: 1)}}
+        action.run(user=user, text_preprocessing_result=None)
+        request_fun.assert_called_with(url="http://localhost:8088/api/v1/search/epkId", method='post',
+                                       json=expected_request, headers={'Content-Type': 'application/json'},
+                                       timeout=1)
 
     def test_rtdm_send_action(self):
         items = {

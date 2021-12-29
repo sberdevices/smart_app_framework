@@ -39,7 +39,7 @@ class RtdmSendResponseToPpAction(CommandAction):
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super().__init__(items, id)
         self.command = RTDM_RESPONSE
-        self.request_data = items.get("request_data") or self.DEFAULT_REQUEST_DATA
+        self.request_data = self.DEFAULT_REQUEST_DATA
         self.notification_id = items["notificationId"]
         self.notification_code = items["notificationCode"]
         self.feedback_status = items["feedbackStatus"]

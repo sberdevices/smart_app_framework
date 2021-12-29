@@ -149,11 +149,11 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
         stats += "Loading time: {} msecs\n".format(load_timer.msecs)
         with StatsTimer() as script_timer:
             if getattr(self.model, "IS_ASYNC", False):
-                commands = await self.model.answer(user, message)
+                commands = await self.model.answer(message, user)
             else:
-                commands = self.model.answer(user, message)
+                commands = self.model.answer(message, user)
             if commands:
-                answer = self._generate_answers(user, message)
+                answer = self._generate_answers(user, commands, message)
             else:
                 answer = None
 

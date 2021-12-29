@@ -148,9 +148,12 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
             user = await self.load_user(db_uid, message)
         stats += "Loading time: {} msecs\n".format(load_timer.msecs)
         with StatsTimer() as script_timer:
-            commands = await self.app.loop.run_in_executor(self.pool, self.model.answer, message, user)
+            if getattr(self.model, "IS_ASYNC", False):
+                commands = await self.model.answer(user, message)
+            else:
+                commands = self.model.answer(user, message)
             if commands:
-                answer = self._generate_answers(user, commands, message)
+                answer = self._generate_answers(user, message)
             else:
                 answer = None
 

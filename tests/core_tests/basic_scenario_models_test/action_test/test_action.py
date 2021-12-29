@@ -408,7 +408,6 @@ class ActionTest(unittest.TestCase):
             "nextSystem": "RTDM Adapter",
             "handlerName": "AI_HANDLER",
             "userId": "1594098519615",
-            "chatId": "",
             "notificationId": "1594098519616",
             "notificationCode": "CREDIT",
             "feedbackStatus": "FS",

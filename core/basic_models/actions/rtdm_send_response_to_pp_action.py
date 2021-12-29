@@ -43,7 +43,7 @@ class RtdmSendResponseToPpAction(CommandAction):
         self.notification_id = items["notificationId"]
         self.notification_code = items["notificationCode"]
         self.feedback_status = items["feedbackStatus"]
-        self.description = items["description"]
+        self.description = items.get("description")
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
@@ -53,9 +53,10 @@ class RtdmSendResponseToPpAction(CommandAction):
             "handlerName": "AI_HANDLER",
             "notificationId": self.notification_id,
             "notificationCode": self.notification_code,
-            "feedbackStatus": self.feedback_status,
-            "description": self.description
+            "feedbackStatus": self.feedback_status
         }
+        if self.description:
+            command_params["description"] = self.description
         # Отправка отклика клиента по ПП
         commands = [Command(self.command, command_params, self.id, request_type=self.request_type,
                             request_data=self.request_data)]

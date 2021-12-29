@@ -16,7 +16,6 @@ class SmartAppRtdmToMessage(SmartAppToMessage):
            "nextSystem": self.payload["nextSystem"],
            "handlerName": self.payload["handlerName"],
            "userId": self.incoming_message.uid,
-           "chatId": "",
            "notificationId": self.payload["notificationId"],
            "notificationCode": self.payload["notificationCode"],
            "feedbackStatus": self.payload["feedbackStatus"],

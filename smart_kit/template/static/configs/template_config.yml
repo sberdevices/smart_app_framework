@@ -19,3 +19,5 @@ user_save_collisions_tries: 2
 self_service_with_state_save_messages: true
 project_id: template-app-id
 system_name: framework_smartapp_system_name
+rtdm:
+  url: http://localhost:8088/api/v1/search/epkId

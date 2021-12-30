@@ -19,6 +19,8 @@ class RtdmGetPoAndEventsAction(Action):
         Обязательное поле mode - режим сервиса. Возможные значения:
             offerParam - офферы (маркетинговые предложения из Репозитория) с текстом и тегами;
             serviceParam - сервисные с тегами;
+        Отправляемое поле systemName указывается в template_config.yml в поле system_name.
+        URL сервиса для отправки запросов в RTDM указывается в template_config.yml в поле url поля rtdm
 
         Пример::
             {
@@ -43,7 +45,7 @@ class RtdmGetPoAndEventsAction(Action):
         }
         items = {
             "params": {
-                "url": "http://localhost:8088/api/v1/search/epkId",
+                "url": user.settings["template_settings"]["rtdm"]["url"],
                 "method": "post",
                 "json": command_params,
                 "headers": {

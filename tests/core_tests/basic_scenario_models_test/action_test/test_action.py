@@ -344,7 +344,8 @@ class ActionTest(unittest.TestCase):
 
     @patch('requests.request')
     def test_rtdm_get_action(self, request_fun):
-        settings = {"template_settings": {"system_name": "nlpSystem"}}
+        settings = {"template_settings": {"system_name": "nlpSystem",
+                                          "rtdm": {"url": "http://localhost:8088/api/v1/search/epkId"}}}
         items = {
             "mode": "offerParam,serviceParam"
         }

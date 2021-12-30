@@ -44,10 +44,10 @@ class RtdmSendResponseToPoAction(CommandAction):
         super().__init__(items, id)
         self.command = RTDM_RESPONSE
         self.request_data = self.DEFAULT_REQUEST_DATA
-        self.notification_id = items["notificationId"]
-        self.notification_code = items["notificationCode"]
-        self.feedback_status = items["feedbackStatus"]
-        self.description = items.get("description")
+        self.notification_id: str = items["notificationId"]
+        self.notification_code: str = items["notificationCode"]
+        self.feedback_status: str = items["feedbackStatus"]
+        self.description: Optional[str] = items.get("description")
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:

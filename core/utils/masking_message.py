@@ -1,10 +1,10 @@
-from typing import Callable, Optional, Iterable, Mapping, Union, Pattern, Match, MutableMapping
+from typing import Callable, Optional, Iterable, Mapping, Union, Pattern, Match, MutableMapping, Sequence
 import re
 
 MASK = "***"
-DEFAULT_MASKING_FIELDS = ["token", "access_token", "refresh_token", "epkId", "profileId"]
+DEFAULT_MASKING_FIELDS = {"token": 0, "access_token": 0, "refresh_token": 0, "epkId": 0, "profileId": 0}
 CARD_MASKING_FIELDS = ["message", "debug_info", "normalizedMessage", "incoming_text", "annotations", "inner_entities",
-                       "preprocess_result"]
+                       "preprocess_result", "original_message", "original_tokenized_elements"]
 
 card_regular = re.compile(r"(?:(\d{18})|(\d{16})|(?:\d{4} ){3}(\d{4})(\s?\d{2})?)")
 
@@ -50,11 +50,12 @@ def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Unio
     :param depth_level: глубина сохранения структуры маскируемого поля
     :param mask_available_depth: глубина глубокой маскировки полей без сохранения структуры (см ниже)
     """
+
+    if isinstance(masking_fields, Sequence):
+        masking_fields = {key: depth_level for key in masking_fields}
+
     if masking_fields is None:
         masking_fields = DEFAULT_MASKING_FIELDS
-
-    if isinstance(masking_fields, Iterable):
-        masking_fields = {key: depth_level for key in masking_fields}
 
     _masking(data, masking_fields, depth_level, mask_available_depth, masking_on=False, card_masking_on=False)
 

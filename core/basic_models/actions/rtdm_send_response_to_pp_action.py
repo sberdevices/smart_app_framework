@@ -12,23 +12,27 @@ RTDM_RESPONSE = "RTDM_RESPONSE"
 
 class RtdmSendResponseToPpAction(CommandAction):
     """
-    Action отправки отклика на ПП.
+    Action отправки отклика на персональное предложение (ПП) в Real-Time Decision Manager (RTDM). Аналитика:
+    https://confluence.sberbank.ru/pages/viewpage.action?pageId=5786345296
 
-    Пример:
+    Использование::
+        Обязательное поле notificationId - Идентификатор события/ПП по клиенту
+        Обязательное поле notificationCode - Идентификатор события/ПП отклика
+        Обязательное поле feedbackStatus - тип фидбэка:
+            FS - показ ПП в канале ВА,
+            FA - клиент согласился на условия ПП в канале ВА (использовал саджест или другой аналог),
+            FI - клиент прошел по диплинку для оформления,
+        Опциональное поле description - Дополнительный атрибут
+            В случае, если feedbackStatus = FA поле следует заполнить названием саджеста или текстом из саджеста
 
-    {
-       "messageId": 10000001,
-       "messageName": "RTDM_VIEWED_EVENTS",
-       "userChannel": "SBOL",
-       "nextSystem": "RTDM Adapter",
-       "handlerName": "AI_HANDLER",
-       "userId": "1594098519615",
-       "chatId": "1594098487427",
-       "notificationId": "1594098519616",
-       "notificationCode": "CREDIT",
-       "feedbackStatus": "FS",
-       "description": "Клик FS"
-    }
+        Пример::
+            {
+              "type": "rtdm_send",
+              "notificationId": "1594098519616",
+              "notificationCode": "CREDIT",
+              "feedbackStatus": "FS",
+              "description": "Клик FS"
+            }
     """
 
     DEFAULT_REQUEST_DATA = {

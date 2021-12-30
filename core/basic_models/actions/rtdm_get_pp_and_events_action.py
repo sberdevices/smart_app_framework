@@ -14,81 +14,20 @@ from smart_kit.action.http import HTTPRequestAction
 
 class RtdmGetPpAndEventsAction(Action):
     """
-    Action получения ПП и событий из RTDM. Полученные данные сохраняются в user-переменную
-    rtdm_get_response.
+    Action получения персонального предложения (ПП) и событий из Real-Time Decision Manager (RTDM). Полученные данные
+    сохраняются в user-переменную rtdm_get_response. Аналитика:
+    https://confluence.sberbank.ru/pages/viewpage.action?pageId=5786345296
 
-    Пример отправляемого запроса:
-    {
-        "rqUid":"5c975471-ecb1-4301-b1ee-a8ddb9de0c3a",
-        "rqTm":"20-08-2020T14:05:00",
-        "systemName":"nlpSystem",
-        "channel":"F",
-        "epkId":34234608109,
-        "mode":"offerParam,serviceParam"
-    }
+    Использование::
+        Обязательное поле mode - режим сервиса. Возможные значения:
+            offerParam - офферы (маркетинговые предложения из Репозитория) с текстом и тегами;
+            serviceParam - сервисные с тегами;
 
-    Пример ответа:
-    {
-       "rqUid":"5a999111-eeb1-0001-b1ee-a7ddd9de0c3a",
-       "rqTm":"2021-03-04T10:05:00",
-       "systemName":"nlpsystem",
-       "channel":"F",
-       "epkId":"00000000001",
-       "offers":[
-          {
-             "notificationId":"23661232134301",
-             "type":"OFFER_BATCH",
-             "campaignId":"BC777ABD00",
-             "offerKind":"E0110001",
-             "priority":1,
-             "data":{
-                "notificationCode":"Potreb_Credit",
-                "V7":"12",
-                "V6":"200001",
-                "V10":"60",
-                "V11":"5340"
-             }
-          },
-          {
-             "notificationId":"CMT426111",
-             "type":"OFFER_BATCH",
-             "campaignId":"BC111ABD66",
-             "offerKind":"E0330003",
-             "priority":1,
-             "data":{
-                "notificationCode":"Deposit",
-                "V17":"Дополнительный процент",
-                "V18":"100 000 ₽",
-                "V19":"cрок (3, 6 или 12 месяцев)",
-                "V21":"android-app://ru.sberbankmobile/android-app/ru.sberbankmobile/products/deposit?action=create",
-                "V20":"sberbankonline://payments/new-deposit?depositType=92&depositGroup=4"
-             }
-          }
-       ],
-       "service":[
-          {
-             "notificationId":"23661232134301",
-             "type":"SERVICE_EVENT",
-             "campaignId":"BC777ABD00",
-             "priority":1,
-             "data":{
-                "notificationCode":"003",
-                "date":1596786406000,
-                "amount":1000,
-                "currency":"руб",
-                "transactionType":6538,
-                "transactionRespCode":822,
-                "atmNumber":"961072",
-                "bin":220056,
-                "cardMask":5522
-             }
-          }
-       ],
-       "status":{
-          "code":0,
-          "message":"Успешно"
-       }
-    }
+        Пример::
+            {
+              "type": "rtdm_get",
+              "mode": "offerParam,serviceParam"
+            }
     """
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):

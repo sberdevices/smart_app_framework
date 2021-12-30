@@ -1,18 +1,14 @@
 # coding: utf-8
 import datetime
-import json
 import unittest
 import uuid
 from unittest.mock import Mock, MagicMock, patch
-
-import pytest
 
 from core.basic_models.actions.push_action import PushAction
 from core.basic_models.actions.rtdm_get_po_and_events_action import RtdmGetPoAndEventsAction
 from core.basic_models.actions.rtdm_send_response_to_po_action import RtdmSendResponseToPoAction, RTDM_RESPONSE
 from core.basic_models.answer_items.answer_items import SdkAnswerItem, items_factory, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink
-from core.basic_models.variables.variables import Variables
 from core.unified_template.unified_template import UnifiedTemplate, UNIFIED_TEMPLATE_TYPE_NAME
 from core.basic_models.actions.basic_actions import Action, DoingNothingAction, action_factory, RequirementAction, \
     actions, ChoiceAction, ElseAction, CompositeAction, NonRepeatingAction

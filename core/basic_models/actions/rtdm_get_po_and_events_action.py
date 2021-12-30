@@ -21,6 +21,7 @@ class RtdmGetPoAndEventsAction(Action):
             serviceParam - сервисные с тегами;
         Отправляемое поле systemName указывается в template_config.yml в поле system_name.
         URL сервиса для отправки запросов в RTDM указывается в template_config.yml в поле url поля rtdm.
+        Время ожидания получения ответа из RTDM указывается в template_config.yml в поле timeout поля rtdm.
 
         Пример::
             {
@@ -45,6 +46,7 @@ class RtdmGetPoAndEventsAction(Action):
         }
         items = {
             "params": {
+                "timeout": user.settings["template_settings"]["rtdm"]["timeout"],
                 "url": user.settings["template_settings"]["rtdm"]["url"],
                 "method": "post",
                 "json": command_params,

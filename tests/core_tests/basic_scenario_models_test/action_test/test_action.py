@@ -345,7 +345,7 @@ class ActionTest(unittest.TestCase):
     @patch('requests.request')
     def test_rtdm_get_action(self, request_fun):
         settings = {"template_settings": {"system_name": "nlpSystem",
-                                          "rtdm": {"url": "http://localhost:8088/api/v1/search/epkId"}}}
+                                          "rtdm": {"url": "http://localhost:8088/api/v1/search/epkId", "timeout": 1}}}
         items = {
             "mode": "offerParam,serviceParam"
         }
@@ -363,7 +363,7 @@ class ActionTest(unittest.TestCase):
             "epkId": 34234608109,
             "mode": "offerParam,serviceParam"
         }
-        user.descriptions = {"behaviors": {"common_behavior": MagicMock(timeout=lambda x: 1)}}
+        user.settings["template_settings"]["rtdm"]["timeout"]
         action.run(user=user, text_preprocessing_result=None)
         request_fun.assert_called_with(url="http://localhost:8088/api/v1/search/epkId", method='post',
                                        json=expected_request, headers={'Content-Type': 'application/json'},

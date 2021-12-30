@@ -12,8 +12,8 @@ from core.basic_models.actions.counter_actions import CounterIncrementAction, Co
     CounterClearAction, CounterSetAction, CounterCopyAction
 from core.basic_models.actions.external_actions import ExternalAction
 from core.basic_models.actions.external_actions import ExternalActions
-from core.basic_models.actions.rtdm_get_pp_and_events_action import RtdmGetPpAndEventsAction
-from core.basic_models.actions.rtdm_send_response_to_pp_action import RtdmSendResponseToPpAction
+from core.basic_models.actions.rtdm_get_po_and_events_action import RtdmGetPoAndEventsAction
+from core.basic_models.actions.rtdm_send_response_to_po_action import RtdmSendResponseToPoAction
 from core.basic_models.actions.push_action import PushAction
 from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAction, SDKAnswer, \
     SDKAnswerToUser
@@ -307,8 +307,8 @@ class SmartAppResources(BaseConfig):
         actions["set_local_variable"] = SetLocalVariableAction
         actions["set_variable"] = SetVariableAction
         actions["string"] = StringAction
-        actions["rtdm_get"] = RtdmGetPpAndEventsAction
-        actions["rtdm_send"] = RtdmSendResponseToPpAction
+        actions["rtdm_get"] = RtdmGetPoAndEventsAction
+        actions["rtdm_send"] = RtdmSendResponseToPoAction
         actions["push"] = PushAction
 
     def init_requirements(self):

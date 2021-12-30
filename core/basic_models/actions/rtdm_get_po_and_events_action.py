@@ -12,7 +12,7 @@ from scenarios.user.user_model import User
 from smart_kit.action.http import HTTPRequestAction
 
 
-class RtdmGetPpAndEventsAction(Action):
+class RtdmGetPoAndEventsAction(Action):
     """
     Action получения персонального предложения (ПП) и событий из Real-Time Decision Manager (RTDM). Полученные данные
     сохраняются в user-переменную rtdm_get_response. Аналитика:

@@ -10,7 +10,7 @@ from scenarios.user.user_model import User
 RTDM_RESPONSE = "RTDM_RESPONSE"
 
 
-class RtdmSendResponseToPpAction(CommandAction):
+class RtdmSendResponseToPoAction(CommandAction):
     """
     Action отправки отклика на персональное предложение (ПП) в Real-Time Decision Manager (RTDM). Аналитика:
     https://confluence.sberbank.ru/pages/viewpage.action?pageId=5786345296

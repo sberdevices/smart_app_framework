@@ -8,8 +8,8 @@ from unittest.mock import Mock, MagicMock, patch
 import pytest
 
 from core.basic_models.actions.push_action import PushAction
-from core.basic_models.actions.rtdm_get_pp_and_events_action import RtdmGetPpAndEventsAction
-from core.basic_models.actions.rtdm_send_response_to_pp_action import RtdmSendResponseToPpAction, RTDM_RESPONSE
+from core.basic_models.actions.rtdm_get_po_and_events_action import RtdmGetPoAndEventsAction
+from core.basic_models.actions.rtdm_send_response_to_po_action import RtdmSendResponseToPoAction, RTDM_RESPONSE
 from core.basic_models.answer_items.answer_items import SdkAnswerItem, items_factory, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink
 from core.basic_models.variables.variables import Variables
@@ -352,7 +352,7 @@ class ActionTest(unittest.TestCase):
         items = {
             "mode": "offerParam,serviceParam"
         }
-        action = RtdmGetPpAndEventsAction(items)
+        action = RtdmGetPoAndEventsAction(items)
         user = MagicMock()
         user.settings = settings
         user.message = MagicMock()
@@ -388,7 +388,7 @@ class ActionTest(unittest.TestCase):
             "feedbackStatus": "FS",
             "description": "Клик FS"
         }
-        action = RtdmSendResponseToPpAction(items)
+        action = RtdmSendResponseToPoAction(items)
         user = MagicMock()
         command = action.run(user=user, text_preprocessing_result=None)[0]
         self.assertEqual(command.payload, expected)
@@ -413,7 +413,7 @@ class ActionTest(unittest.TestCase):
             "feedbackStatus": "FS",
             "description": "Клик FS"
         }
-        action = RtdmSendResponseToPpAction(items)
+        action = RtdmSendResponseToPoAction(items)
         user = MagicMock()
         command = action.run(user=user, text_preprocessing_result=None)[0]
         message = MagicMock()

@@ -18,8 +18,9 @@ class SmartAppRtdmToMessage(SmartAppToMessage):
            "userId": self.incoming_message.uid,
            "notificationId": self.payload["notificationId"],
            "notificationCode": self.payload["notificationCode"],
-           "feedbackStatus": self.payload["feedbackStatus"],
-           "description": self.payload["description"]
+           "feedbackStatus": self.payload["feedbackStatus"]
         }
+        if "description" in self.payload:
+            fields["description"] = self.payload["description"]
         fields.update(self.root_nodes)
         return fields

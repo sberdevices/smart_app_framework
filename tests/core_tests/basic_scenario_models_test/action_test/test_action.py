@@ -370,6 +370,7 @@ class ActionTest(unittest.TestCase):
                                        timeout=1)
 
     def test_rtdm_send_action(self):
+        settings = {"template_settings": {"rtdm": {"direct_transport_sender_provider_topic": "CHATBOT_INPUT"}}}
         items = {
             "notificationId": "1594098519616",
             "notificationCode": "CREDIT",
@@ -385,11 +386,17 @@ class ActionTest(unittest.TestCase):
             "feedbackStatus": "FS",
             "description": "Клик FS"
         }
+        expected_request_data = {
+            "kafka_key": "RTDM_VIEWED_EVENTS",
+            "topic_key": "CHATBOT_INPUT"
+        }
         action = RtdmSendResponseToPoAction(items)
         user = MagicMock()
+        user.settings = settings
         command = action.run(user=user, text_preprocessing_result=None)[0]
-        self.assertEqual(command.payload, expected)
-        self.assertEqual(command.name, RTDM_RESPONSE)
+        self.assertEqual(expected, command.payload)
+        self.assertEqual(expected_request_data, command.request_data)
+        self.assertEqual(RTDM_RESPONSE, command.name)
 
     def test_rtdm_send_action_message(self):
         items = {
@@ -419,7 +426,7 @@ class ActionTest(unittest.TestCase):
         message.uid = "1594098519615"
         request = Mock()
         fields = SmartAppRtdmToMessage(command=command, message=message, request=request).as_dict
-        self.assertEqual(fields, expected)
+        self.assertEqual(expected, fields)
 
 
 class NonRepeatingActionTest(unittest.TestCase):

@@ -36,7 +36,6 @@ class RtdmSendResponseToPoAction(CommandAction):
     """
 
     DEFAULT_REQUEST_DATA = {
-        "topic_key": "CHATBOT_INPUT",
         "kafka_key": "RTDM_VIEWED_EVENTS"
     }
 
@@ -61,6 +60,8 @@ class RtdmSendResponseToPoAction(CommandAction):
         }
         if self.description:
             command_params["description"] = self.description
+        self.request_data["topic_key"] = \
+            user.settings["template_settings"]["rtdm"]["direct_transport_sender_provider_topic"]
         # Отправка отклика клиента по ПП
         commands = [Command(self.command, command_params, self.id, request_type=self.request_type,
                             request_data=self.request_data)]

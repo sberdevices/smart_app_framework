@@ -20,7 +20,7 @@ class RtdmGetPoAndEventsAction(Action):
             offerParam - офферы (маркетинговые предложения из Репозитория) с текстом и тегами;
             serviceParam - сервисные с тегами;
         Отправляемое поле systemName указывается в template_config.yml в поле system_name.
-        URL сервиса для отправки запросов в RTDM указывается в template_config.yml в поле url поля rtdm
+        URL сервиса для отправки запросов в RTDM указывается в template_config.yml в поле url поля rtdm.
 
         Пример::
             {

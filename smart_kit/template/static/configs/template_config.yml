@@ -21,3 +21,4 @@ project_id: template-app-id
 system_name: framework_smartapp_system_name
 rtdm:
   url: http://localhost:8088/api/v1/search/epkId
+  direct_transport_sender_provider_topic: CHATBOT_INPUT

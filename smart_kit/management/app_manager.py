@@ -1,7 +1,6 @@
 import logging.config
 from collections import namedtuple
 
-from core.logging import logger_utils
 from smart_kit.configs.logger_config import LOGGING_CONFIG
 from smart_kit.configs.logger_config import LoggerConfig
 from smart_kit.management.base import HelpCommand

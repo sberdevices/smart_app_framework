@@ -1,9 +1,8 @@
 import os
 import shutil
-import sys
 
 import smart_kit
-from smart_kit.management.base import Manager, HelpCommand, AppCommand
+from smart_kit.management.base import Manager, AppCommand
 
 
 class SmartKitManager(Manager):

@@ -360,7 +360,7 @@ class ActionTest(unittest.TestCase):
         user.message.incremental_id = "5c975471-ecb1-4301-b1ee-a8ddb9de0c3a"
         expected_request = {
             "rqUid": "5c975471-ecb1-4301-b1ee-a8ddb9de0c3a",
-            "rqTm": datetime.datetime.now().replace(microsecond=0).isoformat(),
+            "rqTm": datetime.datetime.utcnow().replace(microsecond=0).isoformat(),
             "systemName": "nlpSystem",
             "channel": "F",
             "epkId": 34234608109,

@@ -38,7 +38,7 @@ class RtdmGetPpAndEventsAction(Action):
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         command_params = {
             "rqUid": user.message.incremental_id,
-            "rqTm": datetime.datetime.now().replace(microsecond=0).isoformat(),
+            "rqTm": datetime.datetime.utcnow().replace(microsecond=0).isoformat(),
             "systemName": user.settings["template_settings"]["system_name"],
             "channel": "F",
             "epkId": user.message.payload["epkId"],

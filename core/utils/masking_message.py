@@ -56,10 +56,6 @@ def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Unio
 
     if masking_fields is None:
         masking_fields = DEFAULT_MASKING_FIELDS
-    elif isinstance(masking_fields, MutableMapping):
-        masking_fields.update(DEFAULT_MASKING_FIELDS)
-    else:
-        raise Exception("masking_fields should be dict or list")
 
     _masking(data, masking_fields, depth_level, mask_available_depth, masking_on=False, card_masking_on=False)
 

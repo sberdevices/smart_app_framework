@@ -421,11 +421,7 @@ class ActionTest(unittest.TestCase):
         message.channel = "SBOL"
         message.uid = "1594098519615"
         request = Mock()
-        masking_fields = []
-        to_msg_validators = []
-        fields = SmartAppRtdmToMessage(command=command, message=message, request=request,
-                                       masking_fields=masking_fields,
-                                       validators=to_msg_validators).as_dict
+        fields = SmartAppRtdmToMessage(command=command, message=message, request=request).as_dict
         self.assertEqual(fields, expected)
 
 

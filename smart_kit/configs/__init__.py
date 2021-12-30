@@ -61,7 +61,7 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
     set_default(app_config, "PLUGINS", ())
     set_default(app_config, "TO_MSG_VALIDATORS", ())
     set_default(app_config, "FROM_MSG_VALIDATORS", ())
-    set_default(app_config, "AUTO_LISTENING", True)
+    set_default(app_config, "AUTO_LISTENING", False)
 
     set_default(app_config, "STATIC_CLASSIFIERS_PATH", os.path.join(references_path, "./classifiers"))
     set_default(app_config, "STATIC_CLASSIFIERS_DATA_PATH", os.path.join(references_path, "./classifiers_data"))

@@ -17,6 +17,7 @@ from core.basic_models.requirement.user_text_requirements import AnySubstringInL
     NormalizedTextInSetRequirement
 from core.model.registered import registered_factories
 from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 def patch_get_app_config(mock_get_app_config):
@@ -319,7 +320,7 @@ class RequirementTest(unittest.TestCase):
     @patch('smart_kit.configs.get_app_config')
     def test_intersection_requirement_true(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
-        user = Mock()
+        user = PicklableMock()
         requirement = IntersectionRequirement(
             {
                 "phrases": [
@@ -329,7 +330,7 @@ class RequirementTest(unittest.TestCase):
                 ]
             }
         )
-        text_normalization_result = Mock()
+        text_normalization_result = PicklableMock()
         text_normalization_result.tokenized_elements_list_pymorphy = [
             {'lemma': 'я'},
             {'lemma': 'хотеть'},

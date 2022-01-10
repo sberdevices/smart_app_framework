@@ -49,10 +49,7 @@ class RtdmGetPoAndEventsAction(Action):
                 "timeout": user.settings["template_settings"]["rtdm"]["timeout"],
                 "url": user.settings["template_settings"]["rtdm"]["url"],
                 "method": "post",
-                "json": command_params,
-                "headers": {
-                  "Content-Type": "application/json"
-                }
+                "json": command_params
             },
             "store": "rtdm_get_response",
             "behavior": "common_behavior"

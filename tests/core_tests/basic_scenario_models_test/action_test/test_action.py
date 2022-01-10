@@ -366,7 +366,7 @@ class ActionTest(unittest.TestCase):
         user.settings["template_settings"]["rtdm"]["timeout"]
         action.run(user=user, text_preprocessing_result=None)
         request_fun.assert_called_with(url="http://localhost:8088/api/v1/search/epkId", method='post',
-                                       json=expected_request, headers={'Content-Type': 'application/json'},
+                                       json=expected_request,
                                        timeout=1)
 
     def test_rtdm_send_action(self):

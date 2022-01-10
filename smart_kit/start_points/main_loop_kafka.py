@@ -410,7 +410,7 @@ class MainLoop(BaseMainLoop):
         self._log_request(user, request, answer, mq_message)
 
     def _log_request(self, user, request, answer, original_mq_message):
-        log("OUTGOING TO TOPIC_KEY: %(topic_key)s",
+        log("OUTGOING TO TOPIC_KEY: %(topic_key)s DATA: %(data)s",
             params={log_const.KEY_NAME: "outgoing_message",
                     "topic_key": request.topic_key,
                     "headers": str(request._get_new_headers(original_mq_message)),

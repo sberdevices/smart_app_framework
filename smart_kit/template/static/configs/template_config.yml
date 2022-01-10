@@ -20,6 +20,6 @@ self_service_with_state_save_messages: true
 project_id: template-app-id
 system_name: framework_smartapp_system_name
 rtdm:
-  url: http://localhost:8088/api/v1/search/epkId
+  url: https://caas-ingressgateway.prom-apps.ocp-geo.ca.sbrf.ru/api/v1/search/epkId
   direct_transport_sender_provider_topic: CHATBOT_INPUT
-  timeout: 300
+  timeout: 6

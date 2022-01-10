@@ -1,6 +1,8 @@
 # coding: utf-8
 from core.logging.logger_utils import log
 from core.model.registered import Registered
+from core.utils.masking_message import masking
+import copy
 
 import scenarios.logging.logger_constants as log_const
 
@@ -23,6 +25,7 @@ class BasicField:
         self._available = items.get("available", self.description.available)
         self._user = user
         self._lifetime = lifetime
+        self._masking_fields = user.settings["template_settings"].get("masking_fields") if user is not None else []
 
     @property
     def value(self):
@@ -46,10 +49,13 @@ class BasicField:
     def valid(self):
         return self.value is not None or not self.description.required
 
+    def is_fill_need(self, value, origin_value):
+        return value is not None
+
     def fill(self, origin_value):
         filled = False
         value = origin_value if origin_value is not None else self.description.default_value
-        if value is not None:
+        if self.is_fill_need(value, origin_value):
             self._set_value(value)
             self.reset_available()
             filled = True
@@ -57,10 +63,13 @@ class BasicField:
 
     def _set_value(self, value):
         self._value = value
-        message = "BasicField: %(description_id)s filled by value: %(field_value)s"
+        dict_value = {self.description.name: copy.deepcopy(value)}
+        masking(dict_value, self._masking_fields)
+        message = "%(class_name)s: %(description_id)s filled by value: %(field_value)s"
         params = {log_const.KEY_NAME: log_const.FILLER_RESULT_VALUE,
+                  "class_name": self.__class__.__name__,
                   "description_id": self.description.id,
-                  "field_value": str(value)}
+                  "field_value": str(dict_value[self.description.name])}
         log(message, None, params)
 
     def set_available(self):
@@ -98,25 +107,13 @@ class QuestionField(BasicField):
                 return prev_value
         return self.description.default_value
 
-    def fill(self, origin_value):
-        filled = False
-        value = origin_value if origin_value is not None else self.default_value
+    def is_fill_need(self, value, origin_value):
         check_new_field_value = self._value != value and origin_value is not None
         can_set = value is not None and (self._value is None or check_new_field_value)
-
-        if self.available and can_set:
-            self._set_value(value)
-            self.reset_available()
-            filled = True
-        return filled
+        return self.available and can_set
 
     def _set_value(self, value):
-        self._value = value
-        message = "Field: %(description_id)s filled by value: %(field_value)s"
-        params = {log_const.KEY_NAME: log_const.FILLER_RESULT_VALUE,
-                  "description_id": self.description.id,
-                  "field_value": str(value)}
-        log(message, None, params)
+        super()._set_value(value)
         if self.description.need_save_context:
             self._user.last_fields[self.description.id].value = value
             self._user.last_fields[self.description.id].set_remove_time(self._lifetime)

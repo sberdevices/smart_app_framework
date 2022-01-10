@@ -12,6 +12,7 @@ from core.basic_models.actions.counter_actions import CounterIncrementAction, Co
     CounterClearAction, CounterSetAction, CounterCopyAction
 from core.basic_models.actions.external_actions import ExternalAction
 from core.basic_models.actions.external_actions import ExternalActions
+from core.basic_models.actions.push_action import PushAction
 from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAction, SDKAnswer, \
     SDKAnswerToUser
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
@@ -201,6 +202,7 @@ class SmartAppResources(BaseConfig):
         ffd.field_filler_description["regexp_string_operations"] = ffd.RegexpAndStringOperationsFieldFiller
         ffd.field_filler_description["requirement"] = cffd.RequirementFiller
         ffd.field_filler_description["user_id"] = ffd.UserIdFiller
+        ffd.field_filler_description["date_period_filler"] = ffd.DatePeriodFiller
 
     def init_scenarios(self):
         scenarios[None] = BaseScenario
@@ -303,6 +305,7 @@ class SmartAppResources(BaseConfig):
         actions["set_local_variable"] = SetLocalVariableAction
         actions["set_variable"] = SetVariableAction
         actions["string"] = StringAction
+        actions["push"] = PushAction
 
     def init_requirements(self):
         requirements[None] = Requirement

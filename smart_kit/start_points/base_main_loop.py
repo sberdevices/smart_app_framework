@@ -6,7 +6,6 @@ import signal
 import scenarios.logging.logger_constants as log_const
 from core.db_adapter.db_adapter import DBAdapterException
 from core.db_adapter.db_adapter import db_adapter_factory
-from core.jaeger_custom_client.jaeger_config import ExtendedConfig
 from core.logging.logger_utils import log
 from core.monitoring.monitoring import monitoring
 from core.monitoring.healthcheck_handler import RootResource
@@ -54,7 +53,6 @@ class BaseMainLoop:
             self.user_save_collisions_tries = max(save_tries, 1)
 
             self.health_check_server = self._create_health_check_server(template_settings)
-            self.tracer = self._create_jaeger_tracer(template_settings)
             if not template_settings["monitoring"].get("enabled"):
                 monitoring.turn_off()
             else:
@@ -92,13 +90,6 @@ class BaseMainLoop:
                 settings["environment"] in health_check.get("debug_envs", [])
             )
         return health_check_server
-
-    def _create_jaeger_tracer(self, template_settings):
-        jaeger_config = template_settings["jaeger_config"]
-        config = ExtendedConfig(config=jaeger_config, service_name=self.app_name,
-                                validate=True)
-        tracer = config.initialize_tracer()
-        return tracer
 
     def load_user(self, db_uid, message):
         db_data = None

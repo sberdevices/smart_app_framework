@@ -8,8 +8,7 @@ from confluent_kafka.cimpl import KafkaException
 from lazy import lazy
 
 import scenarios.logging.logger_constants as log_const
-from core.jaeger_custom_client import jaeger_utils
-from core.jaeger_custom_client import kafka_codec as jaeger_kafka_codec
+from core.basic_models.actions.push_action import PUSH_NOTIFY
 from core.logging.logger_utils import log, UID_STR, MESSAGE_ID_STR
 
 from core.message.from_message import SmartAppFromMessage
@@ -19,6 +18,7 @@ from core.mq.kafka.kafka_publisher import KafkaPublisher
 from core.utils.stats_timer import StatsTimer
 from core.basic_models.actions.command import Command
 from smart_kit.compatibility.commands import combine_commands
+from smart_kit.message.smart_app_push_message import SmartAppPushToMessage
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.names import message_names
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
@@ -118,9 +118,10 @@ class MainLoop(BaseMainLoop):
         for command in commands:
             request = SmartKitKafkaRequest(id=None, items=command.request_data)
             request.update_empty_items({"topic_key": topic_key, "kafka_key": kafka_key})
-            answer = SmartAppToMessage(command=command, message=message, request=request,
-                                       masking_fields=self.masking_fields,
-                                       validators=self.to_msg_validators)
+            handler_cls = self._get_message_handler(command.name)
+            answer = handler_cls(command=command, message=message, request=request,
+                                 masking_fields=self.masking_fields,
+                                 validators=self.to_msg_validators)
             if answer.validate():
                 answers.append(answer)
             else:
@@ -129,6 +130,13 @@ class MainLoop(BaseMainLoop):
             smart_kit_metrics.counter_outgoing(self.app_name, command.name, answer, user)
 
         return answers
+
+    @staticmethod
+    def _get_message_handler(command_name):
+        default = SmartAppToMessage
+        return {
+            PUSH_NOTIFY: SmartAppPushToMessage
+        }.get(command_name, default)
 
     def _get_timeout_from_message(self, orig_message_raw, callback_id, headers):
         orig_message_raw = json.dumps(orig_message_raw)
@@ -249,52 +257,43 @@ class MainLoop(BaseMainLoop):
 
                 db_uid = message.db_uid
 
-                span = jaeger_utils.get_incoming_spam(self.tracer, message, mq_message)
+                with StatsTimer() as load_timer:
+                    user = self.load_user(db_uid, message)
 
-                with self.tracer.scope_manager.activate(span, True) as scope:
-                    with StatsTimer() as load_timer:
-                        user = self.load_user(db_uid, message)
+                smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
+                stats += "Loading time: {} msecs\n".format(load_timer.msecs)
+                with StatsTimer() as script_timer:
+                    commands = self.model.answer(message, user)
 
-                with self.tracer.scope_manager.activate(span, True) as scope:
-                    with self.tracer.start_span('Loading time', child_of=scope.span) as span:
-                        smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
-                        stats += "Loading time: {} msecs\n".format(load_timer.msecs)
-                        with StatsTimer() as script_timer:
-                            commands = self.model.answer(message, user)
+                answers = self._generate_answers(user=user, commands=commands, message=message,
+                                                 topic_key=topic_key,
+                                                 kafka_key=kafka_key)
+                smart_kit_metrics.sampling_script_time(self.app_name, script_timer.secs)
+                stats += "Script time: {} msecs\n".format(script_timer.msecs)
 
-                    with self.tracer.start_span('Script time', child_of=scope.span) as span:
-                        answers = self._generate_answers(user=user, commands=commands, message=message,
-                                                         topic_key=topic_key,
-                                                         kafka_key=kafka_key)
-                        smart_kit_metrics.sampling_script_time(self.app_name, script_timer.secs)
-                        stats += "Script time: {} msecs\n".format(script_timer.msecs)
+                with StatsTimer() as save_timer:
+                    user_save_no_collisions = self.save_user(db_uid, user, message)
 
-                    with self.tracer.start_span('Saving time', child_of=scope.span) as span:
-                        with StatsTimer() as save_timer:
-                            user_save_no_collisions = self.save_user(db_uid, user, message)
+                smart_kit_metrics.sampling_save_time(self.app_name, save_timer.secs)
+                stats += "Saving time: {} msecs\n".format(save_timer.msecs)
+                if not user_save_no_collisions:
+                    log(
+                        "MainLoop.iterate: save user got collision on uid %(uid)s db_version %(db_version)s.",
+                        user=user,
+                        params={log_const.KEY_NAME: "ignite_collision",
+                                "db_uid": db_uid,
+                                "message_key": mq_message.key(),
+                                "message_partition": mq_message.partition(),
+                                "kafka_key": kafka_key,
+                                "uid": user.id,
+                                "db_version": str(user.variables.get(user.USER_DB_VERSION))},
+                        level="WARNING")
+                    continue
 
-                    smart_kit_metrics.sampling_save_time(self.app_name, save_timer.secs)
-                    stats += "Saving time: {} msecs\n".format(save_timer.msecs)
-                    if not user_save_no_collisions:
-                        log(
-                            "MainLoop.iterate: save user got collision on uid %(uid)s db_version %(db_version)s.",
-                            user=user,
-                            params={log_const.KEY_NAME: "ignite_collision",
-                                    "db_uid": db_uid,
-                                    "message_key": mq_message.key(),
-                                    "message_partition": mq_message.partition(),
-                                    "kafka_key": kafka_key,
-                                    "uid": user.id,
-                                    "db_version": str(user.variables.get(user.USER_DB_VERSION))},
-                            level="WARNING")
-                        continue
-
-                    self.save_behavior_timeouts(user, mq_message, kafka_key)
+                self.save_behavior_timeouts(user, mq_message, kafka_key)
 
                 if mq_message.headers() is None:
                     mq_message.set_headers([])
-                self.tracer.inject(span_context=span.context, format=jaeger_kafka_codec.KAFKA_MAP,
-                                   carrier=mq_message.headers())
 
                 if answers:
                     for answer in answers:
@@ -411,7 +410,7 @@ class MainLoop(BaseMainLoop):
         self._log_request(user, request, answer, mq_message)
 
     def _log_request(self, user, request, answer, original_mq_message):
-        log("OUTGOING TO TOPIC_KEY: %(topic_key)s",
+        log("OUTGOING TO TOPIC_KEY: %(topic_key)s DATA: %(data)s",
             params={log_const.KEY_NAME: "outgoing_message",
                     "topic_key": request.topic_key,
                     "headers": str(request._get_new_headers(original_mq_message)),

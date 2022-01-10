@@ -5,7 +5,7 @@ import uuid
 from unittest.mock import Mock, MagicMock, patch
 
 from core.basic_models.actions.push_action import PushAction
-from core.basic_models.actions.rtdm_get_po_and_events_action import RtdmGetPoAndEventsAction
+from core.basic_models.actions.rtdm_get_pp_and_events_action import RtdmGetPpAndEventsAction
 from core.basic_models.actions.rtdm_send_response_to_po_action import RtdmSendResponseToPoAction, RTDM_RESPONSE
 from core.basic_models.answer_items.answer_items import SdkAnswerItem, items_factory, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink
@@ -349,7 +349,7 @@ class ActionTest(unittest.TestCase):
         items = {
             "mode": "offerParam,serviceParam"
         }
-        action = RtdmGetPoAndEventsAction(items)
+        action = RtdmGetPpAndEventsAction(items)
         user = MagicMock()
         user.settings = settings
         user.message = MagicMock()

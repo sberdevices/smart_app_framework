@@ -1,8 +1,7 @@
-from collections import Iterable, Mapping
-import re
 from smart_kit.utils.pickle_copy import pickle_deepcopy
 
 from core.utils.masking_message import masking
+
 
 class LogMasker:
     """
@@ -18,9 +17,9 @@ class LogMasker:
         return x
 
     @classmethod
-    def mask_structure(cls, record, func):
+    def mask_structure(cls, record, **kwargs):
         r = pickle_deepcopy(record)
-        masking(r)
+        masking(r, **kwargs)
         return r
 
     @classmethod

@@ -24,6 +24,8 @@ class RtdmSendResponseToPoAction(CommandAction):
             FI - клиент прошел по диплинку для оформления,
         Опциональное поле description - Дополнительный атрибут
             В случае, если feedbackStatus = FA поле следует заполнить названием саджеста или текстом из саджеста
+        Название топика, в который отправляется запрос указывается в template_config.yml в поле
+            direct_transport_sender_provider_topic поля rtdm.
 
         Пример::
             {

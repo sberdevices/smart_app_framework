@@ -1,113 +1,112 @@
+import copy
 from unittest import TestCase
 
-import json
-from core.message.from_message import SmartAppFromMessage
+from core.utils.masking_message import masking
 
 
 class MaskingTest(TestCase):
-    def test_1(self):
-        input_msg = {
-            "messageId": 2,
-            "uuid": {"userChannel": "B2C", "userId": "userId", "sub": "sub"},
-            "payload": {
-                "message": {
-                    "original_text": "Номер карты 1234567890123456"
-                }
-            },
-            "messageName": "MESSAGE_TO_SKILL"
-        }
+    def test_bank_card(self):
+        # 'message' in CARD_MASKING_FIELDS
+        input_msg = {"message": "Слово до 1234567890123456"}
+        expected = {"message": "Слово до ************3456"}
+        masking(input_msg)
+        self.assertEqual(expected, input_msg)
 
-        json_input_msg = json.dumps(input_msg, ensure_ascii=False)
-        message = SmartAppFromMessage(value=json_input_msg, headers=[])
+        input_msg = {"message": "Слово до 1234567890123456 и после"}
+        expected = {"message": "Слово до ************3456 и после"}
+        masking(input_msg)
+        self.assertEqual(expected, input_msg)
 
-        masked_message = json.loads(message.masked_value)
+        input_msg = {"message": "Склеено1234567890123456"}
+        expected = {"message": "Склеено************3456"}
+        masking(input_msg)
+        self.assertEqual(expected, input_msg)
 
-        self.assertEqual(masked_message['payload']['message']['original_text'], "Номер карты ************3456")
+        # если это поле входит в банковские, но не проходит по регулярке - то не маскируем
+        input_msg = {"message": "1234"}
+        expected = {"message": "1234"}
+        masking(input_msg)
+        self.assertEqual(expected, input_msg)
 
-    def test_2(self):
-        input_msg = {
-            "messageId": 2,
-            "uuid": {"userChannel": "B2C", "userId": "userId", "sub": "sub"},
-            "payload": {
-                "message": {
-                    "original_text": "Номер карты 1234567890123456 вот"
-                }
-            },
-            "messageName": "MESSAGE_TO_SKILL"
-        }
+        # маскировка так же применится к банковскому полю внутри коллекции
+        input_msg = {'message': {'card': '1234567890123456'}}
+        expected = {'message': {'card': '************3456'}}
+        masking(input_msg, masking_fields=['token'])
+        self.assertEqual(expected, input_msg)
 
-        json_input_msg = json.dumps(input_msg, ensure_ascii=False)
-        message = SmartAppFromMessage(value=json_input_msg, headers=[])
+        # если это не баковское поле - то не маскируем
+        input_msg = {'here_no_cards': {'no_card': '1234567890123456'}}
+        expected = {'here_no_cards': {'no_card': '1234567890123456'}}
+        masking(input_msg)
+        self.assertEqual(expected, input_msg)
 
-        masked_message = json.loads(message.masked_value)
+        # проверки на целочисленный тип значений
+        input_msg = {'message': 1234567890123456}
+        expected = {'message': '************3456'}
+        masking(input_msg)
+        self.assertEqual(expected, input_msg)
 
-        self.assertEqual(masked_message['payload']['message']['original_text'], "Номер карты ************3456 вот")
+        input_msg = {'message': {'card': 1234567890123456}}
+        expected = {'message': {'card': '************3456'}}
+        masking(input_msg)
+        self.assertEqual(expected, input_msg)
 
-    def test_3(self):
-        input_msg = {
-            "messageId": 2,
-            "uuid": {"userChannel": "B2C", "userId": "userId", "sub": "sub"},
-            "payload": {
-                "message": {
-                    "original_text": "Номер карты1234567890123456 вот"
-                }
-            },
-            "messageName": "MESSAGE_TO_SKILL"
-        }
+        input_msg = {'message': 1234}
+        expected = {'message': 1234}
+        masking(input_msg)
+        self.assertEqual(expected, input_msg)
 
-        json_input_msg = json.dumps(input_msg, ensure_ascii=False)
-        message = SmartAppFromMessage(value=json_input_msg, headers=[])
+    def test_masking(self):
+        masking_fields = {'spec_token': 2}
+        input_msg = {"spec_token": '123456'}
+        expected = {"spec_token": '***'}
+        masking(input_msg, masking_fields)
+        self.assertEqual(expected, input_msg)
 
-        masked_message = json.loads(message.masked_value)
+        # все простые типы маскируются как '***'
+        input_msg = {"spec_token": {'int': 123, 'str': 'str', 'bool': True}}
+        expected = {"spec_token": {'int': '***', 'str': '***', 'bool': '***'}}
+        masking(input_msg, masking_fields)
+        self.assertEqual(expected, input_msg)
 
-        self.assertEqual(masked_message['payload']['message']['original_text'], "Номер карты************3456 вот")
+        # если маскируемое поле окажется внутри банковского поля - то оно маскируется с заданной вложеностью
+        input_msg = {'message': {'spec_token': ['12', ['12', {'data': {'key': '12'}}]]}}
+        expected = {'message': {'spec_token': ['***', ['***', '*items-1*collections-1*maxdepth-2*']]}}
+        masking(input_msg, masking_fields)
+        self.assertEqual(expected, input_msg)
 
-    def test_4(self):
-        input_msg = {
-            'token': [12, 12, {'key': [12, 12]}],
-            'notoken': [12, {'token': 12}]
-        }
-        json_input_msg = json.dumps(input_msg, ensure_ascii=False)
-        message = SmartAppFromMessage(value=json_input_msg, headers=[])
+    def test_depth(self):
+        # вложенность любой длины не маскируется пока не встретим ключ для маскировки
+        masking_fields = ['spec_token']
+        depth_level = 0
+        input_msg = {'a': {'b': {'c': 1, 'spec_token': '123456'}}}
+        expected = {'a': {'b': {'c': 1, 'spec_token': '***'}}}
+        masking(input_msg, masking_fields, depth_level)
+        self.assertEqual(expected, input_msg)
 
-        masked_message = json.loads(message.masked_value)
-        result_message = {'token': ['***', '***', {'key': '*items-2*collections-0*maxdepth-1*'}], 'notoken': [12, {'token': '***'}]}
+        # проверка вложенной маскировки
+        input_ = {'spec_token': [12, 12, {'key': [12, 12]}]}
 
-        self.assertEqual(masked_message, result_message)
+        depth_level = 3
+        expected = {'spec_token': ['***', '***', {'key': ['***', '***']}]}
+        input_msg = copy.deepcopy(input_)
+        masking(input_msg, masking_fields, depth_level)
+        self.assertEqual(expected, input_msg)
 
-    def test_5(self):
-        input_msg = {
-            "messageId": 2,
-            "uuid": {"userChannel": "B2C", "epkId": "epkId", "sub": "sub"},
-            "payload": {
-                "message": {
-                    "original_text": "Номер карты1234567890123456 вот"
-                },
-                "profileId":[123, 456]
-            },
-            "messageName": "MESSAGE_TO_SKILL",
-            "data" :{
-                "refresh_token": [123, 456, {"key": {"inner_dict" : ["inner_list", 123, 456]}}]
-            }
-        }
+        depth_level = 2
+        expected = {'spec_token': ['***', '***', {'key': '*items-2*collections-0*maxdepth-1*'}]}
+        input_msg = copy.deepcopy(input_)
+        masking(input_msg, masking_fields, depth_level)
+        self.assertEqual(expected, input_msg)
 
-        json_input_msg = json.dumps(input_msg, ensure_ascii=False)
-        message = SmartAppFromMessage(value=json_input_msg, headers=[])
+        depth_level = 1
+        expected = {'spec_token': ['***', '***', '*items-2*collections-1*maxdepth-2*']}
+        input_msg = copy.deepcopy(input_)
+        masking(input_msg, masking_fields, depth_level)
+        self.assertEqual(expected, input_msg)
 
-        masked_message = json.loads(message.masked_value)
-        result_message = input_msg = {
-            "messageId": 2,
-            "uuid": {"userChannel": "B2C", "epkId": "***", "sub": "sub"},
-            "payload": {
-                "message": {
-                    "original_text": "Номер карты************3456 вот"
-                },
-                "profileId":['***', '***']
-            },
-            "messageName": "MESSAGE_TO_SKILL",
-            "data" :{
-                "refresh_token": ['***', '***', {'key': '*items-3*collections-1*maxdepth-2*'}]
-            }
-        }
-
-        self.assertEqual(masked_message, result_message)
+        depth_level = 0
+        expected = {'spec_token': '*items-4*collections-2*maxdepth-3*'}
+        input_msg = copy.deepcopy(input_)
+        masking(input_msg, masking_fields, depth_level)
+        self.assertEqual(expected, input_msg)

@@ -1,6 +1,6 @@
 ---
 loggers:
-  app_logger:
+  {{app_name}}:
     handlers:
       - console_app_handler
       - file_app_handler

@@ -22,7 +22,7 @@ class ManagementTest2(unittest.TestCase):
     def test_create_app_command_init(self):
         obj1 = smart_kit_manager.CreateAppCommand()
         self.assertTrue(obj1.TEMPLATE_FOLDER == "template")
-        self.assertTrue(obj1.extensions == ".py")
+        self.assertTrue(obj1.extensions == (".py", ".yml"))
         self.assertTrue(hasattr(obj1, 'doc'))
 
 

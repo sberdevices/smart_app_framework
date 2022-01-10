@@ -5,8 +5,8 @@ import uuid
 from unittest.mock import Mock, MagicMock, patch
 
 from core.basic_models.actions.push_action import PushAction
-from core.basic_models.actions.rtdm_get_pp_and_events_action import RtdmGetPpAndEventsAction
-from core.basic_models.actions.rtdm_send_response_to_po_action import RtdmSendResponseToPoAction, RTDM_RESPONSE
+from scenarios.scenario_models.field.field_filler_description import RtdmGetPpAndEventsFiller
+from core.basic_models.actions.rtdm_send_response_to_pp_action import RtdmSendResponseToPpAction, RTDM_RESPONSE
 from core.basic_models.answer_items.answer_items import SdkAnswerItem, items_factory, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink
 from core.unified_template.unified_template import UnifiedTemplate, UNIFIED_TEMPLATE_TYPE_NAME
@@ -342,32 +342,6 @@ class ActionTest(unittest.TestCase):
         self.assertTrue(uuid.UUID(headers.get('sender-id'), version=4))
         self.assertEqual(command.name, "PUSH_NOTIFY")
 
-    @patch('requests.request')
-    def test_rtdm_get_action(self, request_fun):
-        settings = {"template_settings": {"system_name": "nlpSystem",
-                                          "rtdm": {"url": "http://localhost:8088/api/v1/search/epkId", "timeout": 1}}}
-        items = {
-            "mode": "offerParam,serviceParam"
-        }
-        action = RtdmGetPpAndEventsAction(items)
-        user = MagicMock()
-        user.settings = settings
-        user.message = MagicMock()
-        user.message.payload = {"epkId": 34234608109}
-        user.message.incremental_id = "5c975471-ecb1-4301-b1ee-a8ddb9de0c3a"
-        expected_request = {
-            "rqUid": "5c975471-ecb1-4301-b1ee-a8ddb9de0c3a",
-            "rqTm": datetime.datetime.utcnow().replace(microsecond=0).isoformat(),
-            "systemName": "nlpSystem",
-            "channel": "F",
-            "epkId": 34234608109,
-            "mode": "offerParam,serviceParam"
-        }
-        action.run(user=user, text_preprocessing_result=None)
-        request_fun.assert_called_with(url="http://localhost:8088/api/v1/search/epkId", method='post',
-                                       json=expected_request,
-                                       timeout=1)
-
     def test_rtdm_send_action(self):
         settings = {"template_settings": {"rtdm": {"direct_transport_sender_provider_topic": "CHATBOT_INPUT"}}}
         items = {
@@ -389,7 +363,7 @@ class ActionTest(unittest.TestCase):
             "kafka_key": "RTDM_VIEWED_EVENTS",
             "topic_key": "CHATBOT_INPUT"
         }
-        action = RtdmSendResponseToPoAction(items)
+        action = RtdmSendResponseToPpAction(items)
         user = MagicMock()
         user.settings = settings
         command = action.run(user=user, text_preprocessing_result=None)[0]
@@ -416,7 +390,7 @@ class ActionTest(unittest.TestCase):
             "feedbackStatus": "FS",
             "description": "Клик FS"
         }
-        action = RtdmSendResponseToPoAction(items)
+        action = RtdmSendResponseToPpAction(items)
         user = MagicMock()
         command = action.run(user=user, text_preprocessing_result=None)[0]
         message = MagicMock()

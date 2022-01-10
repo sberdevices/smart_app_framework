@@ -9,7 +9,7 @@ from lazy import lazy
 
 import scenarios.logging.logger_constants as log_const
 from core.basic_models.actions.push_action import PUSH_NOTIFY
-from core.basic_models.actions.rtdm_send_response_to_po_action import RTDM_RESPONSE
+from core.basic_models.actions.rtdm_send_response_to_pp_action import RTDM_RESPONSE
 from core.logging.logger_utils import log, UID_STR, MESSAGE_ID_STR
 
 from core.message.from_message import SmartAppFromMessage

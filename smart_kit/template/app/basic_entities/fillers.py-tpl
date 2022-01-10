@@ -15,7 +15,7 @@ class CustomFieldFiller(FieldFillerDescription):
     """
 
     def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str] = None) -> None:
-        super(SampleFieldFiller, self).__init__(items, id)
+        super(CustomFieldFiller, self).__init__(items, id)
         items = items or {}
         self.test_item = items.get("test_item")
 

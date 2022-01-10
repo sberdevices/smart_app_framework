@@ -1,4 +1,5 @@
 import collections
+import datetime
 import json
 import operator
 import re
@@ -574,3 +575,52 @@ class ClassifierFillerMeta(ClassifierFiller):
     def _get_result(self, answers: List[Dict[str, Union[str, float, bool]]]) -> List[
         Dict[str, Union[str, float, bool]]]:
         return answers
+
+
+class RtdmGetPpAndEventsFiller(FieldFillerDescription):
+    """
+    Filler получения персонального предложения (ПП) и событий из Real-Time Decision Manager (RTDM). Аналитика:
+    https://confluence.sberbank.ru/pages/viewpage.action?pageId=5786345296
+
+    Использование::
+        Обязательное поле mode - режим сервиса. Возможные значения:
+            offerParam - офферы (маркетинговые предложения из Репозитория) с текстом и тегами;
+            serviceParam - сервисные с тегами;
+        Отправляемое поле systemName указывается в template_config.yml в поле system_name.
+        URL сервиса для отправки запросов в RTDM указывается в template_config.yml в поле url поля rtdm.
+        Время ожидания получения ответа из RTDM указывается в template_config.yml в поле timeout поля rtdm.
+
+        Пример::
+            {
+              "type": "rtdm_get",
+              "mode": "offerParam,serviceParam"
+            }
+    """
+
+    def __init__(self, items: Optional[Dict[str, Any]], id: Optional[str] = None) -> None:
+        super(RtdmGetPpAndEventsFiller, self).__init__(items, id)
+        self.mode: str = items["mode"]
+
+    @exc_handler(on_error_obj_method_name="on_extract_error")
+    def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User, params) -> Optional[str]:
+        command_params = {
+            "rqUid": user.message.incremental_id,
+            "rqTm": datetime.datetime.utcnow().replace(microsecond=0).isoformat(),
+            "systemName": user.settings["template_settings"]["system_name"],
+            "channel": "F",
+            "epkId": user.message.payload["epkId"],
+            "mode": self.mode,
+        }
+        items = {
+            "params": {
+                "timeout": user.settings["template_settings"]["rtdm"]["timeout"],
+                "url": user.settings["template_settings"]["rtdm"]["url"],
+                "method": "post",
+                "json": command_params
+            },
+            "store": "rtdm_get_response",
+            "behavior": "common_behavior"
+        }
+        from smart_kit.action.http import HTTPRequestAction
+        HTTPRequestAction(items).run(user, text_preprocessing_result, params)
+        return user.variables.get("rtdm_get_response")

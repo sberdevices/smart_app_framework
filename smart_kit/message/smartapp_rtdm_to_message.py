@@ -11,16 +11,9 @@ class SmartAppRtdmToMessage(SmartAppToMessage):
         self.incoming_message: SmartAppFromMessage
         fields = {
            "messageId": self.incoming_message.incremental_id,
-           "messageName": self.payload["messageName"],
            "userChannel": self.incoming_message.channel,
-           "nextSystem": self.payload["nextSystem"],
-           "handlerName": self.payload["handlerName"],
            "userId": self.incoming_message.uid,
-           "notificationId": self.payload["notificationId"],
-           "notificationCode": self.payload["notificationCode"],
-           "feedbackStatus": self.payload["feedbackStatus"]
         }
-        if "description" in self.payload:
-            fields["description"] = self.payload["description"]
+        fields.update(self.command.payload)
         fields.update(self.root_nodes)
         return fields

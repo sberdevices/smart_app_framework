@@ -72,6 +72,9 @@ def _masking(data: Union[MutableMapping, Iterable], masking_fields: Union[Mutabl
 
     for key, _ in key_gen:
         value_is_collection = check_value_is_collection(data[key])
+        if isinstance(data[key], set):
+            data[key] = list(data[key])
+            value_is_collection = True
         if masking_on or key in masking_fields:
             if value_is_collection:
                 # если глубина не превышена, идем внутрь с включенным флагом и уменьшаем глубину

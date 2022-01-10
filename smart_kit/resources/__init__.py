@@ -204,7 +204,7 @@ class SmartAppResources(BaseConfig):
         ffd.field_filler_description["requirement"] = cffd.RequirementFiller
         ffd.field_filler_description["user_id"] = ffd.UserIdFiller
         ffd.field_filler_description["date_period_filler"] = ffd.DatePeriodFiller
-        ffd.field_filler_description["rtdm_get"] = ffd.RtdmGetPpAndEventsFiller
+        ffd.field_filler_description["rtdm_info_request_filler"] = ffd.RtdmGetPpAndEventsFiller
 
     def init_scenarios(self):
         scenarios[None] = BaseScenario

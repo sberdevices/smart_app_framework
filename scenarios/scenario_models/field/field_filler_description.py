@@ -592,7 +592,7 @@ class RtdmGetPpAndEventsFiller(FieldFillerDescription):
 
         Пример::
             {
-              "type": "rtdm_get",
+              "type": "rtdm_info_request_filler",
               "mode": "offerParam,serviceParam"
             }
     """

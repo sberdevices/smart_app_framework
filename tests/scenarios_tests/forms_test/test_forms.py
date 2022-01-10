@@ -144,6 +144,7 @@ class FormsTest(TestCase):
 
     def test_collect_form_fields(self):
         user = Mock()
+        user.settings = {"template_settings": {}}
         form_models[MockDescription] = Form
         field_models[MockField] = QuestionField
         field1 = MockField("amount")

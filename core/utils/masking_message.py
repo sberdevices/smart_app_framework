@@ -1,9 +1,10 @@
-from typing import Callable, Optional, Iterable, Mapping, Union, Pattern, Match, MutableMapping
+from typing import Callable, Optional, Iterable, Mapping, Union, Pattern, Match, MutableMapping, Sequence
 import re
 
 MASK = "***"
-DEFAULT_MASKING_FIELDS = ["token", "access_token", "refresh_token", "epkId", "profileId"]
-CARD_MASKING_FIELDS = ["message", "debug_info", "normalizedMessage", "incoming_text", "annotations"]
+DEFAULT_MASKING_FIELDS = {"token": 0, "access_token": 0, "refresh_token": 0, "epkId": 0, "profileId": 0}
+CARD_MASKING_FIELDS = ["message", "debug_info", "normalizedMessage", "incoming_text", "annotations", "inner_entities",
+                       "preprocess_result", "original_message", "original_tokenized_elements"]
 
 card_regular = re.compile(r"(?:(\d{18})|(\d{16})|(?:\d{4} ){3}(\d{4})(\s?\d{2})?)")
 
@@ -49,11 +50,12 @@ def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Unio
     :param depth_level: глубина сохранения структуры маскируемого поля
     :param mask_available_depth: глубина глубокой маскировки полей без сохранения структуры (см ниже)
     """
+
+    if isinstance(masking_fields, Sequence):
+        masking_fields = {key: depth_level for key in masking_fields}
+
     if masking_fields is None:
         masking_fields = DEFAULT_MASKING_FIELDS
-
-    if isinstance(masking_fields, Iterable):
-        masking_fields = {key: depth_level for key in masking_fields}
 
     _masking(data, masking_fields, depth_level, mask_available_depth, masking_on=False, card_masking_on=False)
 
@@ -82,11 +84,16 @@ def _masking(data: Union[MutableMapping, Iterable], masking_fields: Union[Mutabl
                     data[key] = f'*items-{counter.items}*collections-{counter.collections}*maxdepth-{counter.max_depth}*'
             elif data[key] is not None:  # в случае простого элемента. маскируем как ***
                 data[key] = '***'
-        elif card_masking_on and isinstance(data[key], str):  # проверка на реквизиты карты
-            data[key] = card_regular.sub(card_sub_func, data[key])
-        elif key in CARD_MASKING_FIELDS:  # проверка на реквизиты карты
-            _masking(data[key], masking_fields, depth_level, mask_available_depth, masking_on=False,
-                     card_masking_on=True)
+        elif key in CARD_MASKING_FIELDS or card_masking_on:  # проверка на реквизиты карты
+            if value_is_collection:
+                _masking(data[key], masking_fields, depth_level, mask_available_depth, masking_on,card_masking_on=True)
+            elif isinstance(data[key], str):
+                data[key] = card_regular.sub(card_sub_func, data[key])
+            elif isinstance(data[key], int):
+                str_value = str(data[key])
+                masked_value = card_regular.sub(card_sub_func, str_value)
+                if masked_value != str_value:
+                    data[key] = masked_value
         elif value_is_collection:
             # если маскировка не нужна уходим глубже без включенного флага
             _masking(data[key], masking_fields, depth_level, mask_available_depth,

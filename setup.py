@@ -28,7 +28,6 @@ setup(
         "dawg==0.8.0",
         "dill==0.3.3",
         "ics==0.6",
-        "jaeger_client==4.3.0",
         "Jinja2==2.10.1",
         "keras==2.6.0",
         "lazy",

@@ -1,7 +1,5 @@
-from unittest import TestCase
-
 import time
-from unittest.mock import Mock
+from unittest import TestCase
 
 from core.utils.delay_runner import DelayRunner
 from smart_kit.utils.picklable_mock import PicklableMock

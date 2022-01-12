@@ -1,6 +1,6 @@
 # coding: utf-8
 import unittest
-from unittest.mock import Mock
+
 from core.basic_models.actions.basic_actions import Action, actions, action_factory
 from core.model.registered import registered_factories
 from scenarios.behaviors.behavior_description import BehaviorDescription

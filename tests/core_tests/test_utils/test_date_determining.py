@@ -2,13 +2,13 @@
 Модуль для модульного тестирования работы period_determiner
 """
 
-from typing import Optional
 from datetime import datetime, timedelta
+from typing import Optional
+
 from core.utils.period_determiner import ERROR_VALUE
 from core.utils.period_determiner import UNRECOGNIZED_DATE_VALUE
-from core.utils.period_determiner import period_determiner
 from core.utils.period_determiner import extract_words_describing_period
-
+from core.utils.period_determiner import period_determiner
 
 current_date: datetime = datetime.now()
 

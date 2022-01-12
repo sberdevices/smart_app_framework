@@ -1,8 +1,7 @@
 from unittest import TestCase
-from unittest.mock import Mock
-from scenarios.scenario_models.field.field_filler_description import FieldFillerDescription, CompositeFiller
 
 from core.model.registered import registered_factories
+from scenarios.scenario_models.field.field_filler_description import FieldFillerDescription, CompositeFiller
 from scenarios.scenario_models.field.field_filler_description import field_filler_factory, field_filler_description
 from smart_kit.utils.picklable_mock import PicklableMock
 

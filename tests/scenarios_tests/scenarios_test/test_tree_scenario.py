@@ -1,9 +1,9 @@
 from unittest import TestCase
 from unittest.mock import Mock, MagicMock
 
+from core.basic_models.actions.basic_actions import Action, action_factory, actions
 from core.basic_models.actions.command import Command
 from core.model.registered import registered_factories
-from core.basic_models.actions.basic_actions import Action, action_factory, actions
 from scenarios.scenario_descriptions.tree_scenario.tree_scenario import TreeScenario
 from smart_kit.utils.picklable_mock import PicklableMock
 

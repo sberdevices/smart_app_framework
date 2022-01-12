@@ -1,8 +1,7 @@
 import unittest
-from unittest.mock import Mock
 
-from scenarios.scenario_models.field.field_filler_description import FieldFillerDescription, PreviousMessagesFiller
 from core.model.registered import registered_factories
+from scenarios.scenario_models.field.field_filler_description import FieldFillerDescription, PreviousMessagesFiller
 from scenarios.scenario_models.field.field_filler_description import field_filler_description, field_filler_factory
 from smart_kit.utils.picklable_mock import PicklableMock
 

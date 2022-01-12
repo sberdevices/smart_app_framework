@@ -1,5 +1,6 @@
-from unittest import TestCase 
+from unittest import TestCase
 from unittest.mock import Mock
+
 from scenarios.scenario_models.field.field_filler_description import RegexpAndStringOperationsFieldFiller
 
 

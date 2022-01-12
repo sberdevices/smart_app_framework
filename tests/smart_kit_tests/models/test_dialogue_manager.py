@@ -1,6 +1,6 @@
 # coding: utf-8
 import unittest
-from unittest.mock import Mock
+
 from smart_kit.models import dialogue_manager
 from smart_kit.utils.picklable_mock import PicklableMock
 

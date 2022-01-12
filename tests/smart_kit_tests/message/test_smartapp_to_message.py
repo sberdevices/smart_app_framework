@@ -1,7 +1,5 @@
 # coding: utf-8
-import json
 import unittest
-from unittest.mock import Mock
 
 from core.message.msg_validator import MessageValidator
 from smart_kit.message.smartapp_to_message import SmartAppToMessage

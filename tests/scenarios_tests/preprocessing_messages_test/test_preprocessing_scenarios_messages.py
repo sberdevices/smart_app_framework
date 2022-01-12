@@ -1,5 +1,4 @@
 import unittest
-from unittest.mock import Mock
 
 from scenarios.user.preprocessing_messages.prepricessing_messages_for_scenarios import \
     PreprocessingScenariosMessages

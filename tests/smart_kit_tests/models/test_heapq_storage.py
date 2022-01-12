@@ -4,6 +4,7 @@ import unittest
 from core.model.heapq.heapq_storage import HeapqKV
 from core.model.heapq.heapq_storage import heapq
 
+
 class ModelsTest2(unittest.TestCase):
     def setUp(self):
         self.test_value = 10

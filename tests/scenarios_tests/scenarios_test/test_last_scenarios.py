@@ -1,5 +1,6 @@
 from unittest import TestCase
 from unittest.mock import Mock, MagicMock
+
 from scenarios.user.last_scenarios.last_scenarios import LastScenarios
 from smart_kit.utils.picklable_mock import PicklableMock
 

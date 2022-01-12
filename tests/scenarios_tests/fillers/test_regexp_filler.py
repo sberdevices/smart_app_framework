@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock
+
 from scenarios.scenario_models.field.field_filler_description import RegexpFieldFiller
 from smart_kit.utils.picklable_mock import PicklableMock
 

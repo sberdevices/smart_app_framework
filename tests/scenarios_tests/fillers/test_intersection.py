@@ -1,6 +1,6 @@
 import os
 from unittest import TestCase
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import smart_kit
 from scenarios.scenario_models.field.field_filler_description import (

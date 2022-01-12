@@ -1,5 +1,5 @@
 from unittest import TestCase
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 from core.basic_models.classifiers.basic_classifiers import ExternalClassifier
 from scenarios.scenario_models.field.field_filler_description import ClassifierFiller, ClassifierFillerMeta

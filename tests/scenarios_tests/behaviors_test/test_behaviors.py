@@ -1,7 +1,8 @@
 # coding: utf-8
-import unittest
 import time
+import unittest
 from unittest.mock import Mock
+
 from scenarios.behaviors import behaviors
 from smart_kit.utils.picklable_mock import PicklableMock
 

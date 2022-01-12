@@ -1,8 +1,9 @@
 # coding: utf-8
 import unittest
 from unittest.mock import Mock
-from scenarios.user import user_model
+
 from core.model.field import Field
+from scenarios.user import user_model
 from smart_kit.utils.picklable_mock import PicklableMock
 
 

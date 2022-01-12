@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import MagicMock
 
 from core.request.rest_request import RestRequest
 from smart_kit.utils.picklable_mock import PicklableMock

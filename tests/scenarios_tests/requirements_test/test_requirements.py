@@ -2,7 +2,8 @@
 import unittest
 from unittest.mock import Mock
 
-from scenarios.requirements.requirements import TemplateInArrayRequirement, ArrayItemInTemplateRequirement, RegexpInTemplateRequirement
+from scenarios.requirements.requirements import TemplateInArrayRequirement, ArrayItemInTemplateRequirement, \
+    RegexpInTemplateRequirement
 from smart_kit.utils.picklable_mock import PicklableMock
 
 

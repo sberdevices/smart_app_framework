@@ -1,6 +1,7 @@
 # coding: utf-8
 import unittest
 from unittest.mock import Mock
+
 from smart_kit.handlers import handle_close_app
 from smart_kit.utils.picklable_mock import PicklableMock
 

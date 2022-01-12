@@ -53,6 +53,7 @@ setup(
         "timeout-decorator==0.4.1",
         "tqdm",
         "Twisted"
+        "freezegun",
     ],
     classifiers=[
         "Programming Language :: Python :: 3.6",

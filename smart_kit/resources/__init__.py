@@ -12,7 +12,7 @@ from core.basic_models.actions.counter_actions import CounterIncrementAction, Co
     CounterClearAction, CounterSetAction, CounterCopyAction
 from core.basic_models.actions.external_actions import ExternalAction
 from core.basic_models.actions.external_actions import ExternalActions
-from core.basic_models.actions.push_action import PushAction
+from core.basic_models.actions.push_action import PushAction, PUSH_NOTIFY
 from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAction, SDKAnswer, \
     SDKAnswerToUser
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
@@ -88,6 +88,8 @@ from scenarios.user.last_scenarios.last_scenarios_descriptions import LastScenar
 from scenarios.user.preprocessing_messages.preprocessing_messages_description import \
     PreprocessingMessagesDescription
 from smart_kit.action.http import HTTPRequestAction
+from smart_kit.message.get_message_handler import message_handlers
+from smart_kit.message.smart_app_push_message import SmartAppPushToMessage
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
 
 from core.db_adapter.aioredis_sentinel_adapter import AIORedisSentinelAdapter
@@ -397,3 +399,6 @@ class SmartAppResources(BaseConfig):
         classifiers["external"] = ExternalClassifier
         classifiers["scikit"] = SciKitClassifier
         classifiers["skip"] = SkipClassifier
+
+    def init_message_handlers(self):
+        message_handlers[PUSH_NOTIFY] = SmartAppPushToMessage

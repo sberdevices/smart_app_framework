@@ -9,7 +9,7 @@ from core.basic_models.operators.operators import Operator
 from core.basic_models.requirement.basic_requirements import Requirement, CompositeRequirement, AndRequirement, \
     OrRequirement, NotRequirement, RandomRequirement, TopicRequirement, TemplateRequirement, RollingRequirement, \
     TimeRequirement, DateTimeRequirement, IntersectionRequirement, ClassifierRequirement, FormFieldValueRequirement, \
-    EnvironmentRequirement
+    EnvironmentRequirement, CharacterIdRequirement, FeatureToggleRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.user_text_requirements import AnySubstringInLoweredTextRequirement, \
@@ -561,6 +561,32 @@ class RequirementTest(unittest.TestCase):
         text_preprocessing_result.raw = {"normalized_text": "хотеть узнать ."}
 
         self.assertFalse(req.check(text_preprocessing_result, PicklableMock()))
+
+    def test_character_id_requirement_true(self):
+        req = CharacterIdRequirement({"values": ["sber", "afina"]})
+        user = Mock()
+        user.message = Mock()
+        user.message.payload = {"character": {"id": "sber", "name": "Сбер", "gender": "male"}}
+        self.assertTrue(req.check(Mock(), user))
+
+    def test_character_id_requirement_false(self):
+        req = CharacterIdRequirement({"values": ["afina"]})
+        user = Mock()
+        user.message = Mock()
+        user.message.payload = {"character": {"id": "sber", "name": "Сбер", "gender": "male"}}
+        self.assertFalse(req.check(Mock(), user))
+
+    def test_feature_toggle_check_requirement_true(self):
+        req = FeatureToggleRequirement({"toggle_name": "test_true_toggle_name"})
+        mock_user = Mock()
+        mock_user.settings = {"template_settings": {"test_true_toggle_name": True}}
+        self.assertTrue(req.check(Mock(), mock_user))
+
+    def test_feature_toggle_check_requirement_false(self):
+        req = FeatureToggleRequirement({"toggle_name": "test_false_toggle_name"})
+        mock_user = Mock()
+        mock_user.settings = {"template_settings": {"test_false_toggle_name": False}}
+        self.assertFalse(req.check(Mock(), mock_user))
 
 
 if __name__ == '__main__':

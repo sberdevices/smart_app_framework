@@ -1,8 +1,6 @@
 # coding: utf-8
 import time
-
 from unittest import TestCase
-from unittest.mock import Mock
 
 from scenarios.scenario_models.field.field import field_models, QuestionField
 from scenarios.scenario_models.forms.form import form_models, Form
@@ -145,6 +143,7 @@ class FormsTest(TestCase):
 
     def test_collect_form_fields(self):
         user = PicklableMock()
+        user.settings = {"template_settings": {}}
         form_models[MockDescription] = Form
         field_models[MockField] = QuestionField
         field1 = MockField("amount")

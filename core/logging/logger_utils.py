@@ -18,51 +18,71 @@ CLASS_NAME = "class_name"
 LOG_STORE_FOR = "log_store_for"
 
 
-def _make_message(user=None, params=None, cls_name='', log_store_for=0):
-    message_id = None
-    uuid = None
-    logging_uuid = None
-    params = params or {}
-    if user:
+class LoggerMessageCreator:
+    ART_NAMES = [
+        "channel", "type", "device_channel", "device_channel_version", "device_platform", "group",
+        "device_platform_version", "device_platform_client_type", "csa_profile_id", "test_deploy"
+    ]
+
+    @classmethod
+    def update_user_params(cls, user, params):
         message = user.message
-        message_id = message.incremental_id
-        uuid = user.id
-        logging_uuid = message.logging_uuid
-        atr_names = ["channel", "type", "device_channel", "device_channel_version", "device_platform", "group",
-                     "device_platform_version", "device_platform_client_type", "csa_profile_id", "test_deploy"]
-        for name in atr_names:
+        for name in cls.ART_NAMES:
             param = getattr(message, name, None)
             if param:
                 params[name] = param
-    params = LogMasker.mask_structure(params, LogMasker.percent_fix)
-    params[UID_STR] = uuid
-    params[MESSAGE_ID_STR] = message_id
-    params[LOGGING_UUID] = logging_uuid
-    params[CLASS_NAME] = cls_name
-    params[LOG_STORE_FOR] = log_store_for
-    return params
+
+    @classmethod
+    def update_other_params(cls, user, params, cls_name='', log_store_for=0):
+        message_id, uuid, logging_uuid = None, None, None
+        if user:
+            message = user.message
+            message_id = message.incremental_id
+            uuid = user.id
+            logging_uuid = message.logging_uuid
+        params[UID_STR] = uuid
+        params[MESSAGE_ID_STR] = message_id
+        params[LOGGING_UUID] = logging_uuid
+        params[CLASS_NAME] = cls_name
+        params[LOG_STORE_FOR] = log_store_for
+
+    @classmethod
+    def make_message(cls, user=None, params=None, cls_name='', log_store_for=0):
+        params = params or {}
+        if user:
+            cls.update_user_params(user, params)
+        params = LogMasker.mask_structure(params, LogMasker.percent_fix)
+        cls.update_other_params(user, params, cls_name, log_store_for)
+        return params
 
 
-app_logger = logging.getLogger(log_const.APP_LOGGER_NAME)
+default_logger = logging.getLogger()
 
 
 def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_for=0):
     try:
         level_name = logging.getLevelName(level)
         current_frame = inspect.currentframe()
-        previous_frame = current_frame.f_back.f_locals
-        instance = previous_frame.get('self', None)
-        if instance is not None:
-            params = _make_message(user, params, instance.__class__.__name__, log_store_for)
-        else:
-            params = _make_message(user, params, log_store_for=log_store_for)
+        previous_frame = current_frame.f_back
+        module_name = previous_frame.f_globals["__name__"]
+        logger = logging.getLogger(module_name)
+        instance = previous_frame.f_locals.get('self', None)
 
-        app_logger.log(level_name, message, params, exc_info=exc_info)
+        from smart_kit.configs import get_app_config
+        app_config = get_app_config()
+        message_maker = app_config.LOGGER_MESSAGE_CREATOR
+
+        if instance is not None:
+            params = message_maker.make_message(user, params, instance.__class__.__name__, log_store_for)
+        else:
+            params = message_maker.make_message(user, params, log_store_for=log_store_for)
+
+        logger.log(level_name, message, params, exc_info=exc_info)
     except timeout_decorator.TimeoutError:
         raise
     except:
-        app_logger.log(logging.getLevelName("ERROR"), "Failed to write a log. Exception occurred",
-                       params, exc_info=True)
+        default_logger.log(logging.getLevelName("ERROR"), "Failed to write a log. Exception occurred",
+                           params, exc_info=True)
 
 
 def log_classifier_result(classification_res: List[Dict[str, Union[str, float, bool]]], user,

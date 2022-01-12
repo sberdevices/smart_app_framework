@@ -7,7 +7,7 @@ from smart_kit.names import message_names
 
 
 def patch_get_app_config(mock_get_app_config, auto_listening):
-    result = Mock()
+    result = PicklableMock()
     result.AUTO_LISTENING = auto_listening
     mock_get_app_config.return_value = result
 
@@ -41,7 +41,7 @@ class CombineAnswerToUserTest(unittest.TestCase):
         }
 
         list_of_commands = [command_1, command_2, command_3]
-        user = Mock()
+        user = PicklableMock()
         result = commands.combine_commands(list_of_commands, user)
         self.assertFalse(result[0].payload[field.AUTO_LISTENING])
 
@@ -75,7 +75,7 @@ class CombineAnswerToUserTest(unittest.TestCase):
         }
 
         list_of_commands = [command_1, command_2, command_3]
-        user = Mock()
+        user = PicklableMock()
         result = commands.combine_commands(list_of_commands, user)
 
         self.assertFalse(result[0].payload[field.AUTO_LISTENING])
@@ -108,7 +108,7 @@ class CombineAnswerToUserTest(unittest.TestCase):
         }
 
         list_of_commands = [command_1, command_2, command_3]
-        user = Mock()
+        user = PicklableMock()
         result = commands.combine_commands(list_of_commands, user)
 
         self.assertTrue(result[0].payload[field.AUTO_LISTENING])
@@ -139,7 +139,7 @@ class CombineAnswerToUserTest(unittest.TestCase):
         command_3.payload = {}
 
         list_of_commands = [command_1, command_2, command_3]
-        user = Mock()
+        user = PicklableMock()
         result = commands.combine_commands(list_of_commands, user)
 
         self.assertTrue(result[0].payload[field.AUTO_LISTENING])
@@ -169,7 +169,7 @@ class CombineAnswerToUserTest(unittest.TestCase):
         }
 
         list_of_commands = [command_1, command_2, command_3]
-        user = Mock()
+        user = PicklableMock()
         result = commands.combine_commands(list_of_commands, user)
 
         self.assertTrue(result[0].payload[field.AUTO_LISTENING])
@@ -198,7 +198,7 @@ class CombineAnswerToUserTest(unittest.TestCase):
         command_3.payload = {}
 
         list_of_commands = [command_1, command_2, command_3]
-        user = Mock()
+        user = PicklableMock()
         result = commands.combine_commands(list_of_commands, user)
 
         self.assertFalse(result[0].payload[field.AUTO_LISTENING])

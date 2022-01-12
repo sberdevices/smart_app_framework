@@ -4,6 +4,7 @@ from scenarios.scenario_models.field.field_filler_description import FieldFiller
 
 from core.model.registered import registered_factories
 from scenarios.scenario_models.field.field_filler_description import field_filler_factory, field_filler_description
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class MockFiller:
@@ -21,7 +22,7 @@ class TestCompositeFiller(TestCase):
     def setUpClass(cls):
         registered_factories[FieldFillerDescription] = field_filler_factory
         field_filler_description["mock_filler"] = MockFiller
-        TestCompositeFiller.user = Mock()
+        TestCompositeFiller.user = PicklableMock()
 
     def test_first_filler(self):
         expected = "first"

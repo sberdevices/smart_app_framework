@@ -4,6 +4,7 @@ from unittest.mock import Mock
 from core.basic_models.actions.basic_actions import Action, actions, action_factory
 from core.model.registered import registered_factories
 from scenarios.behaviors.behavior_description import BehaviorDescription
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class MockAction(Action):
@@ -24,7 +25,7 @@ class BehaviorDescriptionTest(unittest.TestCase):
 
     def setUp(self):
         self.test_items = {"success_action": [TestAction()]}
-        self.test_user = Mock()
+        self.test_user = PicklableMock()
         self.test_user.settings = {"template_settings": {}}
         registered_factories[Action] = action_factory
         actions[None] = MockAction

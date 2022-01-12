@@ -2,6 +2,7 @@
 import unittest
 from unittest.mock import Mock, MagicMock
 from smart_kit.handlers import handle_respond
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class HandlerTest4(unittest.TestCase):
@@ -16,7 +17,7 @@ class HandlerTest4(unittest.TestCase):
         self.test_user1.message.logging_uuid = '321-654-987'  # пусть чему-то равняется
         self.test_user1.message.message_name = "TestMessageName"
         self.test_user1.message.channel = "test_channel"
-        self.test_user1.message.device = Mock()
+        self.test_user1.message.device = PicklableMock()
         self.test_user1.message.device.surface = "test_surface"
         self.test_user1.message.app_info = {}
         self.test_user1.behaviors = MagicMock()
@@ -32,11 +33,11 @@ class HandlerTest4(unittest.TestCase):
         self.test_user2.message.logging_uuid = '321-654-987'  # пусть чему-то равняется
         self.test_user2.message.message_name = "TestMessageName"
         self.test_user2.message.channel = "test_channel"
-        self.test_user2.message.device = Mock()
+        self.test_user2.message.device = PicklableMock()
         self.test_user2.message.device.surface = "test_surface"
         self.test_user2.message.app_info = {}
         self.callback11_action_params = MagicMock()
-        self.test_user2.behaviors = Mock()
+        self.test_user2.behaviors = PicklableMock()
         self.test_user2.behaviors.get_callback_action_params = MagicMock(return_value=self.callback11_action_params)
 
         self.test_payload = {'message': {1: 1}}

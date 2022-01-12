@@ -2,6 +2,7 @@
 import unittest
 from unittest.mock import Mock, MagicMock
 from smart_kit.handlers import handler_timeout
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class HandlerTest2(unittest.TestCase):
@@ -16,7 +17,7 @@ class HandlerTest2(unittest.TestCase):
         self.test_user.message.channel = "channel"
         self.test_user.message.message_name = "test"
         self.test_user.message.app_info = None
-        self.test_user.message.device = Mock()
+        self.test_user.message.device = PicklableMock()
         self.test_user.message.device.surface = "surface"
 
         self.test_user.behaviors = Mock('behaviors')

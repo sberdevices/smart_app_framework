@@ -21,7 +21,7 @@ from smart_kit.utils.picklable_mock import PicklableMock
 
 
 def patch_get_app_config(mock_get_app_config):
-    result = Mock()
+    result = PicklableMock()
     sk_path = os.path.dirname(smart_kit.__file__)
     result.STATIC_PATH = os.path.join(sk_path, 'template/static')
     mock_get_app_config.return_value = result
@@ -135,7 +135,7 @@ class RequirementTest(unittest.TestCase):
         self.assertFalse(requirement.check(None, None))
 
     def test_channel_success(self):
-        user = Mock()
+        user = PicklableMock()
         message = Mock(channel="ch1")
         user.message = message
         requirement = ChannelRequirement({"channels": ["ch1"]})
@@ -143,7 +143,7 @@ class RequirementTest(unittest.TestCase):
         self.assertTrue(requirement.check(text_normalization_result, user))
 
     def test_channel_fail(self):
-        user = Mock()
+        user = PicklableMock()
         message = Mock(channel="ch2")
         user.message = message
         requirement = ChannelRequirement({"channels": ["ch1"]})
@@ -160,16 +160,16 @@ class RequirementTest(unittest.TestCase):
 
     def test_topic_requirement(self):
         requirement = TopicRequirement({"topics": ["test"]})
-        user = Mock()
-        message = Mock()
+        user = PicklableMock()
+        message = PicklableMock()
         message.topic_key = "test"
         user.message = message
         self.assertTrue(requirement.check(None, user))
 
     def test_counter_value_requirement(self):
         registered_factories[Operator] = MockAmountOperator
-        user = Mock()
-        counter = Mock()
+        user = PicklableMock()
+        counter = PicklableMock()
         counter.__gt__ = Mock(return_value=True)
         user.counters = {"test": counter}
         requirement = CounterValueRequirement({"operator": {"type": "equal", "amount": 2}, "key": "test"})
@@ -177,8 +177,8 @@ class RequirementTest(unittest.TestCase):
 
     def test_counter_time_requirement(self):
         registered_factories[Operator] = MockAmountOperator
-        user = Mock()
-        counter = Mock()
+        user = PicklableMock()
+        counter = PicklableMock()
         counter.update_time = int(time()) - 10
         user.counters = {"test": counter}
         requirement = CounterUpdateTimeRequirement({"operator": {"type": "more_or_equal", "amount": 5}, "key": "test"})
@@ -194,8 +194,8 @@ class RequirementTest(unittest.TestCase):
             "murexIds": ["AAA", "BBB"],
             "message": " BBB    "
         }}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertTrue(requirement.check(None, user))
 
@@ -205,8 +205,8 @@ class RequirementTest(unittest.TestCase):
         }
         requirement = TemplateRequirement(items)
         params = {"payload": {"groupCode": "BROKER1"}}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertFalse(requirement.check(None, user))
 
@@ -216,27 +216,27 @@ class RequirementTest(unittest.TestCase):
         }
         requirement = TemplateRequirement(items)
         params = {"payload": {"groupCode": "BROKER1"}}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertRaises(TypeError, requirement.check, None, user)
 
     def test_rolling_requirement_true(self):
-        user = Mock()
+        user = PicklableMock()
         user.id = "353454"
         requirement = RollingRequirement({"percent": 100})
         text_normalization_result = None
         self.assertTrue(requirement.check(text_normalization_result, user))
 
     def test_rolling_requirement_false(self):
-        user = Mock()
+        user = PicklableMock()
         user.id = "353454"
         requirement = RollingRequirement({"percent": 0})
         text_normalization_result = None
         self.assertFalse(requirement.check(text_normalization_result, user))
 
     def test_time_requirement_true(self):
-        user = Mock()
+        user = PicklableMock()
         user.id = "353454"
         user.message.payload = {
             "meta": {
@@ -258,7 +258,7 @@ class RequirementTest(unittest.TestCase):
         self.assertTrue(requirement.check(text_normalization_result, user))
 
     def test_time_requirement_false(self):
-        user = Mock()
+        user = PicklableMock()
         user.id = "353454"
         user.message.payload = {
             "meta": {
@@ -280,7 +280,7 @@ class RequirementTest(unittest.TestCase):
         self.assertFalse(requirement.check(text_normalization_result, user))
 
     def test_datetime_requirement_true(self):
-        user = Mock()
+        user = PicklableMock()
         user.id = "353454"
         user.message.payload = {
             "meta": {
@@ -299,7 +299,7 @@ class RequirementTest(unittest.TestCase):
         self.assertTrue(requirement.check(text_normalization_result, user))
 
     def test_datetime_requirement_false(self):
-        user = Mock()
+        user = PicklableMock()
         user.id = "353454"
         user.message.payload = {
             "meta": {
@@ -340,7 +340,7 @@ class RequirementTest(unittest.TestCase):
     @patch('smart_kit.configs.get_app_config')
     def test_intersection_requirement_false(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
-        user = Mock()
+        user = PicklableMock()
         requirement = IntersectionRequirement(
             {
                 "phrases": [
@@ -350,7 +350,7 @@ class RequirementTest(unittest.TestCase):
                 ]
             }
         )
-        text_normalization_result = Mock()
+        text_normalization_result = PicklableMock()
         text_normalization_result.tokenized_elements_list = [
             {'lemma': 'ни'},
             {'lemma': 'за'},
@@ -365,9 +365,9 @@ class RequirementTest(unittest.TestCase):
         """
         test_items = {"type": "classifier", "classifier": {"type": "external", "classifier": "hello_scenario_classifier"}}
         classifier_requirement = ClassifierRequirement(test_items)
-        mock_user = Mock()
+        mock_user = PicklableMock()
         mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
-        result = classifier_requirement.check(Mock(), mock_user)
+        result = classifier_requirement.check(PicklableMock(), mock_user)
         self.assertTrue(result)
 
     @patch.object(ExternalClassifier, "find_best_answer", return_value=[])
@@ -375,9 +375,9 @@ class RequirementTest(unittest.TestCase):
         """Тест кейз проверяет что условие возвращает False, если модель классификации не вернула ответ."""
         test_items = {"type": "classifier", "classifier": {"type": "external", "classifier": "hello_scenario_classifier"}}
         classifier_requirement = ClassifierRequirement(test_items)
-        mock_user = Mock()
+        mock_user = PicklableMock()
         mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
-        result = classifier_requirement.check(Mock(), mock_user)
+        result = classifier_requirement.check(PicklableMock(), mock_user)
         self.assertFalse(result)
 
     @patch.object(ExternalClassifier, "find_best_answer", return_value=[{"answer": "other", "score": 1.0, "other": True}])
@@ -385,9 +385,9 @@ class RequirementTest(unittest.TestCase):
         """Тест кейз проверяет что условие возвращает False, если наиболее вероятный вариант есть класс other."""
         test_items = {"type": "classifier", "classifier": {"type": "external", "classifier": "hello_scenario_classifier"}}
         classifier_requirement = ClassifierRequirement(test_items)
-        mock_user = Mock()
+        mock_user = PicklableMock()
         mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
-        result = classifier_requirement.check(Mock(), mock_user)
+        result = classifier_requirement.check(PicklableMock(), mock_user)
         self.assertFalse(result)
 
     def test_form_field_value_requirement_true(self):
@@ -401,12 +401,12 @@ class RequirementTest(unittest.TestCase):
         test_itmes = {"form_name": form_name, "field_name": form_field, "value": field_value}
         req_form_field_value = FormFieldValueRequirement(test_itmes)
 
-        user = Mock()
-        user.forms = {form_name: Mock()}
-        user.forms[form_name].fields = {form_field: Mock(), "value": field_value}
+        user = PicklableMock()
+        user.forms = {form_name: PicklableMock()}
+        user.forms[form_name].fields = {form_field: PicklableMock(), "value": field_value}
         user.forms[form_name].fields[form_field].value = field_value
 
-        result = req_form_field_value.check(Mock(), user)
+        result = req_form_field_value.check(PicklableMock(), user)
         self.assertTrue(result)
 
     def test_form_field_value_requirement_false(self):
@@ -420,12 +420,12 @@ class RequirementTest(unittest.TestCase):
         test_itmes = {"form_name": form_name, "field_name": form_field, "value": field_value}
         req_form_field_value = FormFieldValueRequirement(test_itmes)
 
-        user = Mock()
-        user.forms = {form_name: Mock()}
-        user.forms[form_name].fields = {form_field: Mock(), "value": "OTHER_TEST_VAL"}
+        user = PicklableMock()
+        user.forms = {form_name: PicklableMock()}
+        user.forms[form_name].fields = {form_field: PicklableMock(), "value": "OTHER_TEST_VAL"}
         user.forms[form_name].fields[form_field].value = "OTHER_TEST_VAL"
 
-        result = req_form_field_value.check(Mock(), user)
+        result = req_form_field_value.check(PicklableMock(), user)
         self.assertFalse(result)
 
     @patch("smart_kit.configs.get_app_config")
@@ -433,23 +433,23 @@ class RequirementTest(unittest.TestCase):
         """Тест кейз проверяет что условие возвращает True, т.к среда исполнения из числа values."""
         patch_get_app_config(mock_get_app_config)
         environment_req = EnvironmentRequirement({"values": ["ift", "uat"]})
-        self.assertTrue(environment_req.check(Mock(), Mock()))
+        self.assertTrue(environment_req.check(PicklableMock(), PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
     def test_environment_requirement_false(self, mock_get_app_config):
         """Тест кейз проверяет что условие возвращает False, т.к среда исполнения НЕ из числа values."""
         patch_get_app_config(mock_get_app_config)
         environment_req = EnvironmentRequirement({"values": ["uat", "pt"]})
-        self.assertFalse(environment_req.check(Mock(), Mock()))
+        self.assertFalse(environment_req.check(PicklableMock(), PicklableMock()))
 
     def test_any_substring_in_lowered_text_requirement_true(self):
         """Тест кейз проверяет что условие возвращает True, т.к нашлась подстрока из списка substrings, которая
         встречается в оригинальном тексте в нижнем регистре.
         """
         req = AnySubstringInLoweredTextRequirement({"substrings": ["искомая подстрока", "другое знанчение"]})
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"original_text": "КАКОЙ-ТО ТЕКСТ С ИСКОМАЯ ПОДСТРОКА"}
-        result = req.check(text_preprocessing_result, Mock())
+        result = req.check(text_preprocessing_result, PicklableMock())
         self.assertTrue(result)
 
     def test_any_substring_in_lowered_text_requirement_false(self):
@@ -457,38 +457,38 @@ class RequirementTest(unittest.TestCase):
         которая бы встречалась в оригинальном тексте в нижнем регистре.
         """
         req = AnySubstringInLoweredTextRequirement({"substrings": ["искомая подстрока", "другая подстрока"]})
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"original_text": "КАКОЙ-ТО ТЕКСТ"}
-        result = req.check(text_preprocessing_result, Mock())
+        result = req.check(text_preprocessing_result, PicklableMock())
         self.assertFalse(result)
 
     def test_num_in_range_requirement_true(self):
         """Тест кейз проверяет что условие возвращает True, т.к число находится в заданном диапазоне."""
         req = NumInRangeRequirement({"min_num": "5", "max_num": "10"})
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.num_token_values = 7
-        self.assertTrue(req.check(text_preprocessing_result, Mock()))
+        self.assertTrue(req.check(text_preprocessing_result, PicklableMock()))
 
     def test_num_in_range_requirement_false(self):
         """Тест кейз проверяет что условие возвращает False, т.к число НЕ находится в заданном диапазоне."""
         req = NumInRangeRequirement({"min_num": "5", "max_num": "10"})
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.num_token_values = 20
-        self.assertFalse(req.check(text_preprocessing_result, Mock()))
+        self.assertFalse(req.check(text_preprocessing_result, PicklableMock()))
 
     def test_phone_number_number_requirement_true(self):
         """Тест кейз проверяет что условие возвращает True, т.к кол-во номеров телефонов больше заданного."""
         req = PhoneNumberNumberRequirement({"operator": {"type": "more", "amount": 1}})
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.get_token_values_by_type.return_value = ["89030478799", "89092534523"]
-        self.assertTrue(req.check(text_preprocessing_result, Mock()))
+        self.assertTrue(req.check(text_preprocessing_result, PicklableMock()))
 
     def test_phone_number_number_requirement_false(self):
         """Тест кейз проверяет что условие возвращает False, т.к кол-во номеров телефонов НЕ больше заданного."""
         req = PhoneNumberNumberRequirement({"operator": {"type": "more", "amount": 10}})
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.get_token_values_by_type.return_value = ["89030478799"]
-        self.assertFalse(req.check(text_preprocessing_result, Mock()))
+        self.assertFalse(req.check(text_preprocessing_result, PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
     def test_intersection_with_tokens_requirement_true(self, mock_get_app_config):
@@ -499,7 +499,7 @@ class RequirementTest(unittest.TestCase):
 
         req = IntersectionWithTokensSetRequirement({"input_words": ["погода", "время"]})
 
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"tokenized_elements_list_pymorphy": [
             {"text": "прогноз", "grammem_info": {
                 "animacy": "inan", "case": "acc", "gender": "masc", "number": "sing", "raw_gram_info":
@@ -510,7 +510,7 @@ class RequirementTest(unittest.TestCase):
                 "part_of_speech": "NOUN"}, "lemma": "погода"}
             ]}
 
-        self.assertTrue(req.check(text_preprocessing_result, Mock()))
+        self.assertTrue(req.check(text_preprocessing_result, PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
     def test_intersection_with_tokens_requirement_false(self, mock_get_app_config):
@@ -521,7 +521,7 @@ class RequirementTest(unittest.TestCase):
 
         req = IntersectionWithTokensSetRequirement({"input_words": ["время"]})
 
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"tokenized_elements_list_pymorphy": [
             {"text": "прогноз", "grammem_info": {
                 "animacy": "inan", "case": "acc", "gender": "masc", "number": "sing", "raw_gram_info":
@@ -532,7 +532,7 @@ class RequirementTest(unittest.TestCase):
                 "part_of_speech": "NOUN"}, "lemma": "погода"}
         ]}
 
-        self.assertFalse(req.check(text_preprocessing_result, Mock()))
+        self.assertFalse(req.check(text_preprocessing_result, PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
     def test_normalized_text_in_set_requirement_true(self, mock_get_app_config):
@@ -543,10 +543,10 @@ class RequirementTest(unittest.TestCase):
 
         req = NormalizedTextInSetRequirement({"input_words": ["погода", "время"]})
 
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"normalized_text": "погода ."}
 
-        self.assertTrue(req.check(text_preprocessing_result, Mock()))
+        self.assertTrue(req.check(text_preprocessing_result, PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
     def test_normalized_text_in_set_requirement_false(self, mock_get_app_config):
@@ -557,10 +557,10 @@ class RequirementTest(unittest.TestCase):
 
         req = NormalizedTextInSetRequirement({"input_words": ["погода", "время"]})
 
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"normalized_text": "хотеть узнать ."}
 
-        self.assertFalse(req.check(text_preprocessing_result, Mock()))
+        self.assertFalse(req.check(text_preprocessing_result, PicklableMock()))
 
 
 if __name__ == '__main__':

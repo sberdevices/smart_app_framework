@@ -3,6 +3,7 @@ from unittest.mock import Mock, patch
 
 from core.basic_models.classifiers.basic_classifiers import ExternalClassifier
 from scenarios.scenario_models.field.field_filler_description import ClassifierFiller, ClassifierFillerMeta
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class TestClassifierFiller(TestCase):
@@ -15,8 +16,8 @@ class TestClassifierFiller(TestCase):
         }
         self.filler = ClassifierFiller(test_items)
 
-        self.mock_text_preprocessing_result = Mock()
-        self.mock_user = Mock()
+        self.mock_text_preprocessing_result = PicklableMock()
+        self.mock_user = PicklableMock()
         self.mock_user.descriptions = {
             "external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
 
@@ -48,8 +49,8 @@ class TestClassifierFillerMeta(TestCase):
         }
         self.filler_meta = ClassifierFillerMeta(test_items)
 
-        self.mock_text_preprocessing_result = Mock()
-        self.mock_user = Mock()
+        self.mock_text_preprocessing_result = PicklableMock()
+        self.mock_user = PicklableMock()
         self.mock_user.descriptions = {
             "external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
 

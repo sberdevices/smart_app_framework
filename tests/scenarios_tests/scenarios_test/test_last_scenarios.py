@@ -1,6 +1,7 @@
 from unittest import TestCase
 from unittest.mock import Mock, MagicMock
 from scenarios.user.last_scenarios.last_scenarios import LastScenarios
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class ScenarioDescription:
@@ -28,14 +29,14 @@ class TestLastScenarios(TestCase):
         items = ["pay_phone_scenario"]
         forms = MagicMock(name="context_form_mock")
         forms.clear_form = self.remove_item
-        user = Mock()
+        user = PicklableMock()
         user.forms = forms
 
-        pay_phone_scenario = Mock()
+        pay_phone_scenario = PicklableMock()
         pay_phone_scenario.keep_forms_alive = False
         pay_phone_scenario.form_type = "pay_phone_scenario"
         user.descriptions = {"scenarios": ScenarioDescription({"pay_phone_scenario": pay_phone_scenario})}
-        last_scenario_description = Mock()
+        last_scenario_description = PicklableMock()
         last_scenario_description.get_count = Mock(return_value=1)
         ls = LastScenarios(items, last_scenario_description, user)
         new_scenario = "callcenter_scenario"
@@ -46,13 +47,13 @@ class TestLastScenarios(TestCase):
     def test_add_2(self):
         items = ["pay_phone_scenario"]
         forms = MagicMock(name="context_form_mock")
-        user = Mock()
+        user = PicklableMock()
         user.forms = forms
 
-        pay_phone_scenario = Mock()
+        pay_phone_scenario = PicklableMock()
         pay_phone_scenario.keep_forms_alive = False
         user.descriptions = {"scenarios": {"pay_phone_scenario": pay_phone_scenario}}
-        last_scenario_description = Mock()
+        last_scenario_description = PicklableMock()
         last_scenario_description.get_count = Mock(return_value=2)
         ls = LastScenarios(items, last_scenario_description, user)
         new_scenario = "callcenter_scenario"
@@ -67,13 +68,13 @@ class TestLastScenarios(TestCase):
     def test_add_3(self):
         items = ["pay_phone_scenario"]
         forms = MagicMock(name="context_form_mock")
-        user = Mock()
+        user = PicklableMock()
         user.forms = forms
 
-        pay_phone_scenario = Mock()
+        pay_phone_scenario = PicklableMock()
         pay_phone_scenario.keep_forms_alive = True
         user.descriptions = {"scenarios": ScenarioDescription({"pay_phone_scenario": pay_phone_scenario})}
-        last_scenario_description = Mock()
+        last_scenario_description = PicklableMock()
         last_scenario_description.check = Mock(return_value=True)
         last_scenario_description.get_count = Mock(return_value=1)
         ls = LastScenarios(items, last_scenario_description, user)
@@ -89,14 +90,14 @@ class TestLastScenarios(TestCase):
         items = ["pay_phone_scenario"]
         forms = MagicMock(name="context_form_mock")
         forms.clear_form = self.remove_item
-        user = Mock()
+        user = PicklableMock()
         user.forms = forms
 
-        pay_phone_scenario = Mock()
+        pay_phone_scenario = PicklableMock()
         pay_phone_scenario.keep_forms_alive = False
         pay_phone_scenario.form_type = "pay_phone_scenario"
         user.descriptions = {"scenarios": ScenarioDescription({"pay_phone_scenario": pay_phone_scenario})}
-        last_scenario_description = Mock()
+        last_scenario_description = PicklableMock()
         last_scenario_description.get_count = Mock(return_value=-1)
         ls = LastScenarios(items, last_scenario_description, user)
         new_scenario = "callcenter_scenario"
@@ -108,14 +109,14 @@ class TestLastScenarios(TestCase):
     def test_clear_all(self):
         items = ["pay_phone_scenario"]
         forms = MagicMock(name="context_form_mock")
-        user = Mock()
+        user = PicklableMock()
         user.forms = forms
 
-        pay_phone_scenario = Mock()
+        pay_phone_scenario = PicklableMock()
         pay_phone_scenario.keep_forms_alive = False
         user.descriptions = {"scenarios": {"pay_phone_scenario": pay_phone_scenario}}
 
-        last_scenario_description = Mock()
+        last_scenario_description = PicklableMock()
         last_scenario_description.check = Mock(return_value=True)
         last_scenario_description.get_count = Mock(return_value=2)
         ls = LastScenarios(items, last_scenario_description, user)
@@ -126,26 +127,26 @@ class TestLastScenarios(TestCase):
 
     def test_get_last_scenario_1(self):
         items = ["pay_phone_scenario1", "pay_phone_scenario2"]
-        user = Mock()
-        last_scenario_description = Mock()
+        user = PicklableMock()
+        last_scenario_description = PicklableMock()
         ls = LastScenarios(items, last_scenario_description, user)
         self.assertEqual(ls.last_scenario_name, "pay_phone_scenario2")
 
     def test_get_last_scenario_2(self):
         items = []
-        user = Mock()
-        last_scenario_description = Mock()
+        user = PicklableMock()
+        last_scenario_description = PicklableMock()
         ls = LastScenarios(items, last_scenario_description, user)
         self.assertIsNone(ls.last_scenario_name)
 
     def test_expire(self):
-        user = Mock()
+        user = PicklableMock()
         user.forms = {"pay_phone_scenario": None}
-        pay_phone_scenario = Mock()
+        pay_phone_scenario = PicklableMock()
         pay_phone_scenario.form_type = "pay_phone_scenario"
         scenarios = ScenarioDescription({"pay_phone_scenario": pay_phone_scenario})
         user.descriptions = {"scenarios": scenarios}
-        last_scenario_description = Mock()
+        last_scenario_description = PicklableMock()
         items = ["pay_phone_scenario"]
         ls = LastScenarios(items, last_scenario_description, user)
         ls.expire()

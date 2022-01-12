@@ -5,6 +5,7 @@ from core.basic_models.actions.command import Command
 from core.model.registered import registered_factories
 from core.basic_models.actions.basic_actions import Action, action_factory, actions
 from scenarios.scenario_descriptions.tree_scenario.tree_scenario import TreeScenario
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class MockAction:
@@ -65,7 +66,7 @@ class TestTreeScenario(TestCase):
 
         composite_form = MagicMock(name="form_mock")
         composite_form.forms = start_form_mock
-        composite_form.set_valid = Mock()
+        composite_form.set_valid = PicklableMock()
 
         context_forms = MagicMock(name="context_form_mock")
         context_forms.new = Mock(return_value=Mock(forms={"my form key": internal_form},
@@ -75,7 +76,7 @@ class TestTreeScenario(TestCase):
         current_node_mock.form_key = "start_node_mock"
         current_node_mock.available_nodes = False
 
-        user = Mock()
+        user = PicklableMock()
         user.forms = context_forms
         user.scenario_models = MagicMock()
         user.scenario_models.__getitem__ = Mock(name="scenario_mock", return_value=current_node_mock)
@@ -116,7 +117,7 @@ class TestTreeScenario(TestCase):
         internal_form = Mock(name="internal_form_mock")
         internal_form.description.fields.items = Mock(return_value=[("age", field_descriptor)])
         internal_form.field.field_validator.requirement.check = Mock(return_value=True)
-        field = Mock()
+        field = PicklableMock()
         field.description = field_descriptor
         field.value = 61
         internal_form.fields = {field_descriptor: field, "age": field}
@@ -126,7 +127,7 @@ class TestTreeScenario(TestCase):
 
         composite_form = MagicMock(name="form_mock")
         composite_form.forms = start_form_mock
-        composite_form.set_valid = Mock()
+        composite_form.set_valid = PicklableMock()
 
         context_forms = MagicMock(name="context_form_mock")
         context_forms.new = Mock(return_value=Mock(forms={"my form key": internal_form},
@@ -136,7 +137,7 @@ class TestTreeScenario(TestCase):
         current_node_mock.form_key = "start_node_mock"
         current_node_mock.available_nodes = False
 
-        user = Mock()
+        user = PicklableMock()
         user.forms = context_forms
         user.scenario_models = MagicMock()
         user.scenario_models.__getitem__ = Mock(name="scenario_mock", return_value=current_node_mock)

@@ -2,6 +2,7 @@
 import unittest
 from unittest.mock import Mock
 from scenarios.user import parametrizer
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class TestMessage:
@@ -44,10 +45,10 @@ class UserTest1(unittest.TestCase):
         self.test_user4.descriptions = {"scenarios": {22: self.test_scenario1}}
         self.test_user4.last_scenarios = Mock('last scenario')
         self.test_user4.last_scenarios.last_scenario_name = 22
-        self.test_user4.gender_selector = Mock()
+        self.test_user4.gender_selector = PicklableMock()
         self.test_user4.gender_selector.get_text_by_key = ''
         self.test_user4.settings = {}
-        local_vars = Mock()
+        local_vars = PicklableMock()
         local_vars.values = dict()
         self.test_user4.local_vars = local_vars
         self.test_text_preprocessing_result = Mock('text_preprocessing_result')

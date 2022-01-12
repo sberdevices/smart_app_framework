@@ -8,10 +8,11 @@ from scenarios.scenario_models.field.field_filler_description import (
     IntersectionOriginalTextFiller
 )
 from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 def patch_get_app_config(mock_get_app_config):
-    result = Mock()
+    result = PicklableMock()
     sk_path = os.path.dirname(smart_kit.__file__)
     result.STATIC_PATH = os.path.join(sk_path, 'template/static')
     mock_get_app_config.return_value = result
@@ -35,7 +36,7 @@ class TestIntersectionFieldFiller(TestCase):
                 ]
             }
         }
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.tokenized_elements_list_pymorphy = [
             {'lemma': 'весь'},
             {'lemma': 'хороший'},
@@ -64,7 +65,7 @@ class TestIntersectionFieldFiller(TestCase):
                 ]
             }
         }
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.tokenized_elements_list_pymorphy = [
             {'lemma': 'весь'},
             {'lemma': 'хороший'},
@@ -94,7 +95,7 @@ class TestIntersectionFieldFiller(TestCase):
                 ]
             }
         }
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.tokenized_elements_list_pymorphy = [
             {'lemma': 'хороший'},
             {'lemma': 'рыба'},
@@ -109,7 +110,7 @@ class TestIntersectionFieldFiller(TestCase):
     def test_4(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
         items = {}
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.tokenized_elements_list_pymorphy = []
 
         filler = IntersectionFieldFiller(items)
@@ -132,7 +133,7 @@ class TestIntersectionFieldFiller(TestCase):
             },
             'default': 'дефолтный тунец'
         }
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.tokenized_elements_list_pymorphy = [
             {'lemma': 'мой'},
             {'lemma': 'дядя'},
@@ -161,7 +162,7 @@ class TestIntersectionOriginalTextFiller(TestCase):
                 ]
             }
         }
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.original_text = 'всего хорошего и спасибо за рыбу'
 
         filler = IntersectionOriginalTextFiller(items)
@@ -183,7 +184,7 @@ class TestIntersectionOriginalTextFiller(TestCase):
                 ]
             }
         }
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.original_text = 'всего хорошая и спасибо за рыба'
 
         filler = IntersectionOriginalTextFiller(items)
@@ -207,7 +208,7 @@ class TestIntersectionOriginalTextFiller(TestCase):
                 'лосось': 'не хорошая рыба'
             },
         }
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.original_text = 'не это хорошая рыба'
 
         filler = IntersectionOriginalTextFiller(items)

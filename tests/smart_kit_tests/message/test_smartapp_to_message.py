@@ -5,13 +5,14 @@ from unittest.mock import Mock
 
 from core.message.msg_validator import MessageValidator
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class TestSmartAppToMessage(unittest.TestCase):
     def setUp(self):
-        self.command_ = Mock()
-        self.request_ = Mock()
-        self.message_ = Mock()
+        self.command_ = PicklableMock()
+        self.request_ = PicklableMock()
+        self.message_ = PicklableMock()
         self.command_.payload = {"z": 1}
         self.command_.name = "AnyName"
         self.command_.loader = "json.dumps"
@@ -62,9 +63,9 @@ class PieMessageValidator(MessageValidator):
 
 class TestSmartAppToMessageValidation(unittest.TestCase):
     def test_validation(self):
-        command_ = Mock()
-        request_ = Mock()
-        message_ = Mock()
+        command_ = PicklableMock()
+        request_ = PicklableMock()
+        message_ = PicklableMock()
         command_.payload = {"pi": 3.14159265358979}
         command_.name = "AnyName"
         request_.header = "json"

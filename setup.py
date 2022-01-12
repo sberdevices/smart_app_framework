@@ -52,7 +52,7 @@ setup(
         "tensorflow==2.6.0",
         "timeout-decorator==0.4.1",
         "tqdm",
-        "Twisted"
+        "Twisted",
         "freezegun",
     ],
     classifiers=[

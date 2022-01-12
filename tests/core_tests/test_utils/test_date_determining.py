@@ -25,10 +25,7 @@ def test_period_determiner_1():
         'ныне'
     ]
     result = period_determiner(words_to_process)
-    assert result == ('01.03.2019', '{}.{}.{}'
-                      .format(str(current_date.day).zfill(2),
-                              str(current_date.month).zfill(2),
-                              current_date.year))
+    assert result == ('01.03.2019', current_date.strftime('%d.%m.%Y'))
 
 
 @freeze_time('2021-11-23')
@@ -45,10 +42,7 @@ def test_period_determiner_2():
         'день',
     ]
     result = period_determiner(words_to_process)
-    assert result == ('01.03.2019', '{}.{}.{}'
-                      .format(str(current_date.day).zfill(2),
-                              str(current_date.month).zfill(2),
-                              current_date.year))
+    assert result == ('01.03.2019', current_date.strftime('%d.%m.%Y'))
 
 
 @freeze_time('2021-11-23')
@@ -107,9 +101,7 @@ def test_period_determiner_5():
 
     assert result == (
         '01.{}.{}'.format(str(month).zfill(2), year),
-        '{}.{}.{}'.format(str(current_date.day).zfill(2),
-                          str(current_date.month).zfill(2),
-                          current_date.year)
+        current_date.strftime('%d.%m.%Y')
     )
 
 
@@ -128,10 +120,8 @@ def test_period_determiner_6():
     d = current_date - timedelta(days=delta_day)
 
     assert result == (
-        '{}.{}.{}'.format(str(d.day).zfill(2), str(d.month).zfill(2), d.year),
-        '{}.{}.{}'.format(str(current_date.day).zfill(2),
-                          str(current_date.month).zfill(2),
-                          current_date.year)
+        d.strftime('%d.%m.%Y'),
+        current_date.strftime('%d.%m.%Y')
     )
 
 
@@ -197,10 +187,7 @@ def test_period_determiner_11():
         '2020',
     ]
     result = period_determiner(words_to_process)
-    assert result == ('01.07.2020', '{}.{}.{}'
-                      .format(str(current_date.day).zfill(2),
-                              str(current_date.month).zfill(2),
-                              current_date.year))
+    assert result == ('01.07.2020', current_date.strftime('%d.%m.%Y'))
 
 
 @freeze_time('2021-11-23')
@@ -318,10 +305,7 @@ def test_period_determiner_20():
         'года'
     ]
     result = period_determiner(words_to_process)
-    assert result == ('28.03.2019', '{}.{}.{}'
-                      .format(str(current_date.day).zfill(2),
-                              str(current_date.month).zfill(2),
-                              current_date.year))
+    assert result == ('28.03.2019', current_date.strftime('%d.%m.%Y'))
 
 
 @freeze_time('2021-11-23')
@@ -338,12 +322,10 @@ def test_period_determiner_21():
     ]
     result = period_determiner(words_to_process)
     d1: datetime = current_date - timedelta(365 * count_of_years)
-    assert result == ('{}.{}.{}'.format(str(d1.day).zfill(2),
-                                        str(d1.month).zfill(2),
-                                        d1.year),
-                      '{}.{}.{}'.format(str(current_date.day).zfill(2),
-                                        str(current_date.month).zfill(2),
-                                        current_date.year))
+    assert result == (
+        d1.strftime('%d.%m.%Y'),
+        current_date.strftime('%d.%m.%Y')
+    )
 
 
 @freeze_time('2021-11-23')
@@ -360,12 +342,10 @@ def test_period_determiner_22():
     ]
     result = period_determiner(words_to_process)
     d1: datetime = current_date - timedelta(30 * count_of_months)
-    assert result == ('{}.{}.{}'.format(str(d1.day).zfill(2),
-                                        str(d1.month).zfill(2),
-                                        d1.year),
-                      '{}.{}.{}'.format(str(current_date.day).zfill(2),
-                                        str(current_date.month).zfill(2),
-                                        current_date.year))
+    assert result == (
+        d1.strftime('%d.%m.%Y'),
+        current_date.strftime('%d.%m.%Y')
+    )
 
 
 @freeze_time('2021-11-23')
@@ -413,12 +393,10 @@ def test_period_determiner_25():
     ]
     result = period_determiner(words_to_process)
     d1: datetime = current_date - timedelta(7 * count_of_weeks)
-    assert result == ('{}.{}.{}'.format(str(d1.day).zfill(2),
-                                        str(d1.month).zfill(2),
-                                        d1.year),
-                      '{}.{}.{}'.format(str(current_date.day).zfill(2),
-                                        str(current_date.month).zfill(2),
-                                        current_date.year))
+    assert result == (
+        d1.strftime('%d.%m.%Y'),
+        current_date.strftime('%d.%m.%Y')
+    )
 
 
 @freeze_time('2021-11-23')
@@ -436,12 +414,10 @@ def test_period_determiner_26():
     ]
     result = period_determiner(words_to_process)
     d1: datetime = current_date - timedelta(count_of_days)
-    assert result == ('{}.{}.{}'.format(str(d1.day).zfill(2),
-                                        str(d1.month).zfill(2),
-                                        d1.year),
-                      '{}.{}.{}'.format(str(current_date.day).zfill(2),
-                                        str(current_date.month).zfill(2),
-                                        current_date.year))
+    assert result == (
+        d1.strftime('%d.%m.%Y'),
+        current_date.strftime('%d.%m.%Y')
+    )
 
 
 @freeze_time('2021-11-23')
@@ -467,12 +443,10 @@ def test_period_determiner_28():
     ]
     result = period_determiner(words_to_process)
     d1: datetime = current_date - timedelta(7)
-    assert result == ('{}.{}.{}'.format(str(d1.day).zfill(2),
-                                        str(d1.month).zfill(2),
-                                        d1.year),
-                      '{}.{}.{}'.format(str(current_date.day).zfill(2),
-                                        str(current_date.month).zfill(2),
-                                        current_date.year))
+    assert result == (
+        d1.strftime('%d.%m.%Y'),
+        current_date.strftime('%d.%m.%Y')
+    )
 
 
 @freeze_time('2021-11-23')
@@ -516,12 +490,10 @@ def test_period_determiner_29():
         ) - timedelta(days=1)
 
     result = period_determiner(words_to_process, future_days_allowed=True)
-    assert result == ('{}.{}.{}'.format(str(d1.day).zfill(2),
-                                        str(d1.month).zfill(2),
-                                        d1.year),
-                      '{}.{}.{}'.format(str(d2.day).zfill(2),
-                                        str(d2.month).zfill(2),
-                                        d2.year))
+    assert result == (
+        d1.strftime('%d.%m.%Y'),
+        d2.strftime('%d.%m.%Y')
+    )
 
 
 @freeze_time('2021-11-23')
@@ -549,11 +521,7 @@ def test_period_determiner_31():
         'года'
     ]
     result = period_determiner(words_to_process)
-    assert result == ('01.01.2019',
-                      '{}.{}.{}'
-                      .format(str(current_date.day).zfill(2),
-                              str(current_date.month).zfill(2),
-                              current_date.year))
+    assert result == ('01.01.2019', current_date.strftime('%d.%m.%Y'))
 
 
 def test_extract_words_describing_period_1():

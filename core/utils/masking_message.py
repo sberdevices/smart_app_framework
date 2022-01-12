@@ -38,10 +38,6 @@ def card_sub_func(x: Match[str]) -> str:
     return mask + digs + (last_char * is_last_not_digit)
 
 
-def check_value_is_collection(value):
-    return isinstance(value, dict) or isinstance(value, list) and not isinstance(value, str)
-
-
 def masking(data: Union[Dict, List], masking_fields: Optional[Union[Dict, List]] = None,
             depth_level: int = 2, mask_available_depth: int = -1):
     """
@@ -71,7 +67,7 @@ def _masking(data: Union[Dict, List], masking_fields: Union[Dict, List],
         key_gen = enumerate(data)
 
     for key, _ in key_gen:
-        value_is_collection = check_value_is_collection(data[key])
+        value_is_collection = isinstance(data[key],(dict, list))
         if isinstance(data[key], set):
             data[key] = list(data[key])
             value_is_collection = True
@@ -123,7 +119,7 @@ def structure_mask(data: Union[Dict, List], depth: int, available_depth: int = -
         counter = Counter()
 
     for key, _ in key_gen:
-        if check_value_is_collection(data[key]):
+        if isinstance(data[key],(dict, list)):
             counter.collections += 1
             # если встречаем коллекцию и глубина не превышена идем внутрь
             if depth < available_depth or available_depth == -1:

@@ -1,4 +1,4 @@
-from typing import Optional, Union, Match
+from typing import Optional, Union, Match, Dict, List
 import re
 
 MASK = "***"
@@ -42,7 +42,7 @@ def check_value_is_collection(value):
     return isinstance(value, dict) or isinstance(value, list) and not isinstance(value, str)
 
 
-def masking(data: Union[dict, list], masking_fields: Optional[Union[dict, list]] = None,
+def masking(data: Union[Dict, List], masking_fields: Optional[Union[Dict, List]] = None,
             depth_level: int = 2, mask_available_depth: int = -1):
     """
     :param data: коллекция для маскирования приватных данных
@@ -60,7 +60,7 @@ def masking(data: Union[dict, list], masking_fields: Optional[Union[dict, list]]
     _masking(data, masking_fields, depth_level, mask_available_depth, masking_on=False, card_masking_on=False)
 
 
-def _masking(data: Union[dict, list], masking_fields: Union[dict, list],
+def _masking(data: Union[Dict, List], masking_fields: Union[Dict, List],
              depth_level: int = 2, mask_available_depth: int = -1, masking_on: bool = False,
              card_masking_on: bool = False):
 
@@ -103,7 +103,7 @@ def _masking(data: Union[dict, list], masking_fields: Union[dict, list],
                      masking_on=False, card_masking_on=card_masking_on)
 
 
-def structure_mask(data: Union[dict, list], depth: int, available_depth: int = -1,
+def structure_mask(data: Union[Dict, List], depth: int, available_depth: int = -1,
                    counter: Optional[Counter] = None):
     """
     Функция максировки для сложной структуры

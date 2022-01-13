@@ -1,8 +1,8 @@
 from unittest import TestCase
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 
 from scenarios.scenario_models.field.field import QuestionField
-from smart_kit.utils.picklable_mock import PicklableMock
+from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock
 
 
 class TestField(TestCase):
@@ -37,7 +37,7 @@ class TestField(TestCase):
     def test_3(self):
         expected = "prev_value"
         mock_user = PicklableMock()
-        mock_user.last_fields = MagicMock()
+        mock_user.last_fields = PicklableMagicMock()
         value_mock = PicklableMock()
         value_mock.value = "prev_value"
         mock_user.last_fields.__getitem__.return_value = value_mock
@@ -57,7 +57,7 @@ class TestField(TestCase):
     def test_4(self):
         expected = "my_value"
         mock_user = PicklableMock()
-        mock_user.last_fields = MagicMock()
+        mock_user.last_fields = PicklableMagicMock()
         value_mock = PicklableMock()
         value_mock.value = None
         mock_user.last_fields.__getitem__.return_value = value_mock
@@ -189,8 +189,8 @@ class TestField(TestCase):
         mock_value = PicklableMock()
         mock_value.value = None
 
-        mock_user = MagicMock()
-        mock_user.last_fields = MagicMock()
+        mock_user = PicklableMagicMock()
+        mock_user.last_fields = PicklableMagicMock()
         mock_user.last_fields.__getitem__.return_value = mock_value
 
         description = PicklableMock()

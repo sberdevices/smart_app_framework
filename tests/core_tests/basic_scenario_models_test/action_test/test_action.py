@@ -18,7 +18,7 @@ from core.basic_models.requirement.basic_requirements import requirement_factory
 from core.model.registered import registered_factories
 from core.unified_template.unified_template import UnifiedTemplate, UNIFIED_TEMPLATE_TYPE_NAME
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
-from smart_kit.utils.picklable_mock import PicklableMock
+from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock
 
 
 class MockParametrizer:
@@ -158,7 +158,7 @@ class ActionTest(unittest.TestCase):
 
     def test_string_action(self):
         expected = [Command("cmd_id", {"item": "template", "params": "params"})]
-        user = MagicMock()
+        user = PicklableMagicMock()
         template = PicklableMock()
         template.get_template = Mock(return_value=["nlpp.payload.personInfo.identityCard"])
         user.descriptions = {"render_templates": template}
@@ -263,7 +263,7 @@ class ActionTest(unittest.TestCase):
         action = StringAction(items)
         for template_key, template in action.support_templates.items():
             self.assertIsInstance(template, UnifiedTemplate)
-        user = MagicMock()
+        user = PicklableMagicMock()
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
         output = action.run(user=user, text_preprocessing_result=None)[0].payload["answer"]
         self.assertEqual(output, expected)
@@ -288,7 +288,7 @@ class ActionTest(unittest.TestCase):
             "buttons": [0, 1, 2]
         }
         action = StringAction(items)
-        user = MagicMock()
+        user = PicklableMagicMock()
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
         output = action.run(user=user, text_preprocessing_result=None)[0].payload
         self.assertEqual(output, expected)
@@ -325,7 +325,7 @@ class ActionTest(unittest.TestCase):
             }
         }
         action = PushAction(items)
-        user = MagicMock()
+        user = PicklableMagicMock()
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
         user.settings = settings
         command = action.run(user=user, text_preprocessing_result=None)[0]
@@ -350,7 +350,7 @@ class NonRepeatingActionTest(unittest.TestCase):
                                                        "result": self.expected1}
                                                       ],
                                           "last_action_ids_storage": "last_action_ids_storage"})
-        self.user = MagicMock()
+        self.user = PicklableMagicMock()
         registered_factories[Action] = action_factory
         actions["action_mock"] = MockAction
 

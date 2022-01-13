@@ -3,7 +3,7 @@ import unittest
 from unittest.mock import Mock, MagicMock
 
 from smart_kit.handlers import handle_respond
-from smart_kit.utils.picklable_mock import PicklableMock
+from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock
 
 
 class HandlerTest4(unittest.TestCase):
@@ -21,7 +21,7 @@ class HandlerTest4(unittest.TestCase):
         self.test_user1.message.device = PicklableMock()
         self.test_user1.message.device.surface = "test_surface"
         self.test_user1.message.app_info = {}
-        self.test_user1.behaviors = MagicMock()
+        self.test_user1.behaviors = PicklableMagicMock()
 
         self.test_action = Mock('action')
         self.test_action.run = lambda x, y, z: 10  # пусть что то возвращает
@@ -37,7 +37,7 @@ class HandlerTest4(unittest.TestCase):
         self.test_user2.message.device = PicklableMock()
         self.test_user2.message.device.surface = "test_surface"
         self.test_user2.message.app_info = {}
-        self.callback11_action_params = MagicMock()
+        self.callback11_action_params = PicklableMagicMock()
         self.test_user2.behaviors = PicklableMock()
         self.test_user2.behaviors.get_callback_action_params = MagicMock(return_value=self.callback11_action_params)
 

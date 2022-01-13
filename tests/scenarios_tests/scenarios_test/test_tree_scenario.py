@@ -5,7 +5,7 @@ from core.basic_models.actions.basic_actions import Action, action_factory, acti
 from core.basic_models.actions.command import Command
 from core.model.registered import registered_factories
 from scenarios.scenario_descriptions.tree_scenario.tree_scenario import TreeScenario
-from smart_kit.utils.picklable_mock import PicklableMock
+from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock
 
 
 class MockAction:
@@ -58,7 +58,7 @@ class TestTreeScenario(TestCase):
         internal_form = Mock(name="internal_form_mock")
         internal_form.description.fields.items = Mock(return_value=[("age", field_descriptor)])
         internal_form.field.field_validator.requirement.check = Mock(return_value=True)
-        internal_form.fields = MagicMock()
+        internal_form.fields = PicklableMagicMock()
         internal_form.fields.values.items = Mock(return_value={"age": 61})
         internal_form.is_valid = Mock(return_value=True)
 
@@ -78,7 +78,7 @@ class TestTreeScenario(TestCase):
 
         user = PicklableMock()
         user.forms = context_forms
-        user.scenario_models = MagicMock()
+        user.scenario_models = PicklableMagicMock()
         user.scenario_models.__getitem__ = Mock(name="scenario_mock", return_value=current_node_mock)
 
         text_preprocessing_result = None
@@ -139,7 +139,7 @@ class TestTreeScenario(TestCase):
 
         user = PicklableMock()
         user.forms = context_forms
-        user.scenario_models = MagicMock()
+        user.scenario_models = PicklableMagicMock()
         user.scenario_models.__getitem__ = Mock(name="scenario_mock", return_value=current_node_mock)
 
         text_preprocessing_result = None

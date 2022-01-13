@@ -1,6 +1,6 @@
 import unittest
 from typing import Dict, Any, Union, Optional
-from unittest.mock import MagicMock, Mock, ANY
+from unittest.mock import Mock, ANY
 
 from core.basic_models.actions.basic_actions import Action, action_factory, actions
 from core.model.registered import registered_factories
@@ -24,7 +24,7 @@ from scenarios.actions.action import (
 from scenarios.actions.action import ClearFormAction, ClearInnerFormAction, BreakScenarioAction, AskAgainAction, \
     RemoveFormFieldAction, RemoveCompositeFormFieldAction
 from scenarios.scenario_models.history import Event
-from smart_kit.utils.picklable_mock import PicklableMock
+from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock
 
 
 class MockAction:
@@ -56,7 +56,7 @@ class MockParametrizer:
 class ClearFormIdActionTest(unittest.TestCase):
     def test_run(self):
         action = ClearFormAction({"form": "form"})
-        user = MagicMock()
+        user = PicklableMagicMock()
         action.run(user, None)
         user.forms.remove_item.assert_called_once_with("form")
 
@@ -64,7 +64,7 @@ class ClearFormIdActionTest(unittest.TestCase):
 class RemoveCompositeFormFieldActionTest(unittest.TestCase):
     def test_run(self):
         action = ClearInnerFormAction({"form": "form", "inner_form": "inner_form"})
-        user, form = MagicMock(), MagicMock()
+        user, form = PicklableMagicMock(), PicklableMagicMock()
         user.forms.__getitem__.return_value = form
         action.run(user, None)
         form.forms.remove_item.assert_called_once_with("inner_form")
@@ -75,7 +75,7 @@ class BreakScenarioTest(unittest.TestCase):
         scenario_id = "test_id"
         action = BreakScenarioAction({"scenario_id": scenario_id})
         user = PicklableMock()
-        scenario_model = MagicMock()
+        scenario_model = PicklableMagicMock()
         scenario_model.set_break = Mock(return_value=None)
         user.scenario_models = {scenario_id: scenario_model}
         action.run(user, None)
@@ -86,7 +86,7 @@ class BreakScenarioTest(unittest.TestCase):
         action = BreakScenarioAction({})
         user = PicklableMock()
         user.last_scenarios.last_scenario_name = "test_id"
-        scenario_model = MagicMock()
+        scenario_model = PicklableMagicMock()
         scenario_model.set_break = Mock(return_value=None)
         user.scenario_models = {scenario_id: scenario_model}
         action.run(user, None)
@@ -111,7 +111,7 @@ class AskAgainActionTest(unittest.TestCase):
 class RemoveFormFieldActionTest(unittest.TestCase):
     def test_run(self):
         action = RemoveFormFieldAction({"form": "form", "field": "field"})
-        user, form = MagicMock(), MagicMock()
+        user, form = PicklableMagicMock(), PicklableMagicMock()
         user.forms.__getitem__.return_value = form
         action.run(user, None)
         form.fields.remove_item.assert_called_once_with("field")
@@ -120,7 +120,7 @@ class RemoveFormFieldActionTest(unittest.TestCase):
 class RemoveCompositeFormFieldActionTest(unittest.TestCase):
     def test_run(self):
         action = RemoveCompositeFormFieldAction({"form": "form", "inner_form": "form", "field": "field"})
-        user, inner_form, form = MagicMock(), MagicMock(), MagicMock()
+        user, inner_form, form = PicklableMagicMock(), PicklableMagicMock(), PicklableMagicMock()
         form.forms.__getitem__.return_value = inner_form
         user.forms.__getitem__.return_value = form
         action.run(user, None)
@@ -252,7 +252,7 @@ class SetVariableActionTest(unittest.TestCase):
         user.message = PicklableMock()
         user.person_info = PicklableMock()
         user.descriptions = {"render_templates": template}
-        user.variables = MagicMock()
+        user.variables = PicklableMagicMock()
         user.variables.values = {}
         user.variables.set = PicklableMock()
         self.user = user
@@ -283,7 +283,7 @@ class DeleteVariableActionTest(unittest.TestCase):
         user.message = PicklableMock()
         user.message.payload = {"some_value": "some_value_test"}
         user.person_info = PicklableMock()
-        user.variables = MagicMock()
+        user.variables = PicklableMagicMock()
         user.variables.delete = PicklableMock()
         self.user = user
 
@@ -304,7 +304,7 @@ class ClearVariablesActionTest(unittest.TestCase):
         user.parametrizer = MockParametrizer(user, {})
         user.message = PicklableMock()
         user.person_info = PicklableMock()
-        user.variables = MagicMock()
+        user.variables = PicklableMagicMock()
         user.variables.values = self.var_value
         user.variables.clear = PicklableMock()
         self.user = user

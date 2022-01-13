@@ -69,8 +69,10 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         instance = previous_frame.f_locals.get('self', None)
 
         from smart_kit.configs import get_app_config
-        app_config = get_app_config()
-        message_maker = app_config.LOGGER_MESSAGE_CREATOR
+        try:
+            message_maker = get_app_config().LOGGER_MESSAGE_CREATOR
+        except AttributeError:
+            message_maker = LoggerMessageCreator
 
         if instance is not None:
             params = message_maker.make_message(user, params, instance.__class__.__name__, log_store_for)

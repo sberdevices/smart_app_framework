@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 from core.names import field
 from smart_kit.compatibility import commands
 from smart_kit.names import message_names
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 def patch_get_app_config(mock_get_app_config, auto_listening):

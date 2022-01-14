@@ -156,6 +156,7 @@ class MainLoop(BaseMainLoop):
                         stats += "Polling time: {} msecs\n".format(poll_timer.msecs)
                         log_params["kafka_polling"] = poll_timer.msecs
                         message_value = json.loads(mq_message.value())
+                        await asyncio.sleep(0.2)
                         await self.process_message(mq_message, consumer, kafka_key, stats, log_params)
 
                 except KafkaException as kafka_exp:

@@ -8,8 +8,9 @@ import core.basic_models.classifiers.classifiers_constants as cls_const
 import core.logging.logger_constants as log_const
 import scenarios.logging.logger_constants as scenarios_log_const
 from core.basic_models.classifiers.basic_classifiers import Classifier
-from core.logging.masker import LogMasker
+from core.utils.masking_message import masking
 from core.utils.stats_timer import StatsTimer
+from smart_kit.utils.pickle_copy import pickle_deepcopy
 
 MESSAGE_ID_STR = "message_id"
 UID_STR = "uid"
@@ -51,7 +52,7 @@ class LoggerMessageCreator:
         params = params or {}
         if user:
             cls.update_user_params(user, params)
-        params = LogMasker.mask_structure(params, LogMasker.percent_fix)
+        params = masking(pickle_deepcopy(params))
         cls.update_other_params(user, params, cls_name, log_store_for)
         return params
 
@@ -69,10 +70,11 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         instance = previous_frame.f_locals.get('self', None)
 
         from smart_kit.configs import get_app_config
-        try:
-            message_maker = get_app_config().LOGGER_MESSAGE_CREATOR
-        except AttributeError:
-            message_maker = LoggerMessageCreator
+        message_maker = get_app_config().LOGGER_MESSAGE_CREATOR
+        # try:
+        #     message_maker = get_app_config().LOGGER_MESSAGE_CREATOR
+        # except AttributeError:
+        #     message_maker = LoggerMessageCreator
 
         if instance is not None:
             params = message_maker.make_message(user, params, instance.__class__.__name__, log_store_for)

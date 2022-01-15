@@ -50,36 +50,36 @@ class TestTreeScenario(TestCase):
         items = {"channels": "web", "form": form_type, "start_node_key": "node_1",
                  "scenario_nodes": {"node_1": node_mock}}
 
-        field_descriptor = Mock(name="field_descriptor_mock")
-        field_descriptor.filler.extract = Mock(name="my_field_value_1", return_value=61)
+        field_descriptor = PicklableMock(name="field_descriptor_mock")
+        field_descriptor.filler.extract = PicklableMock(name="my_field_value_1", return_value=61)
         field_descriptor.fill_other = False
         field_descriptor.field_validator.actions = []
 
-        internal_form = Mock(name="internal_form_mock")
-        internal_form.description.fields.items = Mock(return_value=[("age", field_descriptor)])
-        internal_form.field.field_validator.requirement.check = Mock(return_value=True)
+        internal_form = PicklableMock(name="internal_form_mock")
+        internal_form.description.fields.items = PicklableMock(return_value=[("age", field_descriptor)])
+        internal_form.field.field_validator.requirement.check = PicklableMock(return_value=True)
         internal_form.fields = PicklableMagicMock()
-        internal_form.fields.values.items = Mock(return_value={"age": 61})
-        internal_form.is_valid = Mock(return_value=True)
+        internal_form.fields.values.items = PicklableMock(return_value={"age": 61})
+        internal_form.is_valid = PicklableMock(return_value=True)
 
-        start_form_mock = MagicMock(name="start_form_mock")
+        start_form_mock = PicklableMagicMock(name="start_form_mock")
 
-        composite_form = MagicMock(name="form_mock")
+        composite_form = PicklableMagicMock(name="form_mock")
         composite_form.forms = start_form_mock
         composite_form.set_valid = PicklableMock()
 
-        context_forms = MagicMock(name="context_form_mock")
-        context_forms.new = Mock(return_value=Mock(forms={"my form key": internal_form},
-                                                   is_endless=Mock(return_value=False)))
+        context_forms = PicklableMagicMock(name="context_form_mock")
+        context_forms.new = PicklableMock(return_value=PicklableMock(forms={"my form key": internal_form},
+                                                                     is_endless=PicklableMock(return_value=False)))
 
-        current_node_mock = Mock(name="current_node_mock")
+        current_node_mock = PicklableMock(name="current_node_mock")
         current_node_mock.form_key = "start_node_mock"
         current_node_mock.available_nodes = False
 
         user = PicklableMock()
         user.forms = context_forms
         user.scenario_models = PicklableMagicMock()
-        user.scenario_models.__getitem__ = Mock(name="scenario_mock", return_value=current_node_mock)
+        user.scenario_models.__getitem__ = PicklableMock(name="scenario_mock", return_value=current_node_mock)
 
         text_preprocessing_result = None
 
@@ -107,40 +107,40 @@ class TestTreeScenario(TestCase):
         items = {"channels": "web", "form": form_type, "start_node_key": "node_1",
                  "scenario_nodes": {"node_1": node_mock}, "actions": [{"type": "success"}]}
 
-        field_descriptor = Mock(name="field_descriptor_mock")
-        field_descriptor.filler.extract = Mock(name="my_field_value_1", return_value=61)
+        field_descriptor = PicklableMock(name="field_descriptor_mock")
+        field_descriptor.filler.extract = PicklableMock(name="my_field_value_1", return_value=61)
         field_descriptor.fill_other = False
         field_descriptor.field_validator.actions = []
         field_descriptor.on_filled_actions = [BreakAction(), MockAction(command_name="break action result")]
         field_descriptor.id = "age"
 
-        internal_form = Mock(name="internal_form_mock")
-        internal_form.description.fields.items = Mock(return_value=[("age", field_descriptor)])
-        internal_form.field.field_validator.requirement.check = Mock(return_value=True)
+        internal_form = PicklableMock(name="internal_form_mock")
+        internal_form.description.fields.items = PicklableMock(return_value=[("age", field_descriptor)])
+        internal_form.field.field_validator.requirement.check = PicklableMock(return_value=True)
         field = PicklableMock()
         field.description = field_descriptor
         field.value = 61
         internal_form.fields = {field_descriptor: field, "age": field}
-        internal_form.is_valid = Mock(return_value=True)
+        internal_form.is_valid = PicklableMock(return_value=True)
 
-        start_form_mock = MagicMock(name="start_form_mock")
+        start_form_mock = PicklableMagicMock(name="start_form_mock")
 
-        composite_form = MagicMock(name="form_mock")
+        composite_form = PicklableMagicMock(name="form_mock")
         composite_form.forms = start_form_mock
         composite_form.set_valid = PicklableMock()
 
-        context_forms = MagicMock(name="context_form_mock")
-        context_forms.new = Mock(return_value=Mock(forms={"my form key": internal_form},
-                                                   is_endless=Mock(return_value=False)))
+        context_forms = PicklableMagicMock(name="context_form_mock")
+        context_forms.new = PicklableMock(return_value=PicklableMock(forms={"my form key": internal_form},
+                                                                     is_endless=PicklableMock(return_value=False)))
 
-        current_node_mock = Mock(name="current_node_mock")
+        current_node_mock = PicklableMock(name="current_node_mock")
         current_node_mock.form_key = "start_node_mock"
         current_node_mock.available_nodes = False
 
         user = PicklableMock()
         user.forms = context_forms
         user.scenario_models = PicklableMagicMock()
-        user.scenario_models.__getitem__ = Mock(name="scenario_mock", return_value=current_node_mock)
+        user.scenario_models.__getitem__ = PicklableMock(name="scenario_mock", return_value=current_node_mock)
 
         text_preprocessing_result = None
 

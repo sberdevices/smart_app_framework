@@ -17,3 +17,11 @@ class TestLogger(TestCase):
 
         log("%0", level="ERROR")
         self.assertEqual(fh.handleError.called, False)
+
+    def test_render_params(self):
+        fh = logging.StreamHandler()
+        logging.root.handlers = []
+        logging.root.addHandler(fh)
+        fh.stream.write = Mock()
+        log("%(p)s %p %p", level="ERROR", params={'p': 'value'})
+        self.assertEqual(fh.stream.write.call_args[0][0], 'value %p %p\n')

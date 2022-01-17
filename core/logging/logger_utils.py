@@ -48,6 +48,18 @@ class LoggerMessageCreator:
         params[LOG_STORE_FOR] = log_store_for
 
     @classmethod
+    def escape(cls, string):
+        new_string = ""
+
+        for i in range(len(string) - 1):
+            if string[i] == "%" and string[i + 1] != "(":
+                new_string += "%%"
+            else:
+                new_string += string[i]
+        return new_string + string[-1]
+
+
+    @classmethod
     def make_message(cls, user=None, params=None, cls_name='', log_store_for=0):
         params = params or {}
         if user:
@@ -82,7 +94,7 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
 
         # эскейпим сишное форматирование логгера,
         # см. tests.core_tests.test_utils.test_logger.TestLogger.test_escaping
-        message = message.replace("%", "%%")
+        message = message_maker.escape(message)
 
         logger.log(level_name, message, params, exc_info=exc_info)
     except timeout_decorator.TimeoutError:

@@ -48,11 +48,15 @@ class LoggerMessageCreator:
         params[LOG_STORE_FOR] = log_store_for
 
     @classmethod
+    def percent_fix(cls, record):
+        return str(record).replace("%", "%%")
+
+    @classmethod
     def make_message(cls, user=None, params=None, cls_name='', log_store_for=0):
         params = params or {}
         if user:
             cls.update_user_params(user, params)
-        masking(pickle_deepcopy(params))
+        masking(pickle_deepcopy(params), string_process_func=cls.percent_fix)
         cls.update_other_params(user, params, cls_name, log_store_for)
         return params
 

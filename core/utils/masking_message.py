@@ -43,12 +43,13 @@ def check_value_is_collection(value):
 
 
 def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Union[MutableMapping, Iterable]] = None,
-            depth_level: int = 2, mask_available_depth: int = -1):
+            depth_level: int = 2, mask_available_depth: int = -1, string_process_func: Callable[[str], str] = None):
     """
     :param data: коллекция для маскирования приватных данных
     :param masking_fields: поля для обязательной маскировки независимо от уровня
     :param depth_level: глубина сохранения структуры маскируемого поля
     :param mask_available_depth: глубина глубокой маскировки полей без сохранения структуры (см ниже)
+    :param string_process_func: функция обработки каждой незамаскированной строки
     """
 
     if isinstance(masking_fields, Sequence):
@@ -57,12 +58,13 @@ def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Unio
     if masking_fields is None:
         masking_fields = DEFAULT_MASKING_FIELDS
 
-    _masking(data, masking_fields, depth_level, mask_available_depth, masking_on=False, card_masking_on=False)
+    _masking(data, masking_fields, depth_level, mask_available_depth, masking_on=False, card_masking_on=False,
+             string_process_func=string_process_func)
 
 
 def _masking(data: Union[MutableMapping, Iterable], masking_fields: Union[MutableMapping, Iterable],
              depth_level: int = 2, mask_available_depth: int = -1, masking_on: bool = False,
-             card_masking_on: bool = False):
+             card_masking_on: bool = False, string_process_func: Callable[[str], str] = None):
 
     # тут в зависимости от листа или словаря создаем итератор
     if isinstance(data, MutableMapping):
@@ -79,9 +81,11 @@ def _masking(data: Union[MutableMapping, Iterable], masking_fields: Union[Mutabl
             if value_is_collection:
                 # если глубина не превышена, идем внутрь с включенным флагом и уменьшаем глубину
                 if masking_on and depth_level > 0:
-                    _masking(data[key], masking_fields, depth_level - 1, mask_available_depth, masking_on=True)
+                    _masking(data[key], masking_fields, depth_level - 1, mask_available_depth, masking_on=True,
+                             string_process_func=string_process_func)
                 elif key in masking_fields and masking_fields[key] > 0:
-                    _masking(data[key], masking_fields, masking_fields[key] - 1, mask_available_depth, masking_on=True)
+                    _masking(data[key], masking_fields, masking_fields[key] - 1, mask_available_depth, masking_on=True,
+                             string_process_func=string_process_func)
                 else:
                     counter = structure_mask(data[key], depth=1, available_depth=mask_available_depth)
                     data[key] = f'*items-{counter.items}*collections-{counter.collections}*maxdepth-{counter.max_depth}*'
@@ -89,9 +93,12 @@ def _masking(data: Union[MutableMapping, Iterable], masking_fields: Union[Mutabl
                 data[key] = '***'
         elif key in CARD_MASKING_FIELDS or card_masking_on:  # проверка на реквизиты карты
             if value_is_collection:
-                _masking(data[key], masking_fields, depth_level, mask_available_depth, masking_on,card_masking_on=True)
+                _masking(data[key], masking_fields, depth_level, mask_available_depth, masking_on, card_masking_on=True,
+                         string_process_func=string_process_func)
             elif isinstance(data[key], str):
                 data[key] = card_regular.sub(card_sub_func, data[key])
+                if string_process_func is not None:
+                    data[key] = string_process_func(data[key])
             elif isinstance(data[key], int):
                 str_value = str(data[key])
                 masked_value = card_regular.sub(card_sub_func, str_value)
@@ -99,8 +106,10 @@ def _masking(data: Union[MutableMapping, Iterable], masking_fields: Union[Mutabl
                     data[key] = masked_value
         elif value_is_collection:
             # если маскировка не нужна уходим глубже без включенного флага
-            _masking(data[key], masking_fields, depth_level, mask_available_depth,
-                     masking_on=False, card_masking_on=card_masking_on)
+            _masking(data[key], masking_fields, depth_level, mask_available_depth, masking_on=False,
+                     card_masking_on=card_masking_on, string_process_func=string_process_func)
+        elif string_process_func is not None and isinstance(data[key], str):
+            data[key] = string_process_func(data[key])
 
 
 def structure_mask(data: Union[MutableMapping, Iterable], depth: int, available_depth: int = -1,

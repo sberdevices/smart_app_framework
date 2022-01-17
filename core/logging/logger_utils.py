@@ -80,7 +80,8 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         else:
             params = message_maker.make_message(user, params, log_store_for=log_store_for)
 
-        message = message_maker.percent_fix(message)
+        # эскейпим сишное форматирование логгера
+        message = message.replace("%", "%%")
 
         logger.log(level_name, message, params, exc_info=exc_info)
     except timeout_decorator.TimeoutError:

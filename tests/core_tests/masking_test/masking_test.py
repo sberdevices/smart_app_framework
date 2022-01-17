@@ -111,7 +111,7 @@ class MaskingTest(TestCase):
         masking(input_msg, masking_fields, depth_level)
         self.assertEqual(expected, input_msg)
 
-    def test_set_components(self):
+    def test_check_set_components(self):
         input_message = {"set": {12, 13, 14}}
         expected = {"set": [12, 13, 14]}
         masking(input_message)
@@ -126,29 +126,3 @@ class MaskingTest(TestCase):
         expected = {"masked": ["***","***","***"]}
         masking(input_message, masking_fields={"masked":2})
         self.assertEqual(expected, input_message)
-
-    def test_string_process_func(self):
-        func = lambda x: x.replace("a", "se")
-
-        input_message = {"string": "action"}
-        expected = {"string": "section"}
-        masking(input_message, string_process_func=func)
-        self.assertEqual(expected, input_message)
-
-        input_message = {"string": ["action"]}
-        expected = {"string": ["section"]}
-        masking(input_message, string_process_func=func)
-        self.assertEqual(expected, input_message)
-
-        # проверка на применение функции внутри банковских полей
-        input_message = {"message": "action"}
-        expected = {"message": "section"}
-        masking(input_message, string_process_func=func)
-        self.assertEqual(expected, input_message)
-
-        input_message = {"message": ["action"]}
-        expected = {"message": ["section"]}
-        masking(input_message, string_process_func=func)
-        self.assertEqual(expected, input_message)
-
-

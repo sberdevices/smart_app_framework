@@ -1,7 +1,9 @@
 # coding: utf-8
 import unittest
+import uuid
 from unittest.mock import Mock, MagicMock, patch
 
+from core.basic_models.actions.push_action import PushAction
 from core.basic_models.answer_items.answer_items import SdkAnswerItem, items_factory, answer_items, BubbleText, \
     ItemCard, PronounceText, SuggestText, SuggestDeepLink
 from core.unified_template.unified_template import UnifiedTemplate, UNIFIED_TEMPLATE_TYPE_NAME
@@ -15,6 +17,7 @@ from core.basic_models.actions.external_actions import ExternalAction
 from core.basic_models.actions.command import Command
 from core.basic_models.requirement.basic_requirements import requirement_factory, Requirement, requirements
 from core.model.registered import registered_factories
+from smart_kit.request.kafka_request import SmartKitKafkaRequest
 
 
 class MockParametrizer:
@@ -288,6 +291,52 @@ class ActionTest(unittest.IsolatedAsyncioTestCase):
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
         output = (await action.run(user=user, text_preprocessing_result=None))[0].payload
         self.assertEqual(output, expected)
+
+    async def test_push_action(self):
+        params = {
+            "day_time": "morning",
+            "deep_link_url": "some_url",
+            "icon_url": "some_icon_url"
+        }
+        settings = {"template_settings": {"project_id": "project_id"}}
+        items = {
+            "push_data": {
+                "notificationHeader": "{% if day_time == 'morning' %}Время завтракать!{% else %}Хотите что нибудь заказать?{% endif %}",
+                "fullText": "В нашем магазине большой ассортимент{% if day_time == 'evening' %}. Успей заказать!{% endif %}",
+                "mobileAppParameters": {
+                    "DeeplinkAndroid": "{{ deep_link_url }}",
+                    "DeeplinkIos": "{{ deep_link_url }}",
+                    "Logo": "{{ icon_url }}"
+                }
+            }
+        }
+        expected = {
+            "surface": "COMPANION",
+            "project_id": "project_id",
+            "content": {
+                "notificationHeader": "Время завтракать!",
+                "fullText": "В нашем магазине большой ассортимент",
+                "mobileAppParameters": {
+                    "DeeplinkAndroid": "some_url",
+                    "DeeplinkIos": "some_url",
+                    "Logo": "some_icon_url"
+                }
+            }
+        }
+        action = PushAction(items)
+        user = MagicMock()
+        user.parametrizer = MockSimpleParametrizer(user, {"data": params})
+        user.settings = settings
+        command = (await action.run(user=user, text_preprocessing_result=None))[0]
+        self.assertEqual(command.payload, expected)
+        # проверяем наличие кастомных хэдеров для сервиса пушей
+        self.assertTrue(SmartKitKafkaRequest.KAFKA_EXTRA_HEADERS in command.request_data)
+        headers = command.request_data.get(SmartKitKafkaRequest.KAFKA_EXTRA_HEADERS)
+        self.assertTrue('request-id' in headers)
+        self.assertTrue('sender-id' in headers)
+        self.assertTrue(uuid.UUID(headers.get('request-id'), version=4))
+        self.assertTrue(uuid.UUID(headers.get('sender-id'), version=4))
+        self.assertEqual(command.name, "PUSH_NOTIFY")
 
 
 class NonRepeatingActionTest(unittest.IsolatedAsyncioTestCase):

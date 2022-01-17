@@ -52,7 +52,7 @@ class LoggerMessageCreator:
         params = params or {}
         if user:
             cls.update_user_params(user, params)
-        params = masking(pickle_deepcopy(params))
+        masking(pickle_deepcopy(params))
         cls.update_other_params(user, params, cls_name, log_store_for)
         return params
 

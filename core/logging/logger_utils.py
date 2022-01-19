@@ -1,5 +1,6 @@
 import inspect
 import logging
+import re
 from typing import Dict, List, Union, Optional
 
 import timeout_decorator
@@ -49,15 +50,7 @@ class LoggerMessageCreator:
 
     @classmethod
     def escape(cls, string):
-        new_string = ""
-
-        for i in range(len(string) - 1):
-            if string[i] == "%" and string[i + 1] != "(":
-                new_string += "%%"
-            else:
-                new_string += string[i]
-        return new_string + string[-1]
-
+        return re.sub(r"(%[^\(])", r"%\1", string)
 
     @classmethod
     def make_message(cls, user=None, params=None, cls_name='', log_store_for=0):

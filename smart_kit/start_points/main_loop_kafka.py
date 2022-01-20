@@ -18,7 +18,7 @@ from core.mq.kafka.kafka_publisher import KafkaPublisher
 from core.utils.stats_timer import StatsTimer
 from core.basic_models.actions.command import Command
 from smart_kit.compatibility.commands import combine_commands
-from smart_kit.message.get_message_handler import get_message_handler
+from smart_kit.message.get_to_message import get_to_message
 from smart_kit.message.smart_app_push_message import SmartAppPushToMessage
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.names import message_names
@@ -119,7 +119,7 @@ class MainLoop(BaseMainLoop):
         for command in commands:
             request = SmartKitKafkaRequest(id=None, items=command.request_data)
             request.update_empty_items({"topic_key": topic_key, "kafka_key": kafka_key})
-            handler_cls = get_message_handler(command.name)
+            handler_cls = get_to_message(command.name)
             answer = handler_cls(command=command, message=message, request=request,
                                  masking_fields=self.masking_fields,
                                  validators=self.to_msg_validators)

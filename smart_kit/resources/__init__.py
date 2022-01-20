@@ -88,7 +88,7 @@ from scenarios.user.last_scenarios.last_scenarios_descriptions import LastScenar
 from scenarios.user.preprocessing_messages.preprocessing_messages_description import \
     PreprocessingMessagesDescription
 from smart_kit.action.http import HTTPRequestAction
-from smart_kit.message.get_message_handler import message_handlers
+from smart_kit.message.get_to_message import to_messages
 from smart_kit.message.smart_app_push_message import SmartAppPushToMessage
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
 
@@ -401,4 +401,4 @@ class SmartAppResources(BaseConfig):
         classifiers["skip"] = SkipClassifier
 
     def init_message_handlers(self):
-        message_handlers[PUSH_NOTIFY] = SmartAppPushToMessage
+        to_messages[PUSH_NOTIFY] = SmartAppPushToMessage

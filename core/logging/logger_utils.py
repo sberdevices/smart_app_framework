@@ -1,5 +1,6 @@
 import inspect
 import logging
+import re
 from typing import Dict, List, Union, Optional
 
 import timeout_decorator
@@ -48,11 +49,15 @@ class LoggerMessageCreator:
         params[LOG_STORE_FOR] = log_store_for
 
     @classmethod
+    def escape(cls, string):
+        return re.sub(r"(%[^\(])", r"%\1", string)
+
+    @classmethod
     def make_message(cls, user=None, params=None, cls_name='', log_store_for=0):
         params = params or {}
         if user:
             cls.update_user_params(user, params)
-        params = masking(pickle_deepcopy(params))
+        masking(pickle_deepcopy(params))
         cls.update_other_params(user, params, cls_name, log_store_for)
         return params
 
@@ -70,16 +75,19 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         instance = previous_frame.f_locals.get('self', None)
 
         from smart_kit.configs import get_app_config
-        message_maker = get_app_config().LOGGER_MESSAGE_CREATOR
-        # try:
-        #     message_maker = get_app_config().LOGGER_MESSAGE_CREATOR
-        # except AttributeError:
-        #     message_maker = LoggerMessageCreator
+        try:
+            message_maker = get_app_config().LOGGER_MESSAGE_CREATOR
+        except AttributeError:
+            message_maker = LoggerMessageCreator
 
         if instance is not None:
             params = message_maker.make_message(user, params, instance.__class__.__name__, log_store_for)
         else:
             params = message_maker.make_message(user, params, log_store_for=log_store_for)
+
+        # эскейпим сишное форматирование логгера,
+        # см. tests.core_tests.test_utils.test_logger.TestLogger.test_escaping
+        message = message_maker.escape(message)
 
         logger.log(level_name, message, params, exc_info=exc_info)
     except timeout_decorator.TimeoutError:

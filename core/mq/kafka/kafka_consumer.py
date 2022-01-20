@@ -131,3 +131,4 @@ class KafkaConsumer(BaseKafkaConsumer):
 
     def close(self):
         self._consumer.close()
+        log(f"consumer to topics {self._config['topics']} closed.")

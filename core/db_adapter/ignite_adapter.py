@@ -54,14 +54,31 @@ class IgniteAdapter(DBAdapter):
             raise
 
     def _save(self, id, data):
-        return self.cache.put(id, data)
+        try:
+            return self.cache.put(id, data)
+        except Exception:
+            log(
+                "IgniteAdapter cache put error",
+                params = {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
+                level = "ERROR",
+                exc_info = True
+            )
 
     def _replace_if_equals(self, id, sample, data):
         return self._cache.replace_if_equals(id, sample, data)
 
     def _get(self, id):
-        data = self.cache.get(id)
-        return data
+        try:
+            data = self.cache.get(id)
+            return data
+        except Exception:
+            log(
+                "IgniteAdapter cache get error",
+                params={log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
+                level="ERROR",
+                exc_info=True
+            )
+
 
     @property
     def cache(self):

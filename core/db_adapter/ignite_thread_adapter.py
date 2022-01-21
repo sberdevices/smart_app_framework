@@ -69,14 +69,31 @@ class IgniteThreadAdapter(DBAdapter):
         return self._caches[thread_id]
 
     def _save(self, id, data):
-        return self._get_cache().put(id, data)
+        try:
+            return self._get_cache().put(id, data)
+        except Exception:
+            log(
+                "IgniteAdapter cache put error",
+                params={log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
+                level="ERROR",
+                exc_info=True
+            )
 
     def _replace_if_equals(self, id, sample, data):
         return self._get_cache().replace_if_equals(id, sample, data)
 
     def _get(self, id):
-        data = self._get_cache().get(id)
-        return data
+        try:
+            data = self._get_cache().get(id)
+            return data
+        except Exception:
+            log(
+                "IgniteAdapter cache get error",
+                params={log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
+                level="ERROR",
+                exc_info=True
+            )
+
 
     @property
     def cache(self):

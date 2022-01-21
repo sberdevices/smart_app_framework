@@ -119,8 +119,8 @@ class MainLoop(BaseMainLoop):
         for command in commands:
             request = SmartKitKafkaRequest(id=None, items=command.request_data)
             request.update_empty_items({"topic_key": topic_key, "kafka_key": kafka_key})
-            handler_cls = get_to_message(command.name)
-            answer = handler_cls(command=command, message=message, request=request,
+            to_message = get_to_message(command.name)
+            answer = to_message(command=command, message=message, request=request,
                                  masking_fields=self.masking_fields,
                                  validators=self.to_msg_validators)
             if answer.validate():

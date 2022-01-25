@@ -10,6 +10,8 @@ from core.db_adapter.db_adapter import DBAdapter
 from core.logging.logger_utils import log
 from core.monitoring.monitoring import monitoring
 
+CacheError = pyignite.exceptions.CacheError
+
 
 class IgniteAdapter(DBAdapter):
 
@@ -45,7 +47,7 @@ class IgniteAdapter(DBAdapter):
                 "pyignite_addresses": str(self._url)
             }
             log("IgniteAdapter to servers %(pyignite_addresses)s created", params=logger_args, level="WARNING")
-        except Exception:
+        except CacheError:
             log("IgniteAdapter connect error",
                           params={log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
                           level="ERROR",
@@ -56,7 +58,7 @@ class IgniteAdapter(DBAdapter):
     def _save(self, id, data):
         try:
             return self.cache.put(id, data)
-        except Exception:
+        except CacheError:
             log(
                 "IgniteAdapter cache put error",
                 params = {log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
@@ -69,9 +71,8 @@ class IgniteAdapter(DBAdapter):
 
     def _get(self, id):
         try:
-            data = self.cache.get(id)
-            return data
-        except Exception:
+            return self.cache.get(id)
+        except CacheError:
             log(
                 "IgniteAdapter cache get error",
                 params={log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},

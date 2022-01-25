@@ -89,7 +89,7 @@ class KafkaConsumer(BaseKafkaConsumer):
             if self.autocommit_enabled:
                 self._consumer.store_offsets(msg)
             else:
-                self._consumer.commit(msg, **{"async": False})
+                self._consumer.commit(msg, **{"async": True})
 
     def get_msg_create_time(self, mq_message):
         timestamp_type, timestamp = mq_message.timestamp()
@@ -131,3 +131,4 @@ class KafkaConsumer(BaseKafkaConsumer):
 
     def close(self):
         self._consumer.close()
+        log(f"consumer to topics {self._config['topics']} closed.")

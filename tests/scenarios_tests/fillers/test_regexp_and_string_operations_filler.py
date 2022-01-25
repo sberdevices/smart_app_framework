@@ -1,5 +1,6 @@
-from unittest import TestCase 
+from unittest import TestCase
 from unittest.mock import Mock
+
 from scenarios.scenario_models.field.field_filler_description import RegexpAndStringOperationsFieldFiller
 
 
@@ -8,13 +9,17 @@ class PickableMock(Mock):
         return (Mock, ())
 
 
+class PickablePicklableMock:
+    pass
+
+
 class TestRegexpStringOperationsFiller(TestCase):
     def setUp(self):
         self.items = {"exp": "1-[0-9A-Z]{7}"}
 
     def _test_operation(self, field_value, type_op, amount):
         self.items["operations"] = []
-        text_preprocessing_result = PickableMock()
+        text_preprocessing_result = PickablePicklableMock()
         text_preprocessing_result.original_text = field_value
 
         filler = RegexpAndStringOperationsFieldFiller(self.items)
@@ -36,7 +41,7 @@ class TestRegexpStringOperationsFiller(TestCase):
         self.assertEqual(field_value.lstrip(amount), result)
 
     def _test_extract(self, field_value):
-        text_preprocessing_result = PickableMock()
+        text_preprocessing_result = PickablePicklableMock()
         text_preprocessing_result.original_text = field_value
 
         filler = RegexpAndStringOperationsFieldFiller(self.items)

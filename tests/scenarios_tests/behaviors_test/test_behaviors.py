@@ -1,8 +1,10 @@
 # coding: utf-8
-import unittest
 import time
+import unittest
 from unittest.mock import Mock
+
 from scenarios.behaviors import behaviors
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class BehaviorsTest3(unittest.TestCase):
@@ -13,10 +15,10 @@ class BehaviorsTest3(unittest.TestCase):
                                          "text_preprocessing_result": {}, "action_params": {}}}
         self.test_user = Mock('User')
         self.test_user.id = 111
-        self.test_user.message = Mock()
+        self.test_user.message = PicklableMock()
         self.test_user.message.incremental_id = 123
         self.test_user.message.logging_uuid = 222
-        self.test_user.settings = Mock()
+        self.test_user.settings = PicklableMock()
         self.test_user.settings.app_name = "test"
         self.test_descriptions = Mock('Descriptions')
 

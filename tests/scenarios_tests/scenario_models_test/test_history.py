@@ -1,9 +1,8 @@
 from time import time
-
 from unittest import TestCase
-from unittest.mock import Mock
 
 from scenarios.scenario_models.history import Event, History, HistoryEventFormatter
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class ScenarioHistoryTest(TestCase):
@@ -41,7 +40,7 @@ class ScenarioHistoryTest(TestCase):
         self.assertDictEqual(event.to_dict(), expected)
 
     def test_history_add_event(self):
-        descriptions = Mock()
+        descriptions = PicklableMock()
         item = {
             'type': 'event_type',
             'content': {'foo': 'bar'}
@@ -55,7 +54,7 @@ class ScenarioHistoryTest(TestCase):
         self.assertEqual(history.get_raw_events()[0], expected)
 
     def test_history_clear(self):
-        descriptions = Mock()
+        descriptions = PicklableMock()
         items = {
             'events': [
                 {
@@ -76,7 +75,7 @@ class ScenarioHistoryTest(TestCase):
 
     def test_history_raw(self):
         now = time()
-        descriptions = Mock()
+        descriptions = PicklableMock()
         items = {
             'events': [
                 {
@@ -106,7 +105,7 @@ class ScenarioHistoryTest(TestCase):
 
     def test_history_expire(self):
         now = time()
-        descriptions = Mock()
+        descriptions = PicklableMock()
         descriptions.event_expiration_delay = 5
         items = {
             'events': [
@@ -162,7 +161,7 @@ class ScenarioHistoryTest(TestCase):
         self.assertListEqual(formatter.format(events), expected)
 
     def test_get_events(self):
-        descriptions = Mock()
+        descriptions = PicklableMock()
         descriptions.formatter = HistoryEventFormatter()
         items = {
             'events': [

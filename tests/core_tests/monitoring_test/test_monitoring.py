@@ -13,6 +13,7 @@ class MonitoringTest1(unittest.TestCase):
         self.config = Mock()
         self.mock_rep = Mock()
         self.monitoring = Monitoring()
+        self.monitoring.apply_config({})
 
     def test_got_message_disabled(self):
         self.monitoring.turn_off()

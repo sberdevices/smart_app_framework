@@ -1,5 +1,6 @@
-from core.utils.utils import time_check, current_time_ms
 from unittest import TestCase
+
+from core.utils.utils import time_check, current_time_ms
 
 
 class TestTimeCheck(TestCase):

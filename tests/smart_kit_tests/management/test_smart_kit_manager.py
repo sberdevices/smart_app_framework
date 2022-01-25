@@ -1,8 +1,9 @@
 # coding: utf-8
-import unittest
-from smart_kit.management import smart_kit_manager
 import os
 import shutil
+import unittest
+
+from smart_kit.management import smart_kit_manager
 
 
 class ManagementTest2(unittest.TestCase):

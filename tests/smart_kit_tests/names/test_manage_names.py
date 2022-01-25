@@ -1,5 +1,6 @@
 # coding: utf-8
 import unittest
+
 from smart_kit.names import message_names
 
 

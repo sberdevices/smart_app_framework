@@ -1,7 +1,9 @@
 # coding: utf-8
 import unittest
 from unittest.mock import Mock
+
 from smart_kit.handlers import handle_close_app
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class TestScenarioDesc(dict):
@@ -12,7 +14,7 @@ class TestScenarioDesc(dict):
 class HandlerTest6(unittest.TestCase):
     def setUp(self):
         self.test_text_preprocessing_result = Mock('text_preprocessing_result')
-        self.test_user = Mock()
+        self.test_user = PicklableMock()
         self.test_user.name = "TestName"
         self.test_user.forms = Mock('forms')
         self.test_user.forms.remove_item = lambda x: 20
@@ -22,7 +24,7 @@ class HandlerTest6(unittest.TestCase):
         self.test_user.last_scenarios.delete = lambda x: 10
         self.test_user.message.payload = {"skillId": 1, "intent": 2}
         self.test_user.message.message_name = "TestMessageName"
-        self.test_user.message.device = Mock()
+        self.test_user.message.device = PicklableMock()
         self.test_user.message.device.surface = "test_surface"
         self.test_user.message.channel = "test_channel"
 

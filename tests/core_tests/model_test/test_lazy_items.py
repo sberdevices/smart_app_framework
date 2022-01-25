@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import Mock
 
 from core.model.lazy_items import LazyItems
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class MockFactory:
@@ -22,8 +23,8 @@ class LazyItemsTest(unittest.TestCase):
 
     def test_clear_removed_items(self):
         raw_data = {}
-        user = Mock()
-        description = Mock()
+        user = PicklableMock()
+        description = PicklableMock()
         factory = Mock(raw_data, description, user)
         items = {"1": "test1", "2": "test2", "3": "test3"}
         raw_description = {"1": "test1", "2": "test2"}

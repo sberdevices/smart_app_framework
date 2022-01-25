@@ -1,6 +1,6 @@
 import unittest
 from typing import Dict, Any, Union, Optional
-from unittest.mock import MagicMock, Mock, ANY
+from unittest.mock import Mock, ANY
 
 from core.basic_models.actions.basic_actions import Action, action_factory, actions
 from core.model.registered import registered_factories
@@ -24,6 +24,7 @@ from scenarios.actions.action import (
 from scenarios.actions.action import ClearFormAction, ClearInnerFormAction, BreakScenarioAction, AskAgainAction, \
     RemoveFormFieldAction, RemoveCompositeFormFieldAction
 from scenarios.scenario_models.history import Event
+from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock
 
 
 class MockAction:
@@ -55,7 +56,7 @@ class MockParametrizer:
 class ClearFormIdActionTest(unittest.TestCase):
     def test_run(self):
         action = ClearFormAction({"form": "form"})
-        user = MagicMock()
+        user = PicklableMagicMock()
         action.run(user, None)
         user.forms.remove_item.assert_called_once_with("form")
 
@@ -63,7 +64,7 @@ class ClearFormIdActionTest(unittest.TestCase):
 class RemoveCompositeFormFieldActionTest(unittest.TestCase):
     def test_run(self):
         action = ClearInnerFormAction({"form": "form", "inner_form": "inner_form"})
-        user, form = MagicMock(), MagicMock()
+        user, form = PicklableMagicMock(), PicklableMagicMock()
         user.forms.__getitem__.return_value = form
         action.run(user, None)
         form.forms.remove_item.assert_called_once_with("inner_form")
@@ -73,8 +74,8 @@ class BreakScenarioTest(unittest.TestCase):
     def test_run_1(self):
         scenario_id = "test_id"
         action = BreakScenarioAction({"scenario_id": scenario_id})
-        user = Mock()
-        scenario_model = MagicMock()
+        user = PicklableMock()
+        scenario_model = PicklableMagicMock()
         scenario_model.set_break = Mock(return_value=None)
         user.scenario_models = {scenario_id: scenario_model}
         action.run(user, None)
@@ -83,9 +84,9 @@ class BreakScenarioTest(unittest.TestCase):
     def test_run_2(self):
         scenario_id = "test_id"
         action = BreakScenarioAction({})
-        user = Mock()
+        user = PicklableMock()
         user.last_scenarios.last_scenario_name = "test_id"
-        scenario_model = MagicMock()
+        scenario_model = PicklableMagicMock()
         scenario_model.set_break = Mock(return_value=None)
         user.scenario_models = {scenario_id: scenario_model}
         action.run(user, None)
@@ -95,10 +96,10 @@ class BreakScenarioTest(unittest.TestCase):
 class AskAgainActionTest(unittest.TestCase):
     def test_run(self):
         items = dict()
-        user = Mock()
+        user = PicklableMock()
         last_scenario_name = "test_id"
         user.last_scenarios.last_scenario_name = last_scenario_name
-        scenario = Mock()
+        scenario = PicklableMock()
         scenario.get_ask_again_question_result.return_value = "test_result"
         scenarios = {last_scenario_name: scenario}
         user.descriptions = {"scenarios": scenarios}
@@ -110,7 +111,7 @@ class AskAgainActionTest(unittest.TestCase):
 class RemoveFormFieldActionTest(unittest.TestCase):
     def test_run(self):
         action = RemoveFormFieldAction({"form": "form", "field": "field"})
-        user, form = MagicMock(), MagicMock()
+        user, form = PicklableMagicMock(), PicklableMagicMock()
         user.forms.__getitem__.return_value = form
         action.run(user, None)
         form.fields.remove_item.assert_called_once_with("field")
@@ -119,7 +120,7 @@ class RemoveFormFieldActionTest(unittest.TestCase):
 class RemoveCompositeFormFieldActionTest(unittest.TestCase):
     def test_run(self):
         action = RemoveCompositeFormFieldAction({"form": "form", "inner_form": "form", "field": "field"})
-        user, inner_form, form = MagicMock(), MagicMock(), MagicMock()
+        user, inner_form, form = PicklableMagicMock(), PicklableMagicMock(), PicklableMagicMock()
         form.forms.__getitem__.return_value = inner_form
         user.forms.__getitem__.return_value = form
         action.run(user, None)
@@ -129,8 +130,8 @@ class RemoveCompositeFormFieldActionTest(unittest.TestCase):
 class SaveBehaviorActionTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        user = Mock()
-        user.message = Mock()
+        user = PicklableMock()
+        user.message = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
         user.last_scenarios.last_scenario_name = "scenario_id"
         test_incremental_id = "test_incremental_id"
@@ -139,11 +140,11 @@ class SaveBehaviorActionTest(unittest.TestCase):
 
     def test_save_behavior_scenario_name(self):
         data = {"behavior": "test"}
-        behavior = Mock()
-        behavior.add = Mock()
+        behavior = PicklableMock()
+        behavior.add = PicklableMock()
         self.user.behaviors = behavior
         action = SaveBehaviorAction(data)
-        tpr = Mock()
+        tpr = PicklableMock()
         tpr_raw = tpr.raw
         action.run(self.user, tpr)
         self.user.behaviors.add.assert_called_once_with(self.user.message.generate_new_callback_id(), "test",
@@ -152,11 +153,11 @@ class SaveBehaviorActionTest(unittest.TestCase):
 
     def test_save_behavior_without_scenario_name(self):
         data = {"behavior": "test", "check_scenario": False}
-        behavior = Mock()
-        behavior.add = Mock()
+        behavior = PicklableMock()
+        behavior.add = PicklableMock()
         self.user.behaviors = behavior
         action = SaveBehaviorAction(data)
-        text_preprocessing_result_raw = Mock()
+        text_preprocessing_result_raw = PicklableMock()
         text_preprocessing_result = Mock(raw=text_preprocessing_result_raw)
         action.run(self.user, text_preprocessing_result, None)
         self.user.behaviors.add.assert_called_once_with(self.user.message.generate_new_callback_id(), "test", None,
@@ -165,7 +166,7 @@ class SaveBehaviorActionTest(unittest.TestCase):
 
 class SelfServiceActionWithStateTest(unittest.TestCase):
     def setUp(self) -> None:
-        self.user = Mock()
+        self.user = PicklableMock()
         self.user.settings = {"template_settings": {"self_service_with_state_save_messages": True}}
 
     def test_action_1(self):
@@ -174,17 +175,17 @@ class SelfServiceActionWithStateTest(unittest.TestCase):
         registered_factories[Action] = action_factory
         actions["action_mock"] = MockAction
         self.user.parametrizer = MockParametrizer(self.user, {})
-        self.user.message = Mock()
-        local_vars = Mock()
+        self.user.message = PicklableMock()
+        local_vars = PicklableMock()
         local_vars.values = dict()
         self.user.local_vars = local_vars
         test_incremental_id = "test_incremental_id"
         self.user.message.incremental_id = test_incremental_id
-        behavior = Mock()
+        behavior = PicklableMock()
         behavior.check_got_saved_id = Mock(return_value=False)
         self.user.behaviors = behavior
         action = SelfServiceActionWithState(data)
-        text_preprocessing_result_raw = Mock()
+        text_preprocessing_result_raw = PicklableMock()
         text_preprocessing_result = Mock(raw=text_preprocessing_result_raw)
         result = action.run(self.user, text_preprocessing_result, None)
         behavior.check_got_saved_id.assert_called_once()
@@ -195,10 +196,10 @@ class SelfServiceActionWithStateTest(unittest.TestCase):
     def test_action_2(self):
         data = {"behavior": "test", "check_scenario": False, "command_action": {"command": "cmd_id", "nodes": {}}}
         self.user.parametrizer = MockParametrizer(self.user, {})
-        self.user.message = Mock()
+        self.user.message = PicklableMock()
         test_incremental_id = "test_incremental_id"
         self.user.message.incremental_id = test_incremental_id
-        behavior = Mock()
+        behavior = PicklableMock()
         self.user.behaviors = behavior
         behavior.check_got_saved_id = Mock(return_value=True)
         action = SelfServiceActionWithState(data)
@@ -211,25 +212,25 @@ class SelfServiceActionWithStateTest(unittest.TestCase):
         registered_factories[Action] = action_factory
         actions["action_mock"] = MockAction
         self.user.parametrizer = MockParametrizer(self.user, {})
-        self.user.message = Mock()
-        self.user.message = Mock()
-        local_vars = Mock()
+        self.user.message = PicklableMock()
+        self.user.message = PicklableMock()
+        local_vars = PicklableMock()
         local_vars.values = dict()
         self.user.local_vars = local_vars
         test_incremental_id = "test_incremental_id"
         self.user.message.incremental_id = test_incremental_id
-        _new_behavior_id = Mock()
+        _new_behavior_id = PicklableMock()
         self.user.message.generate_new_callback_id = lambda: _new_behavior_id
-        behavior = Mock()
+        behavior = PicklableMock()
         behavior.check_got_saved_id = Mock(return_value=False)
-        behavior.add = Mock()
+        behavior.add = PicklableMock()
         self.user.behaviors = behavior
-        self.user.last_scenarios = Mock()
+        self.user.last_scenarios = PicklableMock()
         scenarios_names = ["test_scenario"]
         self.user.last_scenarios.last_scenario_name = "test_scenario"
         self.user.last_scenarios.scenarios_names = scenarios_names
         action = SelfServiceActionWithState(data)
-        text_preprocessing_result_raw = Mock()
+        text_preprocessing_result_raw = PicklableMock()
         text_preprocessing_result = Mock(raw=text_preprocessing_result_raw)
         result = action.run(self.user, text_preprocessing_result, None)
         behavior.check_got_saved_id.assert_called_once()
@@ -244,16 +245,16 @@ class SelfServiceActionWithStateTest(unittest.TestCase):
 class SetVariableActionTest(unittest.TestCase):
 
     def setUp(self):
-        template = Mock()
+        template = PicklableMock()
         template.get_template = Mock(return_value=[])
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        user.message = Mock()
-        user.person_info = Mock()
+        user.message = PicklableMock()
+        user.person_info = PicklableMock()
         user.descriptions = {"render_templates": template}
-        user.variables = MagicMock()
+        user.variables = PicklableMagicMock()
         user.variables.values = {}
-        user.variables.set = Mock()
+        user.variables.set = PicklableMock()
         self.user = user
 
     def test_action(self):
@@ -277,13 +278,13 @@ class SetVariableActionTest(unittest.TestCase):
 class DeleteVariableActionTest(unittest.TestCase):
 
     def setUp(self):
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        user.message = Mock()
+        user.message = PicklableMock()
         user.message.payload = {"some_value": "some_value_test"}
-        user.person_info = Mock()
-        user.variables = MagicMock()
-        user.variables.delete = Mock()
+        user.person_info = PicklableMock()
+        user.variables = PicklableMagicMock()
+        user.variables.delete = PicklableMock()
         self.user = user
 
     def test_action(self):
@@ -299,13 +300,13 @@ class ClearVariablesActionTest(unittest.TestCase):
             "some_key_1": "some_value_1",
             "some_key_2": "some_value_2",
         }
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        user.message = Mock()
-        user.person_info = Mock()
-        user.variables = MagicMock()
+        user.message = PicklableMock()
+        user.person_info = PicklableMock()
+        user.variables = PicklableMagicMock()
         user.variables.values = self.var_value
-        user.variables.clear = Mock()
+        user.variables.clear = PicklableMock()
         self.user = user
 
     def test_action(self):
@@ -320,11 +321,11 @@ class FillFieldActionTest(unittest.TestCase):
         params = {"test_field": "test_data"}
         data = {"form": "test_form", "field": "test_field", "data_path": "{{test_field}}"}
         action = FillFieldAction(data)
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {"data": params})
-        user.forms = {"test_form": Mock()}
-        field = Mock()
-        field.fill = Mock()
+        user.forms = {"test_form": PicklableMock()}
+        field = PicklableMock()
+        field.fill = PicklableMock()
         user.forms["test_form"].fields = {"test_field": field}
         action.run(user, None)
         field.fill.assert_called_once_with(params["test_field"])
@@ -337,14 +338,14 @@ class CompositeFillFieldActionTest(unittest.TestCase):
         data = {"form": "test_form", "field": "test_field", "internal_form": "test_internal_form",
                 "data_path": "{{test_field}}", "parametrizer": {"data": params}}
         action = CompositeFillFieldAction(data)
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {"data": params})
-        form = Mock()
-        internal_form = Mock()
+        form = PicklableMock()
+        internal_form = PicklableMock()
         form.forms = {"test_internal_form": internal_form}
         user.forms = {"test_form": form}
-        field = Mock()
-        field.fill = Mock()
+        field = PicklableMock()
+        field.fill = PicklableMock()
         user.forms["test_form"].forms["test_internal_form"].fields = {"test_field": field}
         action.run(user, None)
         field.fill.assert_called_once_with(params["test_field"])
@@ -353,13 +354,13 @@ class CompositeFillFieldActionTest(unittest.TestCase):
 class ScenarioActionTest(unittest.TestCase):
     def test_scenario_action(self):
         action = RunScenarioAction({"scenario": "test"})
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        scen = Mock()
+        scen = PicklableMock()
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"test": scen}}
-        result = action.run(user, Mock())
+        result = action.run(user, PicklableMock())
         self.assertEqual(result, scen_result)
 
     def test_scenario_action_with_jinja_good(self):
@@ -367,35 +368,35 @@ class ScenarioActionTest(unittest.TestCase):
         items = {"scenario": "{{next_scenario}}"}
 
         action = RunScenarioAction(items)
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {"data": params})
-        scen = Mock()
+        scen = PicklableMock()
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"ANNA.pipeline.scenario": scen}}
-        result = action.run(user, Mock())
+        result = action.run(user, PicklableMock())
         self.assertEqual(result, scen_result)
 
     def test_scenario_action_no_scenario(self):
         action = RunScenarioAction({"scenario": "{{next_scenario}}"})
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        scen = Mock()
+        scen = PicklableMock()
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"next_scenario": scen}}
-        result = action.run(user, Mock())
+        result = action.run(user, PicklableMock())
         self.assertEqual(result, None)
 
     def test_scenario_action_without_jinja(self):
         action = RunScenarioAction({"scenario": "next_scenario"})
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        scen = Mock()
+        scen = PicklableMock()
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"next_scenario": scen}}
-        result = action.run(user, Mock())
+        result = action.run(user, PicklableMock())
         self.assertEqual(result, scen_result)
 
 
@@ -403,16 +404,16 @@ class RunLastScenarioActionTest(unittest.TestCase):
 
     def test_scenario_action(self):
         action = RunLastScenarioAction({})
-        user = Mock()
-        scen = Mock()
+        user = PicklableMock()
+        scen = PicklableMock()
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"test": scen}}
-        user.last_scenarios = Mock()
+        user.last_scenarios = PicklableMock()
         last_scenario_name = "test"
         user.last_scenarios.scenarios_names = [last_scenario_name]
         user.last_scenarios.last_scenario_name = last_scenario_name
-        result = action.run(user, Mock())
+        result = action.run(user, PicklableMock())
         self.assertEqual(result, scen_result)
 
 
@@ -422,13 +423,13 @@ class ChoiceScenarioActionTest(unittest.TestCase):
     def mock_and_perform_action(test_items: Dict[str, Any], expected_result: Optional[str] = None,
                                 expected_scen: Optional[str] = None) -> Union[str, None]:
         action = ChoiceScenarioAction(test_items)
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        scen = Mock()
+        scen = PicklableMock()
         scen.run.return_value = expected_result
         if expected_scen:
             user.descriptions = {"scenarios": {expected_scen: scen}}
-        return action.run(user, Mock())
+        return action.run(user, PicklableMock())
 
     def test_choice_scenario_action(self):
         # Проверяем, что запустили нужный сценарий, в случае если выполнился его requirement
@@ -495,12 +496,12 @@ class ClearCurrentScenarioActionTest(unittest.TestCase):
 
     def test_action(self):
         scenario_name = "test_scenario"
-        user = Mock()
-        user.forms.remove_item = Mock()
+        user = PicklableMock()
+        user.forms.remove_item = PicklableMock()
 
         user.last_scenarios.last_scenario_name = scenario_name
-        user.last_scenarios.delete = Mock()
-        scenario = Mock()
+        user.last_scenarios.delete = PicklableMock()
+        scenario = PicklableMock()
         scenario.form_type = scenario_name
         user.descriptions = {"scenarios": {scenario_name: scenario}}
 
@@ -511,11 +512,11 @@ class ClearCurrentScenarioActionTest(unittest.TestCase):
         user.forms.remove_item.assert_called_once()
 
     def test_action_with_empty_scenarios_names(self):
-        user = Mock()
-        user.forms.remove_item = Mock()
+        user = PicklableMock()
+        user.forms.remove_item = PicklableMock()
 
         user.last_scenarios.last_scenario_name = None
-        user.last_scenarios.delete = Mock()
+        user.last_scenarios.delete = PicklableMock()
 
         action = ClearCurrentScenarioAction({})
         result = action.run(user, {}, {})
@@ -528,11 +529,11 @@ class ClearScenarioByIdActionTest(unittest.TestCase):
 
     def test_action(self):
         scenario_name = "test_scenario"
-        user = Mock()
-        user.forms = Mock()
+        user = PicklableMock()
+        user.forms = PicklableMock()
 
         user.last_scenarios.last_scenario_name = scenario_name
-        scenario = Mock()
+        scenario = PicklableMock()
         scenario.form_type = scenario_name
         user.descriptions = {"scenarios": {scenario_name: scenario}}
 
@@ -543,8 +544,8 @@ class ClearScenarioByIdActionTest(unittest.TestCase):
         user.forms.remove_item.assert_called_once()
 
     def test_action_with_empty_scenarios_names(self):
-        user = Mock()
-        user.forms = Mock()
+        user = PicklableMock()
+        user.forms = PicklableMock()
 
         user.last_scenarios.last_scenario_name = "test_scenario"
 
@@ -558,12 +559,12 @@ class ClearScenarioByIdActionTest(unittest.TestCase):
 class ClearCurrentScenarioFormActionTest(unittest.TestCase):
     def test_action(self):
         scenario_name = "test_scenario"
-        user = Mock()
-        user.forms = Mock()
-        user.forms.remove_item = Mock()
+        user = PicklableMock()
+        user.forms = PicklableMock()
+        user.forms.remove_item = PicklableMock()
 
         user.last_scenarios.last_scenario_name = scenario_name
-        scenario = Mock()
+        scenario = PicklableMock()
         scenario.form_type = scenario_name
         scenario.keep_forms_alive = False
         user.descriptions = {"scenarios": {scenario_name: scenario}}
@@ -575,12 +576,12 @@ class ClearCurrentScenarioFormActionTest(unittest.TestCase):
 
     def test_action_with_empty_last_scenario(self):
         scenario_name = "test_scenario"
-        user = Mock()
-        user.forms = Mock()
-        user.forms.remove_item = Mock()
+        user = PicklableMock()
+        user.forms = PicklableMock()
+        user.forms.remove_item = PicklableMock()
 
         user.last_scenarios.last_scenario_name = None
-        scenario = Mock()
+        scenario = PicklableMock()
         scenario.form_type = scenario_name
         scenario.keep_forms_alive = False
         user.descriptions = {"scenarios": {scenario_name: scenario}}
@@ -593,10 +594,10 @@ class ClearCurrentScenarioFormActionTest(unittest.TestCase):
 
 class ResetCurrentNodeActionTest(unittest.TestCase):
     def test_action(self):
-        user = Mock()
-        user.forms = Mock()
+        user = PicklableMock()
+        user.forms = PicklableMock()
         user.last_scenarios.last_scenario_name = 'test_scenario'
-        scenario_model = Mock()
+        scenario_model = PicklableMock()
         scenario_model.current_node = 'some_node'
         user.scenario_models = {'test_scenario': scenario_model}
 
@@ -606,10 +607,10 @@ class ResetCurrentNodeActionTest(unittest.TestCase):
         self.assertIsNone(user.scenario_models['test_scenario'].current_node)
 
     def test_action_with_empty_last_scenario(self):
-        user = Mock()
-        user.forms = Mock()
+        user = PicklableMock()
+        user.forms = PicklableMock()
         user.last_scenarios.last_scenario_name = None
-        scenario_model = Mock()
+        scenario_model = PicklableMock()
         scenario_model.current_node = 'some_node'
         user.scenario_models = {'test_scenario': scenario_model}
 
@@ -619,10 +620,10 @@ class ResetCurrentNodeActionTest(unittest.TestCase):
         self.assertEqual('some_node', user.scenario_models['test_scenario'].current_node)
 
     def test_specific_target(self):
-        user = Mock()
-        user.forms = Mock()
+        user = PicklableMock()
+        user.forms = PicklableMock()
         user.last_scenarios.last_scenario_name = 'test_scenario'
-        scenario_model = Mock()
+        scenario_model = PicklableMock()
         scenario_model.current_node = 'some_node'
         user.scenario_models = {'test_scenario': scenario_model}
 
@@ -638,20 +639,20 @@ class ResetCurrentNodeActionTest(unittest.TestCase):
 class AddHistoryEventActionTest(unittest.TestCase):
 
     def setUp(self):
-        main_form = Mock()
+        main_form = PicklableMock()
         main_form.field_1 = "value_1"
-        parametrizer = Mock()
-        message = Mock()
+        parametrizer = PicklableMock()
+        message = PicklableMock()
         message.name = "CLIENT_INFO_RESPONSE"
         parametrizer.collect = Mock(return_value={"message": message, "main_form": main_form})
 
         self.user = Mock(parametrizer=parametrizer)
-        self.user.history = Mock()
-        self.user.history.add_event = Mock()
+        self.user.history = PicklableMock()
+        self.user.history.add_event = PicklableMock()
         self.user.last_scenarios.last_scenario_name = 'test_scenario'
 
     def test_action_with_non_empty_scenario(self):
-        scenario = Mock()
+        scenario = PicklableMock()
         scenario.id = 'name'
         scenario.version = '1.0'
         self.user.descriptions = {'scenarios': {'test_scenario': scenario}}
@@ -688,7 +689,7 @@ class AddHistoryEventActionTest(unittest.TestCase):
         self.user.history.add_event.assert_not_called()
 
     def test_action_with_jinja(self):
-        scenario = Mock()
+        scenario = PicklableMock()
         scenario.id = 'name'
         scenario.version = '1.0'
         self.user.descriptions = {'scenarios': {'test_scenario': scenario}}

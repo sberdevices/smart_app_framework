@@ -40,10 +40,10 @@ class Monitoring:
         if counter:
             counter.inc()
 
-    def got_histogram(self, name, description=None):
+    def got_histogram_decorate(self, name, description=None):
         def decor(func):
             def wrap(*args, **kwargs):
-                decor_ = self._got_histogram(name, description=description)
+                decor_ = self.got_histogram(name, description=None)
                 if decor_:
                     return decor_(func)(*args, **kwargs)
                 else:
@@ -51,7 +51,7 @@ class Monitoring:
             return wrap
         return decor
 
-    def _got_histogram(self, name, description=None):
+    def got_histogram(self, name, description=None):
         if self.check_enabled(name):
             histogram = self._monitoring_items[self.HISTOGRAM]
             if not histogram.get(name):

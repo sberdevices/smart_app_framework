@@ -19,9 +19,9 @@ class MonitoringTest1(unittest.TestCase):
         event_name = "test_counter"
         counter_item = self.monitoring._monitoring_items[self.monitoring.COUNTER]
         self.assertTrue(counter_item == dict())
-        counter = self.monitoring.got_counter(event_name)
+        self.monitoring.got_counter(event_name)
         self.assertTrue(event_name not in counter_item)
-        self.assertIsNone(counter)
+        self.assertEqual(counter_item.get(event_name), None)
 
     def test_got_message_enabled(self):
         self.monitoring.turn_on()
@@ -37,7 +37,7 @@ class MonitoringTest1(unittest.TestCase):
         event_name = "test_histogram"
         histogram_item = self.monitoring._monitoring_items[self.monitoring.HISTOGRAM]
         self.assertTrue(histogram_item == dict())
-        histogram = self.monitoring._got_histogram(event_name)
+        histogram = self.monitoring.got_histogram(event_name)
         self.assertTrue(event_name not in histogram_item)
         self.assertIsNone(histogram)
 
@@ -46,7 +46,7 @@ class MonitoringTest1(unittest.TestCase):
         event_name = "test_histogram"
         histogram_item = self.monitoring._monitoring_items[self.monitoring.HISTOGRAM]
         self.assertTrue(histogram_item == dict())
-        self.monitoring._got_histogram(event_name)
+        self.monitoring.got_histogram(event_name)
         histogram_item = self.monitoring._monitoring_items[self.monitoring.HISTOGRAM]
         self.assertTrue(event_name in histogram_item)
         self.assertEqual(type(histogram_item[event_name]), type(Histogram('histogram_name', 'histogram_name')))

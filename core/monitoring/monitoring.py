@@ -15,6 +15,7 @@ class Monitoring:
             self.HISTOGRAM: {}
         }
         self.disabled_metrics = []
+        self.buckets = []
 
     def check_enabled(self, name: str):
         metric_disabled = next((True for m in self.disabled_metrics if name.startswith(m)), False)
@@ -39,10 +40,10 @@ class Monitoring:
         if counter:
             counter.inc()
 
-    def got_histogram(self, name):
+    def got_histogram(self, name, description=None):
         def decor(func):
             def wrap(*args, **kwargs):
-                decor_ = self._got_histogram(name)
+                decor_ = self._got_histogram(name, description=description)
                 if decor_:
                     return decor_(func)(*args, **kwargs)
                 else:
@@ -50,23 +51,24 @@ class Monitoring:
             return wrap
         return decor
 
-    def _got_histogram(self, name):
+    def _got_histogram(self, name, description=None):
         if self.check_enabled(name):
             histogram = self._monitoring_items[self.HISTOGRAM]
             if not histogram.get(name):
-                histogram[name] = Histogram(name, name)
+                histogram[name] = Histogram(name, description or name, buckets=self.buckets)
             return histogram[name].time()
 
-    def got_histogram_observe(self, name, value):
+    def got_histogram_observe(self, name, value, description=None):
         if self.check_enabled(name):
             histogram = self._monitoring_items[self.HISTOGRAM]
             if not histogram.get(name):
-                histogram[name] = Histogram(name, name)
+                histogram[name] = Histogram(name, description or name, buckets=self.buckets)
             return histogram[name].observe(value)
 
     def apply_config(self, config):
         self._enabled = config.get("enabled", self.DEFAULT_ENABLED)
         self.disabled_metrics = config.get("disabled_metrics", self.DEFAULT_DISABLED_METRICS)
+        self.buckets = config.get("buckets", Histogram.DEFAULT_BUCKETS)
 
 
 monitoring = Monitoring()

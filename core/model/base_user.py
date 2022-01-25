@@ -63,6 +63,10 @@ class BaseUser(Model):
         return super(BaseUser, self).raw
 
     @property
+    def raw_without_log(self):
+        return json.dumps(super(BaseUser, self).raw)
+
+    @property
     def raw_str(self):
         return json.dumps(self.raw)
 

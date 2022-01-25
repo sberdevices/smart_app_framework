@@ -1,4 +1,6 @@
 # coding: utf-8
+import re
+
 from prometheus_client import Counter, Histogram
 
 
@@ -18,7 +20,7 @@ class Monitoring:
         self.buckets = []
 
     def check_enabled(self, name: str):
-        metric_disabled = next((True for m in self.disabled_metrics if name.startswith(m)), False)
+        metric_disabled = next((True for m in self.disabled_metrics if re.match(m, name)), False)
         return self._enabled and not metric_disabled
 
     def turn_on(self):

@@ -1,5 +1,6 @@
 # coding: utf-8
 import unittest
+
 from core.db_adapter import memory_adapter
 
 

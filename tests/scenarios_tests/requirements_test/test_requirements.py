@@ -2,7 +2,9 @@
 import unittest
 from unittest.mock import Mock
 
-from scenarios.requirements.requirements import TemplateInArrayRequirement, ArrayItemInTemplateRequirement, RegexpInTemplateRequirement
+from scenarios.requirements.requirements import TemplateInArrayRequirement, ArrayItemInTemplateRequirement, \
+    RegexpInTemplateRequirement
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class MockRequirement:
@@ -67,8 +69,8 @@ class RequirementTest(unittest.TestCase):
             },
             "message": "BBB"
         }}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertTrue(requirement.check(None, user))
 
@@ -84,8 +86,8 @@ class RequirementTest(unittest.TestCase):
                 },
                 "message": " BBB    "
             }}
-            user = Mock()
-            user.parametrizer = Mock()
+            user = PicklableMock()
+            user.parametrizer = PicklableMock()
             user.parametrizer.collect = Mock(return_value=params)
             self.assertTrue(requirement.check(None, user))
 
@@ -101,8 +103,8 @@ class RequirementTest(unittest.TestCase):
                 },
                 "message": " BBB "
             }}
-            user = Mock()
-            user.parametrizer = Mock()
+            user = PicklableMock()
+            user.parametrizer = PicklableMock()
             user.parametrizer.collect = Mock(return_value=params)
             self.assertFalse(requirement.check(None, user))
 
@@ -124,8 +126,8 @@ class RequirementTest(unittest.TestCase):
                 },
                 "message": " BBB "
             }}
-            user = Mock()
-            user.parametrizer = Mock()
+            user = PicklableMock()
+            user.parametrizer = PicklableMock()
             user.parametrizer.collect = Mock(return_value=params)
             self.assertTrue(requirement.check(None, user))
 
@@ -143,8 +145,8 @@ class RequirementTest(unittest.TestCase):
                 },
                 "message": " BBB "
             }}
-            user = Mock()
-            user.parametrizer = Mock()
+            user = PicklableMock()
+            user.parametrizer = PicklableMock()
             user.parametrizer.collect = Mock(return_value=params)
             self.assertTrue(requirement.check(None, user))
 
@@ -166,8 +168,8 @@ class RequirementTest(unittest.TestCase):
                 },
                 "message": " BBB "
             }}
-            user = Mock()
-            user.parametrizer = Mock()
+            user = PicklableMock()
+            user.parametrizer = PicklableMock()
             user.parametrizer.collect = Mock(return_value=params)
             self.assertFalse(requirement.check(None, user))
 
@@ -184,8 +186,8 @@ class RequirementTest(unittest.TestCase):
                 },
                 "message": "карточки ф1у"
             }}
-            user = Mock()
-            user.parametrizer = Mock()
+            user = PicklableMock()
+            user.parametrizer = PicklableMock()
             user.parametrizer.collect = Mock(return_value=params)
             self.assertTrue(requirement.check(None, user))
 
@@ -202,8 +204,8 @@ class RequirementTest(unittest.TestCase):
                 },
                 "message": "карточки конг фу 1"
             }}
-            user = Mock()
-            user.parametrizer = Mock()
+            user = PicklableMock()
+            user.parametrizer = PicklableMock()
             user.parametrizer.collect = Mock(return_value=params)
             self.assertFalse(requirement.check(None, user))
 

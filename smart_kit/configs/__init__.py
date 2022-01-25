@@ -1,6 +1,7 @@
 import importlib
 import os
 
+from core.logging.logger_utils import LoggerMessageCreator
 from core.message.from_message import SmartAppFromMessage
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User
@@ -49,6 +50,7 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
     set_default(app_config, "PPS_URL", "")
     set_default(app_config, "NORMALIZER", LocalTextNormalizer())
     set_default(app_config, "USER", User)
+    set_default(app_config, "LOGGER_MESSAGE_CREATOR", LoggerMessageCreator)
     set_default(app_config, "MAIN_LOOP", HttpMainLoop)
     set_default(app_config, "PARAMETRIZER", Parametrizer)
     set_default(app_config, "MODEL", SmartAppModel)

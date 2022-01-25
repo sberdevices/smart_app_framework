@@ -12,6 +12,7 @@ from core.basic_models.actions.counter_actions import CounterIncrementAction, Co
     CounterClearAction, CounterSetAction, CounterCopyAction
 from core.basic_models.actions.external_actions import ExternalAction
 from core.basic_models.actions.external_actions import ExternalActions
+from core.basic_models.actions.push_action import PushAction
 from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAction, SDKAnswer, \
     SDKAnswerToUser
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
@@ -22,7 +23,8 @@ from core.basic_models.classifiers.external_classifiers import ExternalClassifie
 from core.basic_models.requirement.basic_requirements import requirement_factory, IntersectionRequirement
 from core.basic_models.requirement.basic_requirements import requirements, Requirement, AndRequirement, \
     OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement, TimeRequirement, DateTimeRequirement, \
-    ClassifierRequirement, FormFieldValueRequirement, EnvironmentRequirement
+    ClassifierRequirement, FormFieldValueRequirement, EnvironmentRequirement, CharacterIdRequirement, \
+    FeatureToggleRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
@@ -304,6 +306,7 @@ class SmartAppResources(BaseConfig):
         actions["set_local_variable"] = SetLocalVariableAction
         actions["set_variable"] = SetVariableAction
         actions["string"] = StringAction
+        actions["push"] = PushAction
 
     def init_requirements(self):
         requirements[None] = Requirement
@@ -314,12 +317,14 @@ class SmartAppResources(BaseConfig):
         requirements["ask_again_exist"] = AskAgainExistRequirement
         requirements["capabilities_property_available"] = dr.CapabilitiesPropertyAvailableRequirement
         requirements["channel"] = ChannelRequirement
+        requirements["character_id"] = CharacterIdRequirement
         requirements["classifier"] = ClassifierRequirement
         requirements["counter_time"] = CounterUpdateTimeRequirement
         requirements["counter_value"] = CounterValueRequirement
         requirements["datetime"] = DateTimeRequirement
         requirements["environment"] = EnvironmentRequirement
         requirements["external"] = ExternalRequirement
+        requirements["feature_toggle_check"] = FeatureToggleRequirement
         requirements["form_field_value"] = FormFieldValueRequirement
         requirements["intersection"] = IntersectionRequirement
         requirements["intersection_with_tokens"] = IntersectionWithTokensSetRequirement

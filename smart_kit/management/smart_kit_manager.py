@@ -1,9 +1,8 @@
 import os
 import shutil
-import sys
 
 import smart_kit
-from smart_kit.management.base import Manager, HelpCommand, AppCommand
+from smart_kit.management.base import Manager, AppCommand
 
 
 class SmartKitManager(Manager):
@@ -23,8 +22,11 @@ class CreateAppCommand(AppCommand):
 
     TEMPLATE_FOLDER = "template"
 
-    def __init__(self, extensions=".py"):
-        self.extensions = extensions
+    def __init__(self, extensions: tuple = None):
+        if extensions:
+            self.extensions = extensions
+        else:
+            self.extensions = (".py", ".yml")
 
     def execute(self, *args, **kwargs):
         app_name = args[0]

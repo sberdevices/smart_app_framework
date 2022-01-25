@@ -56,10 +56,6 @@ def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Unio
 
     if masking_fields is None:
         masking_fields = DEFAULT_MASKING_FIELDS
-    elif isinstance(masking_fields, MutableMapping):
-        masking_fields.update(DEFAULT_MASKING_FIELDS)
-    else:
-        raise Exception("masking_fields should be dict or list")
 
     _masking(data, masking_fields, depth_level, mask_available_depth, masking_on=False, card_masking_on=False)
 
@@ -76,6 +72,9 @@ def _masking(data: Union[MutableMapping, Iterable], masking_fields: Union[Mutabl
 
     for key, _ in key_gen:
         value_is_collection = check_value_is_collection(data[key])
+        if isinstance(data[key], set):
+            data[key] = list(data[key])
+            value_is_collection = True
         if masking_on or key in masking_fields:
             if value_is_collection:
                 # если глубина не превышена, идем внутрь с включенным флагом и уменьшаем глубину

@@ -8,6 +8,7 @@ class TestField(TestCase):
     def test_1(self):
         expected = "my_value"
         mock_user = Mock()
+        mock_user.settings = {"template_settings": {}}
         description = Mock()
         lifetime = 10
         items = {"value": expected, "available": False}
@@ -19,6 +20,7 @@ class TestField(TestCase):
     def test_2(self):
         expected = "my_value"
         mock_user = Mock()
+        mock_user.settings = {"template_settings": {}}
 
         description = Mock()
         description.need_load_context = False
@@ -38,6 +40,7 @@ class TestField(TestCase):
         value_mock = Mock()
         value_mock.value = "prev_value"
         mock_user.last_fields.__getitem__.return_value = value_mock
+        mock_user.settings = {"template_settings": {}}
 
         description = Mock()
         description.need_load_context = True
@@ -57,6 +60,7 @@ class TestField(TestCase):
         value_mock = Mock()
         value_mock.value = None
         mock_user.last_fields.__getitem__.return_value = value_mock
+        mock_user.settings = {"template_settings": {}}
 
         description = Mock()
         description.need_load_context = True
@@ -85,6 +89,7 @@ class TestField(TestCase):
         description = Mock(default_value=None)
         description.id = 1
         mock_user.last_fields = {description.id: Mock(value=None)}
+        mock_user.settings = {"template_settings": {}}
 
         description.required = False
         lifetime = 10
@@ -99,6 +104,7 @@ class TestField(TestCase):
         description = Mock(default_value=None)
         description.id = 1
         mock_user.last_fields = {description.id: Mock(value=None)}
+        mock_user.settings = {"template_settings": {}}
         lifetime = 10
         items = {"available": True}
         field = QuestionField(description, items, mock_user, lifetime)

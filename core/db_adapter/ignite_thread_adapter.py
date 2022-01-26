@@ -11,8 +11,6 @@ from core.db_adapter.db_adapter import DBAdapter
 from core.logging.logger_utils import log
 from core.monitoring.monitoring import monitoring
 
-CacheError = pyignite.exceptions.CacheError
-
 
 class IgniteThreadAdapter(DBAdapter):
 

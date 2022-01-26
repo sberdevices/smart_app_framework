@@ -19,7 +19,7 @@
 	},
 	"requirement": {
 		"type": "template",
-		"requirement": "{{ payload.new_session and user.settings['template_settings'].get('reset_context_on_new_session')}}"
+		"requirement": "{{ payload.new_session and settings['template_settings'].get('reset_context_on_new_session')}}"
 	}
   }
 }

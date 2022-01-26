@@ -2,15 +2,13 @@
 import random
 
 import pyignite
-from pyignite.exceptions import ReconnectError, SocketError
+from pyignite.exceptions import ReconnectError, SocketError, HandshakeError, CacheError
 
 import core.logging.logger_constants as log_const
 from core.db_adapter import error
 from core.db_adapter.db_adapter import DBAdapter
 from core.logging.logger_utils import log
 from core.monitoring.monitoring import monitoring
-
-CacheError = pyignite.exceptions.CacheError
 
 
 class IgniteAdapter(DBAdapter):
@@ -47,7 +45,7 @@ class IgniteAdapter(DBAdapter):
                 "pyignite_addresses": str(self._url)
             }
             log("IgniteAdapter to servers %(pyignite_addresses)s created", params=logger_args, level="WARNING")
-        except CacheError:
+        except (HandshakeError, ReconnectError):
             log("IgniteAdapter connect error",
                           params={log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
                           level="ERROR",
@@ -65,9 +63,19 @@ class IgniteAdapter(DBAdapter):
                 level = "ERROR",
                 exc_info = True
             )
+            raise
 
     def _replace_if_equals(self, id, sample, data):
-        return self._cache.replace_if_equals(id, sample, data)
+        try:
+            return self._cache.replace_if_equals(id, sample, data)
+        except CacheError:
+            log(
+                "IgniteAdapter cache get error",
+                params={log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
+                level="ERROR",
+                exc_info=True
+            )
+            raise
 
     def _get(self, id):
         try:
@@ -79,6 +87,7 @@ class IgniteAdapter(DBAdapter):
                 level="ERROR",
                 exc_info=True
             )
+            raise
 
 
     @property

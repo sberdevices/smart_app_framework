@@ -1,4 +1,5 @@
 import functools
+import re
 import typing
 import tabulate
 import json
@@ -47,7 +48,7 @@ class Diff:
 @functools.singledispatch
 def partial_diff(expected: typing.Any, actual: typing.Any, path="") -> Diff:
     diff = Diff()
-    if expected != actual:
+    if not re.fullmatch(expected, actual):
         diff.different[path] = expected, actual
     return diff
 

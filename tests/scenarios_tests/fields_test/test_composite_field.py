@@ -4,6 +4,7 @@ from unittest.mock import Mock
 
 from scenarios.scenario_models.field.composite_field import CompositeField
 from scenarios.scenario_models.field.field import field_models
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class MockDescr1():
@@ -50,7 +51,7 @@ class TestCompositeField(TestCase):
         descr1 = MockDescr1(id="descr1")
         descr2 = MockDescr2(id="descr2")
         descriptions = {"d1": descr1, "d2": descr2}
-        user = Mock()
+        user = PicklableMock()
         fields = {"fields": {"d1": {}, "d2": {}}}
         self.composite_field = CompositeField(Mock(fields=descriptions), fields, user, None)
 

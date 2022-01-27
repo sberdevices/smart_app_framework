@@ -1,6 +1,7 @@
 # coding: utf-8
 import unittest
 from unittest.mock import Mock
+
 from core.basic_models.requirement import device_requirements
 
 

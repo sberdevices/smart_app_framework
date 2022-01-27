@@ -1,7 +1,9 @@
 # coding: utf-8
 import unittest
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
+
 from smart_kit.handlers import handler_timeout
+from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock
 
 
 class HandlerTest2(unittest.TestCase):
@@ -16,12 +18,12 @@ class HandlerTest2(unittest.TestCase):
         self.test_user.message.channel = "channel"
         self.test_user.message.message_name = "test"
         self.test_user.message.app_info = None
-        self.test_user.message.device = Mock()
+        self.test_user.message.device = PicklableMock()
         self.test_user.message.device.surface = "surface"
 
         self.test_user.behaviors = Mock('behaviors')
         self.test_user.behaviors.timeout = lambda x: 120
-        self.test_user.behaviors.has_callback = lambda *x, **y: MagicMock()
+        self.test_user.behaviors.has_callback = lambda *x, **y: PicklableMagicMock()
         self.test_user.behaviors.get_callback_action_params = lambda *x, **y: {}
         self.test_payload = Mock('payload')
 

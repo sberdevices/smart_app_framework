@@ -1,6 +1,7 @@
 import inspect
 import logging
 import re
+from unittest.mock import Mock
 from typing import Dict, List, Union, Optional
 
 import timeout_decorator
@@ -77,6 +78,8 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         from smart_kit.configs import get_app_config
         try:
             message_maker = get_app_config().LOGGER_MESSAGE_CREATOR
+            if isinstance(message_maker, Mock):
+                raise AttributeError
         except AttributeError:
             message_maker = LoggerMessageCreator
 

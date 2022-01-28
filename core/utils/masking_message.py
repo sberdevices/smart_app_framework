@@ -68,7 +68,7 @@ def _masking(data: Union[Dict, List], masking_fields: Union[Dict, List],
 
     for key, _ in key_gen:
         value_is_collection = isinstance(data[key],(dict, list))
-        if isinstance(data[key], set):
+        if isinstance(data[key], (set, tuple)):
             data[key] = list(data[key])
             value_is_collection = True
         if masking_on or key in masking_fields:

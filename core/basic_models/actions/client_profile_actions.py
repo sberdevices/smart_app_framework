@@ -76,7 +76,7 @@ class GiveMeMemoryAction(StringAction):
         return commands
 
 
-class RememberAction(StringAction):
+class RememberThisAction(StringAction):
 
     """
     "type": "remember",

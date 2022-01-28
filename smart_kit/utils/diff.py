@@ -48,7 +48,7 @@ class Diff:
 @functools.singledispatch
 def partial_diff(expected: typing.Any, actual: typing.Any, path="") -> Diff:
     diff = Diff()
-    if not re.fullmatch(expected, actual):
+    if expected != actual and not re.fullmatch(expected, actual):
         diff.different[path] = expected, actual
     return diff
 

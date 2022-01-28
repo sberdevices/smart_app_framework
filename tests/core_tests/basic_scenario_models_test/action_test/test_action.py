@@ -1,23 +1,24 @@
 # coding: utf-8
 import unittest
 import uuid
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, MagicMock
 
-from core.basic_models.actions.push_action import PushAction
-from core.basic_models.answer_items.answer_items import SdkAnswerItem, items_factory, answer_items, BubbleText, \
-    ItemCard, PronounceText, SuggestText, SuggestDeepLink
-from core.unified_template.unified_template import UnifiedTemplate, UNIFIED_TEMPLATE_TYPE_NAME
 from core.basic_models.actions.basic_actions import Action, DoingNothingAction, action_factory, RequirementAction, \
     actions, ChoiceAction, ElseAction, CompositeAction, NonRepeatingAction
-from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAction, SDKAnswer, \
-    SDKAnswerToUser, NodeAction
+from core.basic_models.actions.command import Command
 from core.basic_models.actions.counter_actions import CounterIncrementAction, CounterDecrementAction, \
     CounterClearAction, CounterSetAction, CounterCopyAction
 from core.basic_models.actions.external_actions import ExternalAction
-from core.basic_models.actions.command import Command
+from core.basic_models.actions.push_action import PushAction
+from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAction, SDKAnswer, \
+    SDKAnswerToUser, NodeAction
+from core.basic_models.answer_items.answer_items import SdkAnswerItem, items_factory, answer_items, BubbleText, \
+    ItemCard, PronounceText, SuggestText, SuggestDeepLink
 from core.basic_models.requirement.basic_requirements import requirement_factory, Requirement, requirements
 from core.model.registered import registered_factories
+from core.unified_template.unified_template import UnifiedTemplate, UNIFIED_TEMPLATE_TYPE_NAME
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
+from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock
 
 
 class MockParametrizer:
@@ -101,7 +102,7 @@ class ActionTest(unittest.TestCase):
     def test_external(self):
         items = {"action": "test_action_key"}
         action = ExternalAction(items)
-        user = Mock()
+        user = PicklableMock()
         user.descriptions = {"external_actions": {"test_action_key": MockAction()}}
         self.assertEqual(action.run(user, None), ["test action run"])
 
@@ -157,8 +158,8 @@ class ActionTest(unittest.TestCase):
 
     def test_string_action(self):
         expected = [Command("cmd_id", {"item": "template", "params": "params"})]
-        user = MagicMock()
-        template = Mock()
+        user = PicklableMagicMock()
+        template = PicklableMock()
         template.get_template = Mock(return_value=["nlpp.payload.personInfo.identityCard"])
         user.descriptions = {"render_templates": template}
         params = {"params": "params"}
@@ -176,7 +177,7 @@ class ActionTest(unittest.TestCase):
         requirements["test"] = MockRequirement
         registered_factories[Action] = action_factory
         actions["test"] = MockAction
-        user = Mock()
+        user = PicklableMock()
         items = {
             "requirement": {"type": "test", "result": True},
             "action": {"type": "test", "result": "main_action"},
@@ -190,7 +191,7 @@ class ActionTest(unittest.TestCase):
         requirements["test"] = MockRequirement
         registered_factories[Action] = action_factory
         actions["test"] = MockAction
-        user = Mock()
+        user = PicklableMock()
         items = {
             "requirement": {"type": "test", "result": False},
             "action": {"type": "test", "result": "main_action"},
@@ -204,7 +205,7 @@ class ActionTest(unittest.TestCase):
         requirements["test"] = MockRequirement
         registered_factories[Action] = action_factory
         actions["test"] = MockAction
-        user = Mock()
+        user = PicklableMock()
         items = {
             "requirement": {"type": "test", "result": True},
             "action": {"type": "test", "result": "main_action"},
@@ -217,7 +218,7 @@ class ActionTest(unittest.TestCase):
         requirements["test"] = MockRequirement
         registered_factories[Action] = action_factory
         actions["test"] = MockAction
-        user = Mock()
+        user = PicklableMock()
         items = {
             "requirement": {"type": "test", "result": False},
             "action": {"type": "test", "result": "main_action"},
@@ -229,7 +230,7 @@ class ActionTest(unittest.TestCase):
     def test_composite_action(self):
         registered_factories[Action] = action_factory
         actions["action_mock"] = MockAction
-        user = Mock()
+        user = PicklableMock()
         items = {
             "actions": [
                 {"type": "action_mock"},
@@ -262,7 +263,7 @@ class ActionTest(unittest.TestCase):
         action = StringAction(items)
         for template_key, template in action.support_templates.items():
             self.assertIsInstance(template, UnifiedTemplate)
-        user = MagicMock()
+        user = PicklableMagicMock()
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
         output = action.run(user=user, text_preprocessing_result=None)[0].payload["answer"]
         self.assertEqual(output, expected)
@@ -287,7 +288,7 @@ class ActionTest(unittest.TestCase):
             "buttons": [0, 1, 2]
         }
         action = StringAction(items)
-        user = MagicMock()
+        user = PicklableMagicMock()
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
         output = action.run(user=user, text_preprocessing_result=None)[0].payload
         self.assertEqual(output, expected)
@@ -324,7 +325,7 @@ class ActionTest(unittest.TestCase):
             }
         }
         action = PushAction(items)
-        user = MagicMock()
+        user = PicklableMagicMock()
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
         user.settings = settings
         command = action.run(user=user, text_preprocessing_result=None)[0]
@@ -341,15 +342,15 @@ class ActionTest(unittest.TestCase):
 
 class NonRepeatingActionTest(unittest.TestCase):
     def setUp(self):
-        self.expected = Mock()
-        self.expected1 = Mock()
+        self.expected = PicklableMock()
+        self.expected1 = PicklableMock()
         self.action = NonRepeatingAction({"actions": [{"type": "action_mock",
                                                        "result": self.expected},
                                                       {"type": "action_mock",
                                                        "result": self.expected1}
                                                       ],
                                           "last_action_ids_storage": "last_action_ids_storage"})
-        self.user = MagicMock()
+        self.user = PicklableMagicMock()
         registered_factories[Action] = action_factory
         actions["action_mock"] = MockAction
 
@@ -367,9 +368,9 @@ class NonRepeatingActionTest(unittest.TestCase):
 
 class CounterIncrementActionTest(unittest.TestCase):
     def test_run(self):
-        user = Mock()
-        counter = Mock()
-        counter.inc = Mock()
+        user = PicklableMock()
+        counter = PicklableMock()
+        counter.inc = PicklableMock()
         user.counters = {"test": counter}
         items = {"key": "test"}
         action = CounterIncrementAction(items)
@@ -379,9 +380,9 @@ class CounterIncrementActionTest(unittest.TestCase):
 
 class CounterDecrementActionTest(unittest.TestCase):
     def test_run(self):
-        user = Mock()
-        counter = Mock()
-        counter.dec = Mock()
+        user = PicklableMock()
+        counter = PicklableMock()
+        counter.dec = PicklableMock()
         user.counters = {"test": counter}
         items = {"key": "test"}
         action = CounterDecrementAction(items)
@@ -391,9 +392,9 @@ class CounterDecrementActionTest(unittest.TestCase):
 
 class CounterClearActionTest(unittest.TestCase):
     def test_run(self):
-        user = Mock()
-        user.counters = Mock()
-        user.counters.inc = Mock()
+        user = PicklableMock()
+        user.counters = PicklableMock()
+        user.counters.inc = PicklableMock()
         items = {"key": "test"}
         action = CounterClearAction(items)
         action.run(user, None)
@@ -402,9 +403,9 @@ class CounterClearActionTest(unittest.TestCase):
 
 class CounterSetActionTest(unittest.TestCase):
     def test_run(self):
-        user = Mock()
-        counter = Mock()
-        counter.inc = Mock()
+        user = PicklableMock()
+        counter = PicklableMock()
+        counter.inc = PicklableMock()
         counters = {"test": counter}
         user.counters = counters
         items = {"key": "test"}
@@ -415,10 +416,10 @@ class CounterSetActionTest(unittest.TestCase):
 
 class CounterCopyActionTest(unittest.TestCase):
     def test_run(self):
-        user = Mock()
-        counter_src = Mock()
+        user = PicklableMock()
+        counter_src = PicklableMock()
         counter_src.value = 10
-        counter_dst = Mock()
+        counter_dst = PicklableMock()
         user.counters = {"src": counter_src, "dst": counter_dst}
         items = {"source": "src", "destination": "dst"}
         action = CounterCopyAction(items)
@@ -429,7 +430,7 @@ class CounterCopyActionTest(unittest.TestCase):
 
 class AfinaAnswerActionTest(unittest.TestCase):
     def test_typical_answer(self):
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
         expected = [MagicMock(_name="ANSWER_TO_USER", raw={'messageName': 'ANSWER_TO_USER',
                                                            'payload': {'answer': 'a1'}})]
@@ -445,7 +446,7 @@ class AfinaAnswerActionTest(unittest.TestCase):
         self.assertEqual(expected[0].raw, result[0].raw)
 
     def test_typical_answer_with_other(self):
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
         expected = [MagicMock(_name="ANSWER_TO_USER", raw={'messageName': 'ANSWER_TO_USER',
                                                            'payload': {'answer': 'a1',
@@ -467,9 +468,9 @@ class AfinaAnswerActionTest(unittest.TestCase):
     def test_typical_answer_with_pers_info(self):
         expected = [MagicMock(_name="ANSWER_TO_USER", raw={'messageName': 'ANSWER_TO_USER',
                                                            'payload': {'answer': 'Ivan Ivanov'}})]
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        user.message = Mock()
+        user.message = PicklableMock()
         user.message.payload = {"personInfo": {"name": "Ivan Ivanov"}}
         items = {"nodes": {"answer": ["{{payload.personInfo.name}}"]}}
         action = AfinaAnswerAction(items)
@@ -478,9 +479,9 @@ class AfinaAnswerActionTest(unittest.TestCase):
         self.assertEqual(expected[0].raw, result[0].raw)
 
     def test_items_empty(self):
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        template = Mock()
+        template = PicklableMock()
         template.get_template = Mock(return_value=[])
         user.descriptions = {"render_templates": template}
         items = None
@@ -489,9 +490,9 @@ class AfinaAnswerActionTest(unittest.TestCase):
         self.assertEqual(result, [])
 
     def test__items_empty_dict(self):
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        template = Mock()
+        template = PicklableMock()
         template.get_template = Mock(return_value=[])
         user.descriptions = {"render_templates": template}
         items = {}
@@ -502,9 +503,9 @@ class AfinaAnswerActionTest(unittest.TestCase):
 
 class CardAnswerActionTest(unittest.TestCase):
     def test_typical_answer(self):
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        user.message = Mock()
+        user.message = PicklableMock()
         user.message.payload = {"personInfo": {"name": "Ivan Ivanov"}}
         items = {
             "type": "sdk_answer",
@@ -558,9 +559,9 @@ class CardAnswerActionTest(unittest.TestCase):
 
 
     def test_typical_answer_without_items(self):
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        user.message = Mock()
+        user.message = PicklableMock()
         user.message.payload = {"personInfo": {"name": "Ivan Ivanov"}}
         items = {
             "type": "sdk_answer",
@@ -580,9 +581,9 @@ class CardAnswerActionTest(unittest.TestCase):
             self.assertTrue(str(result[0].raw) in exp_list)
 
     def test_typical_answer_without_nodes(self):
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        user.message = Mock()
+        user.message = PicklableMock()
         user.message.payload = {"personInfo": {"name": "Ivan Ivanov"}}
         items = {
                 "type": "sdk_answer",
@@ -632,9 +633,9 @@ class SDKRandomAnswer(unittest.TestCase):
         requirements["test"] = MockRequirement
         requirements[None] = Requirement
 
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        user.message = Mock()
+        user.message = PicklableMock()
         user.message.payload = {"personInfo": {"name": "Ivan Ivanov"}}
         items = {
             "type": "sdk_answer_to_user",
@@ -718,9 +719,9 @@ class SDKRandomAnswer(unittest.TestCase):
         answer_items["suggest_deeplink"] = SuggestDeepLink
 
 
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        user.message = Mock()
+        user.message = PicklableMock()
         user.message.payload = {"personInfo": {"name": "Ivan Ivanov"}}
         items = {
             "type": "sdk_answer_to_user",
@@ -762,7 +763,7 @@ class SDKRandomAnswer(unittest.TestCase):
         registered_factories[SdkAnswerItem] = items_factory
         answer_items["bubble_text"] = BubbleText
 
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
         items = {
             "type": "sdk_answer_to_user",
@@ -783,7 +784,7 @@ class SDKRandomAnswer(unittest.TestCase):
         registered_factories[SdkAnswerItem] = items_factory
         answer_items["bubble_text"] = BubbleText
 
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
         items = {
             "type": "sdk_answer_to_user",

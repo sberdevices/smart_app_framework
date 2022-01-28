@@ -2,8 +2,8 @@ import json
 from unittest import TestCase
 
 from core.message.from_message import SmartAppFromMessage
-from core.utils.utils import current_time_ms
 from core.message.msg_validator import MessageValidator
+from core.utils.utils import current_time_ms
 
 
 class PieMessageValidator(MessageValidator):

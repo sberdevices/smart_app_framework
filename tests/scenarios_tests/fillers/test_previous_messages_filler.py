@@ -1,9 +1,9 @@
 import unittest
-from unittest.mock import Mock
 
-from scenarios.scenario_models.field.field_filler_description import FieldFillerDescription, PreviousMessagesFiller
 from core.model.registered import registered_factories
+from scenarios.scenario_models.field.field_filler_description import FieldFillerDescription, PreviousMessagesFiller
 from scenarios.scenario_models.field.field_filler_description import field_filler_description, field_filler_factory
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class MockFiller:
@@ -20,8 +20,8 @@ class PreviousMessagesFillerTest(unittest.TestCase):
         field_filler_description["mock_filler"] = MockFiller
         expected = "first"
         items = {"filler": {"type": "mock_filler", "result": expected}}
-        user = Mock()
-        user.preprocessing_messages_for_scenarios = Mock()
+        user = PicklableMock()
+        user.preprocessing_messages_for_scenarios = PicklableMock()
         user.preprocessing_messages_for_scenarios.processed_items = [{}, {}, {}]
         filler = PreviousMessagesFiller(items)
         filler.extract(None, user)
@@ -32,8 +32,8 @@ class PreviousMessagesFillerTest(unittest.TestCase):
         field_filler_description["mock_filler"] = MockFiller
         expected = "first"
         items = {"filler": {"type": "mock_filler", "result": expected}, "count": 2}
-        user = Mock()
-        user.preprocessing_messages_for_scenarios = Mock()
+        user = PicklableMock()
+        user.preprocessing_messages_for_scenarios = PicklableMock()
         user.preprocessing_messages_for_scenarios.processed_items = [{}, {}, {}]
         filler = PreviousMessagesFiller(items)
         filler.extract(None, user)

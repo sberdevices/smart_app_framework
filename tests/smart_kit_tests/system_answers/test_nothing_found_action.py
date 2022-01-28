@@ -1,10 +1,11 @@
 # coding: utf-8
 import unittest
 from unittest.mock import Mock
-from smart_kit.system_answers import nothing_found_action
+
+from core.basic_models.actions.command import Command
 from core.basic_models.actions.string_actions import StringAction
 from smart_kit.names.message_names import NOTHING_FOUND
-from core.basic_models.actions.command import Command
+from smart_kit.system_answers import nothing_found_action
 
 
 class SystemAnswersTest1(unittest.TestCase):

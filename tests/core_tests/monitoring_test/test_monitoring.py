@@ -1,17 +1,18 @@
 # -*- coding: utf-8 -*-
 import unittest
-from unittest.mock import Mock
+
 from prometheus_client import Counter, Histogram
 
 from core.monitoring.monitoring import Monitoring
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class MonitoringTest1(unittest.TestCase):
     def setUp(self):
-        self.logger = Mock()
-        self.logger.exception = Mock()
-        self.config = Mock()
-        self.mock_rep = Mock()
+        self.logger = PicklableMock()
+        self.logger.exception = PicklableMock()
+        self.config = PicklableMock()
+        self.mock_rep = PicklableMock()
         self.monitoring = Monitoring()
 
     def test_got_message_disabled(self):

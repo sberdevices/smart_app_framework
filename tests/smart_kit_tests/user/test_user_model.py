@@ -1,8 +1,10 @@
 # coding: utf-8
 import unittest
 from unittest.mock import Mock
-from scenarios.user import user_model
+
 from core.model.field import Field
+from scenarios.user import user_model
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class UserTest2(unittest.TestCase):
@@ -11,10 +13,10 @@ class UserTest2(unittest.TestCase):
         self.test_scenario1.scenario_description = "This is test scenario 1 desc"
         self.test_scenario1.form_type = "any type 1"
         self.test_id = 11
-        self.test_message = Mock()
+        self.test_message = PicklableMock()
         self.test_message.incremental_id = 123
         self.test_values = {11: "any val"}
-        history = Mock()
+        history = PicklableMock()
         history.enabled = True
         self.test_descriptions = {"forms": {}, "last_scenarios": [11], "scenarios": [self.test_scenario1],
                                   "preprocessing_messages_for_scenario": "any msg",

@@ -1,5 +1,6 @@
 # coding: utf-8
 import unittest
+
 from core.configs import global_constants
 
 

@@ -2,8 +2,8 @@ import os
 from unittest import TestCase
 from unittest.mock import Mock, patch
 
-from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 import smart_kit
+from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from scenarios.scenario_models.field.field_filler_description import (
     ApproveFiller,
     ApproveRawTextFiller

@@ -2,7 +2,7 @@ import json
 import pickle
 import tempfile
 import unittest
-from unittest.mock import Mock, patch, PropertyMock
+from unittest.mock import patch, PropertyMock
 
 from core.model.registered import Registered
 from core.repositories.base_repository import BaseRepository
@@ -11,6 +11,7 @@ from core.repositories.dill_repository import DillRepository
 from core.repositories.folder_repository import FolderRepository
 from core.repositories.shard_repository import ShardRepository
 from core.utils.loader import ordered_json
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class MockDescriptionItem:
@@ -46,7 +47,7 @@ class MockSource:
 class MockStream:
     def __init__(self, data):
         self.data = data
-        self.stream = Mock()
+        self.stream = PicklableMock()
         self.stream.read.return_value = json.dumps(self.data).encode()
 
     def __enter__(self):

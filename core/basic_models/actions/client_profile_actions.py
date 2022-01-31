@@ -16,23 +16,14 @@ class GiveMeMemoryAction(StringAction):
     "type": "give_me_memory",
     "behavior": "client_info_request",
     "nodes": {
-        "root_nodes": {
-            "protocolVersion": 1
+        "memory": {
+            "confidentialMemo": [
+                "userAgreement"
+            ],
+            "projectPrivateMemo": [
+                "character_{{message.uuid.userId}}"
+            ]
         },
-        "memory": [
-            {
-                "memoryPartition": "confidentialMemo",
-                "tags": [
-                    "userAgreement"
-                ]
-            },
-            {
-                "memoryPartition": "projectPrivateMemo",
-                "tags": [
-                    "character_{{message.uuid.userId}}"
-                ]
-            }
-        ],
         "profileEmployee": {
             "type": "unified_template",
             "template": "{{ example }}"
@@ -56,6 +47,12 @@ class GiveMeMemoryAction(StringAction):
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self._nodes["consumer"] = {"projectId": user.settings["template_settings"]["project_id"]}
+        self._nodes["root_nodes"] = {"protocolVersion": user.message.protocolVersion}
+
+        memory_info = self._nodes["memory"].copy()
+        self._nodes["memory"] = []
+        for key, val in memory_info.items():
+            self._nodes["memory"].append({"memoryPartition": key, "tags": val})
 
         self.request_data = {
             "topic_key": "client_info",
@@ -81,9 +78,6 @@ class RememberThisAction(StringAction):
     """
     "type": "remember",
     "nodes": {
-      "root_nodes": {
-        "protocolVersion": 3
-      },
       "clientIds": {
         "type": "unified_template",
         "template": "{{ example }}"
@@ -146,6 +140,7 @@ class RememberThisAction(StringAction):
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self._nodes["consumer"] = {"projectId": user.settings["template_settings"]["project_id"]}
+        self._nodes["root_nodes"] = {"protocolVersion": user.message.protocolVersion}
 
         self.request_data = {
             "topic_key": "client_info_remember",

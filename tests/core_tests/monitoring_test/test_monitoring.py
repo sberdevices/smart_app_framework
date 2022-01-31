@@ -55,8 +55,8 @@ class MonitoringTest1(unittest.TestCase):
 
     def test_got_histogram_disabled_by_name(self):
         self.monitoring.turn_on()
-        self.monitoring.disabled_metrics.append('^test_')
-        self.monitoring.disabled_metrics.append('.*_all$')
+        self.monitoring.disabled_metrics.append('test_.*')
+        self.monitoring.disabled_metrics.append('.*_all')
         for event_name, disabled in [("test_one", True), ("test_two", True),
                                      ("not_a_test", False), ('metric_all', True)]:
             counter_item = self.monitoring._monitoring_items[self.monitoring.COUNTER]

@@ -20,7 +20,7 @@ class Monitoring:
         self.buckets = Histogram.DEFAULT_BUCKETS
 
     def check_enabled(self, name: str):
-        metric_disabled = next((True for m in self.disabled_metrics if re.match(m, name)), False)
+        metric_disabled = next((True for m in self.disabled_metrics if re.fullmatch(m, name)), False)
         return self._enabled and not metric_disabled
 
     def turn_on(self):

@@ -16,7 +16,7 @@ class Monitoring:
             self.COUNTER: {},
             self.HISTOGRAM: {}
         }
-        self.disabled_metrics = []
+        self.disabled_metrics = self.DEFAULT_DISABLED_METRICS.copy()
         self.buckets = Histogram.DEFAULT_BUCKETS
 
     def check_enabled(self, name: str):
@@ -69,7 +69,7 @@ class Monitoring:
 
     def apply_config(self, config):
         self._enabled = config.get("enabled", self.DEFAULT_ENABLED)
-        self.disabled_metrics = config.get("disabled_metrics", self.DEFAULT_DISABLED_METRICS)
+        self.disabled_metrics = config.get("disabled_metrics", self.DEFAULT_DISABLED_METRICS.copy())
         self.buckets = config.get("buckets", Histogram.DEFAULT_BUCKETS)
 
 

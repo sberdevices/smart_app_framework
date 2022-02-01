@@ -41,13 +41,13 @@ class GiveMeMemoryAction(StringAction):
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         self.behavior = items.get("behavior")
+        self._nodes["root_nodes"] = {"protocolVersion": 1}
         items["command"] = GIVE_ME_MEMORY
         super().__init__(items, id)
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self._nodes["consumer"] = {"projectId": user.settings["template_settings"]["project_id"]}
-        self._nodes["root_nodes"] = {"protocolVersion": user.message.protocolVersion}
 
         memory_info = self._nodes["memory"].copy()
         self._nodes["memory"] = []
@@ -134,6 +134,7 @@ class RememberThisAction(StringAction):
     DEFAULT_KAFKA_KEY = "main"
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
+        self._nodes["root_nodes"] = {"protocolVersion": 3}
         items["command"] = REMEMBER_THIS
         super().__init__(items, id)
 

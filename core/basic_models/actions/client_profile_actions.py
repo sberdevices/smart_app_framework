@@ -13,26 +13,28 @@ REMEMBER_THIS = "REMEMBER_THIS"
 class GiveMeMemoryAction(StringAction):
 
     """
-    "type": "give_me_memory",
-    "behavior": "client_info_request",
-    "nodes": {
-        "memory": {
-            "confidentialMemo": [
-                "userAgreement"
-            ],
-            "projectPrivateMemo": [
-                "character_{{message.uuid.userId}}"
-            ]
-        },
-        "profileEmployee": {
-            "type": "unified_template",
-            "template": "{{ example }}"
-            "loader": "json"
-        },
-        "tokenType": {
-            "type": "unified_template",
-            "template": "{{ example }}",
-            "loader": "json"
+    example: {
+        "type": "give_me_memory",
+        "behavior": "client_info_request",
+        "nodes": {
+            "memory": {
+                "confidentialMemo": [
+                    "userAgreement"
+                ],
+                "projectPrivateMemo": [
+                    "character_{{message.uuid.userId}}"
+                ]
+            },
+            "profileEmployee": {
+                "type": "unified_template",
+                "template": "{{ example }}"
+                "loader": "json"
+            },
+            "tokenType": {
+                "type": "unified_template",
+                "template": "{{ example }}",
+                "loader": "json"
+            }
         }
     }
     """
@@ -76,58 +78,60 @@ class GiveMeMemoryAction(StringAction):
 class RememberThisAction(StringAction):
 
     """
-    "type": "remember",
-    "nodes": {
-      "clientIds": {
-        "type": "unified_template",
-        "template": "{{ example }}"
-        "loader": "json"
-      },
-      "memory": [
-        {
-          "memoryPartition": "publicMemo",
-          "partitionData": [
+    example: {
+        "type": "remember",
+        "nodes": {
+          "clientIds": {
+            "type": "unified_template",
+            "template": "{{ example }}"
+            "loader": "json"
+          },
+          "memory": [
             {
-              "tag": "historyInfo",
-              "action": {
-                "type": "upsert",
-                "params": {
-                  "operation": [
-                    {
-                      "selector": {
-                        "intent": {
-                          "$eq": "run_app"
-                        },
-                        "surface": {
-                          "$eq": "{{ example }}"
-                        },
-                        "channel": {
-                          "$eq": "{{ channel }}"
-                        },
-                        "projectId": {
-                          "$eq": "{{current_app_info.project_id|default(\"\")}}"
-                        }
-                      },
-                      "updater": [
+              "memoryPartition": "publicMemo",
+              "partitionData": [
+                {
+                  "tag": "historyInfo",
+                  "action": {
+                    "type": "upsert",
+                    "params": {
+                      "operation": [
                         {
-                          "$set": {
-                            "$.lastExecuteDateTime": "{{now()|strftime('%Y-%m-%d %H:%M:%S')}}"
-                          }
-                        },
-                        {
-                          "$inc": {
-                            "$.executeCounter": 1
-                          }
+                          "selector": {
+                            "intent": {
+                              "$eq": "run_app"
+                            },
+                            "surface": {
+                              "$eq": "{{ example }}"
+                            },
+                            "channel": {
+                              "$eq": "{{ channel }}"
+                            },
+                            "projectId": {
+                              "$eq": "{{current_app_info.project_id|default(\"\")}}"
+                            }
+                          },
+                          "updater": [
+                            {
+                              "$set": {
+                                "$.lastExecuteDateTime": "{{now()|strftime('%Y-%m-%d %H:%M:%S')}}"
+                              }
+                            },
+                            {
+                              "$inc": {
+                                "$.executeCounter": 1
+                              }
+                            }
+                          ]
                         }
                       ]
                     }
-                  ]
+                  }
                 }
-              }
+              ]
             }
           ]
         }
-      ]
     }
     """
 

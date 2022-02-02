@@ -1,6 +1,6 @@
 from core.logging.logger_constants import KEY_NAME
 from core.logging.logger_utils import log
-from core.monitoring.monitoring import Monitoring
+from core.monitoring.monitoring import MonitoringProxy
 
 
 def _filter_monitoring_msg(msg):
@@ -25,7 +25,7 @@ def silence_it(func):
     return wrap
 
 
-class Metrics(Monitoring):
+class Metrics(MonitoringProxy):
 
     @silence_it
     def init_metrics(self, app_name):

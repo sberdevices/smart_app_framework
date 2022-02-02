@@ -3,7 +3,7 @@ import unittest
 
 from prometheus_client import Counter, Histogram
 
-from core.monitoring.monitoring import Monitoring
+from core.monitoring.monitoring import MonitoringProxy
 from smart_kit.utils.picklable_mock import PicklableMock
 
 
@@ -13,7 +13,7 @@ class MonitoringTest1(unittest.TestCase):
         self.logger.exception = PicklableMock()
         self.config = PicklableMock()
         self.mock_rep = PicklableMock()
-        self.monitoring = Monitoring()
+        self.monitoring = MonitoringProxy()
         self.monitoring.apply_config({})
 
     def test_got_message_disabled(self):

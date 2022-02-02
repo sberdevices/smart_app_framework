@@ -69,8 +69,8 @@ class GatherAndRequirement(CompositeRequirement):
     async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
                     params: Dict[str, Any] = None) -> bool:
         check_results = await asyncio.gather(
-                requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
-                for requirement in self.requirements)
+            requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
+            for requirement in self.requirements)
         return all(check_results)
 
 
@@ -80,7 +80,7 @@ class AndRequirement(CompositeRequirement):
                     params: Dict[str, Any] = None) -> bool:
         return all(
             [await requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
-                for requirement in self.requirements]
+             for requirement in self.requirements]
         )
 
 
@@ -89,8 +89,8 @@ class GatherOrRequirement(CompositeRequirement):
     async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
                     params: Dict[str, Any] = None) -> bool:
         check_results = await asyncio.gather(
-                requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
-                for requirement in self.requirements)
+            requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
+            for requirement in self.requirements)
         return any(check_results)
 
 
@@ -100,7 +100,7 @@ class OrRequirement(CompositeRequirement):
                     params: Dict[str, Any] = None) -> bool:
         return any(
             [await requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
-                for requirement in self.requirements]
+             for requirement in self.requirements]
         )
 
 
@@ -329,3 +329,31 @@ class EnvironmentRequirement(Requirement):
     async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
                     params: Dict[str, Any] = None) -> bool:
         return self.check_result
+
+
+class CharacterIdRequirement(Requirement):
+    """Условие возвращает True, если идентификатор выбранного персонажа входит
+    в список значений, иначе - False.
+    """
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(CharacterIdRequirement, self).__init__(items=items, id=id)
+        self.values = items["values"]
+
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                    params: Dict[str, Any] = None) -> bool:
+        return user.message.payload["character"]["id"] in self.values
+
+
+class FeatureToggleRequirement(Requirement):
+    """Условие возвращает True, если проверка указанного тогла по названию возвращает True, иначе - False.
+    Тоглы задаются в template_config.yml, с помощью значений True и False их можно включить или выключить.
+    """
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
+        super(FeatureToggleRequirement, self).__init__(items=items, id=id)
+        self.toggle_name = items["toggle_name"]
+
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                    params: Dict[str, Any] = None) -> bool:
+        return user.settings["template_settings"].get(self.toggle_name, False)

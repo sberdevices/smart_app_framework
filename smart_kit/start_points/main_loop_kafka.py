@@ -22,6 +22,7 @@ from core.mq.kafka.kafka_publisher import KafkaPublisher
 from core.utils.stats_timer import StatsTimer
 from core.basic_models.actions.command import Command
 from smart_kit.compatibility.commands import combine_commands
+from smart_kit.message.get_to_message import get_to_message
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.names import message_names
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
@@ -207,9 +208,10 @@ class MainLoop(BaseMainLoop):
         for command in commands:
             request = SmartKitKafkaRequest(id=None, items=command.request_data)
             request.update_empty_items({"topic_key": topic_key, "kafka_key": kafka_key})
-            answer = SmartAppToMessage(command=command, message=message, request=request,
-                                       masking_fields=self.masking_fields,
-                                       validators=self.to_msg_validators)
+            to_message = get_to_message(command.name)
+            answer = to_message(command=command, message=message, request=request,
+                                masking_fields=self.masking_fields,
+                                validators=self.to_msg_validators)
             if answer.validate():
                 answers.append(answer)
             else:
@@ -255,7 +257,9 @@ class MainLoop(BaseMainLoop):
                     user_save_no_collisions = await self.save_user(db_uid, user, mq_message)
 
                     if user and not user_save_no_collisions:
-                        log("MainLoop.iterate_behavior_timeouts: save user got collision on uid %(uid)s db_version %(db_version)s.",
+                        log(
+                            "MainLoop.iterate_behavior_timeouts: save user got collision on uid %(uid)s db_version %("
+                            "db_version)s.",
                             user=user,
                             params={log_const.KEY_NAME: "ignite_collision",
                                     "db_uid": db_uid,
@@ -268,7 +272,9 @@ class MainLoop(BaseMainLoop):
                         continue
 
                 if not user_save_no_collisions:
-                    log("MainLoop.iterate_behavior_timeouts: db_save collision all tries left on uid %(uid)s db_version %(db_version)s.",
+                    log(
+                        "MainLoop.iterate_behavior_timeouts: db_save collision all tries left on uid %(uid)s "
+                        "db_version %(db_version)s.",
                         user=user,
                         params={log_const.KEY_NAME: "ignite_collision",
                                 "db_uid": db_uid,
@@ -348,7 +354,7 @@ class MainLoop(BaseMainLoop):
                             "surface": message.device.surface,
                             MESSAGE_ID_STR: message.incremental_id},
                     user=user
-                    )
+                )
 
                 with StatsTimer() as script_timer:
                     commands = await self.model.answer(message, user)
@@ -502,7 +508,7 @@ class MainLoop(BaseMainLoop):
         self._log_request(user, request, answer, mq_message)
 
     def _log_request(self, user, request, answer, original_mq_message):
-        log("OUTGOING TO TOPIC_KEY: %(topic_key)s",
+        log("OUTGOING TO TOPIC_KEY: %(topic_key)s DATA: %(data)s",
             params={log_const.KEY_NAME: "outgoing_message",
                     "topic_key": request.topic_key,
                     "headers": str(request._get_new_headers(original_mq_message)),
@@ -557,7 +563,9 @@ class MainLoop(BaseMainLoop):
             user = None
             while save_tries < self.user_save_collisions_tries and not user_save_ok:
                 callback_found = False
-                log(f"MainLoop.do_behavior_timeout: handling callback {callback_id}. for db_uid {db_uid}. try {save_tries}.")
+                log(
+                    f"MainLoop.do_behavior_timeout: handling callback {callback_id}. for db_uid {db_uid}. try "
+                    f"{save_tries}.")
 
                 save_tries += 1
 
@@ -580,7 +588,9 @@ class MainLoop(BaseMainLoop):
                     user_save_ok = await self.save_user(db_uid, user, mq_message)
 
                     if not user_save_ok:
-                        log("MainLoop.iterate_behavior_timeouts: save user got collision on uid %(uid)s db_version %(db_version)s.",
+                        log(
+                            "MainLoop.iterate_behavior_timeouts: save user got collision on uid %(uid)s db_version %("
+                            "db_version)s.",
                             user=user,
                             params={log_const.KEY_NAME: "ignite_collision",
                                     "db_uid": db_uid,
@@ -591,7 +601,9 @@ class MainLoop(BaseMainLoop):
                             level="WARNING")
 
             if not user_save_ok and callback_found:
-                log("MainLoop.iterate_behavior_timeouts: db_save collision all tries left on uid %(uid)s db_version %(db_version)s.",
+                log(
+                    "MainLoop.iterate_behavior_timeouts: db_save collision all tries left on uid %(uid)s db_version "
+                    "%(db_version)s.",
                     user=user,
                     params={log_const.KEY_NAME: "ignite_collision",
                             "db_uid": db_uid,

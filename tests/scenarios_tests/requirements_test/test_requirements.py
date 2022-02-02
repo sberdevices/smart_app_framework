@@ -4,6 +4,7 @@ from unittest.mock import Mock
 
 from scenarios.requirements.requirements import TemplateInArrayRequirement, ArrayItemInTemplateRequirement, \
     RegexpInTemplateRequirement
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class MockRequirement:
@@ -68,8 +69,8 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
             },
             "message": "BBB"
         }}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertTrue(await requirement.check(None, user))
 
@@ -85,8 +86,8 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
             },
             "message": " BBB    "
         }}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertTrue(await requirement.check(None, user))
 
@@ -102,8 +103,8 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
             },
             "message": " BBB "
         }}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertFalse(await requirement.check(None, user))
 
@@ -124,8 +125,8 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
             },
             "message": " BBB "
         }}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertTrue(await requirement.check(None, user))
 
@@ -142,8 +143,8 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
             },
             "message": " BBB "
         }}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertTrue(await requirement.check(None, user))
 
@@ -164,8 +165,8 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
             },
             "message": " BBB "
         }}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertFalse(await requirement.check(None, user))
 
@@ -181,8 +182,8 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
             },
             "message": "карточки ф1у"
         }}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertTrue(await requirement.check(None, user))
 
@@ -198,8 +199,8 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
             },
             "message": "карточки конг фу 1"
         }}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertFalse(await requirement.check(None, user))
 

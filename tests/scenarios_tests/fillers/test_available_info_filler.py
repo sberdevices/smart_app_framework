@@ -2,6 +2,7 @@ from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock
 
 from scenarios.scenario_models.field.field_filler_description import AvailableInfoFiller
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class MockParametrizer:
@@ -23,23 +24,26 @@ class MockParametrizer:
 
 
 class TestAvailableInfoFiller(IsolatedAsyncioTestCase):
-    def setUp(self):
-        self.address = "Address!"
+    @classmethod
+    def setUpClass(cls):
+        cls.address = "Address!"
         payload_items = {'value': '{{payload.sf_answer.address}}'}
-        self.payload_filler = AvailableInfoFiller(payload_items)
-        template = Mock()
+        cls.payload_filler = AvailableInfoFiller(payload_items)
+
+    def setUp(self):
+        template = PicklableMock()
         template.get_template = Mock(return_value=[])
-        user = Mock()
+        user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        user.message = Mock()
-        user.person_info = Mock()
+        user.message = PicklableMock()
+        user.person_info = PicklableMock()
         user.descriptions = {"render_templates": template}
         self.user = user
 
     async def test_getting_person_info_value(self):
         name = "Name!"
         surname = "Surname!"
-        self.user.person_info.raw = Mock()
+        self.user.person_info.raw = PicklableMock()
         self.user.person_info.raw.full_name = {"name": name, "surname": surname}
         person_info_items = {'value': '{{person_info.full_name.surname}}'}
         person_info_filler = AvailableInfoFiller(person_info_items)
@@ -72,7 +76,7 @@ class TestAvailableInfoFiller(IsolatedAsyncioTestCase):
         self.assertEqual("", result)
 
     async def test_filter(self):
-        template = Mock()
+        template = PicklableMock()
         template.get_template = Mock(return_value=["payload.personInfo.identityCard"])
         self.user.parametrizer = MockParametrizer(self.user, {"filter": True})
         self.user.message.payload = {"personInfo": {"identityCard": "my_pass"}}

@@ -1,6 +1,6 @@
 # coding: utf-8
 import unittest
-from unittest.mock import Mock
+
 from smart_kit.message import app_info
 
 

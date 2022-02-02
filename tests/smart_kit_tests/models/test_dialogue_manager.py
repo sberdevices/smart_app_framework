@@ -1,12 +1,17 @@
 # coding: utf-8
 import unittest
-from unittest.mock import Mock
+
 from smart_kit.models import dialogue_manager
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class TestScenarioDesc(dict):
     def get_keys(self):
         return self.keys()
+
+
+async def mock_two_parameters_return_false(x, y):
+    return False
 
 
 async def mock_scenario1_text_fits():
@@ -27,35 +32,35 @@ async def mock_scenario2_run(x, y):
 
 class ModelsTest1(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
-        self.test_user1 = Mock()
+        self.test_user1 = PicklableMock()
         self.test_user1.name = "TestName"
-        self.test_user1.last_scenarios = Mock()
+        self.test_user1.last_scenarios = PicklableMock()
         self.test_user1.last_scenarios.scenarios_names = []
         self.test_user1.message.payload = {"skillId": 1, "intent": 2}
-        self.test_user2 = Mock()
+        self.test_user2 = PicklableMock()
         self.test_user2.name = "TestName"
-        self.test_user2.last_scenarios = Mock()
+        self.test_user2.last_scenarios = PicklableMock()
         self.test_user2.last_scenarios.scenarios_names = [1, 2]
         self.test_user2.message.payload = {"skillId": 1, "intent": 2}
-        self.test_user3 = Mock()
+        self.test_user3 = PicklableMock()
         self.test_user3.name = "TestName"
-        self.test_user3.last_scenarios = Mock()
+        self.test_user3.last_scenarios = PicklableMock()
         self.test_user3.last_scenarios.scenarios_names = [1]
         self.test_user3.message.payload = {"skillId": 1, "intent": 2}
-        self.test_text_preprocessing_result = Mock()
+        self.test_text_preprocessing_result = PicklableMock()
         self.test_text_preprocessing_result.name = "Result"
-        self.test_scenario1 = Mock()
+        self.test_scenario1 = PicklableMock()
         self.test_scenario1.scenario_description = "This is test scenario 1 desc"
-        self.test_scenario1.text_fits = mock_scenario1_text_fits
+        self.test_scenario1.text_fits = mock_two_parameters_return_false
         self.test_scenario1.run = mock_scenario1_run
-        self.test_scenario2 = Mock()
+        self.test_scenario2 = PicklableMock()
         self.test_scenario2.scenario_description = "This is test scenario 2 desc"
         self.test_scenario2.text_fits = mock_scenario2_text_fits
         self.test_scenario2.run = mock_scenario2_run
         self.test_scenarios = TestScenarioDesc({1: self.test_scenario1, 2: self.test_scenario2})
-        self.TestAction = Mock()
+        self.TestAction = PicklableMock()
         self.TestAction.description = "test_function"
-        self.TestAction.run = lambda x, y: x.name + y.name
+        self.TestAction.run = mock_scenario1_run
         self.app_name = "test"
 
     def test_log_const(self):
@@ -113,7 +118,6 @@ class ModelsTest1(unittest.IsolatedAsyncioTestCase):
         obj = dialogue_manager.DialogueManager({'scenarios': self.test_scenarios,
                                                 'external_actions': {'nothing_found_action': self.TestAction}},
                                                self.app_name)
-        print(await obj.run_scenario(1, self.test_text_preprocessing_result, self.test_user1))
         self.assertTrue(
             await obj.run_scenario(1, self.test_text_preprocessing_result, self.test_user1) == "ResultTestName"
         )

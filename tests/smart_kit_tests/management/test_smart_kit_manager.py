@@ -1,8 +1,9 @@
 # coding: utf-8
-import unittest
-from smart_kit.management import smart_kit_manager
 import os
 import shutil
+import unittest
+
+from smart_kit.management import smart_kit_manager
 
 
 class ManagementTest2(unittest.TestCase):
@@ -22,7 +23,7 @@ class ManagementTest2(unittest.TestCase):
     def test_create_app_command_init(self):
         obj1 = smart_kit_manager.CreateAppCommand()
         self.assertTrue(obj1.TEMPLATE_FOLDER == "template")
-        self.assertTrue(obj1.extensions == ".py")
+        self.assertTrue(obj1.extensions == (".py", ".yml"))
         self.assertTrue(hasattr(obj1, 'doc'))
 
 

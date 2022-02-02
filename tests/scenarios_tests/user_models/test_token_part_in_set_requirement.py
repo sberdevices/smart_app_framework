@@ -1,5 +1,6 @@
 # coding: utf-8
 import unittest
+
 from scenarios.scenario_models.field_requirements.field_requirements import TokenPartInSet
 
 

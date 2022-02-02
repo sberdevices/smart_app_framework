@@ -2,6 +2,7 @@ from unittest import TestCase
 from unittest.mock import Mock
 
 from core.utils.rerunable import Rerunable
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class HandledException(Exception):
@@ -19,7 +20,7 @@ class CustomException(Exception):
 class RerunableOne(Rerunable):
     def __init__(self, try_count):
         super(RerunableOne, self).__init__({"try_count": try_count})
-        self._on_prepare_mock = Mock()
+        self._on_prepare_mock = PicklableMock()
 
     @property
     def _handled_exception(self):
@@ -39,12 +40,12 @@ class TestRerunable(TestCase):
     def setUp(self):
         self.try_count = 2
         self.rerunable = RerunableOne(self.try_count)
-        self.expected_value = Mock()
-        self.param = Mock()
-        self.param1 = {"param1_name": Mock()}
+        self.expected_value = PicklableMock()
+        self.param = PicklableMock()
+        self.param1 = {"param1_name": PicklableMock()}
 
     def test_pass(self):
-        self.action = Mock()
+        self.action = PicklableMock()
         self.rerunable.run(self.action, self.param, **self.param1)
         self.action.assert_called_once_with(self.param, **self.param1)
 
@@ -62,8 +63,8 @@ class TestRerunable(TestCase):
         self.assertEqual(self.action.call_count, self.try_count)
 
     def test_first_try_failed(self):
-        self.param = Mock()
-        self.param1 = {"param1_name": Mock()}
+        self.param = PicklableMock()
+        self.param1 = {"param1_name": PicklableMock()}
         self.action = Mock(side_effect=[HandledException(), self.expected_value])
         result = self.rerunable.run(self.action, self.param, **self.param1)
         self.action.assert_called_with(self.param, **self.param1)

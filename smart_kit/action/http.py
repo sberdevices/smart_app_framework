@@ -29,7 +29,7 @@ class HTTPRequestAction(NodeAction):
         behavior_description = user.descriptions["behaviors"][self.behavior]
 
         request_params = self.params
-        request_params["timeout"] = await behavior_description.timeout(user)
+        request_params["timeout"] = request_params.get("timeout") or behavior_description.timeout(user)
 
         params = params or {}
         collected = user.parametrizer.collect(text_preprocessing_result)

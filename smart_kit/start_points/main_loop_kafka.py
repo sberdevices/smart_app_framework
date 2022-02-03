@@ -19,6 +19,8 @@ from core.logging.logger_utils import log, UID_STR, MESSAGE_ID_STR
 
 from core.message.from_message import SmartAppFromMessage
 from core.mq.kafka.async_kafka_publisher import AsyncKafkaPublisher
+from core.model.heapq.heapq_storage import HeapqKV
+from core.monitoring.monitoring import monitoring
 from core.mq.kafka.kafka_consumer import KafkaConsumer
 from core.utils.memstats import get_top_malloc
 from core.utils.stats_timer import StatsTimer
@@ -453,6 +455,7 @@ class MainLoop(BaseMainLoop):
                 level="WARNING")
             smart_kit_metrics.counter_save_collision_tries_left(self.app_name)
 
+        monitoring.send()
         consumer.commit_offset(mq_message)
         if message_handled_ok:
             self.remove_timer(message)

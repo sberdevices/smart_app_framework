@@ -2,6 +2,7 @@
 import logging
 
 from core.logging.logger_utils import log
+from core.monitoring.monitoring import monitoring
 
 
 def run(app_config):
@@ -12,6 +13,9 @@ def run(app_config):
         config_path=app_config.CONFIGS_PATH, secret_path=app_config.SECRET_PATH,
         references_path=app_config.REFERENCES_PATH, app_name=app_config.APP_NAME)
     log("FINISHED SETTINGS CREATE", level="WARNING")
+
+    monitoring.apply_adapter(app_config.MONITRING_ADAPTER)
+
     source = settings.get_source()
     log("START RESOURCES CREATE", level="WARNING")
     resource = app_config.RESOURCES(source, app_config.REFERENCES_PATH, settings)

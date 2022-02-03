@@ -9,6 +9,7 @@ from core.basic_models.actions.command import Command
 from core.configs.global_constants import CALLBACK_ID_HEADER
 from core.logging.logger_utils import log
 from core.message.from_message import SmartAppFromMessage, basic_error_message
+from core.monitoring.monitoring import monitoring
 from core.utils.stats_timer import StatsTimer
 from smart_kit.compatibility.commands import combine_commands
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
@@ -81,6 +82,7 @@ class BaseHttpMainLoop(BaseMainLoop):
             self.save_user(db_uid, user, message)
         stats += "Saving time: {} msecs\n".format(save_timer.msecs)
         log(stats, params={log_const.KEY_NAME: "timings"})
+        monitoring.send()
         return answer, stats
 
     def _get_headers(self, environ):

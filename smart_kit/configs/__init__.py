@@ -3,6 +3,7 @@ import os
 
 from core.logging.logger_utils import LoggerMessageCreator
 from core.message.from_message import SmartAppFromMessage
+from core.monitoring.monitoring import MonitoringAdapterProm
 from scenarios.user.parametrizer import Parametrizer
 from scenarios.user.user_model import User
 from smart_kit.configs.settings import Settings
@@ -59,6 +60,8 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
 
     set_default(app_config, "NORMALIZATION_CACHE_TTL", 0)
     set_default(app_config, "NORMALIZATION_CACHE", JSONCache)
+
+    set_default(app_config, "MONITRING_ADAPTER", MonitoringAdapterProm())
 
     set_default(app_config, "PLUGINS", ())
     set_default(app_config, "TO_MSG_VALIDATORS", ())

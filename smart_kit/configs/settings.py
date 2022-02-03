@@ -5,9 +5,10 @@ from core.configs.base_config import BaseConfig
 from core.db_adapter.ceph.ceph_adapter import CephAdapter
 from core.db_adapter.os_adapter import OSAdapter
 from core.repositories.file_repository import UpdatableFileRepository, FileRepository
+from core.utils.singleton import Singleton
 
 
-class Settings(BaseConfig):
+class Settings(BaseConfig, metaclass=Singleton):
     CephAdapterKey = "ceph"
     OSAdapterKey = "os"
 

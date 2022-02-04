@@ -5,6 +5,7 @@ from typing import Union, Dict, List, Any, Optional
 import core.logging.logger_constants as log_const
 from core.basic_models.actions.command import Command
 from core.basic_models.requirement.basic_requirements import Requirement
+from core.configs.global_constants import KAFKA
 from core.logging.logger_utils import log
 from core.model.base_user import BaseUser
 from core.model.factory import build_factory, factory, list_factory
@@ -37,7 +38,7 @@ class Action:
 
 
 class CommandAction(Action):
-    DEFAULT_REQUEST_TYPE = "kafka"
+    DEFAULT_REQUEST_TYPE = KAFKA
     version: Optional[int]
     command: str
     request_type: Optional[str]

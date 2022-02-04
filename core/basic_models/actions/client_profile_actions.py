@@ -8,6 +8,7 @@ from scenarios.user.user_model import User
 
 GIVE_ME_MEMORY = "GIVE_ME_MEMORY"
 REMEMBER_THIS = "REMEMBER_THIS"
+KAFKA = "kafka"
 
 
 class GiveMeMemoryAction(StringAction):
@@ -42,19 +43,18 @@ class GiveMeMemoryAction(StringAction):
     DEFAULT_KAFKA_KEY = "main"
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
-        self.behavior = items.get("behavior")
-        self._nodes["root_nodes"] = {"protocolVersion": 1}
         items["command"] = GIVE_ME_MEMORY
         super().__init__(items, id)
+        self.request_type = KAFKA
+        self.behavior = items.get("behavior")
+        self._nodes["root_nodes"] = {"protocolVersion": 1}
+        self._nodes["memory"] = [
+            {"memoryPartition": key, "tags": val} for key, val in self._nodes["memory"].items()
+        ]
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self._nodes["consumer"] = {"projectId": user.settings["template_settings"]["project_id"]}
-
-        memory_info = self._nodes["memory"].copy()
-        self._nodes["memory"] = []
-        for key, val in memory_info.items():
-            self._nodes["memory"].append({"memoryPartition": key, "tags": val})
 
         self.request_data = {
             "topic_key": "client_info",
@@ -67,11 +67,7 @@ class GiveMeMemoryAction(StringAction):
             user.behaviors.add(user.message.generate_new_callback_id(), self.behavior, scenario_id,
                                text_preprocessing_result.raw, action_params=pickle_deepcopy(params))
 
-        command_params = self._generate_command_context(user, text_preprocessing_result, params)
-
-        commands = [
-            Command(self.command, command_params, self.id, request_type="kafka", request_data=self.request_data)
-        ]
+        commands = super().run(user, text_preprocessing_result, params)
         return commands
 
 
@@ -138,14 +134,14 @@ class RememberThisAction(StringAction):
     DEFAULT_KAFKA_KEY = "main"
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
-        self._nodes["root_nodes"] = {"protocolVersion": 3}
         items["command"] = REMEMBER_THIS
         super().__init__(items, id)
+        self.request_type = KAFKA
+        self._nodes["root_nodes"] = {"protocolVersion": 3}
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self._nodes["consumer"] = {"projectId": user.settings["template_settings"]["project_id"]}
-        self._nodes["root_nodes"] = {"protocolVersion": user.message.protocolVersion}
 
         self.request_data = {
             "topic_key": "client_info_remember",
@@ -153,9 +149,5 @@ class RememberThisAction(StringAction):
             "kafka_replyTopic": user.settings["template_settings"]["consumer_topic"]
         }
 
-        command_params = self._generate_command_context(user, text_preprocessing_result, params)
-
-        commands = [
-            Command(self.command, command_params, self.id, request_type="kafka", request_data=self.request_data)
-        ]
+        commands = super().run(user, text_preprocessing_result, params)
         return commands

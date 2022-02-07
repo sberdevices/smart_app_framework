@@ -9,6 +9,7 @@ health_check:
     - local
 monitoring:
   enabled: false
+  disabled_metrics: []
 masking_fields:
   - token
   - access_token

@@ -9,8 +9,6 @@ from smart_kit.names.message_names import ANSWER_TO_USER
 
 
 def combine_answer_to_user(commands: typing.List[Command]) -> Command:
-    from smart_kit.configs import get_app_config
-    config = get_app_config()
 
     answer = Command(name=ANSWER_TO_USER, request_data=commands[0].request_data, request_type=commands[0].request_type)
     summary_pronounce_text = []

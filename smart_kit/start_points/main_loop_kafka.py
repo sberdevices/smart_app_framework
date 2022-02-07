@@ -629,7 +629,7 @@ class MainLoop(BaseMainLoop):
             # TODO: remove "- time()" when framework will be modified to asyncio only
             # если колбеков много, разносим их на 1 секунду друг от друга во избежание коллизий
             when = expire_time_us - time.time() + i
-            log("%(class_name)s: adding local_timeout on callback %(callback_id)s with timeout in %(timeout)s seconds.",
+            log("%(class_name)s: adding local_timeout on callback %(callback_id)s with timeout in %(when)s seconds.",
                 params={log_const.KEY_NAME: "adding_local_timeout",
                         "class_name": self.__class__.__name__,
                         "callback_id": callback_id,

@@ -1,5 +1,6 @@
-from core.utils.stats_timer import StatsTimer
 from unittest import TestCase
+
+from core.utils.stats_timer import StatsTimer
 
 
 class TestStatsTimer(TestCase):

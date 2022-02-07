@@ -53,10 +53,7 @@ class BaseMainLoop:
             self.user_save_collisions_tries = max(save_tries, 1)
 
             self.health_check_server = self._create_health_check_server(template_settings)
-            if not template_settings["monitoring"].get("enabled"):
-                monitoring.turn_off()
-            else:
-                smart_kit_metrics.init_metrics(app_name=self.app_name)
+            self._init_monitoring_config(template_settings)
 
             log("%(class_name)s.__init__ completed.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                                         "class_name": self.__class__.__name__})
@@ -90,6 +87,12 @@ class BaseMainLoop:
                 settings["environment"] in health_check.get("debug_envs", [])
             )
         return health_check_server
+
+    def _init_monitoring_config(self, template_settings):
+        monitoring_config = template_settings["monitoring"]
+        monitoring.apply_config(monitoring_config)
+        smart_kit_metrics.apply_config(monitoring_config)
+        smart_kit_metrics.init_metrics(app_name=self.app_name)
 
     def load_user(self, db_uid, message):
         db_data = None

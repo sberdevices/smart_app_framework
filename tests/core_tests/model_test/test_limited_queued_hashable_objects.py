@@ -2,7 +2,6 @@
 import unittest
 
 from core.model.queued_objects.limited_queued_hashable_objects import LimitedQueuedHashableObjects
-
 from core.model.queued_objects.limited_queued_hashable_objects_description import \
     LimitedQueuedHashableObjectsDescription
 

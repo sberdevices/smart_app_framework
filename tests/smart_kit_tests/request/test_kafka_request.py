@@ -1,6 +1,7 @@
 # coding: utf-8
 import unittest
 from unittest.mock import Mock
+
 from smart_kit.request import kafka_request
 
 

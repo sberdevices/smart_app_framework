@@ -28,12 +28,12 @@ class GiveMeMemoryAction(StringAction):
             },
             "profileEmployee": {
                 "type": "unified_template",
-                "template": "{{ example }}"
+                "template": "{{ 0 }}",
                 "loader": "json"
             },
             "tokenType": {
                 "type": "unified_template",
-                "template": "{{ example }}",
+                "template": "{{ 0 }}",
                 "loader": "json"
             }
         }
@@ -79,7 +79,7 @@ class RememberThisAction(StringAction):
         "nodes": {
           "clientIds": {
             "type": "unified_template",
-            "template": "{{ example }}"
+            "template": "{{ 0 }}",
             "loader": "json"
           },
           "memory": [
@@ -98,19 +98,19 @@ class RememberThisAction(StringAction):
                               "$eq": "run_app"
                             },
                             "surface": {
-                              "$eq": "{{ example }}"
+                              "$eq": "{{ 0 }}"
                             },
                             "channel": {
-                              "$eq": "{{ channel }}"
+                              "$eq": "{{ 0 }}"
                             },
                             "projectId": {
-                              "$eq": "{{current_app_info.project_id|default(\"\")}}"
+                              "$eq": "{{ 0 }}"
                             }
                           },
                           "updater": [
                             {
                               "$set": {
-                                "$.lastExecuteDateTime": "{{now()|strftime('%Y-%m-%d %H:%M:%S')}}"
+                                "$.lastExecuteDateTime": "{{ 0 }}"
                               }
                             },
                             {

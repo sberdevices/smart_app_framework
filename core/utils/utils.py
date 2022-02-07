@@ -1,13 +1,17 @@
 # coding=utf-8
 import datetime
+import gc
 import json
 import os
 import re
+import weakref
 
 from collections import OrderedDict
 from math import isnan, isinf
 from typing import Optional
 from time import time
+
+from scenarios.user.user_model import User
 
 
 def convert_version_to_list_of_int(version):
@@ -126,3 +130,9 @@ def current_time_ms():
 
 def time_check(begin_time, reject_timeout):
     return current_time_ms() - begin_time <= reject_timeout if begin_time is not None else True
+
+def get_user_number():
+    return sum(
+        not isinstance(o, weakref.ProxyType) and isinstance(o, User)
+        for o in gc.get_objects()
+    )

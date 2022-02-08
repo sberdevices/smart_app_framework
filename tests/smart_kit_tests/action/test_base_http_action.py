@@ -11,8 +11,14 @@ class BaseHttpRequestActionTest(unittest.TestCase):
     @staticmethod
     def set_request_mock_attribute(request_mock, return_value=None):
         return_value = return_value or {}
-        request_mock.return_value = Mock(__enter__=Mock(return_value=Mock(json=Mock(return_value=return_value))),
-                                         __exit__=Mock())
+        request_mock.return_value = Mock(
+            __enter__=Mock(return_value=Mock(
+                json=Mock(return_value=return_value),
+                cookies={},
+                headers={},
+            ),),
+            __exit__=Mock()
+        )
 
     @patch('requests.request')
     def test_simple_request(self, request_mock: Mock):
@@ -70,8 +76,14 @@ class AsyncBaseHttpRequestActionTest(unittest.IsolatedAsyncioTestCase):
     @staticmethod
     def set_request_mock_attribute(request_mock, return_value=None):
         return_value = return_value or {}
-        request_mock.return_value = Mock(__aenter__=AsyncMock(return_value=Mock(json=AsyncMock(return_value=return_value))),
-                                         __aexit__=AsyncMock())
+        request_mock.return_value = Mock(
+            __aenter__=AsyncMock(return_value=Mock(
+                json=AsyncMock(return_value=return_value),
+                cookies={},
+                headers={},
+            ),),
+            __aexit__=AsyncMock()
+        )
 
     @patch('aiohttp.request')
     async def test_simple_request(self, request_mock: Mock):

@@ -8,7 +8,8 @@ class BaseHttpRequestActionTest(unittest.TestCase):
     def setUp(self):
         self.user = Mock(parametrizer=Mock(collect=lambda *args, **kwargs: {}))
 
-    def set_request_mock_attribute(self, request_mock, return_value=None):
+    @staticmethod
+    def set_request_mock_attribute(request_mock, return_value=None):
         return_value = return_value or {}
         request_mock.return_value = Mock(__enter__=Mock(return_value=Mock(json=Mock(return_value=return_value))),
                                          __exit__=Mock())
@@ -66,7 +67,8 @@ class AsyncBaseHttpRequestActionTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.user = Mock(parametrizer=Mock(collect=lambda *args, **kwargs: {}))
 
-    def set_request_mock_attribute(self, request_mock, return_value=None):
+    @staticmethod
+    def set_request_mock_attribute(request_mock, return_value=None):
         return_value = return_value or {}
         request_mock.return_value = Mock(__aenter__=AsyncMock(return_value=Mock(json=AsyncMock(return_value=return_value))),
                                          __aexit__=AsyncMock())

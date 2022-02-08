@@ -1,8 +1,6 @@
 from core.logging.logger_constants import KEY_NAME
 from core.logging.logger_utils import log
-from core.monitoring.monitoring import monitoring
-
-from prometheus_client import Counter
+from core.monitoring.monitoring import Monitoring
 
 
 def _filter_monitoring_msg(msg):
@@ -10,17 +8,24 @@ def _filter_monitoring_msg(msg):
     return msg
 
 
+class MetricDisabled(ValueError):
+    pass
+
+
 def silence_it(func):
     def wrap(*args, **kwargs):
         try:
             func(*args, **kwargs)
+        except MetricDisabled as error:
+            log(f"Metrics: {error}",
+                params={KEY_NAME: "metrics_disabled"}, level="DEBUG")
         except:
             log("Metrics: Failed send. Exception occurred.",
-                          params={KEY_NAME: "metrics_fail"}, level="ERROR", exc_info=True)
+                params={KEY_NAME: "metrics_fail"}, level="ERROR", exc_info=True)
     return wrap
 
 
-class Metrics:
+class Metrics(Monitoring):
 
     @silence_it
     def init_metrics(self, app_name):
@@ -34,10 +39,9 @@ class Metrics:
                                             "Incoming message validation error.")
 
     def _get_or_create_counter(self, monitoring_msg, descr, labels=()):
-        counter = getattr(self, monitoring_msg, None)
-        if not counter:
-            counter = Counter(monitoring_msg, descr, labels)
-            setattr(self, monitoring_msg, counter)
+        counter = self.get_counter(monitoring_msg, descr, labels)
+        if counter is None:
+            raise MetricDisabled('counter disabled')
         return counter
 
     @silence_it
@@ -47,7 +51,6 @@ class Metrics:
         c = self._get_or_create_counter(monitoring_msg, "Count of incoming messages",
                                         ['message_name', 'handler', 'project_id', 'system_name', 'application_id',
                                          'app_version_id', 'channel', 'surface'])
-
         if app_info is not None:
             project_id = app_info.project_id
             system_name = app_info.system_name
@@ -179,22 +182,22 @@ class Metrics:
     @silence_it
     def sampling_load_time(self, app_name, value):
         monitoring_msg = "{}_load_time".format(app_name)
-        monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
+        self.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
 
     @silence_it
     def sampling_script_time(self, app_name, value):
         monitoring_msg = "{}_script_time".format(app_name)
-        monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
+        self.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
 
     @silence_it
     def sampling_save_time(self, app_name, value):
         monitoring_msg = "{}_save_time".format(app_name)
-        monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
+        self.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
 
     @silence_it
     def sampling_mq_waiting_time(self, app_name, value):
         monitoring_msg = "{}_mq_waiting_time".format(app_name)
-        monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
+        self.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
 
 
 smart_kit_metrics = Metrics()

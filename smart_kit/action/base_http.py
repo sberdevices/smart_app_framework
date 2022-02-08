@@ -43,7 +43,7 @@ class BaseHttpRequestAction(NodeAction):
     @staticmethod
     def _check_headers_validity(headers: Dict[str, Any]) -> Dict[str, str]:
         for header_name, header_value in headers.items():
-            if not isinstance(header_value, str) or not isinstance(header_value, bytes):
+            if not isinstance(header_value, (str, bytes)):
                 headers[header_name] = str(header_value)
         return headers
 

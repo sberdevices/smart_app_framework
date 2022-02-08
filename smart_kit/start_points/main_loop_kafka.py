@@ -10,7 +10,6 @@ import signal
 import time
 import concurrent.futures
 import tracemalloc
-from collections import namedtuple
 from functools import lru_cache
 
 from confluent_kafka.cimpl import KafkaException
@@ -20,13 +19,11 @@ import scenarios.logging.logger_constants as log_const
 from core.logging.logger_utils import log, UID_STR, MESSAGE_ID_STR
 
 from core.message.from_message import SmartAppFromMessage
-from core.model.heapq.heapq_storage import HeapqKV
 from core.mq.kafka.async_kafka_publisher import AsyncKafkaPublisher
 from core.mq.kafka.kafka_consumer import KafkaConsumer
 from core.utils.memstats import get_top_malloc
 from core.utils.stats_timer import StatsTimer
 from core.basic_models.actions.command import Command
-from core.utils.utils import get_user_number
 from smart_kit.compatibility.commands import combine_commands
 from smart_kit.message.get_to_message import get_to_message
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
@@ -92,12 +89,6 @@ class MainLoop(BaseMainLoop):
             self.publishers = publishers
             self.concurrent_messages = 0
 
-            # Missing in DP
-            self.behaviors_timeouts_value_cls = namedtuple('behaviors_timeouts_value',
-                                                           'db_uid, callback_id, mq_message, kafka_key')
-            self.behaviors_timeouts = HeapqKV(value_to_key_func=lambda val: val.callback_id)
-            # End: Missing in DP
-
             log("%(class_name)s.__init__ completed.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
                                                               "class_name": self.__class__.__name__})
         except Exception:
@@ -142,7 +133,7 @@ class MainLoop(BaseMainLoop):
     async def process_consumer(self, kafka_key):
         consumer = self.consumers[kafka_key]
         loop = asyncio.get_event_loop()
-        max_concurrent_messages = self.template_settings.get("max_concurrent_messages", 1)
+        max_concurrent_messages = self.template_settings.get("max_concurrent_messages", 100)
         total_messages = 0
 
         profiling_settings = self.template_settings.get("profiling", {})
@@ -169,7 +160,6 @@ class MainLoop(BaseMainLoop):
                     log(
                         f"Total memory: {top}; "
                         f"Async: {async_values} = {sum(async_counts)}; "
-                        f"User number: {get_user_number()}; "
                         f"Trash: {gc.get_count()} ",
                         level="DEBUG"
                     )
@@ -434,7 +424,6 @@ class MainLoop(BaseMainLoop):
                     break
 
                 db_uid = message.db_uid
-
                 with StatsTimer() as load_timer:
                     user = await self.load_user(db_uid, message)
                 self.check_message_key(message, mq_message.key(), user)
@@ -625,18 +614,17 @@ class MainLoop(BaseMainLoop):
         return self.settings["template_settings"].get("masking_fields")
 
     def save_behavior_timeouts(self, user, mq_message, kafka_key):
-        for i, (expire_time_us, callback_id) in enumerate(user.behaviors.get_behavior_timeouts()):
-            # TODO: remove "- time()" when framework will be modified to asyncio only
+        for i, (behavior_delay, callback_id) in enumerate(user.behaviors.get_behavior_timeouts()):
             # если колбеков много, разносим их на 1 секунду друг от друга во избежание коллизий
-            when = expire_time_us - time.time() + i
-            log("%(class_name)s: adding local_timeout on callback %(callback_id)s with timeout in %(when)s seconds.",
+            delay = behavior_delay + i
+            log("%(class_name)s: adding local_timeout on callback %(callback_id)s with delay in %(delay)s seconds.",
                 params={log_const.KEY_NAME: "adding_local_timeout",
                         "class_name": self.__class__.__name__,
                         "callback_id": callback_id,
-                        "when": when})
+                        "delay": delay})
 
             self._timers[callback_id] = self.loop.call_later(
-                when, self.loop.create_task,
+                delay, self.loop.create_task,
                 self.do_behavior_timeout(user.message.db_uid, callback_id, mq_message, kafka_key)
             )
 

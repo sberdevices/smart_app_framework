@@ -130,9 +130,3 @@ def current_time_ms():
 
 def time_check(begin_time, reject_timeout):
     return current_time_ms() - begin_time <= reject_timeout if begin_time is not None else True
-
-def get_user_number():
-    return sum(
-        not isinstance(o, weakref.ProxyType) and isinstance(o, User)
-        for o in gc.get_objects()
-    )

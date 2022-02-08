@@ -31,7 +31,7 @@ class HTTPRequestAction(Action):
 
     def preprocess(self, user, text_processing, params):
         behavior_description = user.descriptions["behaviors"][self.behavior]
-        self.http_action.method_params.setdefault("timeout"), behavior_description.timeout(user)
+        self.http_action.method_params.setdefault("timeout", behavior_description.timeout(user))
 
     def process_result(self, result, user, text_preprocessing_result, params):
         behavior_description = user.descriptions["behaviors"][self.behavior]

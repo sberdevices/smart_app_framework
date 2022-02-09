@@ -4,7 +4,7 @@ from core.basic_models.actions.basic_actions import Action
 from core.basic_models.actions.command import Command
 from core.model.base_user import BaseUser
 from core.text_preprocessing.base import BaseTextPreprocessingResult
-from smart_kit.action.base_http import BaseHttpRequestAction, AsyncBaseHttpRequestAction
+from smart_kit.action.base_http import BaseHttpRequestAction
 
 
 class HTTPRequestAction(Action):
@@ -48,15 +48,4 @@ class HTTPRequestAction(Action):
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self.preprocess(user, text_preprocessing_result, params)
         result = self.http_action.run(user, text_preprocessing_result, params)
-        return self.process_result(result, user, text_preprocessing_result, params)
-
-
-class AsyncHTTPRequestAction(HTTPRequestAction):
-    HTTP_ACTION = AsyncBaseHttpRequestAction
-
-    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
-        self.preprocess(user, text_preprocessing_result, params)
-        self.http_action: AsyncHTTPRequestAction
-        result = await self.http_action.run(user, text_preprocessing_result, params)
         return self.process_result(result, user, text_preprocessing_result, params)

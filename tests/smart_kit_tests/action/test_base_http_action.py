@@ -1,7 +1,7 @@
 import unittest
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, patch
 
-from smart_kit.action.base_http import BaseHttpRequestAction, AsyncBaseHttpRequestAction
+from smart_kit.action.base_http import BaseHttpRequestAction
 
 
 class BaseHttpRequestActionTest(unittest.TestCase):
@@ -67,33 +67,3 @@ class BaseHttpRequestActionTest(unittest.TestCase):
             "header_3": b"d32"
         })
         self.assertEqual(result, {})
-
-
-class AsyncBaseHttpRequestActionTest(unittest.IsolatedAsyncioTestCase):
-    def setUp(self):
-        self.user = Mock(parametrizer=Mock(collect=lambda *args, **kwargs: {}))
-
-    @staticmethod
-    def set_request_mock_attribute(request_mock, return_value=None):
-        return_value = return_value or {}
-        request_mock.return_value = Mock(
-            __aenter__=AsyncMock(return_value=Mock(
-                json=AsyncMock(return_value=return_value),
-                cookies={},
-                headers={},
-            ),),
-            __aexit__=AsyncMock()
-        )
-
-    @patch('aiohttp.request')
-    async def test_simple_request(self, request_mock: Mock):
-        self.set_request_mock_attribute(request_mock)
-        items = {
-            "method": "POST",
-            "url": "https://my.url.com",
-        }
-        result = await AsyncBaseHttpRequestAction(items).run(self.user, None, {})
-        request_mock.assert_called_with(url="https://my.url.com", method='POST')
-        self.assertEqual(result, {})
-
-

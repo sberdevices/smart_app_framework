@@ -5,7 +5,7 @@ from smart_kit.action.http import HTTPRequestAction
 from tests.smart_kit_tests.action.test_base_http_action import BaseHttpRequestActionTest
 
 
-class HttpRequestActionTest(unittest.TestCase):
+class HttpRequestActionTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.user = Mock(
             parametrizer=Mock(collect=lambda *args, **kwargs: {}),
@@ -16,8 +16,8 @@ class HttpRequestActionTest(unittest.TestCase):
             }
         )
 
-    @patch('requests.request')
-    def test_simple_request(self, request_mock: Mock):
+    @patch('aiohttp.request')
+    async def test_simple_request(self, request_mock: Mock):
         BaseHttpRequestActionTest.set_request_mock_attribute(request_mock, return_value={'data': 'value'})
         items = {
             "params": {
@@ -27,7 +27,7 @@ class HttpRequestActionTest(unittest.TestCase):
             "store": "user_variable",
             "behavior": "my_behavior",
         }
-        HTTPRequestAction(items).run(self.user, None, {})
+        await HTTPRequestAction(items).run(self.user, None, {})
         request_mock.assert_called_with(url="https://my.url.com", method='POST', timeout=3)
         self.assertTrue(self.user.descriptions["behaviors"]["my_behavior"].success_action.run.called)
         self.assertTrue(self.user.variables.set.called)

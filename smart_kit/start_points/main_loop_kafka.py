@@ -242,6 +242,7 @@ class MainLoop(BaseMainLoop):
                             "message_key": mq_message.key(),
                             "kafka_key": kafka_key,
                             "incoming_data": str(message.masked_value),
+                            "length": len(message.value),
                             "headers": str(mq_message.headers()),
                             "waiting_message": waiting_message_time,
                             "surface": message.device.surface,
@@ -408,7 +409,8 @@ class MainLoop(BaseMainLoop):
             params={log_const.KEY_NAME: "outgoing_message",
                     "topic_key": request.topic_key,
                     "headers": str(request._get_new_headers(original_mq_message)),
-                    "data": answer.masked_value}, user=user)
+                    "data": answer.masked_value,
+                    "length": len(answer.value)}, user=user)
 
     @lru_cache()
     def _topic_names_2_key(self, kafka_key):

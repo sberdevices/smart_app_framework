@@ -170,6 +170,7 @@ class SmartAppResources(BaseConfig):
         self.init_history_formatters()
         self.init_db_adapters()
         self.init_classifiers()
+        self.init_message_handlers()
 
     def init_field_requirements(self):
         frd.field_requirements[None] = frd.FieldRequirement

@@ -44,8 +44,8 @@ class HTTPRequestAction(Action):
             action = behavior_description.fail_action
         return action.run(user, text_preprocessing_result, None)
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self.preprocess(user, text_preprocessing_result, params)
-        result = self.http_action.run(user, text_preprocessing_result, params)
+        result = await self.http_action.run(user, text_preprocessing_result, params)
         return self.process_result(result, user, text_preprocessing_result, params)

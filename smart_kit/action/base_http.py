@@ -1,7 +1,7 @@
-import json
 from typing import Optional, Dict, Union, List, Any
 
-import requests
+import aiohttp
+import aiohttp.client_exceptions
 
 import core.logging.logger_constants as log_const
 from core.basic_models.actions.command import Command
@@ -49,19 +49,19 @@ class BaseHttpRequestAction(NodeAction):
                 headers[header_name] = str(header_value)
         return headers
 
-    def _make_response(self, request_parameters, user):
+    async def _make_response(self, request_parameters, user):
         try:
-            with requests.request(**request_parameters) as response:
+            async with aiohttp.request(**request_parameters) as response:
                 response.raise_for_status()
                 try:
-                    data = response.json()
-                except json.decoder.JSONDecodeError:
+                    data = await response.json()
+                except aiohttp.client_exceptions.ContentTypeError:
                     data = None
                 self._log_response(user, response, data)
                 return data
-        except requests.exceptions.Timeout:
+        except (aiohttp.ClientTimeout, aiohttp.ServerTimeoutError):
             self.error = self.TIMEOUT
-        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
+        except aiohttp.ClientError:
             self.error = self.CONNECTION
 
     def _get_requst_params(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
@@ -87,16 +87,15 @@ class BaseHttpRequestAction(NodeAction):
     def _log_response(self, user, response, data):
         log(f"{self.__class__.__name__}.run get https response ", user=user, params={
             'headers': dict(response.headers),
-            'time': response.elapsed.microseconds,
             'cookie': {i.name: i.value for i in response.cookies},
-            'status': response.status_code,
+            'status': response.status,
             'data': data,
             log_const.KEY_NAME: "got_http_response",
         })
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         params = params or {}
         request_parameters = self._get_requst_params(user, text_preprocessing_result, params)
         self._log_request(user, request_parameters)
-        return self._make_response(request_parameters, user)
+        return await self._make_response(request_parameters, user)

@@ -14,6 +14,7 @@ KAFKA = "kafka"
 class GiveMeMemoryAction(StringAction):
 
     """
+    Example::
     example: {
         "type": "give_me_memory",
         "behavior": "client_info_request",
@@ -74,6 +75,7 @@ class GiveMeMemoryAction(StringAction):
 class RememberThisAction(StringAction):
 
     """
+    Example::
     example: {
         "type": "remember",
         "nodes": {

@@ -57,7 +57,8 @@ from scenarios.actions.action import (
     ClearCurrentScenarioFormAction, ClearFormAction, ClearInnerFormAction, ClearScenarioByIdAction,
     ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction, FillFieldAction,
     RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
-    ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction
+    ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction,
+    ClearAllScenariosAction
 )
 from scenarios.actions.action import ProcessBehaviorAction, SelfServiceActionWithState, EmptyAction
 from scenarios.behaviors.behavior_descriptions import BehaviorDescriptions
@@ -276,6 +277,7 @@ class SmartAppResources(BaseConfig):
         actions["choice"] = ChoiceAction
         actions["choice_scenario"] = ChoiceScenarioAction
         actions["clear_current_scenario"] = ClearCurrentScenarioAction
+        actions["clear_all_scenarios"] = ClearAllScenariosAction
         actions["clear_current_scenario_form"] = ClearCurrentScenarioFormAction
         actions["clear_form_by_id"] = ClearFormAction
         actions["clear_inner_form_by_id"] = ClearInnerFormAction

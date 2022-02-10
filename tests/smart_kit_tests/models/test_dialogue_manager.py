@@ -17,16 +17,25 @@ class ModelsTest1(unittest.TestCase):
         self.test_user1.last_scenarios = PicklableMock()
         self.test_user1.last_scenarios.scenarios_names = []
         self.test_user1.message.payload = {"skillId": 1, "intent": 2}
+        self.test_user1.descriptions = {'external_actions': {}}
         self.test_user2 = PicklableMock()
         self.test_user2.name = "TestName"
         self.test_user2.last_scenarios = PicklableMock()
         self.test_user2.last_scenarios.scenarios_names = [1, 2]
         self.test_user2.message.payload = {"skillId": 1, "intent": 2}
+        self.test_user2.descriptions = {'external_actions': {}}
         self.test_user3 = PicklableMock()
         self.test_user3.name = "TestName"
         self.test_user3.last_scenarios = PicklableMock()
         self.test_user3.last_scenarios.scenarios_names = [1]
         self.test_user3.message.payload = {"skillId": 1, "intent": 2}
+        self.test_user3.descriptions = {'external_actions': {}}
+        self.test_user4 = PicklableMock()
+        self.test_user4.name = "TestName"
+        self.test_user4.last_scenarios = PicklableMock()
+        self.test_user4.last_scenarios.scenarios_names = []
+        self.test_user4.message.payload = {"skillId": 1, "intent": 2}
+        self.test_user4.descriptions = {'external_actions': {'before_action': PicklableMock()}}
         self.test_text_preprocessing_result = PicklableMock()
         self.test_text_preprocessing_result.name = "Result"
         self.test_scenario1 = PicklableMock()
@@ -85,6 +94,10 @@ class ModelsTest1(unittest.TestCase):
         self.assertTrue(obj1.run(self.test_text_preprocessing_result, self.test_user2) == ("TestNameResult", True))
         # случай, когда 2-е условие не выполнено
         self.assertTrue(obj2.run(self.test_text_preprocessing_result, self.test_user3) == ('TestNameResult', True))
+
+        # проверка на вызов before_action, если такой задан в external_actions
+        obj2.run(self.test_text_preprocessing_result, self.test_user4)
+        self.assertTrue(self.test_user4.descriptions['external_actions']['before_action'].run.called)
 
     def test_dialogue_manager_run_scenario(self):
         obj = dialogue_manager.DialogueManager({'scenarios': self.test_scenarios,

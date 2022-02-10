@@ -123,7 +123,7 @@ class BaseMainLoop:
 
             no_collisions = True
             try:
-                str_data = user.raw
+                str_data = user.raw_str
                 if user.initial_db_data and self.user_save_check_for_collisions:
                     no_collisions = self.db_adapter.replace_if_equals(db_uid,
                                                                       sample=user.initial_db_data,

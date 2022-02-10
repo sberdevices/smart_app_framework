@@ -5,40 +5,40 @@ from core.basic_models.actions.string_actions import StringAction
 from core.text_preprocessing.base import BaseTextPreprocessingResult
 from core.utils.pickle_copy import pickle_deepcopy
 from scenarios.user.user_model import User
+from core.configs.global_constants import KAFKA
 
 GIVE_ME_MEMORY = "GIVE_ME_MEMORY"
 REMEMBER_THIS = "REMEMBER_THIS"
-KAFKA = "kafka"
 
 
 class GiveMeMemoryAction(StringAction):
 
     """
     Example::
-    example: {
-        "type": "give_me_memory",
-        "behavior": "client_info_request",
-        "nodes": {
-            "memory": {
-                "confidentialMemo": [
-                    "userAgreement"
-                ],
-                "projectPrivateMemo": [
-                    "character_{{message.uuid.userId}}"
-                ]
-            },
-            "profileEmployee": {
-                "type": "unified_template",
-                "template": "{{ 0 }}",
-                "loader": "json"
-            },
-            "tokenType": {
-                "type": "unified_template",
-                "template": "{{ 0 }}",
-                "loader": "json"
+        {
+            "type": "give_me_memory",
+            "behavior": "client_info_request",
+            "nodes": {
+                "memory": {
+                    "confidentialMemo": [
+                        "userAgreement"
+                    ],
+                    "projectPrivateMemo": [
+                        "character_{{message.uuid.userId}}"
+                    ]
+                },
+                "profileEmployee": {
+                    "type": "unified_template",
+                    "template": "{{ 0 }}",
+                    "loader": "json"
+                },
+                "tokenType": {
+                    "type": "unified_template",
+                    "template": "{{ 0 }}",
+                    "loader": "json"
+                }
             }
         }
-    }
     """
 
     DEFAULT_KAFKA_KEY = "main"
@@ -76,7 +76,7 @@ class RememberThisAction(StringAction):
 
     """
     Example::
-    example: {
+      {
         "type": "remember",
         "nodes": {
           "clientIds": {
@@ -130,7 +130,7 @@ class RememberThisAction(StringAction):
             }
           ]
         }
-    }
+      }
     """
 
     DEFAULT_KAFKA_KEY = "main"

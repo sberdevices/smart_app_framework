@@ -123,11 +123,7 @@ class BaseMainLoop:
 
             no_collisions = True
             try:
-                str_data = user.raw_without_log
-                log("Saving User %(uid)s. Serialized utf8 json length is %(user_length)s symbols.", user=user,
-                    params={"uid": user.id,
-                            log_const.KEY_NAME: "user_save",
-                            "user_length": len(str_data)})
+                str_data = user.raw
                 if user.initial_db_data and self.user_save_check_for_collisions:
                     no_collisions = self.db_adapter.replace_if_equals(db_uid,
                                                                       sample=user.initial_db_data,

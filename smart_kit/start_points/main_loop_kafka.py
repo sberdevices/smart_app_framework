@@ -405,8 +405,12 @@ class MainLoop(BaseMainLoop):
         self._log_request(user, request, answer, mq_message)
 
     def _log_request(self, user, request, answer, original_mq_message):
+        if request.topic_key is not None:
+            topic = request.topic_key
+        else:
+            topic = request.topic
         log("OUTGOING TO TOPIC_KEY: %(topic_key)s DATA: %(data)s",
-            params={log_const.KEY_NAME: "outgoing_message" + request.topic_key,
+            params={log_const.KEY_NAME: f"outgoing_message_{topic}",
                     "topic_key": request.topic_key,
                     "headers": str(request._get_new_headers(original_mq_message)),
                     "data": answer.masked_value,

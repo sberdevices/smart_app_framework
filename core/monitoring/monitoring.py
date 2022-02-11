@@ -1,12 +1,8 @@
 # coding: utf-8
 import re
 from abc import ABC, abstractmethod
-from collections import defaultdict
 from typing import Dict, Any, Union, Callable
-from time import time
 
-import aiohttp
-import requests
 from prometheus_client import Counter, Histogram
 
 COUNTER = "counter"
@@ -42,6 +38,9 @@ class MonitoringBase(ABC):
         pass
 
     def send(self):
+        pass
+
+    async def async_send(self):
         pass
 
     def apply_config(self, config: dict):
@@ -88,52 +87,6 @@ class MonitoringAdapterProm(MonitoringBase):
 
     def apply_config(self, config: dict):
         self.buckets = config.get("buckets", Histogram.DEFAULT_BUCKETS)
-
-
-class MonitoringAdapterUFS(MonitoringBase):
-    DEFAULT_URL = ""
-
-    def __init__(self):
-        self._monitoring_items = {
-            COUNTER: defaultdict(int),
-            HISTOGRAM: defaultdict(list)
-        }
-        self._url = self.DEFAULT_URL
-
-    def get_counter(self, name: str, description: str = None, labels=()):
-        counter: defaultdict[Any, int] = self._monitoring_items[COUNTER]
-        return counter[name]
-
-    def got_counter(self, name: str, description: str = None, labels=()):
-        counter: defaultdict[Any, int] = self._monitoring_items[COUNTER]
-        counter[name] += 1
-
-    def got_histogram(self, name: str, description: str = None, buckets=()):
-        def decorator(func):
-            def wrapper(*args, **kwargs):
-                start = time()
-                ret = func(*args, **kwargs)
-                end = time()
-
-                histogram: defaultdict[Any, list] = self._monitoring_items[HISTOGRAM]
-                histogram[name].append(end - start)
-
-                return ret
-            return wrapper
-        return decorator
-
-    def got_histogram_observe(self, name, value, description: str = None, buckets=()):
-        histogram: defaultdict[Any, list] = self._monitoring_items[HISTOGRAM]
-        histogram[name].append(value)
-
-    def apply_config(self, config: dict):
-        self._url = config.get("enabled", self.DEFAULT_URL)
-
-    def send(self):
-        metrics = [{'metric': name, 'type': COUNTER, 'value': [value]} for name, value in self._monitoring_items[COUNTER].items()] + \
-                  [{'metric': name, 'type': HISTOGRAM, 'value': value} for name, value in self._monitoring_items[HISTOGRAM].items()]
-        # requests now, aiohttp needs tests on async kafka
-        requests.post("http://ptsv2.com/t/tkw9y-1644243206/post", json={'metrics': metrics})
 
 
 class MonitoringProxy(MonitoringBase):

@@ -457,6 +457,7 @@ class MainLoop(BaseMainLoop):
 
         monitoring.send()
         consumer.commit_offset(mq_message)
+        asyncio.create_task(monitoring.async_send())
         if message_handled_ok:
             self.remove_timer(message)
 

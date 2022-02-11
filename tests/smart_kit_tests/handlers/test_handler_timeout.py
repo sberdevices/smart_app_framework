@@ -26,7 +26,7 @@ class HandlerTest2(unittest.IsolatedAsyncioTestCase):
         self.test_user.message.device.surface = "surface"
 
         self.test_user.behaviors = Mock('behaviors')
-        self.test_user.behaviors.timeout = lambda x: 120
+        self.test_user.behaviors.timeout = mock_behaviors_timeout
         self.test_user.behaviors.has_callback = lambda *x, **y: PicklableMagicMock()
         self.test_user.behaviors.get_callback_action_params = lambda *x, **y: {}
         self.test_payload = Mock('payload')

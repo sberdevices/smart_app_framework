@@ -174,6 +174,6 @@ class TreeScenario(FormFillingScenario):
         reply_commands.extend(_command)
 
         if not reply_commands:
-            reply_commands = self.get_no_commands_action(user, text_preprocessing_result)
+            reply_commands = await self.get_no_commands_action(user, text_preprocessing_result)
 
         return reply_commands

@@ -44,8 +44,8 @@ class GiveMeMemoryAction(StringAction):
     DEFAULT_KAFKA_KEY = "main"
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
-        items["command"] = GIVE_ME_MEMORY
         super().__init__(items, id)
+        self.command = GIVE_ME_MEMORY
         self.request_type = KAFKA
         self.behavior = items.get("behavior")
         self._nodes["root_nodes"] = {"protocolVersion": 1}

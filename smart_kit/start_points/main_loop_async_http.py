@@ -9,6 +9,7 @@ import scenarios.logging.logger_constants as log_const
 from core.db_adapter.db_adapter import DBAdapterException, db_adapter_factory
 from core.logging.logger_utils import log
 from core.message.from_message import SmartAppFromMessage
+from core.monitoring.monitoring import monitoring
 from core.utils.stats_timer import StatsTimer
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.start_points.main_loop_http import BaseHttpMainLoop
@@ -159,6 +160,7 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
             await self.save_user(db_uid, user, message)
         stats += "Saving time: {} msecs\n".format(save_timer.msecs)
         log(stats, params={log_const.KEY_NAME: "timings"})
+        asyncio.create_task(monitoring.async_send())
         return answer, stats, user
 
     async def get_health_check(self, request: aiohttp.web.Request):

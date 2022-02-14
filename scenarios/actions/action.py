@@ -426,6 +426,13 @@ class ClearCurrentScenarioAction(Action):
             self._clear_scenario(user, last_scenario_id)
 
 
+class ClearAllScenariosAction(Action):
+
+    async def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
+            params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
+        user.last_scenarios.clear_all()
+
+
 class ClearScenarioByIdAction(ClearCurrentScenarioAction):
     version: Optional[int]
     parametrizer: BasicParametrizer

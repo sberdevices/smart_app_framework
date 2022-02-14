@@ -6,17 +6,18 @@ from collections import namedtuple
 from unittest.mock import Mock, AsyncMock
 
 import scenarios.behaviors.behaviors
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class BehaviorsTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
-        self.user = Mock()
-        self.user.settings = Mock()
+        self.user = PicklableMock()
+        self.user.settings = PicklableMock()
         self.user.settings.app_name = "app_name"
         self.user.local_vars.values = {"test_local_var_key": "test_local_var_value"}
-        self.description = Mock()
+        self.description = PicklableMock()
         self.description.timeout = Mock(return_value=10)
-        self.success_action = Mock()
+        self.success_action = PicklableMock()
         self.success_action.run = AsyncMock()
         self.fail_action = AsyncMock()
         self.timeout_action = AsyncMock()
@@ -140,7 +141,7 @@ class BehaviorsTest(unittest.IsolatedAsyncioTestCase):
         scenario_id = "test_scen"
         item = {"behavior_id": behavior_id, "expire_time": 1548079039, "scenario_id": scenario_id}
         items = {str(callback_id): item}
-        self.user.last_scenarios = Mock()
+        self.user.last_scenarios = PicklableMock()
         self.user.last_scenarios.last_scenario_name = "test_scen2"
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
         behaviors.initialize()
@@ -152,7 +153,7 @@ class BehaviorsTest(unittest.IsolatedAsyncioTestCase):
         scenario_id = "test_scen"
         item = {"behavior_id": behavior_id, "expire_time": 1548079039, "scenario_id": scenario_id}
         items = {str(callback_id): item}
-        self.user.last_scenarios = Mock()
+        self.user.last_scenarios = PicklableMock()
         self.user.last_scenarios.last_scenario_name = "test_scen"
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
         behaviors.initialize()

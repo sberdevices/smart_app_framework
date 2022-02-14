@@ -28,27 +28,23 @@ class DialogueManager:
         return self.actions.get(self.NOTHING_FOUND_ACTION) or NothingFoundAction()
 
     async def run(self, text_preprocessing_result, user):
+        before_action = user.descriptions["external_actions"].get("before_action")
+        if before_action:
+            params = user.parametrizer.collect(text_preprocessing_result)
+            before_action.run(user, text_preprocessing_result, params)
         scenarios_names = user.last_scenarios.scenarios_names
         scenario_key = user.message.payload[field.INTENT]
-
         if scenario_key in scenarios_names:
             scenario = self.scenarios[scenario_key]
             is_form_filling = isinstance(scenario, FormFillingScenario)
-
             if is_form_filling:
-                params = user.parametrizer.collect(text_preprocessing_result)
-
                 if not await scenario.text_fits(text_preprocessing_result, user):
-
+                    params = user.parametrizer.collect(text_preprocessing_result)
                     if await scenario.check_ask_again_requests(text_preprocessing_result, user, params):
                         reply = await scenario.ask_again(text_preprocessing_result, user, params)
-
                         return reply, True
-
                     smart_kit_metrics.counter_nothing_found(self.app_name, scenario_key, user)
-
                     return await self._nothing_found_action.run(user, text_preprocessing_result), False
-
         return await self.run_scenario(scenario_key, text_preprocessing_result, user), True
 
     async def run_scenario(self, scen_id, text_preprocessing_result, user):

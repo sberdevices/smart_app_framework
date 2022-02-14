@@ -1,14 +1,16 @@
 from unittest import TestCase
-from unittest.mock import Mock, MagicMock
+from unittest.mock import Mock
 
 from scenarios.scenario_models.field.field import QuestionField
+from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock
 
 
 class TestField(TestCase):
     def test_1(self):
         expected = "my_value"
-        mock_user = Mock()
-        description = Mock()
+        mock_user = PicklableMock()
+        mock_user.settings = {"template_settings": {}}
+        description = PicklableMock()
         lifetime = 10
         items = {"value": expected, "available": False}
         field = QuestionField(description, items, mock_user, lifetime)
@@ -18,9 +20,10 @@ class TestField(TestCase):
 
     def test_2(self):
         expected = "my_value"
-        mock_user = Mock()
+        mock_user = PicklableMock()
+        mock_user.settings = {"template_settings": {}}
 
-        description = Mock()
+        description = PicklableMock()
         description.need_load_context = False
         description.default_value = expected
 
@@ -33,13 +36,14 @@ class TestField(TestCase):
 
     def test_3(self):
         expected = "prev_value"
-        mock_user = Mock()
-        mock_user.last_fields = MagicMock()
-        value_mock = Mock()
+        mock_user = PicklableMock()
+        mock_user.last_fields = PicklableMagicMock()
+        value_mock = PicklableMock()
         value_mock.value = "prev_value"
         mock_user.last_fields.__getitem__.return_value = value_mock
+        mock_user.settings = {"template_settings": {}}
 
-        description = Mock()
+        description = PicklableMock()
         description.need_load_context = True
         description.id = 5
 
@@ -52,13 +56,14 @@ class TestField(TestCase):
 
     def test_4(self):
         expected = "my_value"
-        mock_user = Mock()
-        mock_user.last_fields = MagicMock()
-        value_mock = Mock()
+        mock_user = PicklableMock()
+        mock_user.last_fields = PicklableMagicMock()
+        value_mock = PicklableMock()
         value_mock.value = None
         mock_user.last_fields.__getitem__.return_value = value_mock
+        mock_user.settings = {"template_settings": {}}
 
-        description = Mock()
+        description = PicklableMock()
         description.need_load_context = True
         description.id = 5
         description.default_value = expected
@@ -72,7 +77,7 @@ class TestField(TestCase):
 
     def test_5_1(self):
         mock_user = None
-        description = Mock()
+        description = PicklableMock()
         lifetime = 10
         items = {"value": "my_value", "available": True}
         field = QuestionField(description, items, mock_user, lifetime)
@@ -85,6 +90,7 @@ class TestField(TestCase):
         description = Mock(default_value=None)
         description.id = 1
         mock_user.last_fields = {description.id: Mock(value=None)}
+        mock_user.settings = {"template_settings": {}}
 
         description.required = False
         lifetime = 10
@@ -94,11 +100,12 @@ class TestField(TestCase):
         self.assertTrue(field.valid)
 
     def test_5_3(self):
-        mock_user = Mock()
+        mock_user = PicklableMock()
 
         description = Mock(default_value=None)
         description.id = 1
         mock_user.last_fields = {description.id: Mock(value=None)}
+        mock_user.settings = {"template_settings": {}}
         lifetime = 10
         items = {"available": True}
         field = QuestionField(description, items, mock_user, lifetime)
@@ -109,7 +116,7 @@ class TestField(TestCase):
         expected = {"value": "my_value", "available": True}
 
         mock_user = None
-        description = Mock()
+        description = PicklableMock()
         description.default_value = "some_value"
         description.available = False
         lifetime = 10
@@ -123,7 +130,7 @@ class TestField(TestCase):
         expected = {"value": "my_value"}
 
         mock_user = None
-        description = Mock()
+        description = PicklableMock()
         description.default_value = "some_value"
         description.available = True
         lifetime = 10
@@ -136,7 +143,7 @@ class TestField(TestCase):
     def test_6_3(self):
         expected = {}
         mock_user = None
-        description = Mock()
+        description = PicklableMock()
         description.default_value = "some_value"
         description.available = True
         lifetime = 10
@@ -149,7 +156,7 @@ class TestField(TestCase):
     def test_7_1(self):
         expected = "my_value"
         mock_user = None
-        description = Mock()
+        description = PicklableMock()
         description.default_value = "some_value"
         description.available = False
         lifetime = 10
@@ -163,7 +170,7 @@ class TestField(TestCase):
     def test_7_2(self):
         expected = "some_value"
         mock_user = None
-        description = Mock()
+        description = PicklableMock()
         description.default_value = "some_value"
         description.available = True
         description.need_save_context = False
@@ -179,14 +186,14 @@ class TestField(TestCase):
     def test_7_3(self):
         expected = "some_value"
 
-        mock_value = Mock()
+        mock_value = PicklableMock()
         mock_value.value = None
 
-        mock_user = MagicMock()
-        mock_user.last_fields = MagicMock()
+        mock_user = PicklableMagicMock()
+        mock_user.last_fields = PicklableMagicMock()
         mock_user.last_fields.__getitem__.return_value = mock_value
 
-        description = Mock()
+        description = PicklableMock()
         description.id = 5
         description.default_value = expected
         description.available = True
@@ -204,7 +211,7 @@ class TestField(TestCase):
     def test_7_4(self):
         expected = "my_value"
         mock_user = None
-        description = Mock()
+        description = PicklableMock()
         description.default_value = "some_value"
         description.available = True
         description.need_save_context = False
@@ -220,7 +227,7 @@ class TestField(TestCase):
 
     def test_set_available(self):
         mock_user = None
-        description = Mock()
+        description = PicklableMock()
         description.default_value = "some_value"
         description.available = True
         lifetime = 10
@@ -231,7 +238,7 @@ class TestField(TestCase):
 
     def test_set_unavailable(self):
         mock_user = None
-        description = Mock()
+        description = PicklableMock()
         description.default_value = "some_value"
         description.available = False
         lifetime = 10

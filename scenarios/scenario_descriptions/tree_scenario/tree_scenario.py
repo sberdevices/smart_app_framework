@@ -1,5 +1,4 @@
 # coding: utf-8
-from lazy import lazy
 from typing import Dict, Any
 
 from scenarios.scenario_descriptions.form_filling_scenario import FormFillingScenario
@@ -84,7 +83,7 @@ class TreeScenario(FormFillingScenario):
                 all_forms_fields.update(form_field_data)
         return all_forms_fields
 
-    @monitoring.got_histogram("scenario_time")
+    @monitoring.got_histogram_decorate("scenario_time")
     async def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
         main_form = self._get_form(user)
         user.last_scenarios.add(self.id, text_preprocessing_result)
@@ -174,6 +173,6 @@ class TreeScenario(FormFillingScenario):
         reply_commands.extend(_command)
 
         if not reply_commands:
-            reply_commands = self.get_no_commands_action(user, text_preprocessing_result)
+            reply_commands = await self.get_no_commands_action(user, text_preprocessing_result)
 
         return reply_commands

@@ -12,6 +12,7 @@ from core.basic_models.actions.counter_actions import CounterIncrementAction, Co
     CounterClearAction, CounterSetAction, CounterCopyAction
 from core.basic_models.actions.external_actions import ExternalAction
 from core.basic_models.actions.external_actions import ExternalActions
+from core.basic_models.actions.push_action import PushAction, PUSH_NOTIFY
 from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAction, SDKAnswer, \
     SDKAnswerToUser
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
@@ -22,7 +23,8 @@ from core.basic_models.classifiers.external_classifiers import ExternalClassifie
 from core.basic_models.requirement.basic_requirements import requirement_factory, IntersectionRequirement
 from core.basic_models.requirement.basic_requirements import requirements, Requirement, AndRequirement, \
     OrRequirement, NotRequirement, TemplateRequirement, RandomRequirement, TimeRequirement, DateTimeRequirement, \
-    ClassifierRequirement, FormFieldValueRequirement, EnvironmentRequirement
+    ClassifierRequirement, FormFieldValueRequirement, EnvironmentRequirement, CharacterIdRequirement, \
+    FeatureToggleRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.external_requirements import ExternalRequirement
@@ -53,7 +55,8 @@ from scenarios.actions.action import (
     ClearCurrentScenarioFormAction, ClearFormAction, ClearInnerFormAction, ClearScenarioByIdAction,
     ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction, FillFieldAction,
     RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
-    ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction
+    ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction,
+    ClearAllScenariosAction
 )
 from scenarios.actions.action import ProcessBehaviorAction, SelfServiceActionWithState, EmptyAction
 from scenarios.behaviors.behavior_descriptions import BehaviorDescriptions
@@ -84,6 +87,8 @@ from scenarios.user.last_scenarios.last_scenarios_descriptions import LastScenar
 from scenarios.user.preprocessing_messages.preprocessing_messages_description import \
     PreprocessingMessagesDescription
 from smart_kit.action.http import HTTPRequestAction
+from smart_kit.message.get_to_message import to_messages
+from smart_kit.message.smart_app_push_message import SmartAppPushToMessage
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
 
 from core.db_adapter.aioredis_sentinel_adapter import AIORedisSentinelAdapter
@@ -163,6 +168,7 @@ class SmartAppResources(BaseConfig):
         self.init_history_formatters()
         self.init_db_adapters()
         self.init_classifiers()
+        self.init_message_handlers()
 
     def init_field_requirements(self):
         frd.field_requirements[None] = frd.FieldRequirement
@@ -269,6 +275,7 @@ class SmartAppResources(BaseConfig):
         actions["choice"] = ChoiceAction
         actions["choice_scenario"] = ChoiceScenarioAction
         actions["clear_current_scenario"] = ClearCurrentScenarioAction
+        actions["clear_all_scenarios"] = ClearAllScenariosAction
         actions["clear_current_scenario_form"] = ClearCurrentScenarioFormAction
         actions["clear_form_by_id"] = ClearFormAction
         actions["clear_inner_form_by_id"] = ClearInnerFormAction
@@ -302,6 +309,7 @@ class SmartAppResources(BaseConfig):
         actions["set_local_variable"] = SetLocalVariableAction
         actions["set_variable"] = SetVariableAction
         actions["string"] = StringAction
+        actions["push"] = PushAction
 
     def init_requirements(self):
         requirements[None] = Requirement
@@ -312,12 +320,14 @@ class SmartAppResources(BaseConfig):
         requirements["ask_again_exist"] = AskAgainExistRequirement
         requirements["capabilities_property_available"] = dr.CapabilitiesPropertyAvailableRequirement
         requirements["channel"] = ChannelRequirement
+        requirements["character_id"] = CharacterIdRequirement
         requirements["classifier"] = ClassifierRequirement
         requirements["counter_time"] = CounterUpdateTimeRequirement
         requirements["counter_value"] = CounterValueRequirement
         requirements["datetime"] = DateTimeRequirement
         requirements["environment"] = EnvironmentRequirement
         requirements["external"] = ExternalRequirement
+        requirements["feature_toggle_check"] = FeatureToggleRequirement
         requirements["form_field_value"] = FormFieldValueRequirement
         requirements["intersection"] = IntersectionRequirement
         requirements["intersection_with_tokens"] = IntersectionWithTokensSetRequirement
@@ -388,3 +398,6 @@ class SmartAppResources(BaseConfig):
         classifiers["external"] = ExternalClassifier
         classifiers["scikit"] = SciKitClassifier
         classifiers["skip"] = SkipClassifier
+
+    def init_message_handlers(self):
+        to_messages[PUSH_NOTIFY] = SmartAppPushToMessage

@@ -1,7 +1,9 @@
 # coding: utf-8
 import unittest
 from unittest.mock import Mock
+
 from smart_kit.handlers import handler_text
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 async def mock_dialogue_manager1_run(x, y):
@@ -30,7 +32,7 @@ class HandlerTest5(unittest.IsolatedAsyncioTestCase):
         self.test_user.message.device = Mock("device")
         self.test_user.message.device.surface = "test_surface"
         self.test_user.message.channel = "test_channel"
-        self.test_user.message.app_info = Mock()
+        self.test_user.message.app_info = PicklableMock()
         self.test_user.message.app_info.project_id = "1111-1111-1111-1111"
         self.test_user.message.app_info.system_name = "test"
         self.test_payload = {'message': {1: 1}}

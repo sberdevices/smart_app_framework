@@ -1,10 +1,12 @@
 import datetime
 from unittest import TestCase
-import core.unified_template.jinja_filters
+
 import jinja2
+
+import core.unified_template.jinja_filters
+from core.unified_template.currency2text import Money2Text
 from core.unified_template.num2ordinal import Num2Ordinal
 from core.unified_template.num2text import Num2Text
-from core.unified_template.currency2text import Money2Text
 
 
 class TestJinjaTemplates(TestCase):

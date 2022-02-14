@@ -1,4 +1,4 @@
-from typing import Callable, Optional, Iterable, Mapping, Union, Pattern, Match, MutableMapping, Sequence
+from typing import Optional, Union, Match, Dict, List
 import re
 
 MASK = "***"
@@ -38,11 +38,7 @@ def card_sub_func(x: Match[str]) -> str:
     return mask + digs + (last_char * is_last_not_digit)
 
 
-def check_value_is_collection(value):
-    return isinstance(value, MutableMapping) or isinstance(value, Iterable) and not isinstance(value, str)
-
-
-def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Union[MutableMapping, Iterable]] = None,
+def masking(data: Union[Dict, List], masking_fields: Optional[Union[Dict, List]] = None,
             depth_level: int = 2, mask_available_depth: int = -1):
     """
     :param data: коллекция для маскирования приватных данных
@@ -51,7 +47,7 @@ def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Unio
     :param mask_available_depth: глубина глубокой маскировки полей без сохранения структуры (см ниже)
     """
 
-    if isinstance(masking_fields, Sequence):
+    if isinstance(masking_fields, list):
         masking_fields = {key: depth_level for key in masking_fields}
 
     if masking_fields is None:
@@ -60,18 +56,21 @@ def masking(data: Union[MutableMapping, Iterable], masking_fields: Optional[Unio
     _masking(data, masking_fields, depth_level, mask_available_depth, masking_on=False, card_masking_on=False)
 
 
-def _masking(data: Union[MutableMapping, Iterable], masking_fields: Union[MutableMapping, Iterable],
+def _masking(data: Union[Dict, List], masking_fields: Union[Dict, List],
              depth_level: int = 2, mask_available_depth: int = -1, masking_on: bool = False,
              card_masking_on: bool = False):
 
     # тут в зависимости от листа или словаря создаем итератор
-    if isinstance(data, MutableMapping):
+    if isinstance(data, dict):
         key_gen = data.items()
     else:
         key_gen = enumerate(data)
 
     for key, _ in key_gen:
-        value_is_collection = check_value_is_collection(data[key])
+        value_is_collection = isinstance(data[key],(dict, list))
+        if isinstance(data[key], (set, tuple)):
+            data[key] = list(data[key])
+            value_is_collection = True
         if masking_on or key in masking_fields:
             if value_is_collection:
                 # если глубина не превышена, идем внутрь с включенным флагом и уменьшаем глубину
@@ -100,7 +99,7 @@ def _masking(data: Union[MutableMapping, Iterable], masking_fields: Union[Mutabl
                      masking_on=False, card_masking_on=card_masking_on)
 
 
-def structure_mask(data: Union[MutableMapping, Iterable], depth: int, available_depth: int = -1,
+def structure_mask(data: Union[Dict, List], depth: int, available_depth: int = -1,
                    counter: Optional[Counter] = None):
     """
     Функция максировки для сложной структуры
@@ -111,7 +110,7 @@ def structure_mask(data: Union[MutableMapping, Iterable], depth: int, available_
     :return: counter с подсчитанными элементами
     """
     # в зависимости от листа или словаря создаем итератор
-    if isinstance(data, MutableMapping):
+    if isinstance(data, dict):
         key_gen = data.items()
     else:
         key_gen = enumerate(data)
@@ -120,7 +119,7 @@ def structure_mask(data: Union[MutableMapping, Iterable], depth: int, available_
         counter = Counter()
 
     for key, _ in key_gen:
-        if check_value_is_collection(data[key]):
+        if isinstance(data[key],(dict, list)):
             counter.collections += 1
             # если встречаем коллекцию и глубина не превышена идем внутрь
             if depth < available_depth or available_depth == -1:

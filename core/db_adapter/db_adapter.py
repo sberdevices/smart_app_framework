@@ -65,15 +65,15 @@ class DBAdapter(Rerunable):
     def mtime(self, path):
         return self._run(self._mtime, path)
 
-    @monitoring.got_histogram("save_time")
+    @monitoring.got_histogram_decorate("save_time")
     def save(self, id, data):
         return self._run(self._save, id, data)
 
-    @monitoring.got_histogram("save_time")
+    @monitoring.got_histogram_decorate("save_time")
     def replace_if_equals(self, id, sample, data):
         return self._run(self._replace_if_equals, id, sample, data)
 
-    @monitoring.got_histogram("get_time")
+    @monitoring.got_histogram_decorate("get_time")
     def get(self, id):
         return self._run(self._get, id)
 

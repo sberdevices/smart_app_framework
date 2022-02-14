@@ -10,7 +10,7 @@ from core.basic_models.operators.operators import Operator
 from core.basic_models.requirement.basic_requirements import Requirement, CompositeRequirement, AndRequirement, \
     OrRequirement, NotRequirement, RandomRequirement, TopicRequirement, TemplateRequirement, RollingRequirement, \
     TimeRequirement, DateTimeRequirement, IntersectionRequirement, ClassifierRequirement, FormFieldValueRequirement, \
-    EnvironmentRequirement
+    EnvironmentRequirement, CharacterIdRequirement, FeatureToggleRequirement
 from core.basic_models.requirement.counter_requirements import CounterValueRequirement, CounterUpdateTimeRequirement
 from core.basic_models.requirement.device_requirements import ChannelRequirement
 from core.basic_models.requirement.user_text_requirements import AnySubstringInLoweredTextRequirement, \
@@ -18,6 +18,7 @@ from core.basic_models.requirement.user_text_requirements import AnySubstringInL
     NormalizedTextInSetRequirement
 from core.model.registered import registered_factories
 from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 def _run(coro):
@@ -25,7 +26,7 @@ def _run(coro):
 
 
 def patch_get_app_config(mock_get_app_config):
-    result = Mock()
+    result = PicklableMock()
     sk_path = os.path.dirname(smart_kit.__file__)
     result.STATIC_PATH = os.path.join(sk_path, 'template/static')
     mock_get_app_config.return_value = result
@@ -138,7 +139,7 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(await requirement.check(None, None))
 
     async def test_channel_success(self):
-        user = Mock()
+        user = PicklableMock()
         message = Mock(channel="ch1")
         user.message = message
         requirement = ChannelRequirement({"channels": ["ch1"]})
@@ -146,7 +147,7 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await requirement.check(text_normalization_result, user))
 
     async def test_channel_fail(self):
-        user = Mock()
+        user = PicklableMock()
         message = Mock(channel="ch2")
         user.message = message
         requirement = ChannelRequirement({"channels": ["ch1"]})
@@ -163,16 +164,16 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_topic_requirement(self):
         requirement = TopicRequirement({"topics": ["test"]})
-        user = Mock()
-        message = Mock()
+        user = PicklableMock()
+        message = PicklableMock()
         message.topic_key = "test"
         user.message = message
         self.assertTrue(await requirement.check(None, user))
 
     async def test_counter_value_requirement(self):
         registered_factories[Operator] = MockAmountOperator
-        user = Mock()
-        counter = Mock()
+        user = PicklableMock()
+        counter = PicklableMock()
         counter.__gt__ = Mock(return_value=True)
         user.counters = {"test": counter}
         requirement = CounterValueRequirement({"operator": {"type": "equal", "amount": 2}, "key": "test"})
@@ -180,8 +181,8 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
 
     async def test_counter_time_requirement(self):
         registered_factories[Operator] = MockAmountOperator
-        user = Mock()
-        counter = Mock()
+        user = PicklableMock()
+        counter = PicklableMock()
         counter.update_time = int(time()) - 10
         user.counters = {"test": counter}
         requirement = CounterUpdateTimeRequirement({"operator": {"type": "more_or_equal", "amount": 5}, "key": "test"})
@@ -197,8 +198,8 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
             "murexIds": ["AAA", "BBB"],
             "message": " BBB    "
         }}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertTrue(await requirement.check(None, user))
 
@@ -208,8 +209,8 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
         }
         requirement = TemplateRequirement(items)
         params = {"payload": {"groupCode": "BROKER1"}}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertFalse(await requirement.check(None, user))
 
@@ -219,27 +220,27 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
         }
         requirement = TemplateRequirement(items)
         params = {"payload": {"groupCode": "BROKER1"}}
-        user = Mock()
-        user.parametrizer = Mock()
+        user = PicklableMock()
+        user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
         self.assertRaises(TypeError, _run, requirement.check, None, user)
 
     async def test_rolling_requirement_true(self):
-        user = Mock()
+        user = PicklableMock()
         user.id = "353454"
         requirement = RollingRequirement({"percent": 100})
         text_normalization_result = None
         self.assertTrue(await requirement.check(text_normalization_result, user))
 
     async def test_rolling_requirement_false(self):
-        user = Mock()
+        user = PicklableMock()
         user.id = "353454"
         requirement = RollingRequirement({"percent": 0})
         text_normalization_result = None
         self.assertFalse(await requirement.check(text_normalization_result, user))
 
     async def test_time_requirement_true(self):
-        user = Mock()
+        user = PicklableMock()
         user.id = "353454"
         user.message.payload = {
             "meta": {
@@ -261,7 +262,7 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await requirement.check(text_normalization_result, user))
 
     async def test_time_requirement_false(self):
-        user = Mock()
+        user = PicklableMock()
         user.id = "353454"
         user.message.payload = {
             "meta": {
@@ -283,7 +284,7 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
         self.assertFalse(await requirement.check(text_normalization_result, user))
 
     async def test_datetime_requirement_true(self):
-        user = Mock()
+        user = PicklableMock()
         user.id = "353454"
         user.message.payload = {
             "meta": {
@@ -302,7 +303,7 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(await requirement.check(text_normalization_result, user))
 
     async def test_datetime_requirement_false(self):
-        user = Mock()
+        user = PicklableMock()
         user.id = "353454"
         user.message.payload = {
             "meta": {
@@ -323,7 +324,7 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
     @patch('smart_kit.configs.get_app_config')
     async def test_intersection_requirement_true(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
-        user = Mock()
+        user = PicklableMock()
         requirement = IntersectionRequirement(
             {
                 "phrases": [
@@ -333,7 +334,7 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
                 ]
             }
         )
-        text_normalization_result = Mock()
+        text_normalization_result = PicklableMock()
         text_normalization_result.tokenized_elements_list_pymorphy = [
             {'lemma': 'я'},
             {'lemma': 'хотеть'},
@@ -343,7 +344,7 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
     @patch('smart_kit.configs.get_app_config')
     async def test_intersection_requirement_false(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
-        user = Mock()
+        user = PicklableMock()
         requirement = IntersectionRequirement(
             {
                 "phrases": [
@@ -353,8 +354,8 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
                 ]
             }
         )
-        text_normalization_result = Mock()
-        text_normalization_result.tokenized_elements_list = [
+        text_normalization_result = PicklableMock()
+        text_normalization_result.tokenized_elements_list_pymorphy = [
             {'lemma': 'ни'},
             {'lemma': 'за'},
             {'lemma': 'что'},
@@ -368,9 +369,9 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
         """
         test_items = {"type": "classifier", "classifier": {"type": "external", "classifier": "hello_scenario_classifier"}}
         classifier_requirement = ClassifierRequirement(test_items)
-        mock_user = Mock()
+        mock_user = PicklableMock()
         mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
-        result = await classifier_requirement.check(Mock(), mock_user)
+        result = await classifier_requirement.check(PicklableMock(), mock_user)
         self.assertTrue(result)
 
     @patch.object(ExternalClassifier, "find_best_answer", return_value=[])
@@ -378,9 +379,9 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
         """Тест кейз проверяет что условие возвращает False, если модель классификации не вернула ответ."""
         test_items = {"type": "classifier", "classifier": {"type": "external", "classifier": "hello_scenario_classifier"}}
         classifier_requirement = ClassifierRequirement(test_items)
-        mock_user = Mock()
+        mock_user = PicklableMock()
         mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
-        result = await classifier_requirement.check(Mock(), mock_user)
+        result = await classifier_requirement.check(PicklableMock(), mock_user)
         self.assertFalse(result)
 
     @patch.object(ExternalClassifier, "find_best_answer", return_value=[{"answer": "other", "score": 1.0, "other": True}])
@@ -388,9 +389,9 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
         """Тест кейз проверяет что условие возвращает False, если наиболее вероятный вариант есть класс other."""
         test_items = {"type": "classifier", "classifier": {"type": "external", "classifier": "hello_scenario_classifier"}}
         classifier_requirement = ClassifierRequirement(test_items)
-        mock_user = Mock()
+        mock_user = PicklableMock()
         mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
-        result = await classifier_requirement.check(Mock(), mock_user)
+        result = await classifier_requirement.check(PicklableMock(), mock_user)
         self.assertFalse(result)
 
     async def test_form_field_value_requirement_true(self):
@@ -404,12 +405,12 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
         test_itmes = {"form_name": form_name, "field_name": form_field, "value": field_value}
         req_form_field_value = FormFieldValueRequirement(test_itmes)
 
-        user = Mock()
-        user.forms = {form_name: Mock()}
-        user.forms[form_name].fields = {form_field: Mock(), "value": field_value}
+        user = PicklableMock()
+        user.forms = {form_name: PicklableMock()}
+        user.forms[form_name].fields = {form_field: PicklableMock(), "value": field_value}
         user.forms[form_name].fields[form_field].value = field_value
 
-        result = await req_form_field_value.check(Mock(), user)
+        result = await req_form_field_value.check(PicklableMock(), user)
         self.assertTrue(result)
 
     async def test_form_field_value_requirement_false(self):
@@ -423,12 +424,12 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
         test_itmes = {"form_name": form_name, "field_name": form_field, "value": field_value}
         req_form_field_value = FormFieldValueRequirement(test_itmes)
 
-        user = Mock()
-        user.forms = {form_name: Mock()}
-        user.forms[form_name].fields = {form_field: Mock(), "value": "OTHER_TEST_VAL"}
+        user = PicklableMock()
+        user.forms = {form_name: PicklableMock()}
+        user.forms[form_name].fields = {form_field: PicklableMock(), "value": "OTHER_TEST_VAL"}
         user.forms[form_name].fields[form_field].value = "OTHER_TEST_VAL"
 
-        result = await req_form_field_value.check(Mock(), user)
+        result = await req_form_field_value.check(PicklableMock(), user)
         self.assertFalse(result)
 
     @patch("smart_kit.configs.get_app_config")
@@ -436,23 +437,23 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
         """Тест кейз проверяет что условие возвращает True, т.к среда исполнения из числа values."""
         patch_get_app_config(mock_get_app_config)
         environment_req = EnvironmentRequirement({"values": ["ift", "uat"]})
-        self.assertTrue(await environment_req.check(Mock(), Mock()))
+        self.assertTrue(await environment_req.check(PicklableMock(), PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
     async def test_environment_requirement_false(self, mock_get_app_config):
         """Тест кейз проверяет что условие возвращает False, т.к среда исполнения НЕ из числа values."""
         patch_get_app_config(mock_get_app_config)
         environment_req = EnvironmentRequirement({"values": ["uat", "pt"]})
-        self.assertFalse(await environment_req.check(Mock(), Mock()))
+        self.assertFalse(await environment_req.check(PicklableMock(), PicklableMock()))
 
     async def test_any_substring_in_lowered_text_requirement_true(self):
         """Тест кейз проверяет что условие возвращает True, т.к нашлась подстрока из списка substrings, которая
         встречается в оригинальном тексте в нижнем регистре.
         """
         req = AnySubstringInLoweredTextRequirement({"substrings": ["искомая подстрока", "другое знанчение"]})
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"original_text": "КАКОЙ-ТО ТЕКСТ С ИСКОМАЯ ПОДСТРОКА"}
-        result = await req.check(text_preprocessing_result, Mock())
+        result = await req.check(text_preprocessing_result, PicklableMock())
         self.assertTrue(result)
 
     async def test_any_substring_in_lowered_text_requirement_false(self):
@@ -460,38 +461,38 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
         которая бы встречалась в оригинальном тексте в нижнем регистре.
         """
         req = AnySubstringInLoweredTextRequirement({"substrings": ["искомая подстрока", "другая подстрока"]})
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"original_text": "КАКОЙ-ТО ТЕКСТ"}
-        result = await req.check(text_preprocessing_result, Mock())
+        result = await req.check(text_preprocessing_result, PicklableMock())
         self.assertFalse(result)
 
     async def test_num_in_range_requirement_true(self):
         """Тест кейз проверяет что условие возвращает True, т.к число находится в заданном диапазоне."""
         req = NumInRangeRequirement({"min_num": "5", "max_num": "10"})
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.num_token_values = 7
-        self.assertTrue(await req.check(text_preprocessing_result, Mock()))
+        self.assertTrue(await req.check(text_preprocessing_result, PicklableMock()))
 
     async def test_num_in_range_requirement_false(self):
         """Тест кейз проверяет что условие возвращает False, т.к число НЕ находится в заданном диапазоне."""
         req = NumInRangeRequirement({"min_num": "5", "max_num": "10"})
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.num_token_values = 20
-        self.assertFalse(await req.check(text_preprocessing_result, Mock()))
+        self.assertFalse(await req.check(text_preprocessing_result, PicklableMock()))
 
     async def test_phone_number_number_requirement_true(self):
         """Тест кейз проверяет что условие возвращает True, т.к кол-во номеров телефонов больше заданного."""
         req = PhoneNumberNumberRequirement({"operator": {"type": "more", "amount": 1}})
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.get_token_values_by_type.return_value = ["89030478799", "89092534523"]
-        self.assertTrue(await req.check(text_preprocessing_result, Mock()))
+        self.assertTrue(await req.check(text_preprocessing_result, PicklableMock()))
 
     async def test_phone_number_number_requirement_false(self):
         """Тест кейз проверяет что условие возвращает False, т.к кол-во номеров телефонов НЕ больше заданного."""
         req = PhoneNumberNumberRequirement({"operator": {"type": "more", "amount": 10}})
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.get_token_values_by_type.return_value = ["89030478799"]
-        self.assertFalse(await req.check(text_preprocessing_result, Mock()))
+        self.assertFalse(await req.check(text_preprocessing_result, PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
     async def test_intersection_with_tokens_requirement_true(self, mock_get_app_config):
@@ -502,7 +503,7 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
 
         req = IntersectionWithTokensSetRequirement({"input_words": ["погода", "время"]})
 
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"tokenized_elements_list_pymorphy": [
             {"text": "прогноз", "grammem_info": {
                 "animacy": "inan", "case": "acc", "gender": "masc", "number": "sing", "raw_gram_info":
@@ -513,7 +514,7 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
                 "part_of_speech": "NOUN"}, "lemma": "погода"}
             ]}
 
-        self.assertTrue(await req.check(text_preprocessing_result, Mock()))
+        self.assertTrue(await req.check(text_preprocessing_result, PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
     async def test_intersection_with_tokens_requirement_false(self, mock_get_app_config):
@@ -524,7 +525,7 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
 
         req = IntersectionWithTokensSetRequirement({"input_words": ["время"]})
 
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"tokenized_elements_list_pymorphy": [
             {"text": "прогноз", "grammem_info": {
                 "animacy": "inan", "case": "acc", "gender": "masc", "number": "sing", "raw_gram_info":
@@ -535,7 +536,7 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
                 "part_of_speech": "NOUN"}, "lemma": "погода"}
         ]}
 
-        self.assertFalse(await req.check(text_preprocessing_result, Mock()))
+        self.assertFalse(await req.check(text_preprocessing_result, PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
     async def test_normalized_text_in_set_requirement_true(self, mock_get_app_config):
@@ -546,10 +547,10 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
 
         req = NormalizedTextInSetRequirement({"input_words": ["погода", "время"]})
 
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"normalized_text": "погода ."}
 
-        self.assertTrue(await req.check(text_preprocessing_result, Mock()))
+        self.assertTrue(await req.check(text_preprocessing_result, PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
     async def test_normalized_text_in_set_requirement_false(self, mock_get_app_config):
@@ -560,10 +561,36 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
 
         req = NormalizedTextInSetRequirement({"input_words": ["погода", "время"]})
 
-        text_preprocessing_result = Mock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"normalized_text": "хотеть узнать ."}
 
-        self.assertFalse(await req.check(text_preprocessing_result, Mock()))
+        self.assertFalse(await req.check(text_preprocessing_result, PicklableMock()))
+
+    def test_character_id_requirement_true(self):
+        req = CharacterIdRequirement({"values": ["sber", "afina"]})
+        user = Mock()
+        user.message = Mock()
+        user.message.payload = {"character": {"id": "sber", "name": "Сбер", "gender": "male"}}
+        self.assertTrue(req.check(Mock(), user))
+
+    def test_character_id_requirement_false(self):
+        req = CharacterIdRequirement({"values": ["afina"]})
+        user = Mock()
+        user.message = Mock()
+        user.message.payload = {"character": {"id": "sber", "name": "Сбер", "gender": "male"}}
+        self.assertFalse(req.check(Mock(), user))
+
+    def test_feature_toggle_check_requirement_true(self):
+        req = FeatureToggleRequirement({"toggle_name": "test_true_toggle_name"})
+        mock_user = Mock()
+        mock_user.settings = {"template_settings": {"test_true_toggle_name": True}}
+        self.assertTrue(req.check(Mock(), mock_user))
+
+    def test_feature_toggle_check_requirement_false(self):
+        req = FeatureToggleRequirement({"toggle_name": "test_false_toggle_name"})
+        mock_user = Mock()
+        mock_user.settings = {"template_settings": {"test_false_toggle_name": False}}
+        self.assertFalse(req.check(Mock(), mock_user))
 
 
 if __name__ == '__main__':

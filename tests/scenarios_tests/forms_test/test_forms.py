@@ -1,12 +1,11 @@
 # coding: utf-8
 import time
-
 from unittest import TestCase
-from unittest.mock import Mock
 
 from scenarios.scenario_models.field.field import field_models, QuestionField
 from scenarios.scenario_models.forms.form import form_models, Form
 from scenarios.scenario_models.forms.forms import Forms
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class MockDescription:
@@ -70,8 +69,8 @@ class FormsTest(TestCase):
                        'Turn_on_MB': {'remove_time': 2506421370}}
 
     def test_raw(self):
-        user = Mock()
-        forms = Forms(self.mock_1, {"sbm_credit": Mock(), "Turn_on_MB": Mock()}, user)
+        user = PicklableMock()
+        forms = Forms(self.mock_1, {"sbm_credit": PicklableMock(), "Turn_on_MB": PicklableMock()}, user)
         expected_dict = {'sbm_credit': {'fields': {'amount': {'value': 100.0},
                                                    'currency': {"required": True,
                                                                 "filler": {"type": "currency_first"},
@@ -83,7 +82,7 @@ class FormsTest(TestCase):
         self.assertDictEqual(forms.raw, expected_dict)
 
     def test_new(self):
-        user = Mock()
+        user = PicklableMock()
         form_models[MockDescription] = Form
         description_MB = MockDescription('Turn_on_MB', False)
         description_credit = MockDescription('sbm_credit', False)
@@ -105,14 +104,14 @@ class FormsTest(TestCase):
         self.assertDictEqual(forms.raw, expected_dict)
 
     def test_remove(self):
-        user = Mock()
-        forms = Forms(self.mock_1, {"sbm_credit": Mock(), "Turn_on_MB": Mock()}, user)
+        user = PicklableMock()
+        forms = Forms(self.mock_1, {"sbm_credit": PicklableMock(), "Turn_on_MB": PicklableMock()}, user)
         forms.remove_item("sbm_credit")
         expected_dict = {"Turn_on_MB": {'remove_time': 2506421370}}
         self.assertDictEqual(forms.raw, expected_dict)
 
     def test_expire(self):
-        user = Mock()
+        user = PicklableMock()
         form_models[MockDescription] = MockForm
         description_MB = MockDescription("Turn_on_MB", False)
         description_credit = MockDescription("sbm_credit", True)
@@ -123,8 +122,8 @@ class FormsTest(TestCase):
         self.assertDictEqual(forms.raw, expected_dict)
 
     def test_expire0(self):
-        user = Mock()
-        form = Mock()
+        user = PicklableMock()
+        form = PicklableMock()
         form.check_expired = False
         form_models[MockDescription] = MockForm
         description_MB = MockDescription("Turn_on_MB", True)
@@ -136,14 +135,15 @@ class FormsTest(TestCase):
         self.assertDictEqual(forms.raw, expected_dict)
 
     def test_clear(self):
-        user = Mock()
-        forms = Forms(self.mock_1, {"mock_descr": Mock()}, user)
+        user = PicklableMock()
+        forms = Forms(self.mock_1, {"mock_descr": PicklableMock()}, user)
         forms.clear_all()
         expected_dict = {}
         self.assertDictEqual(forms.raw, expected_dict)
 
     def test_collect_form_fields(self):
-        user = Mock()
+        user = PicklableMock()
+        user.settings = {"template_settings": {}}
         form_models[MockDescription] = Form
         field_models[MockField] = QuestionField
         field1 = MockField("amount")
@@ -177,7 +177,7 @@ class FormsTest(TestCase):
                                                        'sbm_credit': description_credit,
                                                        'Turn_off_MB': description_off_MB})
                         }
-        user = Mock()
+        user = PicklableMock()
         user.descriptions = descriptions
         forms = Forms(self.mock_1, descriptions["forms"], user)
         user.forms = forms

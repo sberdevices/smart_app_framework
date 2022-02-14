@@ -1,11 +1,7 @@
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import Mock
+
 from scenarios.scenario_models.field.field_filler_description import RegexpAndStringOperationsFieldFiller
-
-
-class PickableMock(Mock):
-    def __reduce__(self):
-        return (Mock, ())
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class TestRegexpStringOperationsFiller(IsolatedAsyncioTestCase):
@@ -14,7 +10,7 @@ class TestRegexpStringOperationsFiller(IsolatedAsyncioTestCase):
 
     def _test_operation(self, field_value, type_op, amount):
         self.items["operations"] = []
-        text_preprocessing_result = PickableMock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.original_text = field_value
 
         filler = RegexpAndStringOperationsFieldFiller(self.items)
@@ -36,7 +32,7 @@ class TestRegexpStringOperationsFiller(IsolatedAsyncioTestCase):
         self.assertEqual(field_value.lstrip(amount), result)
 
     async def _test_extract(self, field_value):
-        text_preprocessing_result = PickableMock()
+        text_preprocessing_result = PicklableMock()
         text_preprocessing_result.original_text = field_value
 
         filler = RegexpAndStringOperationsFieldFiller(self.items)

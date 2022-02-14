@@ -9,6 +9,7 @@ health_check:
     - local
 monitoring:
   enabled: false
+  disabled_metrics: []
 masking_fields:
   - token
   - access_token
@@ -17,3 +18,4 @@ masking_fields:
   - profileId
 user_save_collisions_tries: 2
 self_service_with_state_save_messages: true
+project_id: template-app-id

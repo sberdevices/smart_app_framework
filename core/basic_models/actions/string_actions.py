@@ -106,9 +106,8 @@ class StringAction(NodeAction):
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super(StringAction, self).__init__(items, id)
 
-    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
-        # Example: Command("ANSWER_TO_USER", {"answer": {"key1": "string1", "keyN": "stringN"}})
+    def _generate_command_context(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Dict:
         command_params = dict()
         params = params or {}
         collected = user.parametrizer.collect(text_preprocessing_result, filter_params={"command": self.command})
@@ -118,7 +117,13 @@ class StringAction(NodeAction):
             rendered = self._get_rendered_tree(value, params, self.no_empty_nodes)
             if rendered != "" or not self.no_empty_nodes:
                 command_params[key] = rendered
+        return command_params
 
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
+        # Example: Command("ANSWER_TO_USER", {"answer": {"key1": "string1", "keyN": "stringN"}})
+        params = params or {}
+        command_params = self._generate_command_context(user, text_preprocessing_result, params)
         commands = [Command(self.command, command_params, self.id, request_type=self.request_type,
                             request_data=self.request_data)]
         return commands

@@ -13,6 +13,7 @@ from confluent_kafka.cimpl import KafkaException
 from lazy import lazy
 
 import scenarios.logging.logger_constants as log_const
+from core.basic_models.actions.push_action import PUSH_NOTIFY
 from core.logging.logger_utils import log, UID_STR, MESSAGE_ID_STR
 
 from core.message.from_message import SmartAppFromMessage
@@ -22,6 +23,8 @@ from core.mq.kafka.kafka_publisher import KafkaPublisher
 from core.utils.stats_timer import StatsTimer
 from core.basic_models.actions.command import Command
 from smart_kit.compatibility.commands import combine_commands
+from smart_kit.message.get_to_message import get_to_message
+from smart_kit.message.smart_app_push_message import SmartAppPushToMessage
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.names import message_names
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
@@ -207,9 +210,10 @@ class MainLoop(BaseMainLoop):
         for command in commands:
             request = SmartKitKafkaRequest(id=None, items=command.request_data)
             request.update_empty_items({"topic_key": topic_key, "kafka_key": kafka_key})
-            answer = SmartAppToMessage(command=command, message=message, request=request,
-                                       masking_fields=self.masking_fields,
-                                       validators=self.to_msg_validators)
+            to_message = get_to_message(command.name)
+            answer = to_message(command=command, message=message, request=request,
+                                 masking_fields=self.masking_fields,
+                                 validators=self.to_msg_validators)
             if answer.validate():
                 answers.append(answer)
             else:
@@ -343,6 +347,7 @@ class MainLoop(BaseMainLoop):
                             "message_key": mq_message.key(),
                             "kafka_key": kafka_key,
                             "incoming_data": str(message.masked_value),
+                            "length": len(message.value),
                             "headers": str(mq_message.headers()),
                             "waiting_message": waiting_message_time,
                             "surface": message.device.surface,
@@ -502,11 +507,12 @@ class MainLoop(BaseMainLoop):
         self._log_request(user, request, answer, mq_message)
 
     def _log_request(self, user, request, answer, original_mq_message):
-        log("OUTGOING TO TOPIC_KEY: %(topic_key)s",
+        log("OUTGOING TO TOPIC_KEY: %(topic_key)s DATA: %(data)s",
             params={log_const.KEY_NAME: "outgoing_message",
                     "topic_key": request.topic_key,
                     "headers": str(request._get_new_headers(original_mq_message)),
-                    "data": answer.masked_value}, user=user)
+                    "data": answer.masked_value,
+                    "length": len(answer.value)}, user=user)
 
     @lru_cache()
     def _topic_names_2_key(self, kafka_key):

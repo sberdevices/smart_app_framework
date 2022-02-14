@@ -1,9 +1,10 @@
 from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock
-from scenarios.scenario_models.field.field_filler_description import FieldFillerDescription, CompositeFiller
 
 from core.model.registered import registered_factories
+from scenarios.scenario_models.field.field_filler_description import FieldFillerDescription, CompositeFiller
 from scenarios.scenario_models.field.field_filler_description import field_filler_factory, field_filler_description
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class MockFiller:
@@ -20,7 +21,7 @@ class TestCompositeFiller(IsolatedAsyncioTestCase):
     def setUp(self):
         registered_factories[FieldFillerDescription] = field_filler_factory
         field_filler_description["mock_filler"] = MockFiller
-        self.user = Mock()
+        TestCompositeFiller.user = PicklableMock()
 
     async def test_first_filler(self):
         expected = "first"

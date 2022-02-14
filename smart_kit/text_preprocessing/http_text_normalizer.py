@@ -77,9 +77,9 @@ class HttpTextNormalizer(BaseTextNormalizer):
         response = requests.post(self._url, json=[{HttpTextNormalizer.TEXT_PARAM_NAME: el} for el in batch],
                                  timeout=self._timeout)
         response.raise_for_status()
-        result = response.json()
+        result = [item["message"] for item in response.json()]
         for item in result:
-            self.cache[item["message"]["original_text"]] = item["message"]
+            self.cache[item["original_text"]] = item
         return result
 
     def normalize_sequence(self, texts: Sequence, batch_size=None) -> List:

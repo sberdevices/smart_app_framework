@@ -156,6 +156,9 @@ class MonitoringProxy(MonitoringBase):
     def send(self):
         self._adapter.send()
 
+    async def async_send(self):
+        await self._adapter.async_send()
+
     @property
     def _monitoring_items(self):
         return self._adapter._monitoring_items

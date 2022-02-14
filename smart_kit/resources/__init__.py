@@ -8,6 +8,7 @@ import scenarios.scenario_models.field.field_filler_description as ffd
 import scenarios.scenario_models.field_requirements.field_requirements as frd
 from core.basic_models.actions.basic_actions import actions, action_factory, Action, \
     DoingNothingAction, RequirementAction, ChoiceAction, ElseAction, CompositeAction
+from core.basic_models.actions.client_profile_actions import GiveMeMemoryAction, RememberThisAction
 from core.basic_models.actions.counter_actions import CounterIncrementAction, CounterDecrementAction, \
     CounterClearAction, CounterSetAction, CounterCopyAction
 from core.basic_models.actions.external_actions import ExternalAction
@@ -57,7 +58,8 @@ from scenarios.actions.action import (
     ClearCurrentScenarioFormAction, ClearFormAction, ClearInnerFormAction, ClearScenarioByIdAction,
     ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction, FillFieldAction,
     RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
-    ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction
+    ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction,
+    ClearAllScenariosAction
 )
 from scenarios.actions.action import ProcessBehaviorAction, SelfServiceActionWithState, EmptyAction
 from scenarios.behaviors.behavior_descriptions import BehaviorDescriptions
@@ -276,6 +278,7 @@ class SmartAppResources(BaseConfig):
         actions["choice"] = ChoiceAction
         actions["choice_scenario"] = ChoiceScenarioAction
         actions["clear_current_scenario"] = ClearCurrentScenarioAction
+        actions["clear_all_scenarios"] = ClearAllScenariosAction
         actions["clear_current_scenario_form"] = ClearCurrentScenarioFormAction
         actions["clear_form_by_id"] = ClearFormAction
         actions["clear_inner_form_by_id"] = ClearInnerFormAction
@@ -310,6 +313,8 @@ class SmartAppResources(BaseConfig):
         actions["set_variable"] = SetVariableAction
         actions["string"] = StringAction
         actions["push"] = PushAction
+        actions["give_me_memory"] = GiveMeMemoryAction
+        actions["remember_this"] = RememberThisAction
 
     def init_requirements(self):
         requirements[None] = Requirement

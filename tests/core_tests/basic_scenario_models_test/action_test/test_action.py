@@ -5,6 +5,7 @@ from unittest.mock import Mock, MagicMock
 
 from core.basic_models.actions.basic_actions import Action, DoingNothingAction, action_factory, RequirementAction, \
     actions, ChoiceAction, ElseAction, CompositeAction, NonRepeatingAction
+from core.basic_models.actions.client_profile_actions import GiveMeMemoryAction, RememberThisAction
 from core.basic_models.actions.command import Command
 from core.basic_models.actions.counter_actions import CounterIncrementAction, CounterDecrementAction, \
     CounterClearAction, CounterSetAction, CounterCopyAction
@@ -809,3 +810,195 @@ class SDKRandomAnswer(unittest.IsolatedAsyncioTestCase):
                 }
             }
         )
+
+
+class GiveMeMemoryActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run(self):
+        expected = [
+            Command("GIVE_ME_MEMORY",
+                    {
+                        'root_nodes': {
+                            'protocolVersion': 1
+                        },
+                        'consumer': {
+                            'projectId': '0'
+                        },
+                        "tokenType": 0,
+                        'profileEmployee': 0,
+                        'memory': [
+                            {
+                                'memoryPartition': 'confidentialMemo',
+                                'tags': [
+                                    'userAgreement',
+                                    'userAgreementProject'
+                                ]
+                            },
+                            {
+                                'memoryPartition': 'projectPrivateMemo',
+                                'tags': [
+                                    'test'
+                                ]
+                            }
+                        ]
+                    },
+                    None, "kafka", {"topic_key": "client_info", "kafka_key": "main", "kafka_replyTopic": "app"})
+        ]
+        user = PicklableMagicMock()
+        params = {"params": "params"}
+        user.parametrizer = MockSimpleParametrizer(user, {"data": params})
+        user.settings = {"template_settings": {"project_id": "0", "consumer_topic": "app"}}
+        items = {
+            "nodes": {
+                "memory": {
+                    "confidentialMemo": [
+                        "userAgreement",
+                        "userAgreementProject"
+                    ],
+                    "projectPrivateMemo": [
+                        "{{ 'test' }}"
+                    ]
+                },
+                "profileEmployee": {
+                    "type": "unified_template",
+                    "template": "{{ 0 }}",
+                    "loader": "json"
+                },
+                "tokenType": {
+                    "type": "unified_template",
+                    "template": "{{ 0 }}",
+                    "loader": "json"
+                }
+            }
+        }
+        action = GiveMeMemoryAction(items)
+        result = await action.run(user, None)
+        self.assertEqual(expected[0].name, result[0].name)
+        self.assertEqual(expected[0].payload, result[0].payload)
+
+
+class RememberThisActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run(self):
+        expected = [
+            Command("REMEMBER_THIS",
+                    {
+                        'root_nodes': {
+                            'protocolVersion': 3
+                        },
+                        'consumer': {
+                            'projectId': '0'
+                        },
+                        'clientIds': 0,
+                        'memory': [
+                            {
+                                'memoryPartition': 'publicMemo',
+                                'partitionData': [
+                                    {
+                                        'tag': 'historyInfo',
+                                        'action': {
+                                            'type': 'upsert',
+                                            'params': {
+                                                'operation': [
+                                                    {
+                                                        'selector': {
+                                                            'intent': {
+                                                                '$eq': 'run_app'
+                                                            },
+                                                            'surface': {
+                                                                '$eq': '0'
+                                                            },
+                                                            'channel': {
+                                                                '$eq': '0'
+                                                            },
+                                                            'projectId': {
+                                                                '$eq': '0'
+                                                            }
+                                                        },
+                                                        'updater': [
+                                                            {
+                                                                '$set': {
+                                                                    '$.lastExecuteDateTime': '0'
+                                                                }
+                                                            },
+                                                            {
+                                                                '$inc': {
+                                                                    '$.executeCounter': 1
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    None, "kafka", {
+                        "topic_key": 'client_info_remember',
+                        "kafka_key": "main",
+                        "kafka_replyTopic": "app"
+                    })
+        ]
+        user = PicklableMagicMock()
+        params = {"params": "params"}
+        user.parametrizer = MockSimpleParametrizer(user, {"data": params})
+        user.settings = {"template_settings": {"project_id": "0", "consumer_topic": "app"}}
+        items = {
+            "nodes": {
+              "clientIds": {
+                "type": "unified_template",
+                "template": "{{ 0 }}",
+                "loader": "json"
+              },
+              "memory": [
+                {
+                  "memoryPartition": "publicMemo",
+                  "partitionData": [
+                    {
+                      "tag": "historyInfo",
+                      "action": {
+                        "type": "upsert",
+                        "params": {
+                          "operation": [
+                            {
+                              "selector": {
+                                "intent": {
+                                  "$eq": "run_app"
+                                },
+                                "surface": {
+                                  "$eq": "{{ 0 }}"
+                                },
+                                "channel": {
+                                  "$eq": "{{ 0 }}"
+                                },
+                                "projectId": {
+                                  "$eq": "{{ 0 }}"
+                                }
+                              },
+                              "updater": [
+                                {
+                                  "$set": {
+                                    "$.lastExecuteDateTime": "{{ 0 }}"
+                                  }
+                                },
+                                {
+                                  "$inc": {
+                                    "$.executeCounter": 1
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+        }
+        action = RememberThisAction(items)
+        result = await action.run(user, None)
+        self.assertEqual(expected[0].name, result[0].name)
+        self.assertEqual(expected[0].payload, result[0].payload)

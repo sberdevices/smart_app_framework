@@ -19,3 +19,4 @@ masking_fields:
 user_save_collisions_tries: 2
 self_service_with_state_save_messages: true
 project_id: template-app-id
+consumer_topic: "app"

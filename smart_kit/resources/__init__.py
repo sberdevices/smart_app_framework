@@ -8,6 +8,7 @@ import scenarios.scenario_models.field.field_filler_description as ffd
 import scenarios.scenario_models.field_requirements.field_requirements as frd
 from core.basic_models.actions.basic_actions import actions, action_factory, Action, \
     DoingNothingAction, RequirementAction, ChoiceAction, ElseAction, CompositeAction
+from core.basic_models.actions.client_profile_actions import GiveMeMemoryAction, RememberThisAction
 from core.basic_models.actions.counter_actions import CounterIncrementAction, CounterDecrementAction, \
     CounterClearAction, CounterSetAction, CounterCopyAction
 from core.basic_models.actions.external_actions import ExternalAction
@@ -312,6 +313,8 @@ class SmartAppResources(BaseConfig):
         actions["set_variable"] = SetVariableAction
         actions["string"] = StringAction
         actions["push"] = PushAction
+        actions["give_me_memory"] = GiveMeMemoryAction
+        actions["remember_this"] = RememberThisAction
 
     def init_requirements(self):
         requirements[None] = Requirement

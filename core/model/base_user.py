@@ -57,10 +57,11 @@ class BaseUser(Model):
 
     @property
     def raw(self):
+        raw = super(BaseUser, self).raw
         log("%(class_name)s.raw USER %(uid)s SAVE db_version = %(db_version)s.", self,
             {"db_version": str(self.variables.get(self.USER_DB_VERSION)),
-             "uid": str(self.id)})
-        return super(BaseUser, self).raw
+             "uid": str(self.id), "user_length":len(raw)})
+        return raw
 
     @property
     def raw_str(self):

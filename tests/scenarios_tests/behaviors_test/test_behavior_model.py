@@ -3,10 +3,10 @@ import socket
 import unittest
 from collections import OrderedDict
 from collections import namedtuple
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import Mock
 
 import scenarios.behaviors.behaviors
-from smart_kit.utils.picklable_mock import PicklableMock
+from smart_kit.utils.picklable_mock import PicklableMock, AsyncPicklableMock
 
 
 class BehaviorsTest(unittest.IsolatedAsyncioTestCase):
@@ -17,10 +17,10 @@ class BehaviorsTest(unittest.IsolatedAsyncioTestCase):
         self.user.local_vars.values = {"test_local_var_key": "test_local_var_value"}
         self.description = PicklableMock()
         self.description.timeout = Mock(return_value=10)
-        self.success_action = PicklableMock()
-        self.success_action.run = AsyncMock()
-        self.fail_action = AsyncMock()
-        self.timeout_action = AsyncMock()
+        self.success_action = AsyncPicklableMock()
+        self.success_action.run = AsyncPicklableMock()
+        self.fail_action = AsyncPicklableMock()
+        self.timeout_action = AsyncPicklableMock()
 
         self.description.success_action = self.success_action
         self.description.fail_action = self.fail_action

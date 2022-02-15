@@ -1,6 +1,6 @@
 import unittest
 from typing import Dict, Any, Union, Optional
-from unittest.mock import MagicMock, Mock, ANY, AsyncMock
+from unittest.mock import Mock, ANY, AsyncMock
 
 from core.basic_models.actions.basic_actions import Action, action_factory, actions
 from core.model.registered import registered_factories
@@ -16,15 +16,14 @@ from scenarios.actions.action import (
     SetVariableAction,
     SelfServiceActionWithState,
     SaveBehaviorAction,
-    ResetCurrentNodeAction,
     RunScenarioAction,
     RunLastScenarioAction,
-    AddHistoryEventAction
+    AddHistoryEventAction, ResetCurrentNodeAction
 )
 from scenarios.actions.action import ClearFormAction, ClearInnerFormAction, BreakScenarioAction, AskAgainAction, \
     RemoveFormFieldAction, RemoveCompositeFormFieldAction
 from scenarios.scenario_models.history import Event
-from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock
+from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock, AsyncPicklableMock
 
 
 class MockAction:
@@ -61,7 +60,7 @@ class ClearFormIdActionTest(unittest.IsolatedAsyncioTestCase):
         user.forms.remove_item.assert_called_once_with("form")
 
 
-class RemoveCompositeFormFieldActionTest(unittest.IsolatedAsyncioTestCase):
+class ClearInnerFormActionTest(unittest.IsolatedAsyncioTestCase):
     async def test_run(self):
         action = ClearInnerFormAction({"form": "form", "inner_form": "inner_form"})
         user, form = PicklableMagicMock(), PicklableMagicMock()
@@ -128,14 +127,15 @@ class RemoveCompositeFormFieldActionTest(unittest.IsolatedAsyncioTestCase):
 
 
 class SaveBehaviorActionTest(unittest.IsolatedAsyncioTestCase):
-    def setUp(self):
+    @classmethod
+    def setUpClass(cls):
         user = PicklableMock()
         user.message = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
         user.last_scenarios.last_scenario_name = "scenario_id"
         test_incremental_id = "test_incremental_id"
         user.message.incremental_id = test_incremental_id
-        self.user = user
+        cls.user = user
 
     async def test_save_behavior_scenario_name(self):
         data = {"behavior": "test"}
@@ -355,7 +355,7 @@ class ScenarioActionTest(unittest.IsolatedAsyncioTestCase):
         action = RunScenarioAction({"scenario": "test"})
         user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        scen = AsyncMock()
+        scen = AsyncPicklableMock()
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"test": scen}}
@@ -369,7 +369,7 @@ class ScenarioActionTest(unittest.IsolatedAsyncioTestCase):
         action = RunScenarioAction(items)
         user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {"data": params})
-        scen = AsyncMock()
+        scen = AsyncPicklableMock()
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"ANNA.pipeline.scenario": scen}}
@@ -391,7 +391,7 @@ class ScenarioActionTest(unittest.IsolatedAsyncioTestCase):
         action = RunScenarioAction({"scenario": "next_scenario"})
         user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        scen = AsyncMock()
+        scen = AsyncPicklableMock()
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"next_scenario": scen}}
@@ -404,7 +404,7 @@ class RunLastScenarioActionTest(unittest.IsolatedAsyncioTestCase):
     async def test_scenario_action(self):
         action = RunLastScenarioAction({})
         user = PicklableMock()
-        scen = AsyncMock()
+        scen = AsyncPicklableMock()
         scen_result = 'done'
         scen.run.return_value = scen_result
         user.descriptions = {"scenarios": {"test": scen}}
@@ -424,7 +424,7 @@ class ChoiceScenarioActionTest(unittest.IsolatedAsyncioTestCase):
         action = ChoiceScenarioAction(test_items)
         user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
-        scen = AsyncMock()
+        scen = AsyncPicklableMock()
         scen.run.return_value = expected_result
         if expected_scen:
             user.descriptions = {"scenarios": {expected_scen: scen}}

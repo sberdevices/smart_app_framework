@@ -10,6 +10,10 @@ class TestScenarioDesc(dict):
         return self.keys()
 
 
+async def mock_two_parameters_return_false(x, y):
+    return False
+
+
 async def mock_scenario1_text_fits():
     return False
 
@@ -57,6 +61,7 @@ class ModelsTest1(unittest.IsolatedAsyncioTestCase):
         self.test_scenario1 = PicklableMock()
         self.test_scenario1.scenario_description = "This is test scenario 1 desc"
         self.test_scenario1.text_fits = mock_scenario1_text_fits
+        self.test_scenario1.text_fits = mock_two_parameters_return_false
         self.test_scenario1.run = mock_scenario1_run
         self.test_scenario2 = PicklableMock()
         self.test_scenario2.scenario_description = "This is test scenario 2 desc"
@@ -65,7 +70,7 @@ class ModelsTest1(unittest.IsolatedAsyncioTestCase):
         self.test_scenarios = TestScenarioDesc({1: self.test_scenario1, 2: self.test_scenario2})
         self.TestAction = PicklableMock()
         self.TestAction.description = "test_function"
-        self.TestAction.run = lambda x, y: x.name + y.name
+        self.TestAction.run = mock_scenario1_run
         self.app_name = "test"
 
     def test_log_const(self):

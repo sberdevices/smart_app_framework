@@ -1,5 +1,4 @@
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import Mock
 
 from core.model.registered import registered_factories
 from scenarios.scenario_models.field.field_filler_description import FieldFillerDescription, CompositeFiller

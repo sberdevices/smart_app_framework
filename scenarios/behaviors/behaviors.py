@@ -60,11 +60,7 @@ class Behaviors:
         host = socket.gethostname()
         text_preprocessing_result_raw = text_preprocessing_result_raw or {}
         # behavior will be removed after timeout + EXPIRATION_DELAY
-        expiration_time = (
-                int(time()) +
-                self.descriptions[behavior_id].timeout(self._user) +
-                self.EXPIRATION_DELAY
-        )
+        expiration_time = int(time()) + self.descriptions[behavior_id].timeout(self._user) + self.EXPIRATION_DELAY
         action_params = action_params or dict()
         action_params[LOCAL_VARS] = pickle_deepcopy(self._user.local_vars.values)
 
@@ -238,8 +234,7 @@ class Behaviors:
 
     def expire(self):
         callback_id_for_delete = []
-        for callback_id, (
-                behavior_id, expiration_time, *_) in self._callbacks.items():
+        for callback_id, (behavior_id, expiration_time, *_) in self._callbacks.items():
             if expiration_time <= time():
                 callback_id_for_delete.append(callback_id)
         for callback_id in callback_id_for_delete:
@@ -252,8 +247,8 @@ class Behaviors:
                           log_const.BEHAVIOR_DATA_VALUE: str(self._callbacks[callback_id]),
                           "to_message_name": to_message_name}
             log_params.update(app_info)
-            log(
-                f"behavior.expire: if you see this - something went wrong(should be timeout in normal case) callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s,  with to_message_name %(to_message_name)s",
+            log(f"behavior.expire: if you see this - something went wrong(should be timeout in normal case) callback "
+                f"%({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s,  with to_message_name %(to_message_name)s",
                 params=log_params, level="WARNING", user=self._user)
             self._delete(callback_id)
 
@@ -261,8 +256,8 @@ class Behaviors:
         if self.descriptions[behavior_id].loop_def:
             for callback_id, (_behavior_id, *_) in self._callbacks.items():
                 if _behavior_id == behavior_id:
-                    log(
-                        f"behavior.check_got_saved_id == True: already got saved behavior %({log_const.BEHAVIOR_ID_VALUE})s for callback_id %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s",
+                    log(f"behavior.check_got_saved_id == True: already got saved behavior "
+                        f"%({log_const.BEHAVIOR_ID_VALUE})s for callback_id %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s",
                         user=self._user,
                         params={log_const.KEY_NAME: "behavior_got_saved",
                                 log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id,

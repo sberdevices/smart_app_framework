@@ -124,7 +124,6 @@ class BaseMainLoop:
             log("User %(uid)s will not saved", user=user, params={"uid": user.id,
                                                                   log_const.KEY_NAME: "user_will_not_saved"})
         else:
-
             no_collisions = True
             try:
                 str_data = user.raw_str

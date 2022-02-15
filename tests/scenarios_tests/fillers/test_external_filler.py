@@ -1,5 +1,5 @@
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import Mock, AsyncMock
+from unittest.mock import AsyncMock
 
 from scenarios.scenario_models.field.field_filler_description import ExternalFieldFillerDescription
 from smart_kit.utils.picklable_mock import PicklableMock

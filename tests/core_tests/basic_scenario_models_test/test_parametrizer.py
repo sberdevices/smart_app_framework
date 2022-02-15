@@ -6,9 +6,9 @@ from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class ParametrizerTest(unittest.TestCase):
-
-    def setUp(self):
-        self.user = Mock(message=PicklableMock())
+    @classmethod
+    def setUpClass(cls):
+        cls.user = Mock(message=PicklableMock())
 
     def test_get_user_data(self):
         expected = ["message"]

@@ -24,10 +24,13 @@ class MockParametrizer:
 
 
 class TestAvailableInfoFiller(IsolatedAsyncioTestCase):
-    def setUp(self):
-        self.address = "Address!"
+    @classmethod
+    def setUpClass(cls):
+        cls.address = "Address!"
         payload_items = {'value': '{{payload.sf_answer.address}}'}
-        self.payload_filler = AvailableInfoFiller(payload_items)
+        cls.payload_filler = AvailableInfoFiller(payload_items)
+
+    def setUp(self):
         template = PicklableMock()
         template.get_template = Mock(return_value=[])
         user = PicklableMock()

@@ -19,4 +19,8 @@ masking_fields:
 user_save_collisions_tries: 2
 self_service_with_state_save_messages: true
 project_id: template-app-id
+<<<<<<< HEAD
 consumer_topic: "app"
+=======
+max_concurrent_messages: 1
+>>>>>>> eca49afd6e869eeaa3c571c557c6ec5254dd3757

@@ -5,7 +5,7 @@ from core.basic_models.actions.basic_actions import Action, action_factory, acti
 from core.basic_models.actions.command import Command
 from core.model.registered import registered_factories
 from scenarios.scenario_descriptions.tree_scenario.tree_scenario import TreeScenario
-from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock
+from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock, AsyncPicklableMock
 
 
 class MockAction:
@@ -58,7 +58,7 @@ class TestTreeScenario(IsolatedAsyncioTestCase):
 
         internal_form = PicklableMock(name="internal_form_mock")
         internal_form.description.fields.items = PicklableMock(return_value=[("age", field_descriptor)])
-        internal_form.field.field_validator.requirement.check = PicklableMock(return_value=True)
+        internal_form.field.field_validator.requirement.check = AsyncPicklableMock(return_value=True)
         internal_form.fields = PicklableMagicMock()
         internal_form.fields.values.items = PicklableMock(return_value={"age": 61})
         internal_form.is_valid = PicklableMock(return_value=True)
@@ -86,7 +86,7 @@ class TestTreeScenario(IsolatedAsyncioTestCase):
 
         scenario = TreeScenario(items, 1)
 
-        result = await scenario.run(text_preprocessing_result, user)
+        await scenario.run(text_preprocessing_result, user)
         self.assertIsNone(current_node_mock.current_node)
         context_forms.new.assert_called_once_with(form_type)
 
@@ -119,7 +119,7 @@ class TestTreeScenario(IsolatedAsyncioTestCase):
 
         internal_form = PicklableMock(name="internal_form_mock")
         internal_form.description.fields.items = PicklableMock(return_value=[("age", field_descriptor)])
-        internal_form.field.field_validator.requirement.check = PicklableMock(return_value=True)
+        internal_form.field.field_validator.requirement.check = AsyncPicklableMock(return_value=True)
         field = PicklableMock()
         field.description = field_descriptor
         field.value = 61

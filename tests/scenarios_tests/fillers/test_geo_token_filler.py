@@ -1,5 +1,4 @@
 from unittest import IsolatedAsyncioTestCase
-from unittest.mock import Mock
 
 from scenarios.scenario_models.field.field_filler_description import FirstGeoFiller
 from smart_kit.utils.picklable_mock import PicklableMock

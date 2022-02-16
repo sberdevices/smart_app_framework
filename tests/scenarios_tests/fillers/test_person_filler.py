@@ -27,7 +27,6 @@ class TestFirstPersonFiller(IsolatedAsyncioTestCase):
 
         self.assertDictEqual(expected, result)
 
-
     async def test_3(self):
         text_preprocessing_result = PicklableMock()
         text_preprocessing_result.person_token_values = []

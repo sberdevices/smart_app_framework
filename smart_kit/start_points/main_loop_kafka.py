@@ -365,7 +365,22 @@ class MainLoop(BaseMainLoop):
                 log_params["user_loading"] = load_timer.msecs
                 smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
 
-                self._incoming_message_log(user, mq_message, message, kafka_key, waiting_message_time)
+                log(
+                    "INCOMING FROM TOPIC: %(topic)s partition %(message_partition)s HEADERS: %(headers)s DATA: %("
+                    "incoming_data)s",
+                    params={log_const.KEY_NAME: "incoming_message",
+                            "topic": mq_message.topic(),
+                            "message_partition": mq_message.partition(),
+                            "message_key": mq_message.key(),
+                            "kafka_key": kafka_key,
+                            "incoming_data": str(message.masked_value),
+                            "length": len(message.value),
+                            "headers": str(mq_message.headers()),
+                            "waiting_message": waiting_message_time,
+                            "surface": message.device.surface,
+                            MESSAGE_ID_STR: message.incremental_id},
+                    user=user
+                    )
 
                 with StatsTimer() as script_timer:
                     commands = await self.model.answer(message, user)
@@ -533,7 +548,8 @@ class MainLoop(BaseMainLoop):
             params={log_const.KEY_NAME: "outgoing_message",
                     "topic_key": request.topic_key,
                     "headers": str(request._get_new_headers(original_mq_message)),
-                    "data": answer.masked_value}, user=user)
+                    "data": answer.masked_value,
+                    "length": len(answer.value)}, user=user)
 
     @lru_cache()
     def _topic_names_2_key(self, kafka_key):

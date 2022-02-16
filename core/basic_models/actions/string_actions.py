@@ -109,6 +109,7 @@ class StringAction(NodeAction):
     def _generate_command_context(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
                                   params: Optional[Dict[str, Union[str, float, int]]] = None) -> Dict:
         command_params = dict()
+        params = params or {}
         collected = user.parametrizer.collect(text_preprocessing_result, filter_params={"command": self.command})
         params.update(collected)
 

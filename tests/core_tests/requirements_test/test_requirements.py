@@ -355,7 +355,7 @@ class RequirementTest(unittest.IsolatedAsyncioTestCase):
             }
         )
         text_normalization_result = PicklableMock()
-        text_normalization_result.tokenized_elements_list = [
+        text_normalization_result.tokenized_elements_list_pymorphy = [
             {'lemma': 'ни'},
             {'lemma': 'за'},
             {'lemma': 'что'},

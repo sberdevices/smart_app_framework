@@ -1,6 +1,6 @@
 import unittest
 from typing import Dict, Any, Union, Optional
-from unittest.mock import Mock, ANY
+from unittest.mock import Mock, ANY, AsyncMock
 
 from core.basic_models.actions.basic_actions import Action, action_factory, actions
 from core.model.registered import registered_factories

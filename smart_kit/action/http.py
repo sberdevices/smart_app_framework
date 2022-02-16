@@ -1,54 +1,51 @@
-import requests
+from typing import Optional, Dict, Union, List
 
-from typing import Optional, Dict, Union, List, Any
-
+from core.basic_models.actions.basic_actions import Action
 from core.basic_models.actions.command import Command
-from core.basic_models.actions.string_actions import NodeAction
 from core.model.base_user import BaseUser
 from core.text_preprocessing.base import BaseTextPreprocessingResult
+from smart_kit.action.base_http import BaseHttpRequestAction
 
 
-class HTTPRequestAction(NodeAction):
+class HTTPRequestAction(Action):
+    """
+    Example:
+        {
+            "params": {
+                "method": "POST",
+                "url": "https://some_url.com/...",
+                ... (см. BaseHttpRequestAction)
+            },
+            "store": "..."  // название переменной в user.variables, куда сохранится результат
+            "behavior": "..."  // название behavior'a, вызываемого после исполнения запроса
+        }
+    """
+
+    HTTP_ACTION = BaseHttpRequestAction
+
     def __init__(self, items, id=None):
-        super().__init__(items, id)
-        self.params = items["params"]
-        self.url = self.params["url"]
-        self.method = self.params["method"]
+        self.http_action = self.HTTP_ACTION(items["params"], id)
         self.store = items["store"]
         self.behavior = items["behavior"]
+        super().__init__(items, id)
 
-    @staticmethod
-    def _check_headers_validity(headers: Dict[str, Any]) -> Dict[str, str]:
-        for header_name, header_value in headers.items():
-            if not isinstance(header_value, str) or not isinstance(header_value, bytes):
-                headers[header_name] = str(header_value)
-        return headers
+    def preprocess(self, user, text_processing, params):
+        behavior_description = user.descriptions["behaviors"][self.behavior]
+        self.http_action.method_params.setdefault("timeout", behavior_description.timeout(user))
+
+    async def process_result(self, result, user, text_preprocessing_result, params) -> Optional[List[Command]]:
+        behavior_description = user.descriptions["behaviors"][self.behavior]
+        if self.http_action.error is None:
+            user.variables.set(self.store, result)
+            action = behavior_description.success_action
+        elif self.http_action.error == self.http_action.TIMEOUT:
+            action = behavior_description.timeout_action
+        else:
+            action = behavior_description.fail_action
+        return await action.run(user, text_preprocessing_result, None)
 
     async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
                   params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
-        behavior_description = user.descriptions["behaviors"][self.behavior]
-
-        request_params = self.params
-        request_params["timeout"] = request_params.get("timeout") or behavior_description.timeout(user)
-
-        params = params or {}
-        collected = user.parametrizer.collect(text_preprocessing_result)
-        params.update(collected)
-
-        request_parameters = self._get_rendered_tree_recursive(self._get_template_tree(request_params), params)
-
-        req_headers = request_parameters.get("headers")
-        if req_headers:
-            # Заголовки в запросах должны иметь тип str или bytes. Поэтому добавлена проверка и приведение к типу str,
-            # на тот случай если в сценарии заголовок указали как int, float и тд
-            request_parameters["headers"] = self._check_headers_validity(req_headers)
-
-        try:
-            with requests.request(**request_parameters) as response:
-                response.raise_for_status()
-                user.variables.set(self.store, response.json())
-                return await behavior_description.success_action.run(user, text_preprocessing_result, None)
-        except requests.exceptions.Timeout:
-            return await behavior_description.timeout_action.run(user, text_preprocessing_result, None)
-        except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
-            return await behavior_description.fail_action.run(user, text_preprocessing_result, None)
+        self.preprocess(user, text_preprocessing_result, params)
+        result = await self.http_action.run(user, text_preprocessing_result, params)
+        return await self.process_result(result, user, text_preprocessing_result, params)

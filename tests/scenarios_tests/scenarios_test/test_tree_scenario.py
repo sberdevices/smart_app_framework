@@ -51,8 +51,7 @@ class TestTreeScenario(IsolatedAsyncioTestCase):
                  "scenario_nodes": {"node_1": node_mock}}
 
         field_descriptor = PicklableMock(name="field_descriptor_mock")
-        field_descriptor.filler.extract = AsyncPicklableMock(name="my_field_value_1", return_value=61)
-        field_descriptor.filler.run = field_descriptor.filler.extract
+        field_descriptor.filler.run = AsyncMock(name="my_field_value_1", return_value=61)
         field_descriptor.fill_other = False
         field_descriptor.field_validator.actions = []
         field_descriptor.field_validator.requirement.check = AsyncMock(return_value=True)
@@ -111,8 +110,7 @@ class TestTreeScenario(IsolatedAsyncioTestCase):
                  "scenario_nodes": {"node_1": node_mock}, "actions": [{"type": "success"}]}
 
         field_descriptor = PicklableMock(name="field_descriptor_mock")
-        field_descriptor.filler.extract = AsyncPicklableMock(name="my_field_value_1", return_value=61)
-        field_descriptor.filler.run = field_descriptor.filler.extract
+        field_descriptor.filler.run = AsyncMock(name="my_field_value_1", return_value=61)
         field_descriptor.fill_other = False
         field_descriptor.field_validator.actions = []
         field_descriptor.field_validator.requirement.check = AsyncMock(return_value=True)

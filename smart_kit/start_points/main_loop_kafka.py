@@ -405,7 +405,7 @@ class MainLoop(BaseMainLoop):
                         with StatsTimer() as publish_timer:
                             self._send_request(user, answer, mq_message)
                             smart_kit_metrics.counter_outgoing(self.app_name, answer.command.name, answer, user)
-                        stats += "Publishing to Kafka time: {publish_timer.msecs} msecs\n"
+                        stats += f"Publishing to Kafka time: {publish_timer.msecs} msecs\n"
                         log_params["kafka_publishing"] = publish_timer.msecs
             else:
                 validation_failed = True

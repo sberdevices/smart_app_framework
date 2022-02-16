@@ -31,7 +31,7 @@ class DialogueManager:
         before_action = user.descriptions["external_actions"].get("before_action")
         if before_action:
             params = user.parametrizer.collect(text_preprocessing_result)
-            before_action.run(user, text_preprocessing_result, params)
+            await before_action.run(user, text_preprocessing_result, params)
         scenarios_names = user.last_scenarios.scenarios_names
         scenario_key = user.message.payload[field.INTENT]
         if scenario_key in scenarios_names:

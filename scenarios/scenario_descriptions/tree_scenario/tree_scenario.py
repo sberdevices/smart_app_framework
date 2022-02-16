@@ -42,14 +42,14 @@ class TreeScenario(FormFillingScenario):
         current_node = self.scenario_nodes[current_node_id]
         return current_node
 
-    def get_next_node(self, user, node, text_preprocessing_result, params):
+    async def get_next_node(self, user, node, text_preprocessing_result, params):
         available_node_keys = node.available_nodes
         for key in available_node_keys:
             node = self.scenario_nodes[key]
             log_params = {log_const.KEY_NAME: log_const.CHECKING_NODE_ID_VALUE,
                           log_const.CHECKING_NODE_ID_VALUE: node.id}
             log(log_const.CHECKING_NODE_ID_MESSAGE, user, log_params)
-            requirement_result = node.requirement.check(text_preprocessing_result, user, params)
+            requirement_result = await node.requirement.check(text_preprocessing_result, user, params)
             if requirement_result:
                 log_params = {log_const.KEY_NAME: log_const.CHOSEN_NODE_ID_VALUE,
                               log_const.CHOSEN_NODE_ID_VALUE: node.id}
@@ -156,7 +156,7 @@ class TreeScenario(FormFillingScenario):
             elif not form:
                 form = internal_form
                 self._set_current_node_id(user, current_node.id)
-            new_node = self.get_next_node(user, current_node, text_preprocessing_result, params)
+            new_node = await self.get_next_node(user, current_node, text_preprocessing_result, params)
 
         field = await self._find_field(form, text_preprocessing_result,
                                        user, params) if form else None

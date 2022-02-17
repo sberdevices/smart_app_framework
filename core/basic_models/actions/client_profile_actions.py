@@ -58,13 +58,10 @@ class GiveMeMemoryAction(StringAction):
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self._nodes["consumer"] = {"projectId": user.settings["template_settings"]["project_id"]}
 
-        if not self.kafka_key:
-            self.kafka_key = user.settings["template_settings"].get("clientId_profile_kafka_key")
-            if not self.kafka_key:
-                self.kafka_key = self.DEFAULT_KAFKA_KEY
+        settings_kafka_key = self.kafka_key = user.settings["template_settings"].get("client_profile_kafka_key")
         self.request_data = {
             "topic_key": "client_info",
-            "kafka_key": self.kafka_key,
+            "kafka_key": self.kafka_key or settings_kafka_key or self.DEFAULT_KAFKA_KEY,
             "kafka_replyTopic": user.settings["template_settings"]["consumer_topic"]
         }
 
@@ -151,13 +148,10 @@ class RememberThisAction(StringAction):
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self._nodes["consumer"] = {"projectId": user.settings["template_settings"]["project_id"]}
 
-        if not self.kafka_key:
-            self.kafka_key = user.settings["template_settings"].get("clientId_profile_kafka_key")
-            if not self.kafka_key:
-                self.kafka_key = self.DEFAULT_KAFKA_KEY
+        settings_kafka_key = user.settings["template_settings"].get("client_profile_kafka_key")
         self.request_data = {
             "topic_key": "client_info_remember",
-            "kafka_key": self.kafka_key,
+            "kafka_key": self.kafka_key or settings_kafka_key or self.DEFAULT_KAFKA_KEY,
             "kafka_replyTopic": user.settings["template_settings"]["consumer_topic"]
         }
 

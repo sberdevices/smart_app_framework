@@ -21,7 +21,7 @@ from scenarios.actions.action import (
     RunLastScenarioAction,
     AddHistoryEventAction
 )
-from scenarios.actions.action import ClearFormAction, ClearInnerFormAction, BreakScenarioAction, AskAgainAction, \
+from scenarios.actions.action import ClearFormAction, ClearInnerFormAction, BreakScenarioAction, \
     RemoveFormFieldAction, RemoveCompositeFormFieldAction
 from scenarios.scenario_models.history import Event
 from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock
@@ -91,21 +91,6 @@ class BreakScenarioTest(unittest.TestCase):
         user.scenario_models = {scenario_id: scenario_model}
         action.run(user, None)
         user.scenario_models[scenario_id].set_break.assert_called_once()
-
-
-class AskAgainActionTest(unittest.TestCase):
-    def test_run(self):
-        items = dict()
-        user = PicklableMock()
-        last_scenario_name = "test_id"
-        user.last_scenarios.last_scenario_name = last_scenario_name
-        scenario = PicklableMock()
-        scenario.get_ask_again_question_result.return_value = "test_result"
-        scenarios = {last_scenario_name: scenario}
-        user.descriptions = {"scenarios": scenarios}
-        action = AskAgainAction(items)
-        tesult = action.run(user, None)
-        self.assertEqual(tesult, "test_result")
 
 
 class RemoveFormFieldActionTest(unittest.TestCase):

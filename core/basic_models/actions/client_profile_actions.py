@@ -58,7 +58,7 @@ class GiveMeMemoryAction(StringAction):
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self._nodes["consumer"] = {"projectId": user.settings["template_settings"]["project_id"]}
 
-        settings_kafka_key = self.kafka_key = user.settings["template_settings"].get("client_profile_kafka_key")
+        settings_kafka_key = user.settings["template_settings"].get("client_profile_kafka_key")
         self.request_data = {
             "topic_key": "client_info",
             "kafka_key": self.kafka_key or settings_kafka_key or self.DEFAULT_KAFKA_KEY,

@@ -49,7 +49,7 @@ class GiveMeMemoryAction(StringAction):
         self.request_type = KAFKA
         self.kafka_key = items.get("kafka_key")
         self.behavior = items.get("behavior")
-        self._nodes["root_nodes"] = {"protocolVersion": 1}
+        self._nodes["root_nodes"] = {"protocolVersion": items.get("protocolVersion") or 1}
         self._nodes["memory"] = [
             {"memoryPartition": key, "tags": val} for key, val in self._nodes["memory"].items()
         ]
@@ -142,7 +142,7 @@ class RememberThisAction(StringAction):
         super().__init__(items, id)
         self.request_type = KAFKA
         self.kafka_key = items.get("kafka_key")
-        self._nodes["root_nodes"] = {"protocolVersion": 3}
+        self._nodes["root_nodes"] = {"protocolVersion": items.get("protocolVersion") or 3}
 
     def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:

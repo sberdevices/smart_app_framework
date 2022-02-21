@@ -5,7 +5,9 @@ MASK = "***"
 DEFAULT_MASKING_FIELDS = {"token": 0, "access_token": 0, "refresh_token": 0, "epkId": 0, "profileId": 0}
 CARD_MASKING_FIELDS = ["message", "debug_info", "normalizedMessage", "incoming_text", "annotations", "inner_entities",
                        "preprocess_result", "original_message", "original_tokenized_elements"]
-ATM_SURFACE_ADDITIONAL_FIELDS = {}
+ATM_SURFACE_ADDITIONAL_FIELDS = {"original_text":0,"asr_original_message":0,"human_normalized_text_with_anaphora":0,
+                                 "ner_prediction":0,"VIDEO_STOPWORDS_TOKEN":0,"WIKI_STOPWORDS_TOKEN":0,
+                                 "MUSIC_STOPWORDS_TOKEN":0, "FOOD_STOPWORDS_TOKEN":0}
 
 card_regular = re.compile(r"(?:(\d{18})|(\d{16})|(?:\d{4} ){3}(\d{4})(\s?\d{2})?)")
 

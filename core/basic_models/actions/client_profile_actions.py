@@ -138,8 +138,8 @@ class RememberThisAction(StringAction):
     DEFAULT_KAFKA_KEY = "main"
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
-        items["command"] = REMEMBER_THIS
         super().__init__(items, id)
+        self.command = REMEMBER_THIS
         self.request_type = KAFKA
         self.kafka_key = items.get("kafka_key")
         self._nodes["root_nodes"] = {"protocolVersion": items.get("protocolVersion") or 3}

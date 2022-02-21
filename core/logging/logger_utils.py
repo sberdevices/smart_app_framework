@@ -58,7 +58,9 @@ class LoggerMessageCreator:
         params = params or {}
         if user:
             cls.update_user_params(user, params)
-        masking(pickle_deepcopy(params))
+        surface = params.get("payload",{}).get("device",{}).get("surface", "")
+        is_atm = surface == "ATM"
+        masking(pickle_deepcopy(params), is_atm=is_atm)
         cls.update_other_params(user, params, cls_name, log_store_for)
         return params
 

@@ -5,6 +5,7 @@ MASK = "***"
 DEFAULT_MASKING_FIELDS = {"token": 0, "access_token": 0, "refresh_token": 0, "epkId": 0, "profileId": 0}
 CARD_MASKING_FIELDS = ["message", "debug_info", "normalizedMessage", "incoming_text", "annotations", "inner_entities",
                        "preprocess_result", "original_message", "original_tokenized_elements"]
+ATM_SURFACE_ADDITIONAL_FIELDS = {}
 
 card_regular = re.compile(r"(?:(\d{18})|(\d{16})|(?:\d{4} ){3}(\d{4})(\s?\d{2})?)")
 
@@ -39,7 +40,7 @@ def card_sub_func(x: Match[str]) -> str:
 
 
 def masking(data: Union[Dict, List], masking_fields: Optional[Union[Dict, List]] = None,
-            depth_level: int = 2, mask_available_depth: int = -1):
+            depth_level: int = 2, mask_available_depth: int = -1, is_atm: bool = False):
     """
     :param data: коллекция для маскирования приватных данных
     :param masking_fields: поля для обязательной маскировки независимо от уровня
@@ -52,6 +53,9 @@ def masking(data: Union[Dict, List], masking_fields: Optional[Union[Dict, List]]
 
     if masking_fields is None:
         masking_fields = DEFAULT_MASKING_FIELDS
+
+    if is_atm:
+        masking_fields.update(ATM_SURFACE_ADDITIONAL_FIELDS)
 
     _masking(data, masking_fields, depth_level, mask_available_depth, masking_on=False, card_masking_on=False)
 

@@ -79,6 +79,7 @@ class BaseHttpRequestAction(NodeAction):
         return request_parameters
 
     def _log_request(self, user, request_parameters, additional_params=None):
+        additional_params = additional_params or {}
         log(f"{self.__class__.__name__}.run sent https request ", user=user, params={
             **request_parameters,
             log_const.KEY_NAME: "sent_http_request",

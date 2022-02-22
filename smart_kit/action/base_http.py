@@ -43,10 +43,15 @@ class BaseHttpRequestAction(NodeAction):
         self.error = None
 
     @staticmethod
-    def _check_headers_validity(headers: Dict[str, Any]) -> Dict[str, str]:
+    def _check_headers_validity(headers: Dict[str, Any], user) -> Dict[str, str]:
         for header_name, header_value in headers.items():
             if not isinstance(header_value, (str, bytes)):
-                headers[header_name] = str(header_value)
+                if isinstance(header_value, (int, float, bool)):
+                    headers[header_name] = str(header_value)
+                else:
+                    log(f"{__class__.__name__}._check_headers_validity remove header {header_name} because "
+                        f"{type(headers[header_name])} is not in [int, float, bool, str, bytes]", user=user)
+                    del headers[header_name]
         return headers
 
     def _make_response(self, request_parameters, user):
@@ -75,7 +80,7 @@ class BaseHttpRequestAction(NodeAction):
         if req_headers:
             # Заголовки в запросах должны иметь тип str или bytes. Поэтому добавлена проверка и приведение к типу str,
             # на тот случай если в сценарии заголовок указали как int, float и тд
-            request_parameters["headers"] = self._check_headers_validity(req_headers)
+            request_parameters["headers"] = self._check_headers_validity(req_headers, user)
         return request_parameters
 
     def _log_request(self, user, request_parameters, additional_params=None):

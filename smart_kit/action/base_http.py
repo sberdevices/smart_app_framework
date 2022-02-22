@@ -49,14 +49,21 @@ class BaseHttpRequestAction(NodeAction):
                 headers[header_name] = str(header_value)
         return headers
 
+    @staticmethod
+    async def _get_response(response: aiohttp.ClientResponse):
+        try:
+            data = await response.json()
+        except aiohttp.client_exceptions.ContentTypeError:
+            data = None
+        return data
+
     async def _make_response(self, request_parameters, user):
         try:
+            if 'method' not in request_parameters:
+                request_parameters['method'] = self.DEFAULT_METHOD
             async with aiohttp.request(**request_parameters) as response:
                 response.raise_for_status()
-                try:
-                    data = await response.json()
-                except aiohttp.client_exceptions.ContentTypeError:
-                    data = None
+                data = await self._get_response(response)
                 self._log_response(user, response, data)
                 return data
         except (aiohttp.ClientTimeout, aiohttp.ServerTimeoutError):
@@ -64,8 +71,8 @@ class BaseHttpRequestAction(NodeAction):
         except aiohttp.ClientError:
             self.error = self.CONNECTION
 
-    def _get_requst_params(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None):
+    def _get_request_params(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                            params: Optional[Dict[str, Union[str, float, int]]] = None):
         collected = user.parametrizer.collect(text_preprocessing_result)
         params.update(collected)
 
@@ -96,6 +103,6 @@ class BaseHttpRequestAction(NodeAction):
     async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
                   params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         params = params or {}
-        request_parameters = self._get_requst_params(user, text_preprocessing_result, params)
+        request_parameters = self._get_request_params(user, text_preprocessing_result, params)
         self._log_request(user, request_parameters)
         return await self._make_response(request_parameters, user)

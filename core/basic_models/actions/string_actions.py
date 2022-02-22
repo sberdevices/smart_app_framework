@@ -1,4 +1,5 @@
 # coding: utf-8
+import asyncio
 import random
 from copy import copy
 from typing import Union, Dict, List, Any, Optional
@@ -80,8 +81,8 @@ class NodeAction(CommandAction):
             result = value
         return result
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
         raise NotImplementedError
 
 
@@ -101,12 +102,14 @@ class StringAction(NodeAction):
       }
     }
     """
+
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super(StringAction, self).__init__(items, id)
 
     def _generate_command_context(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Dict:
+                                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Dict:
         command_params = dict()
+        params = params or {}
         collected = user.parametrizer.collect(text_preprocessing_result, filter_params={"command": self.command})
         params.update(collected)
 
@@ -116,8 +119,8 @@ class StringAction(NodeAction):
                 command_params[key] = rendered
         return command_params
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
         # Example: Command("ANSWER_TO_USER", {"answer": {"key1": "string1", "keyN": "stringN"}})
         params = params or {}
         command_params = self._generate_command_context(user, text_preprocessing_result, params)
@@ -145,8 +148,8 @@ class AfinaAnswerAction(NodeAction):
         super(AfinaAnswerAction, self).__init__(items, id)
         self.command: str = ANSWER_TO_USER
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
         params = user.parametrizer.collect(text_preprocessing_result, filter_params={"command": self.command})
         answer_params = dict()
         result = []
@@ -216,13 +219,15 @@ class SDKAnswer(NodeAction):
     карточки на андроиде требуют sdk_version не ниже "20.03.0.0"
     """
     INDEX_WILDCARD = "*index*"
-    RANDOM_PATH = [['items', INDEX_WILDCARD, 'bubble', 'text'], ['pronounceText'], ['suggestions', 'buttons', INDEX_WILDCARD, 'title']]
+    RANDOM_PATH = [['items', INDEX_WILDCARD, 'bubble', 'text'], ['pronounceText'],
+                   ['suggestions', 'buttons', INDEX_WILDCARD, 'title']]
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super(SDKAnswer, self).__init__(items, id)
         self.command: str = ANSWER_TO_USER
         if self._nodes == {}:
-            self._nodes = {i: items.get(i) for i in items if i not in ['random_paths', 'same_ans', 'type', 'support_templates', 'no_empty_nodes']}
+            self._nodes = {i: items.get(i) for i in items if
+                           i not in ['random_paths', 'same_ans', 'type', 'support_templates', 'no_empty_nodes']}
 
     # функция идет по RANDOM_PATH, числа в нем считает индексами массива,
     # INDEX_WILDCARD - произвольным индексом массива, прочее - ключами словаря
@@ -243,8 +248,8 @@ class SDKAnswer(NodeAction):
                 return
         last_dict[k] = random.choice(last_dict[k])
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
         result = []
         params = user.parametrizer.collect(text_preprocessing_result, filter_params={"command": self.command})
         rendered = self._get_rendered_tree(self.nodes, params, self.no_empty_nodes)
@@ -255,6 +260,191 @@ class SDKAnswer(NodeAction):
                 Command(
                     self.command,
                     rendered,
+                    self.id,
+                    request_type=self.request_type,
+                    request_data=self.request_data,
+                )
+            ]
+        return result
+
+
+class GatherSDKAnswerToUser(NodeAction):
+    """
+    Example:
+    {
+        "type": "sdk_answer_to_user",
+        "root":
+        [
+          {
+            "type": "pronounce_text",
+            "text": "ans"
+          }
+        ],
+        "static": {
+          "ios_card": {
+            "type": "list_card",
+            "cells": [
+              {
+                "ios_params": "ios"
+              }
+            ]
+          },
+          "android_card": {
+            "type": "list_card",
+            "cells": [
+              {
+                "android_params": "android"
+              }
+            ]
+          },
+          "tittle1": "static tittle1",
+          "tittle2": "static tittle2",
+          "sg_dl": "www.www.www",
+          "sg_text": "static suggest text"
+        },
+        "random_choice": [
+          {
+            "ans": "random text1"
+          },
+          {
+            "ans": "random text2"
+          }
+        ],
+        "items": [
+          {
+            "type": "item_card",
+            "value": "ios_card",
+            "requirement": {
+              "type": "external",
+              "requirement": "OCTOBER_iOS"
+            }
+          },
+          {
+            "type": "item_card",
+            "value": "android_card",
+            "requirement": {
+              "type": "external",
+              "requirement": "OCTOBER_android"
+            }
+          },
+          {
+            "type": "bubble_text",
+            "text": "ans"
+          }
+        ],
+        "suggestions": [
+          {
+            "type": "suggest_text",
+            "text": "sg_text",
+            "title": "tittle1"
+          },
+          {
+            "type": "suggest_deeplink",
+            "text": "sg_text",
+            "deep_link": "tittle1"
+          }
+        ]
+    }
+
+    Output:
+    {
+        "items":
+            [{
+                "card": {"type": "list_card", "cells": [{"ios_params": "ios"}]}},
+                {"bubble": {"text": "random texti", "markdown": True}
+            }],
+        "suggestions":
+            {"buttons":
+                [
+                    {"title": "static tittle1", "action": {"text": "static suggest text", "type": "text"}},
+                    {"title": "static tittle2", "action": {"deep_link": "www.www.www", "type": "deep_link"}}
+                ]
+            },
+        "pronounceText": "random texti"
+    }
+    ответ c карточками с случайным выбором текстов из random_choice
+    карточки на андроиде требуют sdk_version не ниже "20.03.0.0"
+    """
+
+    ITEMS = "items"
+    SUGGESTIONS = "suggestions"
+    SUGGESTIONS_TEMPLATE = "suggestions_template"
+    BUTTONS = "buttons"
+    STATIC = "static"
+    RANDOM_CHOICE = "random_choice"
+    COMMAND = "command"
+    ROOT = "root"
+
+    def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
+        super(GatherSDKAnswerToUser, self).__init__(items, id)
+        self.command: str = ANSWER_TO_USER
+        self._nodes[self.STATIC] = items.get(self.STATIC, {})
+        self._nodes[self.RANDOM_CHOICE] = items.get(self.RANDOM_CHOICE, {})
+        self._nodes[self.SUGGESTIONS] = items.get(self.SUGGESTIONS, {})
+        self._nodes[self.SUGGESTIONS_TEMPLATE] = items.get(self.SUGGESTIONS_TEMPLATE, {})
+        self._items = items.get(self.ITEMS, {})
+        self._suggests = items.get(self.SUGGESTIONS, {})
+        self._suggests_template = items.get(self.SUGGESTIONS_TEMPLATE)
+        self._root = items.get(self.ROOT, {})
+
+        self.items = self.build_items()
+        self.suggests = self.build_suggests()
+        self.root = self.build_root()
+
+    @list_factory(SdkAnswerItem)
+    def build_items(self):
+        return self._items
+
+    @list_factory(SdkAnswerItem)
+    def build_suggests(self):
+        return self._suggests
+
+    @list_factory(SdkAnswerItem)
+    def build_root(self):
+        return self._root
+
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
+
+        result = []
+        params = user.parametrizer.collect(text_preprocessing_result, filter_params={self.COMMAND: self.command})
+        rendered = self._get_rendered_tree(self.nodes[self.STATIC], params, self.no_empty_nodes)
+        if self._nodes[self.RANDOM_CHOICE]:
+            random_node = random.choice(self.nodes[self.RANDOM_CHOICE])
+            rendered_random = self._get_rendered_tree(random_node, params, self.no_empty_nodes)
+            rendered.update(rendered_random)
+        out = {}
+        check_results = await asyncio.gather(
+            item.requirement.check(text_preprocessing_result, user, params) for item in self.items)
+        for i, check in enumerate(check_results):
+            item = self.items[i]
+            if check:
+                out.setdefault(self.ITEMS, []).append(item.render(rendered))
+
+        if self._suggests_template is not None:
+            out[self.SUGGESTIONS] = self._get_rendered_tree(self.nodes[self.SUGGESTIONS_TEMPLATE], params,
+                                                            self.no_empty_nodes)
+        else:
+            check_results = await asyncio.gather(
+                suggest.requirement.check(text_preprocessing_result, user, params) for suggest in self.suggests)
+            for i, check in enumerate(check_results):
+                suggest = self.suggests[i]
+                if check:
+                    data_dict = out.setdefault(self.SUGGESTIONS, {self.BUTTONS: []})
+                    buttons = data_dict[self.BUTTONS]
+                    rendered_text = suggest.render(rendered)
+                    buttons.append(rendered_text)
+        check_results = await asyncio.gather(
+            part.requirement.check(text_preprocessing_result, user) for part in self.root)
+        for i, check in enumerate(check_results):
+            part = self.root[i]
+            if check:
+                out.update(part.render(rendered))
+        if rendered or not self.no_empty_nodes:
+            result = [
+                Command(
+                    self.command,
+                    out,
                     self.id,
                     request_type=self.request_type,
                     request_data=self.request_data,
@@ -398,8 +588,8 @@ class SDKAnswerToUser(NodeAction):
     def build_root(self):
         return self._root
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
 
         result = []
         params = user.parametrizer.collect(text_preprocessing_result, filter_params={self.COMMAND: self.command})
@@ -410,7 +600,7 @@ class SDKAnswerToUser(NodeAction):
             rendered.update(rendered_random)
         out = {}
         for item in self.items:
-            if item.requirement.check(text_preprocessing_result, user, params):
+            if await item.requirement.check(text_preprocessing_result, user, params):
                 out.setdefault(self.ITEMS, []).append(item.render(rendered))
 
         if self._suggests_template is not None:
@@ -418,13 +608,13 @@ class SDKAnswerToUser(NodeAction):
                                                             self.no_empty_nodes)
         else:
             for suggest in self.suggests:
-                if suggest.requirement.check(text_preprocessing_result, user, params):
+                if await suggest.requirement.check(text_preprocessing_result, user, params):
                     data_dict = out.setdefault(self.SUGGESTIONS, {self.BUTTONS: []})
                     buttons = data_dict[self.BUTTONS]
                     rendered_text = suggest.render(rendered)
                     buttons.append(rendered_text)
         for part in self.root:
-            if part.requirement.check(text_preprocessing_result, user):
+            if await part.requirement.check(text_preprocessing_result, user):
                 out.update(part.render(rendered))
         if rendered or not self.no_empty_nodes:
             result = [

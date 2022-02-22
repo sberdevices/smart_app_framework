@@ -32,8 +32,8 @@ class SetVariableAction(Action):
         value: str = items["value"]
         self.template: UnifiedTemplate = UnifiedTemplate(value)
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
         params = user.parametrizer.collect(text_preprocessing_result)
         try:
             # if path is wrong, it may fail with UndefinedError
@@ -61,8 +61,8 @@ class DeleteVariableAction(Action):
         super(DeleteVariableAction, self).__init__(items, id)
         self.key: str = items["key"]
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
         user.variables.delete(self.key)
 
 
@@ -72,6 +72,6 @@ class ClearVariablesAction(Action):
     def __init__(self, items: Dict[str, Any] = None, id: Optional[str] = None):
         super(ClearVariablesAction, self).__init__(items, id)
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
         user.variables.clear()

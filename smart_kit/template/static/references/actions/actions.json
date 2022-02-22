@@ -11,5 +11,15 @@
   },
   "process_behavior_action": {
     "type": "process_behavior"
+  },
+  "before_action": {
+    "type": "requirement",
+    "action": {
+		"type": "clear_all_scenarios"
+	},
+	"requirement": {
+		"type": "template",
+		"requirement": "{{ payload.new_session and settings['template_settings'].get('reset_context_on_new_session')}}"
+	}
   }
 }

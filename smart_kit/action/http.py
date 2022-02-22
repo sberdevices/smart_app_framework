@@ -33,7 +33,7 @@ class HTTPRequestAction(Action):
         behavior_description = user.descriptions["behaviors"][self.behavior]
         self.http_action.method_params.setdefault("timeout", behavior_description.timeout(user))
 
-    def process_result(self, result, user, text_preprocessing_result, params):
+    async def process_result(self, result, user, text_preprocessing_result, params) -> Optional[List[Command]]:
         behavior_description = user.descriptions["behaviors"][self.behavior]
         if self.http_action.error is None:
             user.variables.set(self.store, result)
@@ -42,10 +42,10 @@ class HTTPRequestAction(Action):
             action = behavior_description.timeout_action
         else:
             action = behavior_description.fail_action
-        return action.run(user, text_preprocessing_result, None)
+        return await action.run(user, text_preprocessing_result, None)
 
     async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
                   params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self.preprocess(user, text_preprocessing_result, params)
         result = await self.http_action.run(user, text_preprocessing_result, params)
-        return self.process_result(result, user, text_preprocessing_result, params)
+        return await self.process_result(result, user, text_preprocessing_result, params)

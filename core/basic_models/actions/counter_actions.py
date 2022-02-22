@@ -18,20 +18,20 @@ class CounterIncrementAction(Action):
         self.value = items.get("value", 1)
         self.lifetime = items.get("lifetime")
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
         user.counters[self.key].inc(self.value, self.lifetime)
 
 
 class CounterDecrementAction(CounterIncrementAction):
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
         user.counters[self.key].dec(-self.value, self.lifetime)
 
 
 class CounterClearAction(CounterIncrementAction):
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
         user.counters.clear(self.key)
 
 
@@ -48,8 +48,8 @@ class CounterSetAction(CounterIncrementAction):
         self.reset_time = items.get("reset_time", False)
         self.time_shift = items.get("time_shift", 0)
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
         user.counters[self.key].set(self.value, self.reset_time, self.time_shift)
 
 
@@ -61,7 +61,7 @@ class CounterCopyAction(Action):
         self.reset_time = items.get("reset_time", False)
         self.time_shift = items.get("time_shift", 0)
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> None:
         value = user.counters[self.src].value
         user.counters[self.dst].set(value, self.reset_time, self.time_shift)

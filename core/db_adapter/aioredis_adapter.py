@@ -3,15 +3,14 @@ import copy
 import aioredis
 import typing
 
-from core.db_adapter.db_adapter import DBAdapter
+from core.db_adapter.db_adapter import AsyncDBAdapter
 from core.db_adapter import error
 from core.monitoring.monitoring import monitoring
 
 from core.logging.logger_utils import log
 
 
-class AIORedisAdapter(DBAdapter):
-    IS_ASYNC = True
+class AIORedisAdapter(AsyncDBAdapter):
 
     def __init__(self, config=None):
         super().__init__(config)

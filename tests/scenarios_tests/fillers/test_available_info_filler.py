@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import Mock
 
 from scenarios.scenario_models.field.field_filler_description import AvailableInfoFiller
@@ -23,7 +23,7 @@ class MockParametrizer:
         return data
 
 
-class TestAvailableInfoFiller(TestCase):
+class TestAvailableInfoFiller(IsolatedAsyncioTestCase):
     @classmethod
     def setUpClass(cls):
         cls.address = "Address!"
@@ -40,7 +40,7 @@ class TestAvailableInfoFiller(TestCase):
         user.descriptions = {"render_templates": template}
         self.user = user
 
-    def test_getting_person_info_value(self):
+    async def test_getting_person_info_value(self):
         name = "Name!"
         surname = "Surname!"
         self.user.person_info.raw = PicklableMock()
@@ -48,34 +48,34 @@ class TestAvailableInfoFiller(TestCase):
         person_info_items = {'value': '{{person_info.full_name.surname}}'}
         person_info_filler = AvailableInfoFiller(person_info_items)
 
-        result = person_info_filler.extract(None, self.user)
+        result = await person_info_filler.extract(None, self.user)
         self.assertEqual(result, surname)
 
-    def test_getting_payload_value(self):
+    async def test_getting_payload_value(self):
         self.user.message.payload = {"sf_answer": {"address": self.address}}
-        result = self.payload_filler.extract(None, self.user)
+        result = await self.payload_filler.extract(None, self.user)
         self.assertEqual(result, self.address)
 
-    def test_getting_uuid_value(self):
+    async def test_getting_uuid_value(self):
         uuid = "15"
         self.user.message.uuid = {"chatId": uuid}
         uuid_items = {'value': '{{uuid.chatId}}'}
         uuid_filler = AvailableInfoFiller(uuid_items)
 
-        result = uuid_filler.extract(None, self.user)
+        result = await uuid_filler.extract(None, self.user)
         self.assertEqual(result, uuid)
 
-    def test_not_failing_on_wrong_path(self):
+    async def test_not_failing_on_wrong_path(self):
         self.user.message.payload = {"other_answer": {"address": self.address}}
-        result = self.payload_filler.extract(None, self.user)
+        result = await self.payload_filler.extract(None, self.user)
         self.assertIsNone(result)
 
-    def test_return_empty_value(self):
+    async def test_return_empty_value(self):
         self.user.message.payload = {"sf_answer": '1'}
-        result = self.payload_filler.extract(None, self.user)
+        result = await self.payload_filler.extract(None, self.user)
         self.assertEqual("", result)
 
-    def test_filter(self):
+    async def test_filter(self):
         template = PicklableMock()
         template.get_template = Mock(return_value=["payload.personInfo.identityCard"])
         self.user.parametrizer = MockParametrizer(self.user, {"filter": True})
@@ -83,10 +83,10 @@ class TestAvailableInfoFiller(TestCase):
         self.user.descriptions = {"render_templates": template}
         payload_items = {'value': '{{filter}}'}
         filler = AvailableInfoFiller(payload_items)
-        result = filler.extract(None, self.user)
+        result = await filler.extract(None, self.user)
         self.assertEqual("filter_out", result)
 
-    def test_getting_payload_parsed_value(self):
+    async def test_getting_payload_parsed_value(self):
         data = [
             {
                 "id": 1,
@@ -144,5 +144,5 @@ class TestAvailableInfoFiller(TestCase):
             "cacheGuid": "FHGDDASDHDAKSGFLAK",
             "data": data
         }
-        result = payload_filler.extract(None, self.user)
+        result = await payload_filler.extract(None, self.user)
         self.assertEqual(result, data)

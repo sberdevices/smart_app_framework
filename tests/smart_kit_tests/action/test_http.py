@@ -1,5 +1,5 @@
 import unittest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, AsyncMock
 
 from smart_kit.action.http import HTTPRequestAction
 from tests.smart_kit_tests.action.test_base_http_action import BaseHttpRequestActionTest
@@ -11,7 +11,7 @@ class HttpRequestActionTest(unittest.IsolatedAsyncioTestCase):
             parametrizer=Mock(collect=lambda *args, **kwargs: {}),
             descriptions={
                 "behaviors": {
-                    "my_behavior": Mock(timeout=Mock(return_value=3))
+                    "my_behavior": AsyncMock(timeout=Mock(return_value=3))
                 }
             }
         )

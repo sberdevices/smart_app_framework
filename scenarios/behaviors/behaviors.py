@@ -43,8 +43,8 @@ class Behaviors:
             for key, value in callback_action_params.get(LOCAL_VARS, {}).items():
                 self._user.local_vars.set(key, value)
 
-    def _add_behavior_timeout(self, expire_time_us, callback_id):
-        self._behavior_timeouts.append((expire_time_us, callback_id))
+    def _add_behavior_timeout(self, time_left, callback_id):
+        self._behavior_timeouts.append((time_left, callback_id))
 
     def get_behavior_timeouts(self):
         return self._behavior_timeouts
@@ -60,11 +60,7 @@ class Behaviors:
         host = socket.gethostname()
         text_preprocessing_result_raw = text_preprocessing_result_raw or {}
         # behavior will be removed after timeout + EXPIRATION_DELAY
-        expiration_time = (
-                int(time()) +
-                self.descriptions[behavior_id].timeout(self._user) +
-                self.EXPIRATION_DELAY
-        )
+        expiration_time = int(time()) + self.descriptions[behavior_id].timeout(self._user) + self.EXPIRATION_DELAY
         action_params = action_params or dict()
         action_params[LOCAL_VARS] = pickle_deepcopy(self._user.local_vars.values)
 
@@ -77,8 +73,7 @@ class Behaviors:
             hostname=host
         )
         self._callbacks[callback_id] = callback
-        log(
-            f"behavior.add: adding behavior %({log_const.BEHAVIOR_ID_VALUE})s with scenario_id"
+        log(f"behavior.add: adding behavior %({log_const.BEHAVIOR_ID_VALUE})s with scenario_id"
             f" %({log_const.CHOSEN_SCENARIO_VALUE})s for callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s"
             f" expiration_time: %(expiration_time)s.",
             user=self._user,
@@ -89,8 +84,7 @@ class Behaviors:
                     "expiration_time": expiration_time})
 
         behavior_description = self.descriptions[behavior_id]
-        expire_time_us = behavior_description.get_expire_time_from_now(self._user)
-        self._add_behavior_timeout(expire_time_us, callback_id)
+        self._add_behavior_timeout(behavior_description.timeout(self._user) + self.EXPIRATION_DELAY, callback_id)
 
     def _delete(self, callback_id):
         if callback_id in self._callbacks:
@@ -121,7 +115,7 @@ class Behaviors:
             user=self._user,
             params=log_params)
 
-    def success(self, callback_id: str):
+    async def success(self, callback_id: str):
         log(f"behavior.success started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
             params={log_const.KEY_NAME: log_const.BEHAVIOR_SUCCESS_VALUE,
@@ -141,11 +135,11 @@ class Behaviors:
                 callback_action_params,
             )
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            result = behavior.success_action.run(self._user, text_preprocessing_result, callback_action_params)
+            result = await behavior.success_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
 
-    def fail(self, callback_id: str):
+    async def fail(self, callback_id: str):
         log(f"behavior.fail started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
             params={log_const.KEY_NAME: log_const.BEHAVIOR_FAIL_VALUE,
@@ -161,11 +155,11 @@ class Behaviors:
                                smart_kit_metrics.counter_behavior_fail, "fail",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            result = behavior.fail_action.run(self._user, text_preprocessing_result, callback_action_params)
+            result = await behavior.fail_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
 
-    def timeout(self, callback_id: str):
+    async def timeout(self, callback_id: str):
         log(f"behavior.timeout started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
             params={log_const.KEY_NAME: log_const.BEHAVIOR_TIMEOUT_VALUE,
@@ -180,11 +174,11 @@ class Behaviors:
                                smart_kit_metrics.counter_behavior_timeout, "timeout",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            result = behavior.timeout_action.run(self._user, text_preprocessing_result, callback_action_params)
+            result = await behavior.timeout_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
 
-    def misstate(self, callback_id: str):
+    async def misstate(self, callback_id: str):
         log(f"behavior.misstate started: got callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s.",
             self._user,
             params={log_const.KEY_NAME: log_const.BEHAVIOR_MISSTATE_VALUE,
@@ -200,7 +194,7 @@ class Behaviors:
                                smart_kit_metrics.counter_behavior_misstate, "misstate",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
-            result = behavior.misstate_action.run(self._user, text_preprocessing_result, callback_action_params)
+            result = await behavior.misstate_action.run(self._user, text_preprocessing_result, callback_action_params)
         self._delete(callback_id)
         return result
 
@@ -240,8 +234,7 @@ class Behaviors:
 
     def expire(self):
         callback_id_for_delete = []
-        for callback_id, (
-                behavior_id, expiration_time, *_) in self._callbacks.items():
+        for callback_id, (behavior_id, expiration_time, *_) in self._callbacks.items():
             if expiration_time <= time():
                 callback_id_for_delete.append(callback_id)
         for callback_id in callback_id_for_delete:
@@ -254,8 +247,8 @@ class Behaviors:
                           log_const.BEHAVIOR_DATA_VALUE: str(self._callbacks[callback_id]),
                           "to_message_name": to_message_name}
             log_params.update(app_info)
-            log(
-                f"behavior.expire: if you see this - something went wrong(should be timeout in normal case) callback %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s,  with to_message_name %(to_message_name)s",
+            log(f"behavior.expire: if you see this - something went wrong(should be timeout in normal case) callback "
+                f"%({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s,  with to_message_name %(to_message_name)s",
                 params=log_params, level="WARNING", user=self._user)
             self._delete(callback_id)
 
@@ -263,8 +256,8 @@ class Behaviors:
         if self.descriptions[behavior_id].loop_def:
             for callback_id, (_behavior_id, *_) in self._callbacks.items():
                 if _behavior_id == behavior_id:
-                    log(
-                        f"behavior.check_got_saved_id == True: already got saved behavior %({log_const.BEHAVIOR_ID_VALUE})s for callback_id %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s",
+                    log(f"behavior.check_got_saved_id == True: already got saved behavior "
+                        f"%({log_const.BEHAVIOR_ID_VALUE})s for callback_id %({log_const.BEHAVIOR_CALLBACK_ID_VALUE})s",
                         user=self._user,
                         params={log_const.KEY_NAME: "behavior_got_saved",
                                 log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id,

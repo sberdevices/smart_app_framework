@@ -24,7 +24,7 @@ class HandlerRespond(HandlerBase):
         callback_id = user.message.callback_id
         return user.behaviors.get_callback_action_params(callback_id)
 
-    def run(self, payload, user):
+    async def run(self, payload, user):
         callback_id = user.message.callback_id
         action_params = self.get_action_params(payload, user)
         action_name = self.get_action_name(payload, user)
@@ -53,7 +53,7 @@ class HandlerRespond(HandlerBase):
         log("text preprocessing result: '%(normalized_text)s'", user, params, level="DEBUG")
 
         action = user.descriptions["external_actions"][action_name]
-        return action.run(user, text_preprocessing_result, action_params)
+        return await action.run(user, text_preprocessing_result, action_params)
 
     @staticmethod
     def get_processing_time(user):

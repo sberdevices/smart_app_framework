@@ -20,5 +20,5 @@ class CustomFieldFiller(FieldFillerDescription):
         self.test_item = items.get("test_item")
 
     @exc_handler(on_error_obj_method_name="on_extract_error")
-    def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User, params) -> Optional[str]:
+    async def extract(self, text_preprocessing_result: TextPreprocessingResult, user: User, params) -> Optional[str]:
         return None

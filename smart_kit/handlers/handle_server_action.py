@@ -22,7 +22,7 @@ class HandlerServerAction(HandlerBase):
     def get_action_params(self, payload):
         return payload[SERVER_ACTION].get("parameters", {})
 
-    def run(self, payload, user):
+    async def run(self, payload, user):
         action_params = pickle_deepcopy(self.get_action_params(payload))
         params = {log_const.KEY_NAME: "handling_server_action",
                   "server_action_params": str(action_params),
@@ -35,4 +35,4 @@ class HandlerServerAction(HandlerBase):
 
         action_id = self.get_action_name(payload, user)
         action = user.descriptions["external_actions"][action_id]
-        return action.run(user, TextPreprocessingResult({}), action_params)
+        return await action.run(user, TextPreprocessingResult({}), action_params)

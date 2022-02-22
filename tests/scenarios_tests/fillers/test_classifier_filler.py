@@ -1,4 +1,4 @@
-from unittest import TestCase
+from unittest import IsolatedAsyncioTestCase
 from unittest.mock import patch
 
 from core.basic_models.classifiers.basic_classifiers import ExternalClassifier
@@ -6,7 +6,7 @@ from scenarios.scenario_models.field.field_filler_description import ClassifierF
 from smart_kit.utils.picklable_mock import PicklableMock
 
 
-class TestClassifierFiller(TestCase):
+class TestClassifierFiller(IsolatedAsyncioTestCase):
 
     def setUp(self):
         test_items = {
@@ -26,20 +26,20 @@ class TestClassifierFiller(TestCase):
         "find_best_answer",
         return_value=[{"answer": "нет", "score": 0.7, "other": False}, {"answer": "да", "score": 0.3, "other": False}]
     )
-    def test_filler_extract(self, mock_classifier_model):
+    async def test_filler_extract(self, mock_classifier_model):
         """Тест кейз проверяет что поле заполнено наиболее вероятным значением, которое вернула модель."""
         expected_res = "нет"
-        actual_res = self.filler.extract(self.mock_text_preprocessing_result, self.mock_user)
+        actual_res = await self.filler.extract(self.mock_text_preprocessing_result, self.mock_user)
         self.assertEqual(expected_res, actual_res)
 
     @patch.object(ExternalClassifier, "find_best_answer", return_value=[])
-    def test_filler_extract_if_no_model_answer(self, mock_classifier_model):
+    async def test_filler_extract_if_no_model_answer(self, mock_classifier_model):
         """Тест кейз проверяет что поле осталось не заполненным те результат None, если модель не выдала ответ."""
-        actual_res = self.filler.extract(self.mock_text_preprocessing_result, self.mock_user)
+        actual_res = await self.filler.extract(self.mock_text_preprocessing_result, self.mock_user)
         self.assertIsNone(actual_res)
 
 
-class TestClassifierFillerMeta(TestCase):
+class TestClassifierFillerMeta(IsolatedAsyncioTestCase):
 
     def setUp(self):
         test_items = {
@@ -55,14 +55,14 @@ class TestClassifierFillerMeta(TestCase):
             "external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
 
     @patch.object(ExternalClassifier, "find_best_answer", return_value=[{"answer": "нет", "score": 1.0, "other": False}])
-    def test_filler_extract(self, mock_classifier_model):
+    async def test_filler_extract(self, mock_classifier_model):
         """Тест кейз проверяет что мы получаем тот же самый ответ, что вернула модель."""
         expected_res = [{"answer": "нет", "score": 1.0, "other": False}]
-        actual_res = self.filler_meta.extract(self.mock_text_preprocessing_result, self.mock_user)
+        actual_res = await self.filler_meta.extract(self.mock_text_preprocessing_result, self.mock_user)
         self.assertEqual(expected_res, actual_res)
 
     @patch.object(ExternalClassifier, "find_best_answer", return_value=[])
-    def test_filler_extract_if_no_model_answer(self, mock_classifier_model):
+    async def test_filler_extract_if_no_model_answer(self, mock_classifier_model):
         """Тест кейз проверяет результат None, если модель не выдала ответ."""
-        actual_res = self.filler_meta.extract(self.mock_text_preprocessing_result, self.mock_user)
+        actual_res = await self.filler_meta.extract(self.mock_text_preprocessing_result, self.mock_user)
         self.assertIsNone(actual_res)

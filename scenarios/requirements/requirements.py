@@ -10,8 +10,8 @@ from typing import Optional, Dict, Any
 
 class AskAgainExistRequirement(Requirement):
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                    params: Dict[str, Any] = None) -> bool:
         last_scenario_id = user.last_scenarios.last_scenario_name
         scenario = user.descriptions["scenarios"].get(last_scenario_id)
         return scenario.check_ask_again_question(text_preprocessing_result, user, params)
@@ -23,8 +23,8 @@ class TemplateInArrayRequirement(Requirement):
         self._template = UnifiedTemplate(items["template"])
         self._items = set(items["items"])
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                    params: Dict[str, Any] = None) -> bool:
         params = params or {}
         collected = user.parametrizer.collect(text_preprocessing_result)
         params.update(collected)
@@ -38,8 +38,8 @@ class ArrayItemInTemplateRequirement(Requirement):
         self._template = UnifiedTemplate(items["template"])
         self._items = set(items["items"])
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                    params: Dict[str, Any] = None) -> bool:
         params = params or {}
         collected = user.parametrizer.collect(text_preprocessing_result)
         params.update(collected)
@@ -56,8 +56,8 @@ class RegexpInTemplateRequirement(Requirement):
         self._template = UnifiedTemplate(items["template"])
         self._regexp = re.compile(items["regexp"], re.S | re.M)
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                    params: Dict[str, Any] = None) -> bool:
         params = params or {}
         collected = user.parametrizer.collect(text_preprocessing_result)
         params.update(collected)

@@ -8,6 +8,7 @@ import scenarios.scenario_models.field.field_filler_description as ffd
 import scenarios.scenario_models.field_requirements.field_requirements as frd
 from core.basic_models.actions.basic_actions import actions, action_factory, Action, \
     DoingNothingAction, RequirementAction, ChoiceAction, ElseAction, CompositeAction
+from core.basic_models.actions.client_profile_actions import GiveMeMemoryAction, RememberThisAction
 from core.basic_models.actions.counter_actions import CounterIncrementAction, CounterDecrementAction, \
     CounterClearAction, CounterSetAction, CounterCopyAction
 from core.basic_models.actions.external_actions import ExternalAction
@@ -39,9 +40,7 @@ from core.configs.base_config import BaseConfig
 from core.db_adapter.aioredis_adapter import AIORedisAdapter
 from core.db_adapter.db_adapter import db_adapters
 from core.db_adapter.ignite_adapter import IgniteAdapter
-from core.db_adapter.ignite_thread_adapter import IgniteThreadAdapter
 from core.db_adapter.memory_adapter import MemoryAdapter
-from core.db_adapter.redis_adapter import RedisAdapter
 from core.descriptions.descriptions import registered_description_factories
 from core.model.queued_objects.limited_queued_hashable_objects_description import \
     LimitedQueuedHashableObjectsDescriptionsItems
@@ -57,7 +56,8 @@ from scenarios.actions.action import (
     ClearCurrentScenarioFormAction, ClearFormAction, ClearInnerFormAction, ClearScenarioByIdAction,
     ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction, FillFieldAction,
     RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
-    ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction
+    ResetCurrentNodeAction, RunScenarioAction, RunLastScenarioAction, AddHistoryEventAction, SetLocalVariableAction,
+    ClearAllScenariosAction
 )
 from scenarios.actions.action import ProcessBehaviorAction, SelfServiceActionWithState, EmptyAction
 from scenarios.behaviors.behavior_descriptions import BehaviorDescriptions
@@ -276,6 +276,7 @@ class SmartAppResources(BaseConfig):
         actions["choice"] = ChoiceAction
         actions["choice_scenario"] = ChoiceScenarioAction
         actions["clear_current_scenario"] = ClearCurrentScenarioAction
+        actions["clear_all_scenarios"] = ClearAllScenariosAction
         actions["clear_current_scenario_form"] = ClearCurrentScenarioFormAction
         actions["clear_form_by_id"] = ClearFormAction
         actions["clear_inner_form_by_id"] = ClearInnerFormAction
@@ -310,6 +311,8 @@ class SmartAppResources(BaseConfig):
         actions["set_variable"] = SetVariableAction
         actions["string"] = StringAction
         actions["push"] = PushAction
+        actions["give_me_memory"] = GiveMeMemoryAction
+        actions["remember_this"] = RememberThisAction
 
     def init_requirements(self):
         requirements[None] = Requirement
@@ -389,9 +392,7 @@ class SmartAppResources(BaseConfig):
     def init_db_adapters(self):
         db_adapters[None] = MemoryAdapter
         db_adapters["ignite"] = IgniteAdapter
-        db_adapters["ignite_thread"] = IgniteThreadAdapter
         db_adapters["memory"] = MemoryAdapter
-        db_adapters["redis"] = RedisAdapter
         db_adapters["aioredis"] = AIORedisAdapter
         db_adapters["aioredis_sentinel"] = AIORedisSentinelAdapter
 

@@ -5,6 +5,7 @@ from unittest.mock import Mock, MagicMock
 
 from core.basic_models.actions.basic_actions import Action, DoingNothingAction, action_factory, RequirementAction, \
     actions, ChoiceAction, ElseAction, CompositeAction, NonRepeatingAction
+from core.basic_models.actions.client_profile_actions import GiveMeMemoryAction, RememberThisAction
 from core.basic_models.actions.command import Command
 from core.basic_models.actions.counter_actions import CounterIncrementAction, CounterDecrementAction, \
     CounterClearAction, CounterSetAction, CounterCopyAction
@@ -43,7 +44,7 @@ class MockAction:
         items = items or {}
         self.result = items.get("result")
 
-    def run(self, user, text_preprocessing_result, params=None):
+    async def run(self, user, text_preprocessing_result, params=None):
         return self.result or ["test action run"]
 
 
@@ -53,7 +54,7 @@ class UserMockAction:
         self.result = items.get("result")
         self.done = False
 
-    def run(self, user, text_preprocessing_result, params=None):
+    async def run(self, user, text_preprocessing_result, params=None):
         self.done = True
 
 
@@ -61,7 +62,7 @@ class MockRequirement:
     def __init__(self, items):
         self.result = items.get("result")
 
-    def check(self, text_preprocessing_result, user, params):
+    async def check(self, text_preprocessing_result, user, params):
         return self.result
 
 
@@ -74,7 +75,7 @@ class MockSimpleParametrizer:
         return self.data
 
 
-class ActionTest(unittest.TestCase):
+class ActionTest(unittest.IsolatedAsyncioTestCase):
     def test_nodes_1(self):
         items = {"nodes": {"answer": "test"}}
         action = NodeAction(items)
@@ -89,34 +90,34 @@ class ActionTest(unittest.TestCase):
         nodes = action.nodes
         self.assertEqual(nodes, {})
 
-    def test_base(self):
+    async def test_base(self):
         items = {"nodes": "test"}
         action = Action(items)
         try:
-            action.run(None, None)
+            await action.run(None, None)
             result = False
         except NotImplementedError:
             result = True
         self.assertEqual(result, True)
 
-    def test_external(self):
+    async def test_external(self):
         items = {"action": "test_action_key"}
         action = ExternalAction(items)
         user = PicklableMock()
         user.descriptions = {"external_actions": {"test_action_key": MockAction()}}
-        self.assertEqual(action.run(user, None), ["test action run"])
+        self.assertEqual(await action.run(user, None), ["test action run"])
 
-    def test_doing_nothing_action(self):
+    async def test_doing_nothing_action(self):
         items = {"nodes": {"answer": "test"}, "command": "test_name"}
         action = DoingNothingAction(items)
-        result = action.run(None, None)
+        result = await action.run(None, None)
         self.assertIsInstance(result, list)
         command = result[0]
         self.assertIsInstance(command, Command)
         self.assertEqual(command.name, "test_name")
         self.assertEqual(command.payload, {"answer": "test"})
 
-    def test_requirement_action(self):
+    async def test_requirement_action(self):
         registered_factories[Requirement] = requirement_factory
         requirements["test"] = MockRequirement
         registered_factories[Action] = action_factory
@@ -125,13 +126,13 @@ class ActionTest(unittest.TestCase):
         action = RequirementAction(items)
         self.assertIsInstance(action.requirement, MockRequirement)
         self.assertIsInstance(action.internal_item, MockAction)
-        self.assertEqual(action.run(None, None), ["test action run"])
+        self.assertEqual(await action.run(None, None), ["test action run"])
         items = {"requirement": {"type": "test", "result": False}, "action": {"type": "test"}}
         action = RequirementAction(items)
-        result = action.run(None, None)
+        result = await action.run(None, None)
         self.assertIsNone(result)
 
-    def test_requirement_choice(self):
+    async def test_requirement_choice(self):
         items = {"requirement_actions": [
             {"requirement": {"type": "test", "result": False}, "action": {"type": "test", "result": "action1"}},
             {"requirement": {"type": "test", "result": True}, "action": {"type": "test", "result": "action2"}}
@@ -139,10 +140,10 @@ class ActionTest(unittest.TestCase):
         choice_action = ChoiceAction(items)
         self.assertIsInstance(choice_action.items, list)
         self.assertIsInstance(choice_action.items[0], RequirementAction)
-        result = choice_action.run(None, None)
+        result = await choice_action.run(None, None)
         self.assertEqual(result, "action2")
 
-    def test_requirement_choice_else(self):
+    async def test_requirement_choice_else(self):
         items = {
             "requirement_actions": [
                 {"requirement": {"type": "test", "result": False}, "action": {"type": "test", "result": "action1"}},
@@ -153,10 +154,10 @@ class ActionTest(unittest.TestCase):
         choice_action = ChoiceAction(items)
         self.assertIsInstance(choice_action.items, list)
         self.assertIsInstance(choice_action.items[0], RequirementAction)
-        result = choice_action.run(None, None)
+        result = await choice_action.run(None, None)
         self.assertEqual(result, "action3")
 
-    def test_string_action(self):
+    async def test_string_action(self):
         expected = [Command("cmd_id", {"item": "template", "params": "params"})]
         user = PicklableMagicMock()
         template = PicklableMock()
@@ -168,11 +169,11 @@ class ActionTest(unittest.TestCase):
                  "nodes":
                      {"item": "template", "params": "{{params}}"}}
         action = StringAction(items)
-        result = action.run(user, None)
+        result = await action.run(user, None)
         self.assertEqual(expected[0].name, result[0].name)
         self.assertEqual(expected[0].payload, result[0].payload)
 
-    def test_else_action_if(self):
+    async def test_else_action_if(self):
         registered_factories[Requirement] = requirement_factory
         requirements["test"] = MockRequirement
         registered_factories[Action] = action_factory
@@ -184,9 +185,9 @@ class ActionTest(unittest.TestCase):
             "else_action": {"type": "test", "result": "else_action"}
         }
         action = ElseAction(items)
-        self.assertEqual(action.run(user, None), "main_action")
+        self.assertEqual(await action.run(user, None), "main_action")
 
-    def test_else_action_else(self):
+    async def test_else_action_else(self):
         registered_factories[Requirement] = requirement_factory
         requirements["test"] = MockRequirement
         registered_factories[Action] = action_factory
@@ -198,9 +199,9 @@ class ActionTest(unittest.TestCase):
             "else_action": {"type": "test", "result": "else_action"}
         }
         action = ElseAction(items)
-        self.assertEqual(action.run(user, None), "else_action")
+        self.assertEqual(await action.run(user, None), "else_action")
 
-    def test_else_action_no_else_if(self):
+    async def test_else_action_no_else_if(self):
         registered_factories[Requirement] = requirement_factory
         requirements["test"] = MockRequirement
         registered_factories[Action] = action_factory
@@ -211,9 +212,9 @@ class ActionTest(unittest.TestCase):
             "action": {"type": "test", "result": "main_action"},
         }
         action = ElseAction(items)
-        self.assertEqual(action.run(user, None), "main_action")
+        self.assertEqual(await action.run(user, None), "main_action")
 
-    def test_else_action_no_else_else(self):
+    async def test_else_action_no_else_else(self):
         registered_factories[Requirement] = requirement_factory
         requirements["test"] = MockRequirement
         registered_factories[Action] = action_factory
@@ -224,10 +225,10 @@ class ActionTest(unittest.TestCase):
             "action": {"type": "test", "result": "main_action"},
         }
         action = ElseAction(items)
-        result = action.run(user, None)
+        result = await action.run(user, None)
         self.assertIsNone(result)
 
-    def test_composite_action(self):
+    async def test_composite_action(self):
         registered_factories[Action] = action_factory
         actions["action_mock"] = MockAction
         user = PicklableMock()
@@ -238,10 +239,10 @@ class ActionTest(unittest.TestCase):
             ]
         }
         action = CompositeAction(items)
-        result = action.run(user, None)
+        result = await action.run(user, None)
         self.assertEqual(['test action run', 'test action run'], result)
 
-    def test_node_action_support_templates(self):
+    async def test_node_action_support_templates(self):
         params = {
             "markup": "italic",
             "email": "heyho@sberbank.ru",
@@ -265,10 +266,10 @@ class ActionTest(unittest.TestCase):
             self.assertIsInstance(template, UnifiedTemplate)
         user = PicklableMagicMock()
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
-        output = action.run(user=user, text_preprocessing_result=None)[0].payload["answer"]
+        output = (await action.run(user=user, text_preprocessing_result=None))[0].payload["answer"]
         self.assertEqual(output, expected)
 
-    def test_string_action_support_templates(self):
+    async def test_string_action_support_templates(self):
         params = {
             "answer_text": "some_text",
             "buttons_number": 3
@@ -290,10 +291,10 @@ class ActionTest(unittest.TestCase):
         action = StringAction(items)
         user = PicklableMagicMock()
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
-        output = action.run(user=user, text_preprocessing_result=None)[0].payload
+        output = (await action.run(user=user, text_preprocessing_result=None))[0].payload
         self.assertEqual(output, expected)
 
-    def test_push_action(self):
+    async def test_push_action(self):
         params = {
             "day_time": "morning",
             "deep_link_url": "some_url",
@@ -328,7 +329,7 @@ class ActionTest(unittest.TestCase):
         user = PicklableMagicMock()
         user.parametrizer = MockSimpleParametrizer(user, {"data": params})
         user.settings = settings
-        command = action.run(user=user, text_preprocessing_result=None)[0]
+        command = (await action.run(user=user, text_preprocessing_result=None))[0]
         self.assertEqual(command.payload, expected)
         # проверяем наличие кастомных хэдеров для сервиса пушей
         self.assertTrue(SmartKitKafkaRequest.KAFKA_EXTRA_HEADERS in command.request_data)
@@ -340,7 +341,7 @@ class ActionTest(unittest.TestCase):
         self.assertEqual(command.name, "PUSH_NOTIFY")
 
 
-class NonRepeatingActionTest(unittest.TestCase):
+class NonRepeatingActionTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.expected = PicklableMock()
         self.expected1 = PicklableMock()
@@ -354,55 +355,55 @@ class NonRepeatingActionTest(unittest.TestCase):
         registered_factories[Action] = action_factory
         actions["action_mock"] = MockAction
 
-    def test_run_available_indexes(self):
+    async def test_run_available_indexes(self):
         self.user.last_action_ids["last_action_ids_storage"].get_list.side_effect = [[0]]
-        result = self.action.run(self.user, None)
+        result = await self.action.run(self.user, None)
         self.user.last_action_ids["last_action_ids_storage"].add.assert_called_once()
         self.assertEqual(result, self.expected1)
 
-    def test_run_no_available_indexes(self):
+    async def test_run_no_available_indexes(self):
         self.user.last_action_ids["last_action_ids_storage"].get_list.side_effect = [[0, 1]]
-        result = self.action.run(self.user, None)
+        result = await self.action.run(self.user, None)
         self.assertEqual(result, self.expected)
 
 
-class CounterIncrementActionTest(unittest.TestCase):
-    def test_run(self):
+class CounterIncrementActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run(self):
         user = PicklableMock()
         counter = PicklableMock()
         counter.inc = PicklableMock()
         user.counters = {"test": counter}
         items = {"key": "test"}
         action = CounterIncrementAction(items)
-        action.run(user, None)
+        await action.run(user, None)
         user.counters["test"].inc.assert_called_once()
 
 
-class CounterDecrementActionTest(unittest.TestCase):
-    def test_run(self):
+class CounterDecrementActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run(self):
         user = PicklableMock()
         counter = PicklableMock()
         counter.dec = PicklableMock()
         user.counters = {"test": counter}
         items = {"key": "test"}
         action = CounterDecrementAction(items)
-        action.run(user, None)
+        await action.run(user, None)
         user.counters["test"].dec.assert_called_once()
 
 
-class CounterClearActionTest(unittest.TestCase):
-    def test_run(self):
+class CounterClearActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run(self):
         user = PicklableMock()
         user.counters = PicklableMock()
         user.counters.inc = PicklableMock()
         items = {"key": "test"}
         action = CounterClearAction(items)
-        action.run(user, None)
+        await action.run(user, None)
         user.counters.clear.assert_called_once()
 
 
-class CounterSetActionTest(unittest.TestCase):
-    def test_run(self):
+class CounterSetActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run(self):
         user = PicklableMock()
         counter = PicklableMock()
         counter.inc = PicklableMock()
@@ -410,12 +411,12 @@ class CounterSetActionTest(unittest.TestCase):
         user.counters = counters
         items = {"key": "test"}
         action = CounterSetAction(items)
-        action.run(user, None)
+        await action.run(user, None)
         user.counters["test"].set.assert_called_once()
 
 
-class CounterCopyActionTest(unittest.TestCase):
-    def test_run(self):
+class CounterCopyActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run(self):
         user = PicklableMock()
         counter_src = PicklableMock()
         counter_src.value = 10
@@ -423,13 +424,13 @@ class CounterCopyActionTest(unittest.TestCase):
         user.counters = {"src": counter_src, "dst": counter_dst}
         items = {"source": "src", "destination": "dst"}
         action = CounterCopyAction(items)
-        action.run(user, None)
+        await action.run(user, None)
         user.counters["dst"].set.assert_called_once_with(user.counters["src"].value,
                                                          action.reset_time, action.time_shift)
 
 
-class AfinaAnswerActionTest(unittest.TestCase):
-    def test_typical_answer(self):
+class AfinaAnswerActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_typical_answer(self):
         user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
         expected = [MagicMock(_name="ANSWER_TO_USER", raw={'messageName': 'ANSWER_TO_USER',
@@ -440,12 +441,11 @@ class AfinaAnswerActionTest(unittest.TestCase):
             }
         }
         action = AfinaAnswerAction(items)
-
-        result = action.run(user, None)
+        result = await action.run(user, None)
         self.assertEqual(expected[0]._name, result[0].name)
         self.assertEqual(expected[0].raw, result[0].raw)
 
-    def test_typical_answer_with_other(self):
+    async def test_typical_answer_with_other(self):
         user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
         expected = [MagicMock(_name="ANSWER_TO_USER", raw={'messageName': 'ANSWER_TO_USER',
@@ -460,12 +460,11 @@ class AfinaAnswerActionTest(unittest.TestCase):
             }
         }
         action = AfinaAnswerAction(items)
-
-        result = action.run(user, None)
+        result = await action.run(user, None)
         self.assertEqual(expected[0]._name, result[0].name)
         self.assertEqual(expected[0].raw, result[0].raw)
 
-    def test_typical_answer_with_pers_info(self):
+    async def test_typical_answer_with_pers_info(self):
         expected = [MagicMock(_name="ANSWER_TO_USER", raw={'messageName': 'ANSWER_TO_USER',
                                                            'payload': {'answer': 'Ivan Ivanov'}})]
         user = PicklableMock()
@@ -474,11 +473,11 @@ class AfinaAnswerActionTest(unittest.TestCase):
         user.message.payload = {"personInfo": {"name": "Ivan Ivanov"}}
         items = {"nodes": {"answer": ["{{payload.personInfo.name}}"]}}
         action = AfinaAnswerAction(items)
-        result = action.run(user, None)
+        result = await action.run(user, None)
         self.assertEqual(expected[0]._name, result[0].name)
         self.assertEqual(expected[0].raw, result[0].raw)
 
-    def test_items_empty(self):
+    async def test_items_empty(self):
         user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
         template = PicklableMock()
@@ -486,10 +485,10 @@ class AfinaAnswerActionTest(unittest.TestCase):
         user.descriptions = {"render_templates": template}
         items = None
         action = AfinaAnswerAction(items)
-        result = action.run(user, None)
+        result = await action.run(user, None)
         self.assertEqual(result, [])
 
-    def test__items_empty_dict(self):
+    async def test__items_empty_dict(self):
         user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
         template = PicklableMock()
@@ -497,12 +496,12 @@ class AfinaAnswerActionTest(unittest.TestCase):
         user.descriptions = {"render_templates": template}
         items = {}
         action = AfinaAnswerAction(items)
-        result = action.run(user, None)
+        result = await action.run(user, None)
         self.assertEqual(result, [])
 
 
-class CardAnswerActionTest(unittest.TestCase):
-    def test_typical_answer(self):
+class CardAnswerActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_typical_answer(self):
         user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
         user.message = PicklableMock()
@@ -553,12 +552,11 @@ class CardAnswerActionTest(unittest.TestCase):
         expect_arr = [exp1, exp2, exp3, exp4]
         for i in range(10):
             action = SDKAnswer(items)
-            result = action.run(user, None)
+            result = await action.run(user, None)
             self.assertEqual("ANSWER_TO_USER", result[0].name)
             self.assertTrue(str(result[0].raw) in expect_arr)
 
-
-    def test_typical_answer_without_items(self):
+    async def test_typical_answer_without_items(self):
         user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
         user.message = PicklableMock()
@@ -576,11 +574,11 @@ class CardAnswerActionTest(unittest.TestCase):
         exp_list = [exp1, exp2, exp3, exp4]
         for i in range(10):
             action = SDKAnswer(items)
-            result = action.run(user, None)
+            result = await action.run(user, None)
             self.assertEqual("ANSWER_TO_USER", result[0].name)
             self.assertTrue(str(result[0].raw) in exp_list)
 
-    def test_typical_answer_without_nodes(self):
+    async def test_typical_answer_without_nodes(self):
         user = PicklableMock()
         user.parametrizer = MockParametrizer(user, {})
         user.message = PicklableMock()
@@ -614,13 +612,13 @@ class CardAnswerActionTest(unittest.TestCase):
         expect_arr = [exp1, exp2, exp3, exp4]
         for i in range(10):
             action = SDKAnswer(items)
-            result = action.run(user, None)
+            result = await action.run(user, None)
             self.assertEqual("ANSWER_TO_USER", result[0].name)
             self.assertTrue(str(result[0].raw) in expect_arr)
 
 
-class SDKRandomAnswer(unittest.TestCase):
-    def test_SDKItemAnswer_full(self):
+class SDKRandomAnswer(unittest.IsolatedAsyncioTestCase):
+    async def test_SDKItemAnswer_full(self):
 
         registered_factories[SdkAnswerItem] = items_factory
         answer_items["bubble_text"] = BubbleText
@@ -706,10 +704,10 @@ class SDKRandomAnswer(unittest.TestCase):
 
         action = SDKAnswerToUser(items)
         for i in range(3):
-            result = action.run(user, None)
+            result = await action.run(user, None)
             self.assertTrue(str(result[0].raw) in [exp1, exp2])
 
-    def test_SDKItemAnswer_root(self):
+    async def test_SDKItemAnswer_root(self):
 
         registered_factories[SdkAnswerItem] = items_factory
         answer_items["bubble_text"] = BubbleText
@@ -755,10 +753,10 @@ class SDKRandomAnswer(unittest.TestCase):
 
         action = SDKAnswerToUser(items)
         for i in range(3):
-            result = action.run(user, None)
+            result = await action.run(user, None)
             self.assertTrue(str(result[0].raw) in [exp1, exp2])
 
-    def test_SDKItemAnswer_simple(self):
+    async def test_SDKItemAnswer_simple(self):
 
         registered_factories[SdkAnswerItem] = items_factory
         answer_items["bubble_text"] = BubbleText
@@ -776,10 +774,10 @@ class SDKRandomAnswer(unittest.TestCase):
                 ]
         }
         action = SDKAnswerToUser(items)
-        result = action.run(user, None)
+        result = await action.run(user, None)
         self.assertDictEqual(result[0].raw, {'messageName': 'ANSWER_TO_USER', 'payload': {'items': [{'bubble': {'text': '42', 'markdown': True}}]}})
 
-    def test_SDKItemAnswer_suggestions_template(self):
+    async def test_SDKItemAnswer_suggestions_template(self):
 
         registered_factories[SdkAnswerItem] = items_factory
         answer_items["bubble_text"] = BubbleText
@@ -798,7 +796,7 @@ class SDKRandomAnswer(unittest.TestCase):
             }
         }
         action = SDKAnswerToUser(items)
-        result = action.run(user, None)
+        result = await action.run(user, None)
         self.assertDictEqual(
             result[0].raw,
             {
@@ -810,4 +808,197 @@ class SDKRandomAnswer(unittest.TestCase):
                         ]
                     }
                 }
-            })
+            }
+        )
+
+
+class GiveMeMemoryActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run(self):
+        expected = [
+            Command("GIVE_ME_MEMORY",
+                    {
+                        'root_nodes': {
+                            'protocolVersion': 1
+                        },
+                        'consumer': {
+                            'projectId': '0'
+                        },
+                        "tokenType": 0,
+                        'profileEmployee': 0,
+                        'memory': [
+                            {
+                                'memoryPartition': 'confidentialMemo',
+                                'tags': [
+                                    'userAgreement',
+                                    'userAgreementProject'
+                                ]
+                            },
+                            {
+                                'memoryPartition': 'projectPrivateMemo',
+                                'tags': [
+                                    'test'
+                                ]
+                            }
+                        ]
+                    },
+                    None, "kafka", {"topic_key": "client_info", "kafka_key": "main", "kafka_replyTopic": "app"})
+        ]
+        user = PicklableMagicMock()
+        params = {"params": "params"}
+        user.parametrizer = MockSimpleParametrizer(user, {"data": params})
+        user.settings = {"template_settings": {"project_id": "0", "consumer_topic": "app"}}
+        items = {
+            "nodes": {
+                "memory": {
+                    "confidentialMemo": [
+                        "userAgreement",
+                        "userAgreementProject"
+                    ],
+                    "projectPrivateMemo": [
+                        "{{ 'test' }}"
+                    ]
+                },
+                "profileEmployee": {
+                    "type": "unified_template",
+                    "template": "{{ 0 }}",
+                    "loader": "json"
+                },
+                "tokenType": {
+                    "type": "unified_template",
+                    "template": "{{ 0 }}",
+                    "loader": "json"
+                }
+            }
+        }
+        action = GiveMeMemoryAction(items)
+        result = await action.run(user, None)
+        self.assertEqual(expected[0].name, result[0].name)
+        self.assertEqual(expected[0].payload, result[0].payload)
+
+
+class RememberThisActionTest(unittest.IsolatedAsyncioTestCase):
+    async def test_run(self):
+        expected = [
+            Command("REMEMBER_THIS",
+                    {
+                        'root_nodes': {
+                            'protocolVersion': 3
+                        },
+                        'consumer': {
+                            'projectId': '0'
+                        },
+                        'clientIds': 0,
+                        'memory': [
+                            {
+                                'memoryPartition': 'publicMemo',
+                                'partitionData': [
+                                    {
+                                        'tag': 'historyInfo',
+                                        'action': {
+                                            'type': 'upsert',
+                                            'params': {
+                                                'operation': [
+                                                    {
+                                                        'selector': {
+                                                            'intent': {
+                                                                '$eq': 'run_app'
+                                                            },
+                                                            'surface': {
+                                                                '$eq': '0'
+                                                            },
+                                                            'channel': {
+                                                                '$eq': '0'
+                                                            },
+                                                            'projectId': {
+                                                                '$eq': '0'
+                                                            }
+                                                        },
+                                                        'updater': [
+                                                            {
+                                                                '$set': {
+                                                                    '$.lastExecuteDateTime': '0'
+                                                                }
+                                                            },
+                                                            {
+                                                                '$inc': {
+                                                                    '$.executeCounter': 1
+                                                                }
+                                                            }
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        }
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    None, "kafka", {
+                        "topic_key": 'client_info_remember',
+                        "kafka_key": "main",
+                        "kafka_replyTopic": "app"
+                    })
+        ]
+        user = PicklableMagicMock()
+        params = {"params": "params"}
+        user.parametrizer = MockSimpleParametrizer(user, {"data": params})
+        user.settings = {"template_settings": {"project_id": "0", "consumer_topic": "app"}}
+        items = {
+            "nodes": {
+              "clientIds": {
+                "type": "unified_template",
+                "template": "{{ 0 }}",
+                "loader": "json"
+              },
+              "memory": [
+                {
+                  "memoryPartition": "publicMemo",
+                  "partitionData": [
+                    {
+                      "tag": "historyInfo",
+                      "action": {
+                        "type": "upsert",
+                        "params": {
+                          "operation": [
+                            {
+                              "selector": {
+                                "intent": {
+                                  "$eq": "run_app"
+                                },
+                                "surface": {
+                                  "$eq": "{{ 0 }}"
+                                },
+                                "channel": {
+                                  "$eq": "{{ 0 }}"
+                                },
+                                "projectId": {
+                                  "$eq": "{{ 0 }}"
+                                }
+                              },
+                              "updater": [
+                                {
+                                  "$set": {
+                                    "$.lastExecuteDateTime": "{{ 0 }}"
+                                  }
+                                },
+                                {
+                                  "$inc": {
+                                    "$.executeCounter": 1
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+        }
+        action = RememberThisAction(items)
+        result = await action.run(user, None)
+        self.assertEqual(expected[0].name, result[0].name)
+        self.assertEqual(expected[0].payload, result[0].payload)

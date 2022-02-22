@@ -24,8 +24,8 @@ class ExternalAction(CommandAction):
         super(ExternalAction, self).__init__(items, id)
         self._action_key = items["action"]
 
-    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
+    async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> List[Command]:
         action = user.descriptions["external_actions"][self._action_key]
-        commands = action.run(user, text_preprocessing_result, params)
+        commands = await action.run(user, text_preprocessing_result, params)
         return commands

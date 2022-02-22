@@ -11,7 +11,7 @@ class TestScenarioDesc(dict):
         return 'type'
 
 
-class HandlerTest6(unittest.TestCase):
+class HandlerTest6(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.test_text_preprocessing_result = Mock('text_preprocessing_result')
         self.test_user = PicklableMock()
@@ -37,7 +37,7 @@ class HandlerTest6(unittest.TestCase):
         self.assertIsNotNone(obj.KAFKA_KEY)
         self.assertIsNotNone(obj._clear_current_scenario)
 
-    def test_handler_close_app_run(self):
+    async def test_handler_close_app_run(self):
         self.assertIsNotNone(handle_close_app.log_const.KEY_NAME)
         obj = handle_close_app.HandlerCloseApp(app_name=self.app_name)
-        self.assertIsNone(obj.run(self.test_payload, self.test_user))
+        self.assertIsNone(await obj.run(self.test_payload, self.test_user))

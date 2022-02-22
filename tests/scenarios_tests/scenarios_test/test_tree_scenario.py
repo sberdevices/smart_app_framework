@@ -1,11 +1,11 @@
-from unittest import TestCase
-from unittest.mock import Mock, MagicMock
+from unittest import IsolatedAsyncioTestCase
+from unittest.mock import Mock, MagicMock, AsyncMock
 
 from core.basic_models.actions.basic_actions import Action, action_factory, actions
 from core.basic_models.actions.command import Command
 from core.model.registered import registered_factories
 from scenarios.scenario_descriptions.tree_scenario.tree_scenario import TreeScenario
-from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock
+from smart_kit.utils.picklable_mock import PicklableMock, PicklableMagicMock, AsyncPicklableMock
 
 
 class MockAction:
@@ -13,7 +13,7 @@ class MockAction:
         self.called = False
         self.command_name = command_name
 
-    def run(self, user, text_preprocessing_result, params):
+    async def run(self, user, text_preprocessing_result, params):
         self.called = True
         if self.command_name:
             return [Command(self.command_name)]
@@ -23,14 +23,14 @@ class BreakAction:
     def __init__(self, items=None):
         pass
 
-    def run(self, user, text_preprocessing_result, params):
+    async def run(self, user, text_preprocessing_result, params):
         user.scenario_models["some_id"].break_scenario = True
         return []
 
 
-class TestTreeScenario(TestCase):
+class TestTreeScenario(IsolatedAsyncioTestCase):
 
-    def test_1(self):
+    async def test_1(self):
         """
         Тест проверяет сценарий из одного узла. Предполагается идеальный случай, когда одно поле
         и мы смогли его заполнить.
@@ -51,13 +51,14 @@ class TestTreeScenario(TestCase):
                  "scenario_nodes": {"node_1": node_mock}}
 
         field_descriptor = PicklableMock(name="field_descriptor_mock")
-        field_descriptor.filler.extract = PicklableMock(name="my_field_value_1", return_value=61)
+        field_descriptor.filler.run = AsyncMock(name="my_field_value_1", return_value=61)
         field_descriptor.fill_other = False
         field_descriptor.field_validator.actions = []
+        field_descriptor.field_validator.requirement.check = AsyncMock(return_value=True)
 
         internal_form = PicklableMock(name="internal_form_mock")
         internal_form.description.fields.items = PicklableMock(return_value=[("age", field_descriptor)])
-        internal_form.field.field_validator.requirement.check = PicklableMock(return_value=True)
+        internal_form.field.field_validator.requirement.check = AsyncPicklableMock(return_value=True)
         internal_form.fields = PicklableMagicMock()
         internal_form.fields.values.items = PicklableMock(return_value={"age": 61})
         internal_form.is_valid = PicklableMock(return_value=True)
@@ -85,11 +86,11 @@ class TestTreeScenario(TestCase):
 
         scenario = TreeScenario(items, 1)
 
-        result = scenario.run(text_preprocessing_result, user)
+        await scenario.run(text_preprocessing_result, user)
         self.assertIsNone(current_node_mock.current_node)
         context_forms.new.assert_called_once_with(form_type)
 
-    def test_breake(self):
+    async def test_break(self):
         """
         Тест проверяет выход из сценария если сработает флаг break_scenario
         """
@@ -98,6 +99,7 @@ class TestTreeScenario(TestCase):
         actions["test"] = MockAction
         actions["break"] = MockAction
         actions["success"] = MockAction
+        actions["external"] = MockAction
 
         form_type = "form for doing smth"
         internal_form_key = "my form key"
@@ -108,15 +110,16 @@ class TestTreeScenario(TestCase):
                  "scenario_nodes": {"node_1": node_mock}, "actions": [{"type": "success"}]}
 
         field_descriptor = PicklableMock(name="field_descriptor_mock")
-        field_descriptor.filler.extract = PicklableMock(name="my_field_value_1", return_value=61)
+        field_descriptor.filler.run = AsyncMock(name="my_field_value_1", return_value=61)
         field_descriptor.fill_other = False
         field_descriptor.field_validator.actions = []
+        field_descriptor.field_validator.requirement.check = AsyncMock(return_value=True)
         field_descriptor.on_filled_actions = [BreakAction(), MockAction(command_name="break action result")]
         field_descriptor.id = "age"
 
         internal_form = PicklableMock(name="internal_form_mock")
         internal_form.description.fields.items = PicklableMock(return_value=[("age", field_descriptor)])
-        internal_form.field.field_validator.requirement.check = PicklableMock(return_value=True)
+        internal_form.field.field_validator.requirement.check = AsyncPicklableMock(return_value=True)
         field = PicklableMock()
         field.description = field_descriptor
         field.value = 61
@@ -146,7 +149,7 @@ class TestTreeScenario(TestCase):
 
         scenario = TreeScenario(items, 1)
 
-        result = scenario.run(text_preprocessing_result, user)
+        result = await scenario.run(text_preprocessing_result, user)
 
         self.assertFalse(scenario.actions[0].called)
         self.assertEqual(result[0].name, "break action result")

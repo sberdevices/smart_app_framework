@@ -51,6 +51,7 @@ class BaseHttpRequestActionTest(unittest.IsolatedAsyncioTestCase):
         request_mock.assert_called_with(url="https://my.url.com", method='POST', timeout=3, json={"param": "my_value"})
         self.assertEqual(result, {})
 
+
     @patch('aiohttp.request')
     async def test_headers_fix(self, request_mock):
         self.set_request_mock_attribute(request_mock)

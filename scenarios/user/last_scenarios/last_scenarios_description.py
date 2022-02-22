@@ -17,6 +17,7 @@ class LastScenariosDescription:
     def requirement(self):
         return self._requirement
 
-    def check(self, text_preprocessing_result, user):
-        return user.message.channel in self._channels and self.requirement.check(text_preprocessing_result, user) if \
-            self._channels else self.requirement.check(text_preprocessing_result, user)
+    async def check(self, text_preprocessing_result, user):
+        return user.message.channel in self._channels and \
+            await self.requirement.check(text_preprocessing_result, user) if self._channels else \
+            await self.requirement.check(text_preprocessing_result, user)

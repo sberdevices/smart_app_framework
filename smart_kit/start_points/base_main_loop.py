@@ -1,6 +1,7 @@
 # coding=utf-8
 
 from typing import Type, Iterable
+import asyncio
 import signal
 
 import scenarios.logging.logger_constants as log_const
@@ -35,6 +36,7 @@ class BaseMainLoop:
         try:
             signal.signal(signal.SIGINT, self.stop)
             signal.signal(signal.SIGTERM, self.stop)
+            self.loop = asyncio.get_event_loop()
             self.settings = settings
             self.app_name = self.settings.app_name
             self.model: SmartAppModel = model
@@ -56,20 +58,20 @@ class BaseMainLoop:
             self._init_monitoring_config(template_settings)
 
             log("%(class_name)s.__init__ completed.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                                                                        "class_name": self.__class__.__name__})
+                                                              "class_name": self.__class__.__name__})
         except:
             log("%(class_name)s.__init__ exception.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE,
-                                                                        "class_name": self.__class__.__name__},
-                          level="ERROR", exc_info=True)
+                                                              "class_name": self.__class__.__name__},
+                level="ERROR", exc_info=True)
             raise
 
     def get_db(self):
         db_adapter = db_adapter_factory(self.settings["template_settings"].get("db_adapter", {}))
-        if db_adapter.IS_ASYNC:
+        if not db_adapter.IS_ASYNC:
             raise Exception(
-                f"Async adapter {db_adapter.__class__.__name__} doesnt compare with {self.__class__.__name__}"
+                f"Blocking adapter {db_adapter.__class__.__name__} is not good for {self.__class__.__name__}"
             )
-        db_adapter.connect()
+        self.loop.run_until_complete(db_adapter.connect())
         return db_adapter
 
     def _generate_answers(self, user, commands, message, **kwargs):
@@ -94,16 +96,18 @@ class BaseMainLoop:
         smart_kit_metrics.apply_config(monitoring_config)
         smart_kit_metrics.init_metrics(app_name=self.app_name)
 
-    def load_user(self, db_uid, message):
+    async def load_user(self, db_uid, message):
         db_data = None
         load_error = False
         try:
-            db_data = self.db_adapter.get(db_uid)
+            db_data = await self.db_adapter.get(db_uid)
         except (DBAdapterException, ValueError):
             log("Failed to get user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                    log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")
             load_error = True
             smart_kit_metrics.counter_load_error(self.app_name)
+            # to skip message when load failed
+            raise
         return self.user_cls(
             message.uid,
             message=message,
@@ -114,13 +118,12 @@ class BaseMainLoop:
             load_error=load_error
         )
 
-    def save_user(self, db_uid, user, message):
+    async def save_user(self, db_uid, user, message):
         no_collisions = True
         if user.do_not_save:
             log("User %(uid)s will not saved", user=user, params={"uid": user.id,
                                                                   log_const.KEY_NAME: "user_will_not_saved"})
         else:
-
             no_collisions = True
             try:
                 str_data = user.raw_str
@@ -129,11 +132,11 @@ class BaseMainLoop:
                             log_const.KEY_NAME: "user_save",
                             "user_length": len(str_data)})
                 if user.initial_db_data and self.user_save_check_for_collisions:
-                    no_collisions = self.db_adapter.replace_if_equals(db_uid,
-                                                                      sample=user.initial_db_data,
-                                                                      data=str_data)
+                    no_collisions = await self.db_adapter.replace_if_equals(db_uid,
+                                                                            sample=user.initial_db_data,
+                                                                            data=str_data)
                 else:
-                    self.db_adapter.save(db_uid, str_data)
+                    await self.db_adapter.save(db_uid, str_data)
             except (DBAdapterException, ValueError):
                 log("Failed to set user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                        log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")

@@ -44,13 +44,15 @@ class BaseHttpRequestAction(NodeAction):
 
     @staticmethod
     def _check_headers_validity(headers: Dict[str, Any], user) -> Dict[str, str]:
-        for header_name, header_value in headers.items():
+        for header_name, header_value in list(headers.items()):
             if not isinstance(header_value, (str, bytes)):
                 if isinstance(header_value, (int, float, bool)):
                     headers[header_name] = str(header_value)
                 else:
                     log(f"{__class__.__name__}._check_headers_validity remove header {header_name} because "
-                        f"{type(headers[header_name])} is not in [int, float, bool, str, bytes]", user=user)
+                        f"({type(header_value)}) is not in [int, float, bool, str, bytes]", user=user, params={
+                        log_const.KEY_NAME: "sent_http_remove_header",
+                    })
                     del headers[header_name]
         return headers
 

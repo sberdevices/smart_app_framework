@@ -88,4 +88,5 @@ class HttpRequestActionTest(unittest.TestCase):
             "header_1": "32",
             "header_2": "32.03",
             "header_3": b"d32"
-        }, timeout=self.TIMEOUT)
+        }, method=HTTPRequestAction.DEFAULT_METHOD, timeout=self.TIMEOUT)
+

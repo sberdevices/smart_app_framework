@@ -99,12 +99,7 @@ class HttpTextNormalizer(BaseTextNormalizer):
         if len(batch) == 0:
             raise NormalizationError("Empty Message Received")
 
-        answer = batch[0]
-
-        if "message" not in answer:
-            raise NormalizationError(f"Malformed Message Received: {batch}")
-
-        return answer["message"]
+        return batch[0]
 
     def load_everything(self) -> None:
         pass

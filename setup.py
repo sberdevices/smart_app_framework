@@ -28,7 +28,7 @@ setup(
         "dawg==0.8.0",
         "dill==0.3.3",
         "ics==0.6",
-        "Jinja2==2.10.1",
+        "Jinja2==3.0.3",
         "keras==2.6.0",
         "lazy",
         "nltk==3.5",

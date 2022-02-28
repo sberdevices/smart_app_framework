@@ -83,6 +83,10 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         except AttributeError:
             message_maker = LoggerMessageCreator
 
+        log_store_for_map = getattr(logging,"log_store_for_map", None)
+        if log_store_for_map is not None and params is not None:
+            log_store_for = log_store_for_map.get(params.get(log_const.KEY_NAME), log_store_for)
+
         if instance is not None:
             params = message_maker.make_message(user, params, instance.__class__.__name__, log_store_for)
         else:

@@ -41,7 +41,7 @@ class HTTPRequestAction(NodeAction):
 
     def init_save_params(self, items):
         self.store = items["store"]
-        self.behavior = items["behavior"]
+        self.behavior = items.get("behavior")
 
     def preprocess(self, user, text_processing, params):
         behavior_description = user.descriptions["behaviors"][self.behavior]
@@ -65,12 +65,8 @@ class HTTPRequestAction(NodeAction):
         try:
             with requests.request(**request_parameters) as response:
                 response.raise_for_status()
-                try:
-                    data = response.json()
-                except json.decoder.JSONDecodeError:
-                    data = None
-                self._log_response(user, response, data)
-                return data
+                self._log_response(user, response)
+                return response
         except requests.exceptions.Timeout:
             self.error = self.TIMEOUT
         except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
@@ -96,28 +92,33 @@ class HTTPRequestAction(NodeAction):
             **additional_params,
         })
 
-    def _log_response(self, user, response, data, additional_params=None):
+    def _log_response(self, user, response, additional_params=None):
         additional_params = additional_params or {}
         log(f"{self.__class__.__name__}.run get https response ", user=user, params={
             'headers': dict(response.headers),
             'time': response.elapsed.microseconds,
             'cookie': {i.name: i.value for i in response.cookies},
             'status': response.status_code,
-            'data': data,
             log_const.KEY_NAME: "got_http_response",
             **additional_params,
         })
 
-    def process_result(self, result, user, text_preprocessing_result, params):
-        behavior_description = user.descriptions["behaviors"][self.behavior]
+    def process_result(self, response, user, text_preprocessing_result, params):
+        behavior_description = user.descriptions["behaviors"][self.behavior] if self.behavior else None
+        action = None
         if self.error is None:
-            user.variables.set(self.store, result)
-            action = behavior_description.success_action
-        elif self.error == self.TIMEOUT:
-            action = behavior_description.timeout_action
-        else:
-            action = behavior_description.fail_action
-        return action.run(user, text_preprocessing_result, None)
+            try:
+                data = response.json()
+            except json.decoder.JSONDecodeError:
+                data = None
+            user.variables.set(self.store, data)
+            action = behavior_description.success_action if behavior_description else None
+        elif behavior_description:
+            if self.error == self.TIMEOUT:
+                action = behavior_description.timeout_action
+            else:
+                action = behavior_description.fail_action
+        return action.run(user, text_preprocessing_result, None) if action else None
 
     def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
@@ -125,5 +126,5 @@ class HTTPRequestAction(NodeAction):
         params = params or {}
         request_parameters = self._get_request_params(user, text_preprocessing_result, params)
         self._log_request(user, request_parameters)
-        result = self._make_response(request_parameters, user)
-        return self.process_result(result, user, text_preprocessing_result, params)
+        response = self._make_response(request_parameters, user)
+        return self.process_result(response, user, text_preprocessing_result, params)

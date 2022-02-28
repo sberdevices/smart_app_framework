@@ -61,7 +61,7 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
     set_default(app_config, "NORMALIZATION_CACHE_TTL", 0)
     set_default(app_config, "NORMALIZATION_CACHE", JSONCache)
 
-    set_default(app_config, "MONITRING_ADAPTER", MonitoringAdapterProm())
+    set_default(app_config, "MONITORING_ADAPTER", MonitoringAdapterProm())
 
     set_default(app_config, "PLUGINS", ())
     set_default(app_config, "TO_MSG_VALIDATORS", ())

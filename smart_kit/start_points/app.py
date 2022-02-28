@@ -14,7 +14,7 @@ def run(app_config):
         references_path=app_config.REFERENCES_PATH, app_name=app_config.APP_NAME)
     log("FINISHED SETTINGS CREATE", level="WARNING")
 
-    monitoring.apply_adapter(app_config.MONITRING_ADAPTER)
+    monitoring.apply_adapter(app_config.MONITORING_ADAPTER)
 
     source = settings.get_source()
     log("START RESOURCES CREATE", level="WARNING")

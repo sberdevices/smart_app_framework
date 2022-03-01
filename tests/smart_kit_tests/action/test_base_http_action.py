@@ -57,7 +57,9 @@ class BaseHttpRequestActionTest(unittest.TestCase):
             "headers": {
                 "header_1": 32,
                 "header_2": 32.03,
-                "header_3": b"d32"
+                "header_3": b"d32",
+                "header_4": None,
+                "header_5": {"data": "value"},
             },
         }
         result = BaseHttpRequestAction(items).run(self.user, None, {})

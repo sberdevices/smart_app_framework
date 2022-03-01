@@ -120,11 +120,17 @@ class HTTPRequestAction(NodeAction):
         if action:
             return await action.run(user, text_preprocessing_result, None)
 
+    async def _post_request_action(self, response: aiohttp.ClientResponse, user: BaseUser,
+                                  text_preprocessing_result: BaseTextPreprocessingResult,
+                                  params: Optional[Dict[str, Union[str, float, int]]] = None):
+        pass
+
     async def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self.preprocess(user, text_preprocessing_result, params)
         params = params or {}
         request_parameters = self._get_request_params(user, text_preprocessing_result, params)
         self._log_request(user, request_parameters)
-        respone = await self._make_response(request_parameters, user)
-        return await self.process_result(respone, user, text_preprocessing_result, params)
+        response = await self._make_response(request_parameters, user)
+        await self._post_request_action(response, user, text_preprocessing_result, params)
+        return await self.process_result(response, user, text_preprocessing_result, params)

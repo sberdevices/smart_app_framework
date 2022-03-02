@@ -96,7 +96,7 @@ class HTTPRequestAction(NodeAction):
         additional_params = additional_params or {}
         log(f"{self.__class__.__name__}.run get https response ", user=user, params={
             'headers': dict(response.headers),
-            'cookie': {i.name: i.value for i in response.cookies},
+            'cookie': {k: v.value for k, v in response.cookies.items()},
             'status': response.status,
             log_const.KEY_NAME: "got_http_response",
             **additional_params,

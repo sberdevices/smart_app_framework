@@ -74,6 +74,7 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         module_name = previous_frame.f_globals["__name__"]
         logger = logging.getLogger(module_name)
         instance = previous_frame.f_locals.get('self', None)
+        params['finished'] = user.message.payload.get("finished", None)
 
         from smart_kit.configs import get_app_config
         try:
@@ -96,7 +97,7 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         # см. tests.core_tests.test_utils.test_logger.TestLogger.test_escaping
         message = message_maker.escape(message)
 
-        logger.log(level_name, message, params, exc_info=exc_info)
+        logger.log(level_name, message, is_finished, params, exc_info=exc_info)
     except timeout_decorator.TimeoutError:
         raise
     except:

@@ -1,7 +1,7 @@
 # coding: utf-8
 import random
 from copy import copy
-from typing import Union, Dict, List, Any, Optional
+from typing import Union, Dict, List, Any, Optional, Tuple
 from itertools import chain
 
 from lazy import lazy
@@ -228,7 +228,7 @@ class SDKAnswer(NodeAction):
     # функция идет по RANDOM_PATH, числа в нем считает индексами массива,
     # INDEX_WILDCARD - произвольным индексом массива, прочее - ключами словаря
     # в конце пути предполагается непустой массив
-    def get_by_path(self, input_dict: Union[list, dict], nested_key: list[str]) -> list[tuple[Union[list, dict], str]]:
+    def get_by_path(self, input_dict: Union[list, dict], nested_key: List[str]) -> List[Tuple[Union[list, dict], str]]:
         internal_dict_value = input_dict
         for ik, k in enumerate(nested_key):
             last_dict = internal_dict_value

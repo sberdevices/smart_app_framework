@@ -17,6 +17,10 @@ ANSWER_TO_USER = "ANSWER_TO_USER"
 
 
 class NodeAction(CommandAction):
+    """ NodeAction расширяет функционал CommandAction, добавляя рендеринг Jinja-шаблонов внутри полей "nodes" и
+    "support_templates".
+
+    """
     version: Optional[int]
     command: str
     nodes: Dict[str, List[List[str]]]
@@ -86,7 +90,11 @@ class NodeAction(CommandAction):
 
 
 class StringAction(NodeAction):
-    """
+    """ StringAction расширяет NodeAction, реализуя метод run.
+
+    Метод run возвращает команду, составленную из заданных в теле действия типа команды, типа запроса и передаваемых
+    данных, а также извлечённых из `text_preprocessing_result` параметров.
+
     Example:
     {
       "pay_phone_cmd": {
@@ -101,6 +109,7 @@ class StringAction(NodeAction):
       }
     }
     """
+
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
         super(StringAction, self).__init__(items, id)
 

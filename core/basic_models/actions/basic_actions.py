@@ -17,6 +17,13 @@ action_factory = build_factory(actions)
 
 
 class Action:
+    """ Базовый класс для действий в сценариях, хранящий информацию о сценарии: id, version.
+
+    Запуск действия обеспечивается методом run. В случае ошибки выполнения вызывается метод on_run_error. Атрибут id
+    используется в качестве идентификатора действия, по которому можно вызвать действие. Атрибут version используется
+    для отслеживания версии объекта, например, при обновлении SmartUpdatableDescriptionsItems.
+
+    """
     version: Optional[int]
     id: Optional[str]
 
@@ -38,6 +45,9 @@ class Action:
 
 
 class CommandAction(Action):
+    """ Базовый класс для запроса к другому сервису, хранящий информацию о типе, методе и данных запроса.
+
+    """
     DEFAULT_REQUEST_TYPE = KAFKA
     version: Optional[int]
     command: str

@@ -74,7 +74,7 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         module_name = previous_frame.f_globals["__name__"]
         logger = logging.getLogger(module_name)
         instance = previous_frame.f_locals.get('self', None)
-        params['finished'] = user.message.payload.get("finished", None)
+        params['finished'] = user.message.payload.get("finished", None) if user else None
 
         from smart_kit.configs import get_app_config
         try:

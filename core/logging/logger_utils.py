@@ -97,7 +97,7 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         # см. tests.core_tests.test_utils.test_logger.TestLogger.test_escaping
         message = message_maker.escape(message)
 
-        logger.log(level_name, message, is_finished, params, exc_info=exc_info)
+        logger.log(level_name, message, params, exc_info=exc_info)
     except timeout_decorator.TimeoutError:
         raise
     except:

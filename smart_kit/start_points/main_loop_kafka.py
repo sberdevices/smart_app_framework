@@ -230,6 +230,9 @@ class MainLoop(BaseMainLoop):
                     waiting_message_time = time.time() * 1000 - message.creation_time
                     stats += "Waiting message: {} msecs\n".format(waiting_message_time)
 
+                with StatsTimer() as load_timer:
+                    user = self.load_user(db_uid, message)
+
                 stats += "Mid: {}\n".format(message.incremental_id)
                 smart_kit_metrics.sampling_mq_waiting_time(self.app_name, waiting_message_time / 1000)
 
@@ -251,9 +254,6 @@ class MainLoop(BaseMainLoop):
                 )
 
                 db_uid = message.db_uid
-
-                with StatsTimer() as load_timer:
-                    user = self.load_user(db_uid, message)
 
                 smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
                 stats += "Loading time: {} msecs\n".format(load_timer.msecs)
@@ -295,7 +295,7 @@ class MainLoop(BaseMainLoop):
                         with StatsTimer() as publish_timer:
                             self._send_request(user, answer, mq_message)
                         stats += "Publishing time: {} msecs".format(publish_timer.msecs)
-                        log(stats)
+                        log(stats, user=user)
             else:
                 try:
                     data = message.masked_value

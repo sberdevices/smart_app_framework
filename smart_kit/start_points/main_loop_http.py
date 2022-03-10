@@ -59,14 +59,15 @@ class BaseHttpMainLoop(BaseMainLoop):
             return 500, "BAD ANSWER", SmartAppToMessage(self.BAD_ANSWER_COMMAND, message=message, request=None)
 
     def process_message(self, message: SmartAppFromMessage, *args, **kwargs):
+        db_uid = message.db_uid
+        with StatsTimer() as load_timer:
+            user = self.load_user(db_uid, message)
+
         stats = ""
         log("INCOMING DATA: %(masked_message)s",
             params={log_const.KEY_NAME: "incoming_policy_message",
-                    "masked_message": message.masked_value})
-        db_uid = message.db_uid
+                    "masked_message": message.masked_value}, user=user)
 
-        with StatsTimer() as load_timer:
-            user = self.load_user(db_uid, message)
         stats += "Loading time: {} msecs\n".format(load_timer.msecs)
         with StatsTimer() as script_timer:
             commands = self.model.answer(message, user)
@@ -79,7 +80,7 @@ class BaseHttpMainLoop(BaseMainLoop):
         with StatsTimer() as save_timer:
             self.save_user(db_uid, user, message)
         stats += "Saving time: {} msecs\n".format(save_timer.msecs)
-        log(stats, params={log_const.KEY_NAME: "timings"})
+        log(stats, user=user, params={log_const.KEY_NAME: "timings"})
         return answer, stats
 
     def _get_headers(self, environ):

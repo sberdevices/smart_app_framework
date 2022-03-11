@@ -455,7 +455,6 @@ class MainLoop(BaseMainLoop):
                 level="WARNING")
             smart_kit_metrics.counter_save_collision_tries_left(self.app_name)
 
-        monitoring.send()
         consumer.commit_offset(mq_message)
         asyncio.create_task(monitoring.async_send())
         if message_handled_ok:

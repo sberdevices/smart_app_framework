@@ -21,5 +21,33 @@
 		"type": "template",
 		"template": "{{ payload.new_session and settings['template_settings'].get('reset_context_on_new_session', False)}}"
 	}
+  },
+  "smart_geo_success": {
+    "type": "string",
+    "command": "ANSWER_TO_USER",
+    "nodes": {
+      "pronounceText": "Геоданные пользователя",
+      "items": [
+        {
+          "bubble": {
+            "text": "Геоданные пользователя: {{ user.variables.smart_geo }}"
+          }
+        }
+      ]
+    }
+  },
+  "smart_geo_fail": {
+    "type": "string",
+    "command": "ANSWER_TO_USER",
+    "nodes": {
+      "pronounceText": "Ошибка при получении геоданных пользователя",
+      "items": [
+        {
+          "bubble": {
+            "text": "Ошибка при получении геоданных пользователя"
+          }
+        }
+      ]
+    }
   }
 }

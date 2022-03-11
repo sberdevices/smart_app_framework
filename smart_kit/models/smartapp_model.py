@@ -9,7 +9,9 @@ from core.utils.exception_handlers import exc_handler
 
 import scenarios.logging.logger_constants as log_const
 from smart_kit.handlers.handle_close_app import HandlerCloseApp
-from smart_kit.names.message_names import MESSAGE_TO_SKILL, LOCAL_TIMEOUT, RUN_APP, SERVER_ACTION, CLOSE_APP
+from smart_kit.handlers.handler_take_profile_data import HandlerTakeProfileData
+from smart_kit.names.message_names import MESSAGE_TO_SKILL, LOCAL_TIMEOUT, RUN_APP, SERVER_ACTION, CLOSE_APP, \
+    TAKE_PROFILE_DATA
 from smart_kit.handlers.handle_respond import HandlerRespond
 from smart_kit.handlers.handler_text import HandlerText
 from smart_kit.handlers.handler_timeout import HandlerTimeout
@@ -39,7 +41,8 @@ class SmartAppModel:
             RUN_APP: handler_text,
             LOCAL_TIMEOUT: HandlerTimeout(self.app_name),
             SERVER_ACTION: HandlerServerAction(self.app_name),
-            CLOSE_APP: HandlerCloseApp(self.app_name)
+            CLOSE_APP: HandlerCloseApp(self.app_name),
+            TAKE_PROFILE_DATA: HandlerTakeProfileData(self.app_name)
         }
         self._handlers.update({
             message_name: HandlerRespond(self.app_name, action_name=action_name)

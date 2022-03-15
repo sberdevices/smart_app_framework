@@ -90,3 +90,13 @@ class HttpRequestActionTest(unittest.TestCase):
             "header_3": b"d32"
         }, method=HTTPRequestAction.DEFAULT_METHOD, timeout=self.TIMEOUT)
 
+    @patch('requests.request')
+    def test_beheivor_is_none(self, request_mock):
+        self.set_request_mock_attribute(request_mock)
+        items = {
+            "params": {
+            },
+            "store": "user_variable",
+        }
+        HTTPRequestAction(items).run(self.user, None, {})
+        request_mock.assert_called_with(method=HTTPRequestAction.DEFAULT_METHOD, timeout=self.TIMEOUT)

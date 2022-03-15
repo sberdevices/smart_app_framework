@@ -44,8 +44,9 @@ class HTTPRequestAction(NodeAction):
         self.behavior = items.get("behavior")
 
     def preprocess(self, user, text_processing, params):
-        behavior_description = user.descriptions["behaviors"][self.behavior]
-        self.method_params.setdefault("timeout", behavior_description.timeout(user))
+        behavior_description = user.descriptions["behaviors"].get(self.behavior)
+        if behavior_description:
+            self.method_params.setdefault("timeout", behavior_description.timeout(user))
 
     @staticmethod
     def _check_headers_validity(headers: Dict[str, Any], user) -> Dict[str, str]:

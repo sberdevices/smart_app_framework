@@ -28,6 +28,7 @@ class HTTPRequestAction(NodeAction):
     POST = "POST"
     GET = "GET"
     DEFAULT_METHOD = POST
+    DEFAULT_TIMEOUT = 3
 
     TIMEOUT = "TIMEOUT"
     CONNECTION = "CONNECTION"
@@ -45,8 +46,8 @@ class HTTPRequestAction(NodeAction):
 
     def preprocess(self, user, text_processing, params):
         behavior_description = user.descriptions["behaviors"].get(self.behavior)
-        if behavior_description:
-            self.method_params.setdefault("timeout", behavior_description.timeout(user))
+        timeout = behavior_description.timeout(user) if behavior_description else self.DEFAULT_TIMEOUT
+        self.method_params.setdefault("timeout", timeout)
 
     @staticmethod
     def _check_headers_validity(headers: Dict[str, Any], user) -> Dict[str, str]:

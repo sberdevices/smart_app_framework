@@ -5,7 +5,7 @@ from smart_kit.action.http import HTTPRequestAction
 
 
 class HttpRequestActionTest(unittest.TestCase):
-    TIMEOUT = 3
+    TIMEOUT = 4
 
     def setUp(self):
         self.user = Mock(
@@ -40,7 +40,7 @@ class HttpRequestActionTest(unittest.TestCase):
             "behavior": "my_behavior",
         }
         HTTPRequestAction(items).run(self.user, None, {})
-        request_mock.assert_called_with(url="https://my.url.com", method='POST', timeout=3)
+        request_mock.assert_called_with(url="https://my.url.com", method='POST', timeout=self.TIMEOUT)
         self.assertTrue(self.user.descriptions["behaviors"]["my_behavior"].success_action.run.called)
         self.assertTrue(self.user.variables.set.called)
         self.user.variables.set.assert_called_with("user_variable", {'data': 'value'})
@@ -99,4 +99,5 @@ class HttpRequestActionTest(unittest.TestCase):
             "store": "user_variable",
         }
         HTTPRequestAction(items).run(self.user, None, {})
-        request_mock.assert_called_with(method=HTTPRequestAction.DEFAULT_METHOD)
+        request_mock.assert_called_with(method=HTTPRequestAction.DEFAULT_METHOD,
+                                        timeout=HTTPRequestAction.DEFAULT_TIMEOUT)

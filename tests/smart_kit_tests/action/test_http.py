@@ -99,4 +99,4 @@ class HttpRequestActionTest(unittest.TestCase):
             "store": "user_variable",
         }
         HTTPRequestAction(items).run(self.user, None, {})
-        request_mock.assert_called_with(method=HTTPRequestAction.DEFAULT_METHOD, timeout=self.TIMEOUT)
+        request_mock.assert_called_with(method=HTTPRequestAction.DEFAULT_METHOD)

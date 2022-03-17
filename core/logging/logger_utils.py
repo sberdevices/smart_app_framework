@@ -73,6 +73,8 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         previous_frame = current_frame.f_back
         module_name = previous_frame.f_globals["__name__"]
         logger = logging.getLogger(module_name)
+        if not logger.isEnabledFor(level_name):
+            return
         instance = previous_frame.f_locals.get('self', None)
 
         from smart_kit.configs import get_app_config

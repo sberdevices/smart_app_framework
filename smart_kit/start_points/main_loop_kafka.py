@@ -230,6 +230,7 @@ class MainLoop(BaseMainLoop):
                     waiting_message_time = time.time() * 1000 - message.creation_time
                     stats += "Waiting message: {} msecs\n".format(waiting_message_time)
 
+                db_uid = message.db_uid
                 with StatsTimer() as load_timer:
                     user = self.load_user(db_uid, message)
 
@@ -252,8 +253,6 @@ class MainLoop(BaseMainLoop):
                             MESSAGE_ID_STR: message.incremental_id},
                     user=user
                 )
-
-                db_uid = message.db_uid
 
                 smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
                 stats += "Loading time: {} msecs\n".format(load_timer.msecs)

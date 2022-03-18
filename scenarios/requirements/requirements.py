@@ -14,7 +14,7 @@ class AskAgainExistRequirement(Requirement):
               params: Dict[str, Any] = None) -> bool:
         last_scenario_id = user.last_scenarios.last_scenario_name
         scenario = user.descriptions["scenarios"].get(last_scenario_id)
-        return scenario.check_ask_again_question(text_preprocessing_result, user, params)
+        return scenario.check_ask_again_requests(text_preprocessing_result, user, params)
 
 
 class TemplateInArrayRequirement(Requirement):

@@ -723,7 +723,8 @@ class SmartGeoActionTest(unittest.TestCase):
         self.smart_geo_action = SmartGeoAction(items)
 
     def test_action_send_request(self):
-        incoming_message = Mock(incremental_id="1605196199186625000", session_id="0062530b-5521-42cc-90b0-a9d65dea4e98",
+        incoming_message = Mock(incremental_id="1605196199186625000",
+                                session_id="0062530b-5521-42cc-90b0-a9d65dea4e98",
                                 uuid={"userChannel": "B2C", "userId": "ec8a9097-1508-4bec-8d97-67f2329c03e0",
                                       "sub": "385342565001000018390f1f"},
                                 payload={})

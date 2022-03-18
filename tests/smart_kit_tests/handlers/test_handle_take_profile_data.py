@@ -31,18 +31,18 @@ class HandleTakeProfileDataTest(unittest.TestCase):
 
     def test_handle_take_profile_data_init(self):
         obj = handler_take_profile_data.HandlerTakeProfileData(self.app_name)
-        self.assertIsNotNone(obj.handler_name)
+        self.assertIsNotNone(obj.SUCCESS_CODE)
         self.assertIsNotNone(handler_take_profile_data.GEO)
 
     def test_handle_take_profile_data_run_fail(self):
         obj = handler_take_profile_data.HandlerTakeProfileData(self.app_name)
         payload = {"status_code": {"code": 102}}
-        self.assertTrue(obj.run(payload, self.test_user) == "fail")
+        self.assertEqual(obj.run(payload, self.test_user), "fail")
 
     def test_handle_take_profile_data_run_success(self):
         obj = handler_take_profile_data.HandlerTakeProfileData(self.app_name)
         payload = {"profile_data": {"geo": {"reverseGeocoding": {"country": "Российская Федерация"},
                                             "location": {"lat": 10.125, "lon": 10.0124}}},
                    "status_code": {"code": 1}}
-        self.assertTrue(obj.run(payload, self.test_user) == "success")
+        self.assertEqual(obj.run(payload, self.test_user), "success")
         self.assertEqual(self.test_user.variables.get("smart_geo"), payload["profile_data"]["geo"])

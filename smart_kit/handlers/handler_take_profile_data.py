@@ -8,15 +8,15 @@ from smart_kit.names.field import PROFILE_DATA, STATUS_CODE, CODE, GEO
 
 
 class HandlerTakeProfileData(HandlerBase):
-    handler_name = "HandlerTakeProfileData"
+    SUCCESS_CODE = 1
 
     def run(self, payload, user: User):
         super().run(payload, user)
-        log(f"{self.handler_name} started", user)
+        log(f"{self.__class__.__name__} started", user)
 
         text_preprocessing_result = TextPreprocessingResult(payload.get(MESSAGE, {}))
         action = user.descriptions["external_actions"]["smart_geo_fail"]
-        if payload.get(STATUS_CODE, {}).get(CODE, -1) == 1:
+        if payload.get(STATUS_CODE, {}).get(CODE) == self.SUCCESS_CODE:
             action = user.descriptions["external_actions"]["smart_geo_success"]
             user.variables.set("smart_geo", payload.get(PROFILE_DATA, {}).get(GEO))
         return action.run(user, text_preprocessing_result)

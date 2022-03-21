@@ -14,6 +14,7 @@ from core.basic_models.actions.counter_actions import CounterIncrementAction, Co
 from core.basic_models.actions.external_actions import ExternalAction
 from core.basic_models.actions.external_actions import ExternalActions
 from core.basic_models.actions.push_action import PushAction, PUSH_NOTIFY
+from core.basic_models.actions.smartrating import AskRatingAction, CallRatingAction
 from core.basic_models.actions.string_actions import StringAction, AfinaAnswerAction, SDKAnswer, \
     SDKAnswerToUser
 from core.basic_models.answer_items.answer_items import items_factory, SdkAnswerItem, answer_items, BubbleText, \
@@ -315,6 +316,8 @@ class SmartAppResources(BaseConfig):
         actions["push"] = PushAction
         actions["give_me_memory"] = GiveMeMemoryAction
         actions["remember_this"] = RememberThisAction
+        actions["ask_rating"] = AskRatingAction
+        actions["call_rating"] = CallRatingAction
 
     def init_requirements(self):
         requirements[None] = Requirement

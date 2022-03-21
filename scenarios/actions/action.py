@@ -108,15 +108,6 @@ class BreakScenarioAction(Action):
         user.scenario_models[scenario_id].set_break()
 
 
-class AskAgainAction(Action):
-
-    def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
-        last_scenario_id = user.last_scenarios.last_scenario_name
-        scenario = user.descriptions["scenarios"].get(last_scenario_id)
-        return scenario.get_ask_again_question_result(text_preprocessing_result, user, params)
-
-
 class SaveBehaviorAction(Action):
     version: Optional[int]
     parametrizer: BasicParametrizer

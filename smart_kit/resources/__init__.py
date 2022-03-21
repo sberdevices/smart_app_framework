@@ -54,7 +54,7 @@ from core.request.base_request import requests_registered
 from core.request.rest_request import RestRequest
 from core.utils.loader import ordered_json
 from scenarios.actions.action import (
-    AskAgainAction, BreakScenarioAction, ChoiceScenarioAction, ClearCurrentScenarioAction,
+    BreakScenarioAction, ChoiceScenarioAction, ClearCurrentScenarioAction,
     ClearCurrentScenarioFormAction, ClearFormAction, ClearInnerFormAction, ClearScenarioByIdAction,
     ClearVariablesAction, CompositeFillFieldAction, DeleteVariableAction, FillFieldAction,
     RemoveCompositeFormFieldAction, RemoveFormFieldAction, SaveBehaviorAction, SetVariableAction,
@@ -273,7 +273,6 @@ class SmartAppResources(BaseConfig):
     def init_actions(self):
         actions[None] = EmptyAction
         actions["add_history_event"] = AddHistoryEventAction
-        actions["ask_again"] = AskAgainAction
         actions["break_scenario"] = BreakScenarioAction
         actions["choice"] = ChoiceAction
         actions["choice_scenario"] = ChoiceScenarioAction

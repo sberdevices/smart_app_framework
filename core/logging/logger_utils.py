@@ -43,9 +43,9 @@ class LoggerMessageCreator:
             message_id = message.incremental_id
             uuid = user.id
             logging_uuid = message.logging_uuid
-        params[UID_STR] = uuid
-        params[MESSAGE_ID_STR] = message_id
-        params[LOGGING_UUID] = logging_uuid
+        params.setdefault(UID_STR, uuid)
+        params.setdefault(MESSAGE_ID_STR, message_id)
+        params.setdefault(LOGGING_UUID, logging_uuid)
         params[CLASS_NAME] = cls_name
         params[LOG_STORE_FOR] = log_store_for
 

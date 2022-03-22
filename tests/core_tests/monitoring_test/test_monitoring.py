@@ -66,3 +66,14 @@ class MonitoringTest1(unittest.TestCase):
                 self.assertTrue(event_name not in counter_item, event_name)
             else:
                 self.assertTrue(event_name in counter_item, event_name)
+
+    def test_monitoring_init(self):
+        class MyCustomMonitoring(Monitoring):
+            pass
+
+        from core.monitoring import init_monitoring
+        init_monitoring(MyCustomMonitoring)
+        from core.monitoring import monitoring
+        self.assertIsInstance(monitoring.monitoring, MyCustomMonitoring)
+        init_monitoring(Monitoring)
+        self.assertIsInstance(monitoring.monitoring, Monitoring)

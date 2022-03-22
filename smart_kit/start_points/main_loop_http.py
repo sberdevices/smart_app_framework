@@ -67,7 +67,7 @@ class BaseHttpMainLoop(BaseMainLoop):
         db_uid = message.db_uid
 
         with StatsTimer() as load_timer:
-            user = self.load_user(db_uid, message)
+            user = self.loop.run_until_complete(self.load_user(db_uid, message))
         stats += "Loading time: {} msecs\n".format(load_timer.msecs)
         with StatsTimer() as script_timer:
             commands = asyncio.get_event_loop().run_until_complete(self.model.answer(message, user))
@@ -78,7 +78,7 @@ class BaseHttpMainLoop(BaseMainLoop):
 
         stats += "Script time: {} msecs\n".format(script_timer.msecs)
         with StatsTimer() as save_timer:
-            self.save_user(db_uid, user, message)
+            self.loop.run_until_complete(self.save_user(db_uid, user, message))
         stats += "Saving time: {} msecs\n".format(save_timer.msecs)
         log(stats, params={log_const.KEY_NAME: "timings"})
         return answer, stats

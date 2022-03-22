@@ -175,7 +175,7 @@ class TemplateRequirement(Requirement):
             return True
         if render_result == "False":
             return False
-        raise TypeError(f'Template result should be "True" or "False", got: ',
+        raise TypeError(f'Template result should be "True" or "False", got: '
                         f'{render_result} for template {self.items["template"]}')
 
 

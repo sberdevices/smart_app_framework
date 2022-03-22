@@ -1,7 +1,9 @@
+import asyncio
 from typing import Optional, Dict, Union, List, Any
 
 import aiohttp
 import aiohttp.client_exceptions
+from aiohttp import ClientTimeout
 
 import core.logging.logger_constants as log_const
 from core.basic_models.actions.command import Command
@@ -46,6 +48,7 @@ class HTTPRequestAction(NodeAction):
     def preprocess(self, user, text_processing, params):
         behavior_description = user.descriptions["behaviors"][self.behavior]
         self.method_params.setdefault("timeout", behavior_description.timeout(user))
+        self.method_params["timeout"] = ClientTimeout(self.method_params["timeout"])
 
     @staticmethod
     def _check_headers_validity(headers: Dict[str, Any], user) -> Dict[str, str]:
@@ -67,7 +70,7 @@ class HTTPRequestAction(NodeAction):
                 response.raise_for_status()
                 self._log_response(user, response)
                 return response
-        except (aiohttp.ClientTimeout, aiohttp.ServerTimeoutError):
+        except (aiohttp.ServerTimeoutError, asyncio.TimeoutError):
             self.error = self.TIMEOUT
         except aiohttp.ClientError:
             self.error = self.CONNECTION
@@ -126,5 +129,5 @@ class HTTPRequestAction(NodeAction):
         params = params or {}
         request_parameters = self._get_request_params(user, text_preprocessing_result, params)
         self._log_request(user, request_parameters)
-        respone = await self._make_response(request_parameters, user)
-        return await self.process_result(respone, user, text_preprocessing_result, params)
+        response = await self._make_response(request_parameters, user)
+        return await self.process_result(response, user, text_preprocessing_result, params)

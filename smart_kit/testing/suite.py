@@ -7,7 +7,7 @@ from lazy import lazy
 
 from core.configs.global_constants import LINK_BEHAVIOR_FLAG
 from smart_kit.compatibility.commands import combine_commands
-from smart_kit.configs import Settings
+from smart_kit.configs.settings import Settings
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.models.smartapp_model import SmartAppModel
 from smart_kit.request.kafka_request import SmartKitKafkaRequest

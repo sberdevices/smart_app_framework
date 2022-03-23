@@ -57,14 +57,15 @@ class BaseUser(Model):
 
     @property
     def raw(self):
-        log("%(class_name)s.raw USER %(uid)s SAVE db_version = %(db_version)s.", self,
-            {"db_version": str(self.variables.get(self.USER_DB_VERSION)),
-             "uid": str(self.id)})
         return super(BaseUser, self).raw
 
     @property
     def raw_str(self):
-        return json.dumps(self.raw)
+        raw = json.dumps(self.raw)
+        log("%(class_name)s.raw USER %(uid)s SAVE db_version = %(db_version)s.", self,
+            {"db_version": str(self.variables.get(self.USER_DB_VERSION)),
+             "uid": str(self.id), "user_length":len(raw)})
+        return raw
 
     def expire(self):
         self.counters.expire()

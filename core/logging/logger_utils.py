@@ -43,9 +43,9 @@ class LoggerMessageCreator:
             message_id = message.incremental_id
             uuid = user.id
             logging_uuid = message.logging_uuid
-        params[UID_STR] = uuid
-        params[MESSAGE_ID_STR] = message_id
-        params[LOGGING_UUID] = logging_uuid
+        params.setdefault(UID_STR, uuid)
+        params.setdefault(MESSAGE_ID_STR, message_id)
+        params.setdefault(LOGGING_UUID, logging_uuid)
         params[CLASS_NAME] = cls_name
         params[LOG_STORE_FOR] = log_store_for
 
@@ -58,7 +58,8 @@ class LoggerMessageCreator:
         params = params or {}
         if user:
             cls.update_user_params(user, params)
-        masking(pickle_deepcopy(params))
+        params = pickle_deepcopy(params)
+        masking(params)
         cls.update_other_params(user, params, cls_name, log_store_for)
         return params
 
@@ -73,6 +74,8 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         previous_frame = current_frame.f_back
         module_name = previous_frame.f_globals["__name__"]
         logger = logging.getLogger(module_name)
+        if not logger.isEnabledFor(level_name):
+            return
         instance = previous_frame.f_locals.get('self', None)
 
         from smart_kit.configs import get_app_config
@@ -82,6 +85,10 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
                 raise AttributeError
         except AttributeError:
             message_maker = LoggerMessageCreator
+
+        log_store_for_map = getattr(logging,"log_store_for_map", None)
+        if log_store_for_map is not None and params is not None:
+            log_store_for = log_store_for_map.get(params.get(log_const.KEY_NAME), log_store_for)
 
         if instance is not None:
             params = message_maker.make_message(user, params, instance.__class__.__name__, log_store_for)

@@ -27,16 +27,16 @@ class IgniteAdapter(AsyncDBAdapter):
         self._cache = None
         super(IgniteAdapter, self).__init__(config)
 
-    def _open(self, filename, *args, **kwargs):
+    async def _open(self, filename, *args, **kwargs):
         pass
 
-    def _list_dir(self, path):
+    async def _list_dir(self, path):
         raise error.NotSupportedOperation
 
-    def _glob(self, path, pattern):
+    async def _glob(self, path, pattern):
         raise error.NotSupportedOperation
 
-    def _path_exists(self, path):
+    async def _path_exists(self, path):
         raise error.NotSupportedOperation
 
     async def connect(self):
@@ -83,8 +83,8 @@ class IgniteAdapter(AsyncDBAdapter):
         # TypeError is raised during reconnection if all nodes are exhausted
         return OSError, SocketError, ReconnectError, CancelledError
 
-    def _on_prepare(self):
+    async def _on_prepare(self):
         self._client = None
 
-    def _get_counter_name(self):
+    async def _get_counter_name(self):
         return "ignite_async_adapter"

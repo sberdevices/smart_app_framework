@@ -23,18 +23,18 @@ class AIORedisAdapter(AsyncDBAdapter):
 
     @monitoring.got_histogram_decorate("save_time")
     async def save(self, id, data):
-        return await self._run(self._save, id, data)
+        return await self._async_run(self._save, id, data)
 
     @monitoring.got_histogram_decorate("save_time")
     async def replace_if_equals(self, id, sample, data):
-        return await self._run(self._replace_if_equals, id, sample, data)
+        return await self._async_run(self._replace_if_equals, id, sample, data)
 
     @monitoring.got_histogram_decorate("get_time")
     async def get(self, id):
-        return await self._run(self._get, id)
+        return await self._async_run(self._get, id)
 
     async def path_exists(self, path):
-        return await self._run(self._path_exists, path)
+        return await self._async_run(self._path_exists, path)
 
     async def connect(self):
         print("Here is the content of REDIS_CONFIG:", self.config)
@@ -60,14 +60,14 @@ class AIORedisAdapter(AsyncDBAdapter):
         data = await self._redis.get(id)
         return data
 
-    def _list_dir(self, path):
+    async def _list_dir(self, path):
         raise error.NotSupportedOperation
 
-    def _glob(self, path, pattern):
+    async def _glob(self, path, pattern):
         raise error.NotSupportedOperation
 
     async def _path_exists(self, path):
         return await self._redis.exists(path)
 
-    def _on_prepare(self):
+    async def _on_prepare(self):
         pass

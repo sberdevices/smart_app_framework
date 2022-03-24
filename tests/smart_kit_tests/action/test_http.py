@@ -1,6 +1,8 @@
 import unittest
 from unittest.mock import Mock, patch, AsyncMock
 
+from aiohttp import ClientTimeout
+
 from smart_kit.action.http import HTTPRequestAction
 
 
@@ -41,7 +43,7 @@ class HttpRequestActionTest(unittest.IsolatedAsyncioTestCase):
             "behavior": "my_behavior",
         }
         await HTTPRequestAction(items).run(self.user, None, {})
-        request_mock.assert_called_with(url="https://my.url.com", method='POST', timeout=3)
+        request_mock.assert_called_with(url="https://my.url.com", method='POST', timeout=ClientTimeout(3))
         self.assertTrue(self.user.descriptions["behaviors"]["my_behavior"].success_action.run.called)
         self.assertTrue(self.user.variables.set.called)
         self.user.variables.set.assert_called_with("user_variable", {'data': 'value'})
@@ -66,7 +68,7 @@ class HttpRequestActionTest(unittest.IsolatedAsyncioTestCase):
             "value": "my_value"
         }
         await HTTPRequestAction(items).run(self.user, None, params)
-        request_mock.assert_called_with(url="https://my.url.com", method='POST', timeout=3, json={"param": "my_value"})
+        request_mock.assert_called_with(url="https://my.url.com", method='POST', timeout=ClientTimeout(3), json={"param": "my_value"})
 
     @patch('aiohttp.request')
     async def test_headers_fix(self, request_mock):
@@ -89,4 +91,4 @@ class HttpRequestActionTest(unittest.IsolatedAsyncioTestCase):
             "header_1": "32",
             "header_2": "32.03",
             "header_3": b"d32"
-        }, method=HTTPRequestAction.DEFAULT_METHOD, timeout=self.TIMEOUT)
+        }, method=HTTPRequestAction.DEFAULT_METHOD, timeout=ClientTimeout(self.TIMEOUT))

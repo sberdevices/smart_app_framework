@@ -21,13 +21,16 @@ class HandlerText(HandlerBase):
 
     def run(self, payload, user):
         super().run(payload, user)
-        text_preprocessing_result = TextPreprocessingResult(payload.get("message", {}))
 
-        params = {
-            log_const.KEY_NAME: log_const.NORMALIZED_TEXT_VALUE,
-            "normalized_text": str(text_preprocessing_result.raw),
-        }
-        log("text preprocessing result: '%(normalized_text)s'", user, params)
+        text_preprocessing_result = None
+        if payload.get("message"):
+            text_preprocessing_result = TextPreprocessingResult(payload["message"])
+
+            params = {
+                log_const.KEY_NAME: log_const.NORMALIZED_TEXT_VALUE,
+                "normalized_text": str(text_preprocessing_result.raw),
+            }
+            log("text preprocessing result: '%(normalized_text)s'", user, params)
 
         answer = self._handle_base(text_preprocessing_result, user)
         return answer

@@ -316,7 +316,7 @@ class MainLoop(BaseMainLoop):
                         "uid": user.id,
                         "db_version": str(user.variables.get(user.USER_DB_VERSION))},
                 level="WARNING")
-
+            self.postprocessor.postprocess()
             smart_kit_metrics.counter_save_collision_tries_left(self.app_name)
         consumer.commit_offset(mq_message)
 

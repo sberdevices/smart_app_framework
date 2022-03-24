@@ -15,7 +15,7 @@ class PostprocessCompose(Postprocess):
             processor.postprocess(user, message, *args, **kwargs)
 
 
-def postprocessor_compose(*agrs: List[Type[Postprocess]]):
+def postprocessor_compose(*args: List[Type[Postprocess]]):
     class Compose(PostprocessCompose):
-        postprocessors = [processor_cls() for processor_cls in agrs]
+        postprocessors = [processor_cls() for processor_cls in args]
     return Compose

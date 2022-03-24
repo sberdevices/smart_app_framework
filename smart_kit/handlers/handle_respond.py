@@ -29,7 +29,7 @@ class HandlerRespond(HandlerBase):
         action_params = self.get_action_params(payload, user)
         action_name = self.get_action_name(payload, user)
         params = {
-            log_const.KEY_NAME: "handling_respond",
+            log_const.KEY_NAME: "process_time",
             "callback_id": str(callback_id),
             "process_time": self.get_processing_time(user),
             "action_name": action_name

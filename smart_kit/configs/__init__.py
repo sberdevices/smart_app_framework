@@ -1,20 +1,6 @@
 import importlib
 import os
 
-from core.logging.logger_utils import LoggerMessageCreator
-from core.message.from_message import SmartAppFromMessage
-from scenarios.user.parametrizer import Parametrizer
-from scenarios.user.user_model import User
-from smart_kit.configs.settings import Settings
-from smart_kit.models.dialogue_manager import DialogueManager
-from smart_kit.models.smartapp_model import SmartAppModel
-from smart_kit.resources import SmartAppResources
-from smart_kit.start_points.main_loop_http import HttpMainLoop
-from smart_kit.testing.local import CLInterface
-from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
-from smart_kit.utils.cache import JSONCache
-from smart_kit.testing.suite import TestCase
-
 ENVIRONMENT_VARIABLE = "SMART_KIT_APP_CONFIG"
 
 
@@ -41,6 +27,26 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
     set_default(app_config, "SECRET_PATH", os.path.join(static_path, "./configs"))
     references_path = os.path.join(static_path, "./references")
     set_default(app_config, "REFERENCES_PATH", references_path)
+
+    # import and init monitoring first - because other classes use a singleton instance of Monitoring
+    from core.monitoring.monitoring import Monitoring
+    from core.monitoring import init_monitoring
+    set_default(app_config, 'MONITORING', Monitoring)
+    init_monitoring(app_config.MONITORING)
+
+    from core.logging.logger_utils import LoggerMessageCreator
+    from core.message.from_message import SmartAppFromMessage
+    from scenarios.user.parametrizer import Parametrizer
+    from scenarios.user.user_model import User
+    from smart_kit.configs.settings import Settings
+    from smart_kit.models.dialogue_manager import DialogueManager
+    from smart_kit.models.smartapp_model import SmartAppModel
+    from smart_kit.resources import SmartAppResources
+    from smart_kit.start_points.main_loop_http import HttpMainLoop
+    from smart_kit.testing.local import CLInterface
+    from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormalizer
+    from smart_kit.utils.cache import JSONCache
+    from smart_kit.testing.suite import TestCase
 
     set_default(app_config, "LOCAL_TESTING", CLInterface)
     set_default(app_config, "TEST_CASE", TestCase)

@@ -4,7 +4,7 @@ from core.db_adapter.db_adapter import db_adapters
 
 import scenarios.scenario_models.field.field_filler_description as ffd
 
-from smart_kit.configs import SmartAppResources
+from smart_kit.resources import SmartAppResources
 from app.adapters.db_adapters import CustomDBAdapter
 from app.basic_entities.actions import CustomAction
 from app.basic_entities.fillers import CustomFieldFiller

@@ -47,3 +47,4 @@ formatters:
       {args[logging_uuid]} {args[class_name]}: {message}"
   console_simple_formatter:
     format: "[%(levelname)s] %(name)s %(asctime)s %(module)s: %(message)s"
+log_store_for_map:

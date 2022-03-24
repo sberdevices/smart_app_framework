@@ -49,8 +49,8 @@ class User(BaseUser):
         db_version = self.variables.get(self.USER_DB_VERSION, default=0)
         self.variables.set(self.USER_DB_VERSION, db_version + 1)
         log("%(class_name)s.__init__ USER %(uid)s LOAD db_version = %(db_version)s.", self,
-            {"db_version": str(db_version),
-             "uid": str(self.id)})
+            params={"db_version": str(db_version),
+             "uid": str(self.id), log_const.KEY_NAME:"user_load"})
         self.behaviors.initialize()
 
     @property

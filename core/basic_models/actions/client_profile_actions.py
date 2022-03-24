@@ -47,8 +47,9 @@ class GiveMeMemoryAction(StringAction):
         super().__init__(items, id)
         self.command = GIVE_ME_MEMORY
         self.request_type = KAFKA
+        self.kafka_key = items.get("kafka_key")
         self.behavior = items.get("behavior")
-        self._nodes["root_nodes"] = {"protocolVersion": 1}
+        self._nodes["root_nodes"] = {"protocolVersion": items.get("protocolVersion") or 1}
         self._nodes["memory"] = [
             {"memoryPartition": key, "tags": val} for key, val in self._nodes["memory"].items()
         ]
@@ -57,9 +58,10 @@ class GiveMeMemoryAction(StringAction):
                   params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self._nodes["consumer"] = {"projectId": user.settings["template_settings"]["project_id"]}
 
+        settings_kafka_key = user.settings["template_settings"].get("client_profile_kafka_key")
         self.request_data = {
             "topic_key": "client_info",
-            "kafka_key": self.DEFAULT_KAFKA_KEY,
+            "kafka_key": self.kafka_key or settings_kafka_key or self.DEFAULT_KAFKA_KEY,
             "kafka_replyTopic": user.settings["template_settings"]["consumer_topic"]
         }
 
@@ -136,18 +138,20 @@ class RememberThisAction(StringAction):
     DEFAULT_KAFKA_KEY = "main"
 
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None):
-        items["command"] = REMEMBER_THIS
         super().__init__(items, id)
+        self.command = REMEMBER_THIS
         self.request_type = KAFKA
-        self._nodes["root_nodes"] = {"protocolVersion": 3}
+        self.kafka_key = items.get("kafka_key")
+        self._nodes["root_nodes"] = {"protocolVersion": items.get("protocolVersion") or 3}
 
     async def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
                   params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self._nodes["consumer"] = {"projectId": user.settings["template_settings"]["project_id"]}
 
+        settings_kafka_key = user.settings["template_settings"].get("client_profile_kafka_key")
         self.request_data = {
             "topic_key": "client_info_remember",
-            "kafka_key": self.DEFAULT_KAFKA_KEY,
+            "kafka_key": self.kafka_key or settings_kafka_key or self.DEFAULT_KAFKA_KEY,
             "kafka_replyTopic": user.settings["template_settings"]["consumer_topic"]
         }
 

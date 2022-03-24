@@ -372,6 +372,7 @@ class MainLoop(BaseMainLoop):
                             "topic": mq_message.topic(),
                             "message_partition": mq_message.partition(),
                             "message_key": mq_message.key(),
+                            "message_id": message.incremental_id,
                             "kafka_key": kafka_key,
                             "incoming_data": str(message.masked_value),
                             "length": len(message.value),
@@ -382,6 +383,11 @@ class MainLoop(BaseMainLoop):
                     user=user
                     )
 
+                db_uid = message.db_uid
+                with StatsTimer() as load_timer:
+                    user = self.load_user(db_uid, message)
+                smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
+                stats += "Loading time: {} msecs\n".format(load_timer.msecs)
                 with StatsTimer() as script_timer:
                     commands = await self.model.answer(message, user)
 

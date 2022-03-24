@@ -62,10 +62,13 @@ class BaseHttpMainLoop(BaseMainLoop):
     def process_message(self, message: SmartAppFromMessage, *args, **kwargs):
         stats = ""
         log("INCOMING DATA: %(masked_message)s",
-            params={log_const.KEY_NAME: "incoming_policy_message",
-                    "masked_message": message.masked_value})
-        db_uid = message.db_uid
+            params={
+                log_const.KEY_NAME: "incoming_policy_message",
+                "masked_message": message.masked_value,
+                "message_id": message.incremental_id,
+            })
 
+        db_uid = message.db_uid
         with StatsTimer() as load_timer:
             user = self.loop.run_until_complete(self.load_user(db_uid, message))
         stats += "Loading time: {} msecs\n".format(load_timer.msecs)
@@ -80,7 +83,7 @@ class BaseHttpMainLoop(BaseMainLoop):
         with StatsTimer() as save_timer:
             self.loop.run_until_complete(self.save_user(db_uid, user, message))
         stats += "Saving time: {} msecs\n".format(save_timer.msecs)
-        log(stats, params={log_const.KEY_NAME: "timings"})
+        log(stats, user=user, params={log_const.KEY_NAME: "timings"})
         return answer, stats
 
     def _get_headers(self, environ):

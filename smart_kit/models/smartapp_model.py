@@ -9,6 +9,7 @@ from core.utils.exception_handlers import exc_handler
 
 import scenarios.logging.logger_constants as log_const
 from smart_kit.handlers.handle_close_app import HandlerCloseApp
+from smart_kit.handlers.handler_run_app import HandlerRunApp
 from smart_kit.names.message_names import MESSAGE_TO_SKILL, LOCAL_TIMEOUT, RUN_APP, SERVER_ACTION, CLOSE_APP
 from smart_kit.handlers.handle_respond import HandlerRespond
 from smart_kit.handlers.handler_text import HandlerText
@@ -32,11 +33,9 @@ class SmartAppModel:
         self.dialogue_manager = dialogue_manager_cls(scenario_descriptions=self.scenario_descriptions,
                                                      app_name=self.app_name)
 
-        handler_text = HandlerText(self.app_name, dialogue_manager=self.dialogue_manager)
-
         self._handlers = {
-            MESSAGE_TO_SKILL: handler_text,
-            RUN_APP: handler_text,
+            MESSAGE_TO_SKILL: HandlerText(self.app_name, dialogue_manager=self.dialogue_manager),
+            RUN_APP: HandlerRunApp(self.app_name, dialogue_manager=self.dialogue_manager),
             LOCAL_TIMEOUT: HandlerTimeout(self.app_name),
             SERVER_ACTION: HandlerServerAction(self.app_name),
             CLOSE_APP: HandlerCloseApp(self.app_name)

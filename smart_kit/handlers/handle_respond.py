@@ -44,10 +44,9 @@ class HandlerRespond(HandlerBase):
 
         smart_kit_metrics.counter_incoming(self.app_name, user.message.message_name, self.__class__.__name__, user)
 
-        text_preprocessing_result = None
-        if payload.get("message"):
-            text_preprocessing_result = TextPreprocessingResult(payload["message"])
+        text_preprocessing_result = TextPreprocessingResult(payload.get("message", {}))
 
+        if payload.get("message"):
             params = {
                 log_const.KEY_NAME: log_const.NORMALIZED_TEXT_VALUE,
                 "normalized_text": str(text_preprocessing_result.raw),

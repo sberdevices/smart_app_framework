@@ -29,5 +29,5 @@ class HandlerRunApp(HandlerBase):
         return answer
 
     def _handle_base(self, user):
-        answer, is_answer_found = self.dialogue_manager.run(None, user)
+        answer, is_answer_found = self.dialogue_manager.run(TextPreprocessingResult({}), user)
         return answer or []

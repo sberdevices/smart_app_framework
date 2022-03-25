@@ -57,7 +57,7 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
     set_default(app_config, "USER", User)
     set_default(app_config, "LOGGER_MESSAGE_CREATOR", LoggerMessageCreator)
     set_default(app_config, "MAIN_LOOP", HttpMainLoop)
-    set_default(app_config, "POSTPROCESSOR", Postprocess)
+    set_default(app_config, "POSTPROCESSOR_MAIN_LOOP", Postprocess)
     set_default(app_config, "PARAMETRIZER", Parametrizer)
     set_default(app_config, "MODEL", SmartAppModel)
     set_default(app_config, "DIALOGUE_MANAGER", DialogueManager)

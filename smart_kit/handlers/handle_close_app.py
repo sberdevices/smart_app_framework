@@ -20,6 +20,4 @@ class HandlerCloseApp(HandlerBase):
         self._clear_current_scenario.run(user, text_preprocessing_result)
         if payload.get("message"):
             params["tpr_str"] = str(text_preprocessing_result.raw)
-            log("HandlerCloseApp with text preprocessing result", user, params)
-        else:
-            log("HandlerCloseApp without text preprocessing result", user, params)
+        log("HandlerCloseApp with text preprocessing result", user, params)

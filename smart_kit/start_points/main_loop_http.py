@@ -83,6 +83,7 @@ class BaseHttpMainLoop(BaseMainLoop):
             self.save_user(db_uid, user, message)
         stats += "Saving time: {} msecs\n".format(save_timer.msecs)
         log(stats, user=user, params={log_const.KEY_NAME: "timings"})
+        self.postprocessor.postprocess(user, message)
         return answer, stats
 
     def _get_headers(self, environ):

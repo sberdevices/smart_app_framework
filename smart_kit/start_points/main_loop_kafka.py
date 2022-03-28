@@ -215,6 +215,7 @@ class MainLoop(BaseMainLoop):
         user_save_no_collisions = False
         user = None
         db_uid = None
+        message = None
         while save_tries < self.user_save_collisions_tries and not user_save_no_collisions:
             save_tries += 1
             message_value = mq_message.value()
@@ -316,7 +317,7 @@ class MainLoop(BaseMainLoop):
                         "uid": user.id,
                         "db_version": str(user.variables.get(user.USER_DB_VERSION))},
                 level="WARNING")
-
+            self.postprocessor.postprocess(user, message)
             smart_kit_metrics.counter_save_collision_tries_left(self.app_name)
         consumer.commit_offset(mq_message)
 

@@ -1,13 +1,6 @@
 from smart_kit.action.http import HTTPRequestAction
 
 
-POST = "POST"
-GET = "GET"
-PUT = "PUT"
-DELETE = "DELETE"
-PATCH = "PATCH"
-
-
 class SmartPayAction(HTTPRequestAction):
     url = None
     method = None
@@ -25,7 +18,7 @@ class SmartPayAction(HTTPRequestAction):
 class SmartPayCreateAction(SmartPayAction):
     def __init__(self, items, id=None):
         self.url = "/invoices"
-        self.method = POST
+        self.method = self.POST
         self.store = "SmartPay_create_answer"
         super().__init__(items, id)
 
@@ -33,7 +26,7 @@ class SmartPayCreateAction(SmartPayAction):
 class SmartPayPerformAction(SmartPayAction):
     def __init__(self, items, id=None):
         self.url = f"/invoices/{items['invoice_id']}"
-        self.method = POST
+        self.method = self.POST
         self.store = "SmartPay_perform_answer"
         super().__init__(items, id)
 
@@ -41,7 +34,7 @@ class SmartPayPerformAction(SmartPayAction):
 class SmartPayGetStatusAction(SmartPayAction):
     def __init__(self, items, id=None):
         self.url = f"/invoices/{items['invoice_id']}"
-        self.method = GET
+        self.method = self.GET
         self.store = "SmartPay_get_status_answer"
         super().__init__(items, id)
 
@@ -49,7 +42,7 @@ class SmartPayGetStatusAction(SmartPayAction):
 class SmartPayConfirmAction(SmartPayAction):
     def __init__(self, items, id=None):
         self.url = f"/invoices/{items['invoice_id']}"
-        self.method = PUT
+        self.method = self.PUT
         self.store = "SmartPay_confirm_answer"
         super().__init__(items, id)
 
@@ -57,7 +50,7 @@ class SmartPayConfirmAction(SmartPayAction):
 class SmartPayDeleteAction(SmartPayAction):
     def __init__(self, items, id=None):
         self.url = f"/invoices/{items['invoice_id']}"
-        self.method = DELETE
+        self.method = self.DELETE
         self.store = "SmartPay_delete_answer"
         super().__init__(items, id)
 
@@ -65,6 +58,6 @@ class SmartPayDeleteAction(SmartPayAction):
 class SmartPayRefundAction(SmartPayAction):
     def __init__(self, items, id=None):
         self.url = f"/invoices/{items['invoice_id']}"
-        self.method = PATCH
+        self.method = self.PATCH
         self.store = "SmartPay_refund_answer"
         super().__init__(items, id)

@@ -19,6 +19,7 @@ class CallRatingActionTest(unittest.TestCase):
         result = action.run(user, None)
         self.assertEqual(expected[0].name, result[0].name)
         self.assertEqual(expected[0].payload, result[0].payload)
+        self.assertEqual(expected[0].request_data, result[0].request_data)
 
 
 class AskRatingActionTest(unittest.TestCase):
@@ -34,3 +35,4 @@ class AskRatingActionTest(unittest.TestCase):
         result = action.run(user, None)
         self.assertEqual(expected[0].name, result[0].name)
         self.assertEqual(expected[0].payload, result[0].payload)
+        self.assertEqual(expected[0].request_data, result[0].request_data)

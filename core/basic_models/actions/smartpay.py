@@ -1,3 +1,8 @@
+from typing import Optional, Dict, Union, List
+
+from core.basic_models.actions.command import Command
+from core.model.base_user import BaseUser
+from core.text_preprocessing.base import BaseTextPreprocessingResult
 from smart_kit.action.http import HTTPRequestAction
 
 
@@ -13,6 +18,12 @@ class SmartPayAction(HTTPRequestAction):
             "behavior": items.get("behavior")
         }
         super().__init__(items, id)
+
+    def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
+        self.http_action.method_params["url"] = \
+            user.settings["template_settings"]["smart_pay_url"] + self.http_action.method_params["url"]
+        return super().run(user, text_preprocessing_result, params)
 
 
 class SmartPayCreateAction(SmartPayAction):

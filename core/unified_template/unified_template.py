@@ -5,7 +5,7 @@ from distutils.util import strtobool
 
 import core.logging.logger_constants as log_const
 from core.logging.logger_utils import log
-from core.monitoring.monitoring import monitoring
+from core.monitoring import monitoring
 
 UNIFIED_TEMPLATE_TYPE_NAME = "unified_template"
 
@@ -49,7 +49,7 @@ class UnifiedTemplate:
                         "params_dict_str": str(params_dict)},
                 level="ERROR",
                 exc_info=True)
-            monitoring.got_counter("core_jinja_template_error")
+            monitoring.monitoring.got_counter("core_jinja_template_error")
             raise
         return result
 

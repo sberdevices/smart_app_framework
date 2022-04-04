@@ -2,7 +2,7 @@ import asyncio
 
 import core.logging.logger_constants as log_const
 from core.logging.logger_utils import log
-from core.monitoring.monitoring import monitoring
+from core.monitoring import monitoring
 
 
 class Rerunable():
@@ -44,7 +44,7 @@ class Rerunable():
             result = self._run(action, *args, _try_count=_try_count, **kwargs)
             counter_name = self._get_counter_name()
             if counter_name:
-                monitoring.got_counter(f"{counter_name}_exception")
+                monitoring.monitoring.got_counter(f"{counter_name}_exception")
         return result
 
     def _get_counter_name(self):

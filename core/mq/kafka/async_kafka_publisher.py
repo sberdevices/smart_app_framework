@@ -3,7 +3,7 @@ from threading import Thread
 
 import core.logging.logger_constants as log_const
 from core.logging.logger_utils import log
-from core.monitoring.monitoring import monitoring
+from core.monitoring import monitoring
 from core.mq.kafka.kafka_publisher import KafkaPublisher
 
 
@@ -30,7 +30,7 @@ class AsyncKafkaPublisher(KafkaPublisher):
             }
             log("KafkaProducer: Local producer queue is full (%(queue_amount)s messages awaiting delivery):"
                 " try again\n", params=params, level="ERROR")
-            monitoring.got_counter("kafka_producer_exception")
+            monitoring.monitoring.got_counter("kafka_producer_exception")
 
     def send_to_topic(self, value, key=None, topic=None, headers=None):
         try:
@@ -52,7 +52,7 @@ class AsyncKafkaPublisher(KafkaPublisher):
             }
             log("KafkaProducer: Local producer queue is full (%(queue_amount)s messages awaiting delivery):"
                 " try again\n", params=params, level="ERROR")
-            monitoring.got_counter("kafka_producer_exception")
+            monitoring.monitoring.got_counter("kafka_producer_exception")
 
     def _poll_for_callbacks(self):
         poll_timeout = self._config.get("poll_timeout", 1)

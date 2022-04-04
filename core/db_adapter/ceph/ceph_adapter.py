@@ -9,7 +9,7 @@ import core.logging.logger_constants as log_const
 from core.db_adapter.ceph.ceph_io import CephIO
 from core.db_adapter.db_adapter import DBAdapter
 from core.logging.logger_utils import log
-from core.monitoring.monitoring import monitoring
+from core.monitoring import monitoring
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -35,7 +35,7 @@ class CephAdapter(DBAdapter):
                 params={log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
                 level="ERROR",
                 exc_info=True)
-            monitoring.got_counter("ceph_connection_exception")
+            monitoring.monitoring.got_counter("ceph_connection_exception")
             raise
 
     @property

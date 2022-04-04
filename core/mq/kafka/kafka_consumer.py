@@ -10,7 +10,7 @@ from confluent_kafka.cimpl import KafkaError, KafkaException, OFFSET_END, Messag
 
 import core.logging.logger_constants as log_const
 from core.logging.logger_utils import log
-from core.monitoring.monitoring import monitoring
+from core.monitoring import monitoring
 from core.mq.kafka.base_kafka_consumer import BaseKafkaConsumer
 
 
@@ -102,7 +102,7 @@ class KafkaConsumer(BaseKafkaConsumer):
             log_const.KEY_NAME: log_const.EXCEPTION_VALUE
         }
         log("KafkaConsumer: Error: %(error)s", params=params, level="WARNING")
-        monitoring.got_counter("kafka_consumer_exception")
+        monitoring.monitoring.got_counter("kafka_consumer_exception")
 
     # noinspection PyMethodMayBeStatic
     def _process_message(self, msg: KafkaMessage):
@@ -111,7 +111,7 @@ class KafkaConsumer(BaseKafkaConsumer):
             if err.code() == KafkaError._PARTITION_EOF:
                 return None
             else:
-                monitoring.got_counter("kafka_consumer_exception")
+                monitoring.monitoring.got_counter("kafka_consumer_exception")
                 params = {
                     "code": err.code(),
                     "pid": os.getpid(),

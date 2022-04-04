@@ -104,7 +104,7 @@ def log(message, user=None, params=None, level="INFO", exc_info=None, log_store_
         raise
     except:
         default_logger.log(logging.getLevelName("ERROR"), "Failed to write a log. Exception occurred",
-                           params, exc_info=True)
+                           params, exc_info=True, stack_info=True)
 
 
 def log_classifier_result(classification_res: List[Dict[str, Union[str, float, bool]]], user,

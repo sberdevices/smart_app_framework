@@ -64,8 +64,8 @@ class BaseHttpRequestAction(NodeAction):
         except (requests.exceptions.ConnectionError, requests.exceptions.HTTPError):
             self.error = self.CONNECTION
 
-    def _get_requst_params(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None):
+    def _get_request_params(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
+                            params: Optional[Dict[str, Union[str, float, int]]] = None):
         collected = user.parametrizer.collect(text_preprocessing_result)
         params.update(collected)
 
@@ -97,6 +97,6 @@ class BaseHttpRequestAction(NodeAction):
     def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         params = params or {}
-        request_parameters = self._get_requst_params(user, text_preprocessing_result, params)
+        request_parameters = self._get_request_params(user, text_preprocessing_result, params)
         self._log_request(user, request_parameters)
         return self._make_response(request_parameters, user)

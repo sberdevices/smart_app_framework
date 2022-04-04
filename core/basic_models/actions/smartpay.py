@@ -12,11 +12,19 @@ class SmartPayAction(HTTPRequestAction):
     store = None
 
     def __init__(self, items, id=None):
+        request_params = items.get("request_params")
+        smartpay_params = items.get("smartpay_params")
+
         items = {
-            "params": {"json": items, "method": self.method, "url": self.url},
+            "params": {"method": self.method, "url": self.url},
             "store": self.store,
-            "behavior": items.get("behavior")
+            "behavior": items["behavior"]
         }
+        if request_params:
+            items["params"]["params"] = request_params
+        if smartpay_params:
+            items["params"]["json"] = smartpay_params
+
         super().__init__(items, id)
 
     def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
@@ -30,7 +38,7 @@ class SmartPayCreateAction(SmartPayAction):
     def __init__(self, items, id=None):
         self.url = "/invoices"
         self.method = self.POST
-        self.store = "SmartPay_create_answer"
+        self.store = "smartpay_create_answer"
         super().__init__(items, id)
 
 
@@ -38,15 +46,25 @@ class SmartPayPerformAction(SmartPayAction):
     def __init__(self, items, id=None):
         self.url = f"/invoices/{items['invoice_id']}"
         self.method = self.POST
-        self.store = "SmartPay_perform_answer"
+        self.store = "smartpay_perform_answer"
         super().__init__(items, id)
 
 
 class SmartPayGetStatusAction(SmartPayAction):
     def __init__(self, items, id=None):
+        items["request_params"] = {}
+        inv_status = items.get("inv_status")
+        wait = items.get("wait")
+        if inv_status:
+            del items["inv_status"]
+            items["request_params"]["inv_status"] = inv_status
+        if wait:
+            del items["wait"]
+            items["request_params"]["wait"] = wait
+
         self.url = f"/invoices/{items['invoice_id']}"
         self.method = self.GET
-        self.store = "SmartPay_get_status_answer"
+        self.store = "smartpay_get_status_answer"
         super().__init__(items, id)
 
 
@@ -54,7 +72,7 @@ class SmartPayConfirmAction(SmartPayAction):
     def __init__(self, items, id=None):
         self.url = f"/invoices/{items['invoice_id']}"
         self.method = self.PUT
-        self.store = "SmartPay_confirm_answer"
+        self.store = "smartpay_confirm_answer"
         super().__init__(items, id)
 
 
@@ -62,7 +80,7 @@ class SmartPayDeleteAction(SmartPayAction):
     def __init__(self, items, id=None):
         self.url = f"/invoices/{items['invoice_id']}"
         self.method = self.DELETE
-        self.store = "SmartPay_delete_answer"
+        self.store = "smartpay_delete_answer"
         super().__init__(items, id)
 
 
@@ -70,5 +88,5 @@ class SmartPayRefundAction(SmartPayAction):
     def __init__(self, items, id=None):
         self.url = f"/invoices/{items['invoice_id']}"
         self.method = self.PATCH
-        self.store = "SmartPay_refund_answer"
+        self.store = "smartpay_refund_answer"
         super().__init__(items, id)

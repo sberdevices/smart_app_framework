@@ -155,7 +155,7 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
             await self.save_user(db_uid, user, message)
         stats += "Saving time: {} msecs\n".format(save_timer.msecs)
         log(stats, params={log_const.KEY_NAME: "timings"})
-        self.postprocessor.postprocess(user, message)
+        await self.postprocessor.postprocess(user, message)
         return answer, stats, user
 
     async def get_health_check(self, request: aiohttp.web.Request):

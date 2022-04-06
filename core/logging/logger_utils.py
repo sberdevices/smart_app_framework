@@ -12,7 +12,7 @@ import scenarios.logging.logger_constants as scenarios_log_const
 from core.basic_models.classifiers.basic_classifiers import Classifier
 from core.utils.masking_message import masking
 from core.utils.stats_timer import StatsTimer
-from smart_kit.utils.pickle_copy import pickle_deepcopy
+from core.utils.pickle_copy import pickle_deepcopy
 
 MESSAGE_ID_STR = "message_id"
 UID_STR = "uid"

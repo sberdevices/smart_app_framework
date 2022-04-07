@@ -4,7 +4,7 @@ from typing import Dict, Any
 from scenarios.scenario_descriptions.form_filling_scenario import FormFillingScenario
 from scenarios.scenario_descriptions.tree_scenario.tree_scenario_node import TreeScenarioNode
 from core.model.factory import dict_factory
-from core.monitoring.monitoring import monitoring
+from core.monitoring import monitoring
 from core.logging.logger_utils import log
 import scenarios.logging.logger_constants as log_const
 from scenarios.scenario_models.history import Event, HistoryConstants
@@ -83,7 +83,7 @@ class TreeScenario(FormFillingScenario):
                 all_forms_fields.update(form_field_data)
         return all_forms_fields
 
-    @monitoring.got_histogram_decorate("scenario_time")
+    @monitoring.monitoring.got_histogram_decorate("scenario_time")
     async def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
         main_form = self._get_form(user)
         user.last_scenarios.add(self.id, text_preprocessing_result)

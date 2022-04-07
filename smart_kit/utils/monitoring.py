@@ -1,6 +1,6 @@
 from core.logging.logger_constants import KEY_NAME
 from core.logging.logger_utils import log
-from core.monitoring.monitoring import monitoring
+from core.monitoring import monitoring
 
 
 def _filter_monitoring_msg(msg):
@@ -39,7 +39,7 @@ class Metrics:
                                             "Incoming message validation error.")
 
     def _get_or_create_counter(self, monitoring_msg, descr, labels=()):
-        counter = monitoring.get_counter(monitoring_msg, descr, labels)
+        counter = monitoring.monitoring.get_counter(monitoring_msg, descr, labels)
         if counter is None:
             raise MetricDisabled('counter disabled')
         return counter
@@ -182,22 +182,22 @@ class Metrics:
     @silence_it
     def sampling_load_time(self, app_name, value):
         monitoring_msg = "{}_load_time".format(app_name)
-        monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
+        monitoring.monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
 
     @silence_it
     def sampling_script_time(self, app_name, value):
         monitoring_msg = "{}_script_time".format(app_name)
-        monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
+        monitoring.monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
 
     @silence_it
     def sampling_save_time(self, app_name, value):
         monitoring_msg = "{}_save_time".format(app_name)
-        monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
+        monitoring.monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
 
     @silence_it
     def sampling_mq_waiting_time(self, app_name, value):
         monitoring_msg = "{}_mq_waiting_time".format(app_name)
-        monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
+        monitoring.monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
 
 
 smart_kit_metrics = Metrics()

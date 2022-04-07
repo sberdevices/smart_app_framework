@@ -8,7 +8,7 @@ import scenarios.logging.logger_constants as log_const
 from core.db_adapter.db_adapter import DBAdapterException
 from core.db_adapter.db_adapter import db_adapter_factory
 from core.logging.logger_utils import log
-from core.monitoring.monitoring import monitoring
+from core.monitoring import monitoring
 from core.monitoring.healthcheck_handler import RootResource
 from core.monitoring.twisted_server import TwistedServer
 from core.model.base_user import BaseUser
@@ -95,8 +95,7 @@ class BaseMainLoop:
 
     def _init_monitoring_config(self, template_settings):
         monitoring_config = template_settings["monitoring"]
-        monitoring.apply_config(monitoring_config)
-        smart_kit_metrics.apply_config(monitoring_config)
+        monitoring.monitoring.apply_config(monitoring_config)
         smart_kit_metrics.init_metrics(app_name=self.app_name)
 
     async def load_user(self, db_uid, message):

@@ -7,7 +7,7 @@ from confluent_kafka import Producer
 
 import core.logging.logger_constants as log_const
 from core.logging.logger_utils import log
-from core.monitoring.monitoring import monitoring
+from core.monitoring import monitoring
 from core.mq.kafka.base_kafka_publisher import BaseKafkaPublisher
 
 
@@ -41,7 +41,7 @@ class KafkaPublisher(BaseKafkaPublisher):
             }
             log("KafkaProducer: Local producer queue is full (%(queue_amount)s messages awaiting delivery):"
                        " try again\n", params=params, level="ERROR")
-            monitoring.got_counter("kafka_producer_exception")
+            monitoring.monitoring.got_counter("kafka_producer_exception")
         self._poll()
 
     def send_to_topic(self, value, key=None, topic=None, headers=None):
@@ -64,7 +64,7 @@ class KafkaPublisher(BaseKafkaPublisher):
             }
             log("KafkaProducer: Local producer queue is full (%(queue_amount)s messages awaiting delivery):"
                        " try again\n", params=params, level="ERROR")
-            monitoring.got_counter("kafka_producer_exception")
+            monitoring.monitoring.got_counter("kafka_producer_exception")
         self._poll()
 
     def _poll(self):
@@ -81,7 +81,7 @@ class KafkaPublisher(BaseKafkaPublisher):
             log_const.KEY_NAME: log_const.EXCEPTION_VALUE
         }
         log("KafkaProducer: Error: %(error)s", params=params, level="ERROR")
-        monitoring.got_counter("kafka_producer_exception")
+        monitoring.monitoring.got_counter("kafka_producer_exception")
 
     def _delivery_callback(self, err, msg):
         if err:
@@ -101,7 +101,7 @@ class KafkaPublisher(BaseKafkaPublisher):
                                       log_const.KEY_NAME: log_const.EXCEPTION_VALUE},
                               level="ERROR",
                               exc_info=True)
-            monitoring.got_counter("kafka_producer_exception")
+            monitoring.monitoring.got_counter("kafka_producer_exception")
 
     def close(self):
         self._producer.flush(self._config["flush_timeout"])

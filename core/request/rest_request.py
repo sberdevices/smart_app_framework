@@ -2,7 +2,7 @@ import requests
 from timeout_decorator import timeout_decorator
 from core.request.base_request import BaseRequest
 from core.utils.exception_handlers import exc_handler
-from core.monitoring.monitoring import monitoring
+from core.monitoring import monitoring
 
 
 class RestNoMethodSpecifiedException(Exception):
@@ -37,7 +37,7 @@ class RestRequest(BaseRequest):
             return method(data)
 
     def on_timeout_error(self, *args, **kwarg):
-        monitoring.got_counter("core_rest_run_timeout")
+        monitoring.monitoring.got_counter("core_rest_run_timeout")
 
     def _requests_get(self, params):
         return requests.get(self.url, params=params, **self.rest_args).text

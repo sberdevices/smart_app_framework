@@ -11,7 +11,7 @@ import core.logging.logger_constants as log_const
 from core.db_adapter import error
 from core.db_adapter.db_adapter import AsyncDBAdapter
 from core.logging.logger_utils import log
-from core.monitoring.monitoring import monitoring
+from core.monitoring import monitoring
 
 
 class IgniteAdapter(AsyncDBAdapter):
@@ -55,7 +55,7 @@ class IgniteAdapter(AsyncDBAdapter):
                 params={log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE},
                 level="ERROR",
                 exc_info=True)
-            monitoring.got_counter("ignite_connection_exception")
+            monitoring.monitoring.got_counter("ignite_connection_exception")
             raise
 
     async def _save(self, id, data):
@@ -75,7 +75,7 @@ class IgniteAdapter(AsyncDBAdapter):
         if self._client is None:
             log('Attempt to recreate ignite instance', level="WARNING")
             await self.connect()
-            monitoring.got_counter("ignite_reconnection")
+            monitoring.monitoring.got_counter("ignite_reconnection")
         return self._cache
 
     @property

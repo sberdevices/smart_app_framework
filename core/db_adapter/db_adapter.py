@@ -5,7 +5,7 @@ import core.logging.logger_constants as log_const
 from core.logging.logger_utils import log
 from core.model.factory import build_factory
 from core.model.registered import Registered
-from core.monitoring.monitoring import monitoring
+from core.monitoring import monitoring
 from core.utils.rerunable import Rerunable
 
 db_adapters = Registered()
@@ -65,15 +65,15 @@ class DBAdapter(Rerunable):
     def mtime(self, path):
         return self._run(self._mtime, path)
 
-    @monitoring.got_histogram_decorate("save_time")
+    @monitoring.monitoring.got_histogram_decorate("save_time")
     def save(self, id, data):
         return self._run(self._save, id, data)
 
-    @monitoring.got_histogram_decorate("save_time")
+    @monitoring.monitoring.got_histogram_decorate("save_time")
     def replace_if_equals(self, id, sample, data):
         return self._run(self._replace_if_equals, id, sample, data)
 
-    @monitoring.got_histogram_decorate("get_time")
+    @monitoring.monitoring.got_histogram_decorate("get_time")
     def get(self, id):
         return self._run(self._get, id)
 
@@ -109,15 +109,15 @@ class AsyncDBAdapter(DBAdapter):
     async def path_exists(self, path):
         return await self._async_run(self._path_exists, path)
 
-    @monitoring.got_histogram("save_time")
+    @monitoring.monitoring.got_histogram("save_time")
     async def save(self, id, data):
         return await self._async_run(self._save, id, data)
 
-    @monitoring.got_histogram("save_time")
+    @monitoring.monitoring.got_histogram("save_time")
     async def replace_if_equals(self, id, sample, data):
         return await self._async_run(self._replace_if_equals, id, sample, data)
 
-    @monitoring.got_histogram("get_time")
+    @monitoring.monitoring.got_histogram("get_time")
     async def get(self, id):
         return await self._async_run(self._get, id)
 
@@ -144,5 +144,5 @@ class AsyncDBAdapter(DBAdapter):
             result = await self._async_run(action, *args, _try_count=_try_count, **kwargs)
             counter_name = self._get_counter_name()
             if counter_name:
-                monitoring.got_counter(f"{counter_name}_exception")
+                monitoring.monitoring.got_counter(f"{counter_name}_exception")
         return result

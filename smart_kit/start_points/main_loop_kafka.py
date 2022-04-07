@@ -24,7 +24,7 @@ from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.names import message_names
 from smart_kit.request.kafka_request import SmartKitKafkaRequest
 from smart_kit.start_points.base_main_loop import BaseMainLoop
-from smart_kit.utils.monitoring import smart_kit_metrics
+from core.monitoring.monitoring import monitoring
 
 
 def _enrich_config_from_secret(kafka_config, secret_config):
@@ -128,7 +128,7 @@ class MainLoop(BaseMainLoop):
             else:
                 answers.append(SmartAppToMessage(self.BAD_ANSWER_COMMAND, message=message, request=request))
 
-            smart_kit_metrics.counter_outgoing(self.app_name, command.name, answer, user)
+            monitoring.counter_outgoing(self.app_name, command.name, answer, user)
 
         return answers
 
@@ -194,7 +194,7 @@ class MainLoop(BaseMainLoop):
                                 "db_version": str(user.variables.get(user.USER_DB_VERSION))},
                         level="WARNING")
 
-                    smart_kit_metrics.counter_save_collision_tries_left(self.app_name)
+                    monitoring.counter_save_collision_tries_left(self.app_name)
                 self.save_behavior_timeouts(user, mq_message, kafka_key)
                 for answer in answers:
                     self._send_request(user, answer, mq_message)
@@ -232,7 +232,7 @@ class MainLoop(BaseMainLoop):
                     stats += "Waiting message: {} msecs\n".format(waiting_message_time)
 
                 stats += "Mid: {}\n".format(message.incremental_id)
-                smart_kit_metrics.sampling_mq_waiting_time(self.app_name, waiting_message_time / 1000)
+                monitoring.sampling_mq_waiting_time(self.app_name, waiting_message_time / 1000)
 
                 self.check_message_key(message, mq_message.key(), user)
                 log(
@@ -255,7 +255,7 @@ class MainLoop(BaseMainLoop):
                 db_uid = message.db_uid
                 with StatsTimer() as load_timer:
                     user = self.load_user(db_uid, message)
-                smart_kit_metrics.sampling_load_time(self.app_name, load_timer.secs)
+                monitoring.sampling_load_time(self.app_name, load_timer.secs)
                 stats += "Loading time: {} msecs\n".format(load_timer.msecs)
                 with StatsTimer() as script_timer:
                     commands = self.model.answer(message, user)
@@ -263,13 +263,13 @@ class MainLoop(BaseMainLoop):
                 answers = self._generate_answers(user=user, commands=commands, message=message,
                                                  topic_key=topic_key,
                                                  kafka_key=kafka_key)
-                smart_kit_metrics.sampling_script_time(self.app_name, script_timer.secs)
+                monitoring.sampling_script_time(self.app_name, script_timer.secs)
                 stats += "Script time: {} msecs\n".format(script_timer.msecs)
 
                 with StatsTimer() as save_timer:
                     user_save_no_collisions = self.save_user(db_uid, user, message)
 
-                smart_kit_metrics.sampling_save_time(self.app_name, save_timer.secs)
+                monitoring.sampling_save_time(self.app_name, save_timer.secs)
                 stats += "Saving time: {} msecs\n".format(save_timer.msecs)
                 if not user_save_no_collisions:
                     log(
@@ -304,7 +304,7 @@ class MainLoop(BaseMainLoop):
                 log(f"Message validation failed, skip message handling.",
                     params={log_const.KEY_NAME: "invalid_message",
                             "data": data}, level="ERROR")
-                smart_kit_metrics.counter_invalid_message(self.app_name)
+                monitoring.counter_invalid_message(self.app_name)
         if user and not user_save_no_collisions:
             log(
                 "MainLoop.iterate: db_save collision all tries left on uid %(uid)s db_version %(db_version)s.",
@@ -318,7 +318,7 @@ class MainLoop(BaseMainLoop):
                         "db_version": str(user.variables.get(user.USER_DB_VERSION))},
                 level="WARNING")
             self.postprocessor.postprocess(user, message)
-            smart_kit_metrics.counter_save_collision_tries_left(self.app_name)
+            monitoring.counter_save_collision_tries_left(self.app_name)
         consumer.commit_offset(mq_message)
 
     def iterate(self, kafka_key):

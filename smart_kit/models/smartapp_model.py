@@ -16,7 +16,7 @@ from smart_kit.handlers.handler_timeout import HandlerTimeout
 from smart_kit.handlers.handle_server_action import HandlerServerAction
 from smart_kit.resources import SmartAppResources
 from smart_kit.utils import get_callback_action_params, set_debug_info
-from smart_kit.utils.monitoring import smart_kit_metrics
+from core.monitoring.monitoring import monitoring
 
 
 class SmartAppModel:
@@ -68,7 +68,7 @@ class SmartAppModel:
 
     def on_answer_error(self, message, user):
         user.do_not_save = True
-        smart_kit_metrics.counter_exception(self.app_name)
+        monitoring.counter_exception(self.app_name)
         params = {log_const.KEY_NAME: log_const.DIALOG_ERROR_VALUE,
                   "message_id": user.message.incremental_id,
                   "masked_message": user.message.masked_value}

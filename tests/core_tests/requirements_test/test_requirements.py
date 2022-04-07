@@ -1,3 +1,4 @@
+import asyncio
 import os
 import unittest
 from time import time
@@ -20,6 +21,10 @@ from smart_kit.text_preprocessing.local_text_normalizer import LocalTextNormaliz
 from smart_kit.utils.picklable_mock import PicklableMock
 
 
+def _run(coro):
+    return asyncio.get_event_loop().run_until_complete(coro)
+
+
 def patch_get_app_config(mock_get_app_config):
     result = PicklableMock()
     sk_path = os.path.dirname(smart_kit.__file__)
@@ -35,7 +40,7 @@ class MockRequirement:
         items = items or {}
         self.cond = items.get("cond") or False
 
-    def check(self, text_preprocessing_result, user, params):
+    async def check(self, text_preprocessing_result, user, params):
         return self.cond
 
 
@@ -78,113 +83,112 @@ class EQMockOperator:
         return value == self.amount
 
 
-class RequirementTest(unittest.TestCase):
-    def test_base(self):
+class RequirementTest(unittest.IsolatedAsyncioTestCase):
+    async def test_base(self):
         requirement = Requirement(None)
-        assert requirement.check(None, None)
+        assert await requirement.check(None, None)
 
-    def test_composite(self):
+    async def test_composite(self):
         registered_factories[Requirement] = MockRequirement
         requirement = CompositeRequirement({"requirements": [
             {"cond": True},
             {"cond": True}
         ]})
-        self.assertEqual(len(requirement.requirements), 2)
-        self.assertTrue(requirement.check(None, None))
+        self.assertTrue(await requirement.check(None, None))
 
-    def test_and_success(self):
+    async def test_and_success(self):
         registered_factories[Requirement] = MockRequirement
         requirement = AndRequirement({"requirements": [
             {"cond": True},
             {"cond": True}
         ]})
-        self.assertTrue(requirement.check(None, None))
+        self.assertTrue(await requirement.check(None, None))
 
-    def test_and_fail(self):
+    async def test_and_fail(self):
         registered_factories[Requirement] = MockRequirement
         requirement = AndRequirement({"requirements": [
             {"cond": True},
             {"cond": False}
         ]})
-        self.assertFalse(requirement.check(None, None))
+        self.assertFalse(await requirement.check(None, None))
 
-    def test_or_success(self):
+    async def test_or_success(self):
         registered_factories[Requirement] = MockRequirement
         requirement = OrRequirement({"requirements": [
             {"cond": True},
             {"cond": False}
         ]})
-        self.assertTrue(requirement.check(None, None))
+        self.assertTrue(await requirement.check(None, None))
 
-    def test_or_fail(self):
+    async def test_or_fail(self):
         registered_factories[Requirement] = MockRequirement
         requirement = OrRequirement({"requirements": [
             {"cond": False},
             {"cond": False}
         ]})
-        self.assertFalse(requirement.check(None, None))
+        self.assertFalse(await requirement.check(None, None))
 
-    def test_not_success(self):
+    async def test_not_success(self):
         registered_factories[Requirement] = MockRequirement
         requirement = NotRequirement({"requirement": {"cond": False}})
-        self.assertTrue(requirement.check(None, None))
+        self.assertTrue(await requirement.check(None, None))
 
-    def test_not_fail(self):
+    async def test_not_fail(self):
         registered_factories[Requirement] = MockRequirement
         requirement = NotRequirement({"requirement": {"cond": True}})
-        self.assertFalse(requirement.check(None, None))
+        self.assertFalse(await requirement.check(None, None))
 
-    def test_channel_success(self):
+    async def test_channel_success(self):
         user = PicklableMock()
         message = Mock(channel="ch1")
         user.message = message
         requirement = ChannelRequirement({"channels": ["ch1"]})
         text_normalization_result = None
-        self.assertTrue(requirement.check(text_normalization_result, user))
+        self.assertTrue(await requirement.check(text_normalization_result, user))
 
-    def test_channel_fail(self):
+    async def test_channel_fail(self):
         user = PicklableMock()
         message = Mock(channel="ch2")
         user.message = message
         requirement = ChannelRequirement({"channels": ["ch1"]})
         text_normalization_result = None
-        self.assertFalse(requirement.check(text_normalization_result, user))
+        self.assertFalse(await requirement.check(text_normalization_result, user))
 
-    def test_random_requirement_true(self):
+    async def test_random_requirement_true(self):
         requirement = RandomRequirement({"percent": 100})
-        self.assertTrue(requirement.check(None, None))
+        self.assertTrue(await requirement.check(None, None))
 
-    def test_random_requirement_false(self):
+    async def test_random_requirement_false(self):
         requirement = RandomRequirement({"percent": 0})
-        self.assertFalse(requirement.check(None, None))
+        self.assertFalse(await requirement.check(None, None))
 
-    def test_topic_requirement(self):
+    async def test_topic_requirement(self):
         requirement = TopicRequirement({"topics": ["test"]})
         user = PicklableMock()
         message = PicklableMock()
         message.topic_key = "test"
         user.message = message
-        self.assertTrue(requirement.check(None, user))
+        self.assertTrue(await requirement.check(None, user))
 
-    def test_counter_value_requirement(self):
+    async def test_counter_value_requirement(self):
         registered_factories[Operator] = MockAmountOperator
         user = PicklableMock()
         counter = PicklableMock()
         counter.__gt__ = Mock(return_value=True)
         user.counters = {"test": counter}
         requirement = CounterValueRequirement({"operator": {"type": "equal", "amount": 2}, "key": "test"})
-        self.assertTrue(requirement.check(None, user))
+        self.assertTrue(await requirement.check(None, user))
 
-    def test_counter_time_requirement(self):
+    async def test_counter_time_requirement(self):
         registered_factories[Operator] = MockAmountOperator
         user = PicklableMock()
         counter = PicklableMock()
         counter.update_time = int(time()) - 10
         user.counters = {"test": counter}
         requirement = CounterUpdateTimeRequirement({"operator": {"type": "more_or_equal", "amount": 5}, "key": "test"})
-        self.assertTrue(requirement.check(None, user))
+        self.assertTrue(await requirement.check(None, user))
 
-    def test_template_req_true(self):
+    async def test_template_req_true(self):
         items = {
             "template": "{{ payload.message.strip() in payload.murexIds }}"
         }
@@ -197,9 +201,9 @@ class RequirementTest(unittest.TestCase):
         user = PicklableMock()
         user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
-        self.assertTrue(requirement.check(None, user))
+        self.assertTrue(await requirement.check(None, user))
 
-    def test_template_req_false(self):
+    async def test_template_req_false(self):
         items = {
             "template": "{{ payload.groupCode == 'BROKER' }}"
         }
@@ -208,9 +212,9 @@ class RequirementTest(unittest.TestCase):
         user = PicklableMock()
         user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
-        self.assertFalse(requirement.check(None, user))
+        self.assertFalse(await requirement.check(None, user))
 
-    def test_template_req_raise(self):
+    async def test_template_req_raise(self):
         items = {
             "template": "{{ payload.groupCode }}"
         }
@@ -219,23 +223,23 @@ class RequirementTest(unittest.TestCase):
         user = PicklableMock()
         user.parametrizer = PicklableMock()
         user.parametrizer.collect = Mock(return_value=params)
-        self.assertRaises(TypeError, requirement.check, None, user)
+        self.assertRaises(TypeError, _run, requirement.check, None, user)
 
-    def test_rolling_requirement_true(self):
+    async def test_rolling_requirement_true(self):
         user = PicklableMock()
         user.id = "353454"
         requirement = RollingRequirement({"percent": 100})
         text_normalization_result = None
-        self.assertTrue(requirement.check(text_normalization_result, user))
+        self.assertTrue(await requirement.check(text_normalization_result, user))
 
-    def test_rolling_requirement_false(self):
+    async def test_rolling_requirement_false(self):
         user = PicklableMock()
         user.id = "353454"
         requirement = RollingRequirement({"percent": 0})
         text_normalization_result = None
-        self.assertFalse(requirement.check(text_normalization_result, user))
+        self.assertFalse(await requirement.check(text_normalization_result, user))
 
-    def test_time_requirement_true(self):
+    async def test_time_requirement_true(self):
         user = PicklableMock()
         user.id = "353454"
         user.message.payload = {
@@ -255,9 +259,9 @@ class RequirementTest(unittest.TestCase):
             }
         )
         text_normalization_result = None
-        self.assertTrue(requirement.check(text_normalization_result, user))
+        self.assertTrue(await requirement.check(text_normalization_result, user))
 
-    def test_time_requirement_false(self):
+    async def test_time_requirement_false(self):
         user = PicklableMock()
         user.id = "353454"
         user.message.payload = {
@@ -277,9 +281,9 @@ class RequirementTest(unittest.TestCase):
             }
         )
         text_normalization_result = None
-        self.assertFalse(requirement.check(text_normalization_result, user))
+        self.assertFalse(await requirement.check(text_normalization_result, user))
 
-    def test_datetime_requirement_true(self):
+    async def test_datetime_requirement_true(self):
         user = PicklableMock()
         user.id = "353454"
         user.message.payload = {
@@ -296,9 +300,9 @@ class RequirementTest(unittest.TestCase):
             }
         )
         text_normalization_result = None
-        self.assertTrue(requirement.check(text_normalization_result, user))
+        self.assertTrue(await requirement.check(text_normalization_result, user))
 
-    def test_datetime_requirement_false(self):
+    async def test_datetime_requirement_false(self):
         user = PicklableMock()
         user.id = "353454"
         user.message.payload = {
@@ -315,10 +319,10 @@ class RequirementTest(unittest.TestCase):
             }
         )
         text_normalization_result = None
-        self.assertFalse(requirement.check(text_normalization_result, user))
+        self.assertFalse(await requirement.check(text_normalization_result, user))
 
     @patch('smart_kit.configs.get_app_config')
-    def test_intersection_requirement_true(self, mock_get_app_config):
+    async def test_intersection_requirement_true(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
         user = PicklableMock()
         requirement = IntersectionRequirement(
@@ -335,10 +339,10 @@ class RequirementTest(unittest.TestCase):
             {'lemma': 'я'},
             {'lemma': 'хотеть'},
         ]
-        self.assertTrue(requirement.check(text_normalization_result, user))
+        self.assertTrue(await requirement.check(text_normalization_result, user))
 
     @patch('smart_kit.configs.get_app_config')
-    def test_intersection_requirement_false(self, mock_get_app_config):
+    async def test_intersection_requirement_false(self, mock_get_app_config):
         patch_get_app_config(mock_get_app_config)
         user = PicklableMock()
         requirement = IntersectionRequirement(
@@ -356,10 +360,10 @@ class RequirementTest(unittest.TestCase):
             {'lemma': 'за'},
             {'lemma': 'что'},
         ]
-        self.assertFalse(requirement.check(text_normalization_result, user))
+        self.assertFalse(await requirement.check(text_normalization_result, user))
 
     @patch.object(ExternalClassifier, "find_best_answer", return_value=[{"answer": "нет", "score": 1.0, "other": False}])
-    def test_classifier_requirement_true(self, mock_classifier_model):
+    async def test_classifier_requirement_true(self, mock_classifier_model):
         """Тест кейз проверяет что условие возвращает True, если результат классификации запроса относится к одной
         из указанных категорий, прошедших порог, но не равной классу other.
         """
@@ -367,30 +371,30 @@ class RequirementTest(unittest.TestCase):
         classifier_requirement = ClassifierRequirement(test_items)
         mock_user = PicklableMock()
         mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
-        result = classifier_requirement.check(PicklableMock(), mock_user)
+        result = await classifier_requirement.check(PicklableMock(), mock_user)
         self.assertTrue(result)
 
     @patch.object(ExternalClassifier, "find_best_answer", return_value=[])
-    def test_classifier_requirement_false(self, mock_classifier_model):
+    async def test_classifier_requirement_false(self, mock_classifier_model):
         """Тест кейз проверяет что условие возвращает False, если модель классификации не вернула ответ."""
         test_items = {"type": "classifier", "classifier": {"type": "external", "classifier": "hello_scenario_classifier"}}
         classifier_requirement = ClassifierRequirement(test_items)
         mock_user = PicklableMock()
         mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
-        result = classifier_requirement.check(PicklableMock(), mock_user)
+        result = await classifier_requirement.check(PicklableMock(), mock_user)
         self.assertFalse(result)
 
     @patch.object(ExternalClassifier, "find_best_answer", return_value=[{"answer": "other", "score": 1.0, "other": True}])
-    def test_classifier_requirement_false_if_class_other(self, mock_classifier_model):
+    async def test_classifier_requirement_false_if_class_other(self, mock_classifier_model):
         """Тест кейз проверяет что условие возвращает False, если наиболее вероятный вариант есть класс other."""
         test_items = {"type": "classifier", "classifier": {"type": "external", "classifier": "hello_scenario_classifier"}}
         classifier_requirement = ClassifierRequirement(test_items)
         mock_user = PicklableMock()
         mock_user.descriptions = {"external_classifiers": ["read_book_or_not_classifier", "hello_scenario_classifier"]}
-        result = classifier_requirement.check(PicklableMock(), mock_user)
+        result = await classifier_requirement.check(PicklableMock(), mock_user)
         self.assertFalse(result)
 
-    def test_form_field_value_requirement_true(self):
+    async def test_form_field_value_requirement_true(self):
         """Тест кейз проверяет что условие возвращает True, т.к в
         форме form_name в поле form_field значение совпадает с переданным field_value.
         """
@@ -406,10 +410,10 @@ class RequirementTest(unittest.TestCase):
         user.forms[form_name].fields = {form_field: PicklableMock(), "value": field_value}
         user.forms[form_name].fields[form_field].value = field_value
 
-        result = req_form_field_value.check(PicklableMock(), user)
+        result = await req_form_field_value.check(PicklableMock(), user)
         self.assertTrue(result)
 
-    def test_form_field_value_requirement_false(self):
+    async def test_form_field_value_requirement_false(self):
         """Тест кейз проверяет что условие возвращает False, т.к в
         форме form_name в поле form_field значение НЕ совпадает с переданным field_value.
         """
@@ -425,73 +429,73 @@ class RequirementTest(unittest.TestCase):
         user.forms[form_name].fields = {form_field: PicklableMock(), "value": "OTHER_TEST_VAL"}
         user.forms[form_name].fields[form_field].value = "OTHER_TEST_VAL"
 
-        result = req_form_field_value.check(PicklableMock(), user)
+        result = await req_form_field_value.check(PicklableMock(), user)
         self.assertFalse(result)
 
     @patch("smart_kit.configs.get_app_config")
-    def test_environment_requirement_true(self, mock_get_app_config):
+    async def test_environment_requirement_true(self, mock_get_app_config):
         """Тест кейз проверяет что условие возвращает True, т.к среда исполнения из числа values."""
         patch_get_app_config(mock_get_app_config)
         environment_req = EnvironmentRequirement({"values": ["ift", "uat"]})
-        self.assertTrue(environment_req.check(PicklableMock(), PicklableMock()))
+        self.assertTrue(await environment_req.check(PicklableMock(), PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
-    def test_environment_requirement_false(self, mock_get_app_config):
+    async def test_environment_requirement_false(self, mock_get_app_config):
         """Тест кейз проверяет что условие возвращает False, т.к среда исполнения НЕ из числа values."""
         patch_get_app_config(mock_get_app_config)
         environment_req = EnvironmentRequirement({"values": ["uat", "pt"]})
-        self.assertFalse(environment_req.check(PicklableMock(), PicklableMock()))
+        self.assertFalse(await environment_req.check(PicklableMock(), PicklableMock()))
 
-    def test_any_substring_in_lowered_text_requirement_true(self):
+    async def test_any_substring_in_lowered_text_requirement_true(self):
         """Тест кейз проверяет что условие возвращает True, т.к нашлась подстрока из списка substrings, которая
         встречается в оригинальном тексте в нижнем регистре.
         """
         req = AnySubstringInLoweredTextRequirement({"substrings": ["искомая подстрока", "другое знанчение"]})
         text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"original_text": "КАКОЙ-ТО ТЕКСТ С ИСКОМАЯ ПОДСТРОКА"}
-        result = req.check(text_preprocessing_result, PicklableMock())
+        result = await req.check(text_preprocessing_result, PicklableMock())
         self.assertTrue(result)
 
-    def test_any_substring_in_lowered_text_requirement_false(self):
+    async def test_any_substring_in_lowered_text_requirement_false(self):
         """Тест кейз проверяет что условие возвращает False, т.к НЕ нашлась ни одна подстрока из списка substrings,
         которая бы встречалась в оригинальном тексте в нижнем регистре.
         """
         req = AnySubstringInLoweredTextRequirement({"substrings": ["искомая подстрока", "другая подстрока"]})
         text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"original_text": "КАКОЙ-ТО ТЕКСТ"}
-        result = req.check(text_preprocessing_result, PicklableMock())
+        result = await req.check(text_preprocessing_result, PicklableMock())
         self.assertFalse(result)
 
-    def test_num_in_range_requirement_true(self):
+    async def test_num_in_range_requirement_true(self):
         """Тест кейз проверяет что условие возвращает True, т.к число находится в заданном диапазоне."""
         req = NumInRangeRequirement({"min_num": "5", "max_num": "10"})
         text_preprocessing_result = PicklableMock()
         text_preprocessing_result.num_token_values = 7
-        self.assertTrue(req.check(text_preprocessing_result, PicklableMock()))
+        self.assertTrue(await req.check(text_preprocessing_result, PicklableMock()))
 
-    def test_num_in_range_requirement_false(self):
+    async def test_num_in_range_requirement_false(self):
         """Тест кейз проверяет что условие возвращает False, т.к число НЕ находится в заданном диапазоне."""
         req = NumInRangeRequirement({"min_num": "5", "max_num": "10"})
         text_preprocessing_result = PicklableMock()
         text_preprocessing_result.num_token_values = 20
-        self.assertFalse(req.check(text_preprocessing_result, PicklableMock()))
+        self.assertFalse(await req.check(text_preprocessing_result, PicklableMock()))
 
-    def test_phone_number_number_requirement_true(self):
+    async def test_phone_number_number_requirement_true(self):
         """Тест кейз проверяет что условие возвращает True, т.к кол-во номеров телефонов больше заданного."""
         req = PhoneNumberNumberRequirement({"operator": {"type": "more", "amount": 1}})
         text_preprocessing_result = PicklableMock()
         text_preprocessing_result.get_token_values_by_type.return_value = ["89030478799", "89092534523"]
-        self.assertTrue(req.check(text_preprocessing_result, PicklableMock()))
+        self.assertTrue(await req.check(text_preprocessing_result, PicklableMock()))
 
-    def test_phone_number_number_requirement_false(self):
+    async def test_phone_number_number_requirement_false(self):
         """Тест кейз проверяет что условие возвращает False, т.к кол-во номеров телефонов НЕ больше заданного."""
         req = PhoneNumberNumberRequirement({"operator": {"type": "more", "amount": 10}})
         text_preprocessing_result = PicklableMock()
         text_preprocessing_result.get_token_values_by_type.return_value = ["89030478799"]
-        self.assertFalse(req.check(text_preprocessing_result, PicklableMock()))
+        self.assertFalse(await req.check(text_preprocessing_result, PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
-    def test_intersection_with_tokens_requirement_true(self, mock_get_app_config):
+    async def test_intersection_with_tokens_requirement_true(self, mock_get_app_config):
         """Тест кейз проверяет что условие возвращает True, т.к хотя бы одно слово из нормализованного
         вида запроса входит в список слов input_words.
         """
@@ -510,10 +514,10 @@ class RequirementTest(unittest.TestCase):
                 "part_of_speech": "NOUN"}, "lemma": "погода"}
             ]}
 
-        self.assertTrue(req.check(text_preprocessing_result, PicklableMock()))
+        self.assertTrue(await req.check(text_preprocessing_result, PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
-    def test_intersection_with_tokens_requirement_false(self, mock_get_app_config):
+    async def test_intersection_with_tokens_requirement_false(self, mock_get_app_config):
         """Тест кейз проверяет что условие возвращает False, т.к ни одно слово из нормализованного
         вида запроса не входит в список слов input_words.
         """
@@ -532,10 +536,10 @@ class RequirementTest(unittest.TestCase):
                 "part_of_speech": "NOUN"}, "lemma": "погода"}
         ]}
 
-        self.assertFalse(req.check(text_preprocessing_result, PicklableMock()))
+        self.assertFalse(await req.check(text_preprocessing_result, PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
-    def test_normalized_text_in_set_requirement_true(self, mock_get_app_config):
+    async def test_normalized_text_in_set_requirement_true(self, mock_get_app_config):
         """Тест кейз проверяет что условие возвращает True, т.к в нормализованном представлении
         запрос полностью совпадает с одной из нормализованных строк из input_words.
         """
@@ -546,10 +550,10 @@ class RequirementTest(unittest.TestCase):
         text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"normalized_text": "погода ."}
 
-        self.assertTrue(req.check(text_preprocessing_result, PicklableMock()))
+        self.assertTrue(await req.check(text_preprocessing_result, PicklableMock()))
 
     @patch("smart_kit.configs.get_app_config")
-    def test_normalized_text_in_set_requirement_false(self, mock_get_app_config):
+    async def test_normalized_text_in_set_requirement_false(self, mock_get_app_config):
         """Тест кейз проверяет что условие возвращает False, т.к в нормализованном представлении
         запрос НЕ совпадает ни с одной из нормализованных строк из input_words.
         """
@@ -560,33 +564,33 @@ class RequirementTest(unittest.TestCase):
         text_preprocessing_result = PicklableMock()
         text_preprocessing_result.raw = {"normalized_text": "хотеть узнать ."}
 
-        self.assertFalse(req.check(text_preprocessing_result, PicklableMock()))
+        self.assertFalse(await req.check(text_preprocessing_result, PicklableMock()))
 
-    def test_character_id_requirement_true(self):
+    async def test_character_id_requirement_true(self):
         req = CharacterIdRequirement({"values": ["sber", "afina"]})
         user = Mock()
         user.message = Mock()
         user.message.payload = {"character": {"id": "sber", "name": "Сбер", "gender": "male"}}
-        self.assertTrue(req.check(Mock(), user))
+        self.assertTrue(await req.check(Mock(), user))
 
-    def test_character_id_requirement_false(self):
+    async def test_character_id_requirement_false(self):
         req = CharacterIdRequirement({"values": ["afina"]})
         user = Mock()
         user.message = Mock()
         user.message.payload = {"character": {"id": "sber", "name": "Сбер", "gender": "male"}}
-        self.assertFalse(req.check(Mock(), user))
+        self.assertFalse(await req.check(Mock(), user))
 
-    def test_feature_toggle_check_requirement_true(self):
+    async def test_feature_toggle_check_requirement_true(self):
         req = FeatureToggleRequirement({"toggle_name": "test_true_toggle_name"})
         mock_user = Mock()
         mock_user.settings = {"template_settings": {"test_true_toggle_name": True}}
-        self.assertTrue(req.check(Mock(), mock_user))
+        self.assertTrue(await req.check(Mock(), mock_user))
 
-    def test_feature_toggle_check_requirement_false(self):
+    async def test_feature_toggle_check_requirement_false(self):
         req = FeatureToggleRequirement({"toggle_name": "test_false_toggle_name"})
         mock_user = Mock()
         mock_user.settings = {"template_settings": {"test_false_toggle_name": False}}
-        self.assertFalse(req.check(Mock(), mock_user))
+        self.assertFalse(await req.check(Mock(), mock_user))
 
 
 if __name__ == '__main__':

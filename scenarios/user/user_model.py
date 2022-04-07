@@ -18,6 +18,7 @@ from scenarios.user.reply_selector.reply_selector import ReplySelector
 from smart_kit.utils.monitoring import smart_kit_metrics
 import scenarios.logging.logger_constants as log_const
 
+
 class User(BaseUser):
 
     forms: Forms

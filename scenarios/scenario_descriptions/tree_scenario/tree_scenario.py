@@ -1,5 +1,4 @@
 # coding: utf-8
-from lazy import lazy
 from typing import Dict, Any
 
 from scenarios.scenario_descriptions.form_filling_scenario import FormFillingScenario
@@ -24,10 +23,10 @@ class TreeScenario(FormFillingScenario):
     def build_scenario_nodes(self):
         return self._scenario_nodes
 
-    def _field(self, form, text_preprocessing_result, user, params):
+    async def _field(self, form, text_preprocessing_result, user, params):
         current_node = self.get_current_node(user)
         internal_form = self._get_internal_form(form.forms, current_node.form_key)
-        return self._find_field(internal_form, text_preprocessing_result, user, params)
+        return await self._find_field(internal_form, text_preprocessing_result, user, params)
 
     def _set_current_node_id(self, user, node_id):
         user.scenario_models[self.id].current_node = node_id
@@ -43,14 +42,14 @@ class TreeScenario(FormFillingScenario):
         current_node = self.scenario_nodes[current_node_id]
         return current_node
 
-    def get_next_node(self, user, node, text_preprocessing_result, params):
+    async def get_next_node(self, user, node, text_preprocessing_result, params):
         available_node_keys = node.available_nodes
         for key in available_node_keys:
             node = self.scenario_nodes[key]
             log_params = {log_const.KEY_NAME: log_const.CHECKING_NODE_ID_VALUE,
                           log_const.CHECKING_NODE_ID_VALUE: node.id}
             log(log_const.CHECKING_NODE_ID_MESSAGE, user, log_params)
-            requirement_result = node.requirement.check(text_preprocessing_result, user, params)
+            requirement_result = await node.requirement.check(text_preprocessing_result, user, params)
             if requirement_result:
                 log_params = {log_const.KEY_NAME: log_const.CHOSEN_NODE_ID_VALUE,
                               log_const.CHOSEN_NODE_ID_VALUE: node.id}
@@ -85,7 +84,7 @@ class TreeScenario(FormFillingScenario):
         return all_forms_fields
 
     @monitoring.got_histogram_decorate("scenario_time")
-    def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
+    async def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
         main_form = self._get_form(user)
         user.last_scenarios.add(self.id, text_preprocessing_result)
         user.preprocessing_messages_for_scenarios.add(text_preprocessing_result)
@@ -107,7 +106,7 @@ class TreeScenario(FormFillingScenario):
             for field_key, field_descr in internal_form.description.fields.items():
                 field = internal_form.fields[field_key]
                 if field.available:
-                    extracted = field_descr.filler.run(user, text_preprocessing_result, params)
+                    extracted = await field_descr.filler.run(user, text_preprocessing_result, params)
                     if extracted is not None:
                         event = Event(type=HistoryConstants.types.FIELD_EVENT,
                                       scenario=self.root_id,
@@ -124,15 +123,15 @@ class TreeScenario(FormFillingScenario):
                     if extracted is not None and fill_other:
                         fill_other = fill_other and field_descr.fill_other
                         field_data = {field_key: extracted}
-                        _validation_error_msg = self._validate_extracted_data(user, text_preprocessing_result,
-                                                                               internal_form, field_data, params)
+                        _validation_error_msg = await self._validate_extracted_data(user, text_preprocessing_result,
+                                                                                    internal_form, field_data, params)
                         if _validation_error_msg:
                             # return only first validation message in form
                             validation_error_msg = validation_error_msg or _validation_error_msg
                         else:
                             data_extracted.update(field_data)
-            on_filled_node_actions, is_break = self._fill_form(user, text_preprocessing_result,
-                                                               internal_form, data_extracted)
+            on_filled_node_actions, is_break = await self._fill_form(user, text_preprocessing_result,
+                                                                     internal_form, data_extracted)
             if is_break:
                 return on_filled_node_actions
             on_filled_actions.extend(on_filled_node_actions)
@@ -157,10 +156,10 @@ class TreeScenario(FormFillingScenario):
             elif not form:
                 form = internal_form
                 self._set_current_node_id(user, current_node.id)
-            new_node = self.get_next_node(user, current_node, text_preprocessing_result, params)
+            new_node = await self.get_next_node(user, current_node, text_preprocessing_result, params)
 
-        field = self._find_field(form, text_preprocessing_result,
-                                                   user, params) if form else None
+        field = await self._find_field(form, text_preprocessing_result,
+                                       user, params) if form else None
 
         reply_commands = on_filled_actions
         if field:
@@ -170,10 +169,10 @@ class TreeScenario(FormFillingScenario):
                           content={HistoryConstants.content_fields.FIELD: field.description.id},
                           results=HistoryConstants.event_results.ASK_QUESTION)
             user.history.add_event(event)
-        _command = self.get_reply(user, text_preprocessing_result, current_node.actions, field, main_form)
+        _command = await self.get_reply(user, text_preprocessing_result, current_node.actions, field, main_form)
         reply_commands.extend(_command)
 
         if not reply_commands:
-            reply_commands = self.get_no_commands_action(user, text_preprocessing_result)
+            reply_commands = await self.get_no_commands_action(user, text_preprocessing_result)
 
         return reply_commands

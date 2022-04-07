@@ -1,3 +1,4 @@
+import asyncio
 import hashlib
 from datetime import datetime, timezone
 from random import random
@@ -38,8 +39,8 @@ class Requirement:
             "requirement": self.__class__.__name__
         }
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         return True
 
     def on_check_error(self, text_preprocessing_result, user):
@@ -63,20 +64,44 @@ class CompositeRequirement(Requirement):
         return self._requirements
 
 
+class GatherAndRequirement(CompositeRequirement):
+
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
+        check_results = await asyncio.gather(
+            requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
+            for requirement in self.requirements)
+        return all(check_results)
+
+
 class AndRequirement(CompositeRequirement):
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
-        return all(requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
-                   for requirement in self.requirements)
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
+        return all(
+            [await requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
+             for requirement in self.requirements]
+        )
+
+
+class GatherOrRequirement(CompositeRequirement):
+
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
+        check_results = await asyncio.gather(
+            requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
+            for requirement in self.requirements)
+        return any(check_results)
 
 
 class OrRequirement(CompositeRequirement):
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
-        return any(requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
-                   for requirement in self.requirements)
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
+        return any(
+            [await requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
+             for requirement in self.requirements]
+        )
 
 
 class NotRequirement(Requirement):
@@ -91,9 +116,10 @@ class NotRequirement(Requirement):
     def build_requirement(self):
         return self._requirement
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
-        return not self.requirement.check(text_preprocessing_result=text_preprocessing_result, user=user, params=params)
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
+        return not await self.requirement.check(text_preprocessing_result=text_preprocessing_result, user=user,
+                                                params=params)
 
 
 class ComparisonRequirement(Requirement):
@@ -116,8 +142,8 @@ class RandomRequirement(Requirement):
         super(RandomRequirement, self).__init__(items, id)
         self.percent = items["percent"]
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         result = random() * 100
         return result < self.percent
 
@@ -129,8 +155,8 @@ class TopicRequirement(Requirement):
         super(TopicRequirement, self).__init__(items, id)
         self.topics = items["topics"]
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         return user.message.topic_key in self.topics
 
 
@@ -139,8 +165,8 @@ class TemplateRequirement(Requirement):
         super(TemplateRequirement, self).__init__(items, id)
         self._template = UnifiedTemplate(items["template"])
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         params = params or {}
         collected = user.parametrizer.collect(text_preprocessing_result)
         params.update(collected)
@@ -149,7 +175,7 @@ class TemplateRequirement(Requirement):
             return True
         if render_result == "False":
             return False
-        raise TypeError(f'Template result should be "True" or "False", got: ',
+        raise TypeError(f'Template result should be "True" or "False", got: '
                         f'{render_result} for template {self.items["template"]}')
 
 
@@ -160,8 +186,8 @@ class RollingRequirement(Requirement):
         super(RollingRequirement, self).__init__(items, id)
         self.percent = items["percent"]
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         id = user.id
         s = id.encode('utf-8')
         hash = int(hashlib.sha256(s).hexdigest(), 16)
@@ -173,7 +199,7 @@ class TimeRequirement(ComparisonRequirement):
     def __init__(self, items: Dict[str, Any], id: Optional[str] = None) -> None:
         super().__init__(items, id)
 
-    def check(
+    async def check(
             self,
             text_preprocessing_result: BaseTextPreprocessingResult,
             user: BaseUser,
@@ -199,7 +225,7 @@ class DateTimeRequirement(Requirement):
         super().__init__(items, id)
         self.match_cron = items['match_cron']
 
-    def check(
+    async def check(
             self,
             text_preprocessing_result: BaseTextPreprocessingResult,
             user: BaseUser,
@@ -226,14 +252,14 @@ class IntersectionRequirement(Requirement):
             id,
         )
 
-    def check(
+    async def check(
             self,
             text_preprocessing_result: TextPreprocessingResult,
             user: User,
             params: Dict[str, Any] = None
     ) -> bool:
         result = bool(
-            self.filler.extract(text_preprocessing_result, user, params),
+            await self.filler.extract(text_preprocessing_result, user, params),
         )
         return result
 
@@ -252,8 +278,8 @@ class ClassifierRequirement(Requirement):
     def classifier(self) -> Classifier:
         return ExternalClassifier(self._classifier)
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         check_res = True
         classifier = self.classifier
         with StatsTimer() as timer:
@@ -279,8 +305,8 @@ class FormFieldValueRequirement(Requirement):
         self.field_name = items["field_name"]
         self.value = items["value"]
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                    params: Dict[str, Any] = None) -> bool:
         return user.forms[self.form_name].fields[self.field_name].value == self.value
 
 
@@ -300,8 +326,8 @@ class EnvironmentRequirement(Requirement):
         # Если среда исполнения задана, то проверям, что среда в списке возможных значений для сценария, иначе - False
         self.check_result = self.environment in self.values if self.environment else False
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: BaseUser,
+                    params: Dict[str, Any] = None) -> bool:
         return self.check_result
 
 
@@ -314,8 +340,8 @@ class CharacterIdRequirement(Requirement):
         super(CharacterIdRequirement, self).__init__(items=items, id=id)
         self.values = items["values"]
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                    params: Dict[str, Any] = None) -> bool:
         return user.message.payload["character"]["id"] in self.values
 
 
@@ -328,6 +354,6 @@ class FeatureToggleRequirement(Requirement):
         super(FeatureToggleRequirement, self).__init__(items=items, id=id)
         self.toggle_name = items["toggle_name"]
 
-    def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
-              params: Dict[str, Any] = None) -> bool:
+    async def check(self, text_preprocessing_result: BaseTextPreprocessingResult, user: User,
+                    params: Dict[str, Any] = None) -> bool:
         return user.settings["template_settings"].get(self.toggle_name, False)

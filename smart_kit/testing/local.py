@@ -1,3 +1,4 @@
+import asyncio
 import cmd
 import json
 import os
@@ -148,7 +149,7 @@ class CLInterface(cmd.Cmd):
         user = self.__user_cls(self.environment.user_id, message, self.user_data, self.settings,
                                self.app_model.scenario_descriptions,
                                self.__parametrizer_cls, load_error=False)
-        answers = self.app_model.answer(message, user)
+        answers = asyncio.get_event_loop().run_until_complete(self.app_model.answer(message, user))
         return user, answers or []
 
     def default(self, _input: str):

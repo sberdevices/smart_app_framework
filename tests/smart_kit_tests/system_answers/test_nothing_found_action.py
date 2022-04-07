@@ -8,7 +8,7 @@ from smart_kit.names.message_names import NOTHING_FOUND
 from smart_kit.system_answers import nothing_found_action
 
 
-class SystemAnswersTest1(unittest.TestCase):
+class SystemAnswersTest1(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.test_command_1 = Mock('Command')
         self.test_id = '123-345-678'  # пусть чему-то равняется
@@ -26,8 +26,8 @@ class SystemAnswersTest1(unittest.TestCase):
         self.assertTrue(isinstance(obj1._action, StringAction))
         self.assertTrue(obj1._action.command == NOTHING_FOUND)
 
-    def test_system_answer_nothing_found_action_run(self):
+    async def test_system_answer_nothing_found_action_run(self):
         obj1 = nothing_found_action.NothingFoundAction()
         obj2 = nothing_found_action.NothingFoundAction(self.test_items1, self.test_id)
-        self.assertTrue(isinstance(obj1.run(self.test_user1, self.test_text_preprocessing_result).pop(), Command))
-        self.assertTrue(isinstance(obj2.run(self.test_user1, self.test_text_preprocessing_result).pop(), Command))
+        self.assertTrue(isinstance((await obj1.run(self.test_user1, self.test_text_preprocessing_result)).pop(), Command))
+        self.assertTrue(isinstance((await obj2.run(self.test_user1, self.test_text_preprocessing_result)).pop(), Command))

@@ -1,3 +1,5 @@
+import asyncio
+
 import core.logging.logger_constants as log_const
 from core.logging.logger_utils import log
 from core.monitoring.monitoring import monitoring
@@ -36,8 +38,8 @@ class Rerunable():
                 log_const.KEY_NAME: log_const.HANDLED_EXCEPTION_VALUE
             }
             log("%(class_name)s run failed with %(exception)s.\n Got %(try_count)s tries left.",
-                          params=params,
-                          level="ERROR")
+                params=params,
+                level="ERROR")
             self._on_prepare()
             result = self._run(action, *args, _try_count=_try_count, **kwargs)
             counter_name = self._get_counter_name()

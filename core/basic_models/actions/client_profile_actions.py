@@ -54,8 +54,8 @@ class GiveMeMemoryAction(StringAction):
             {"memoryPartition": key, "tags": val} for key, val in self._nodes["memory"].items()
         ]
 
-    def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
+    async def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self._nodes["consumer"] = {"projectId": user.settings["template_settings"]["project_id"]}
 
         settings_kafka_key = user.settings["template_settings"].get("client_profile_kafka_key")
@@ -70,7 +70,7 @@ class GiveMeMemoryAction(StringAction):
             user.behaviors.add(user.message.generate_new_callback_id(), self.behavior, scenario_id,
                                text_preprocessing_result.raw, action_params=pickle_deepcopy(params))
 
-        commands = super().run(user, text_preprocessing_result, params)
+        commands = await super().run(user, text_preprocessing_result, params)
         return commands
 
 
@@ -144,8 +144,8 @@ class RememberThisAction(StringAction):
         self.kafka_key = items.get("kafka_key")
         self._nodes["root_nodes"] = {"protocolVersion": items.get("protocolVersion") or 3}
 
-    def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
-            params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
+    async def run(self, user: User, text_preprocessing_result: BaseTextPreprocessingResult,
+                  params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self._nodes["consumer"] = {"projectId": user.settings["template_settings"]["project_id"]}
 
         settings_kafka_key = user.settings["template_settings"].get("client_profile_kafka_key")
@@ -155,5 +155,5 @@ class RememberThisAction(StringAction):
             "kafka_replyTopic": user.settings["template_settings"]["consumer_topic"]
         }
 
-        commands = super().run(user, text_preprocessing_result, params)
+        commands = await super().run(user, text_preprocessing_result, params)
         return commands

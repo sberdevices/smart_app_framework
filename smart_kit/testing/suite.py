@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 from csv import DictWriter, QUOTE_MINIMAL
@@ -34,17 +35,17 @@ def run_testfile(path: AnyStr, file: AnyStr, app_model: SmartAppModel, settings:
             csv_case_callback = csv_file_callback(test_case)
         else:
             csv_case_callback = None
-        if test_case_cls(
-                app_model,
-                settings,
-                user_cls,
-                parametrizer_cls,
-                from_msg_cls,
-                **test_params,
-                storaged_predefined_fields=storaged_predefined_fields,
-                interactive=interactive,
-                csv_case_callback=csv_case_callback,
-        ).run():
+        if asyncio.get_event_loop().run_until_complete(TestCase(
+            app_model,
+            settings,
+            user_cls,
+            parametrizer_cls,
+            from_msg_cls,
+            **test_params,
+            storaged_predefined_fields=storaged_predefined_fields,
+            interactive=interactive,
+            csv_case_callback=csv_case_callback,
+        ).run()):
             print(f"[+] {test_case} OK")
             success += 1
     print(f"[+] {file} {success}/{len(json_obj)}")
@@ -146,22 +147,22 @@ class TestCase:
         self.__user_cls = user_cls
         self.__from_msg_cls = from_msg_cls
 
-    def run(self) -> bool:
+    async def run(self) -> bool:
         success = True
 
         app_callback_id = None
-        for index, message_ in enumerate(self.messages):
+        for index, message in enumerate(self.messages):
             print('Шаг', index)
             if index and self.interactive:
                 print("Нажмите ENTER, чтобы продолжить...")
                 input()
 
-            request = message_["request"]
-            response = message_["response"]
+            request = message["request"]
+            response = message["response"]
 
             # Если использован флаг linkPreviousByCallbackId и после предыдущего сообщения был сохранен app_callback_id,
             # сообщению добавляются заголовки. Таким образом, сработает behavior, созданный предыдущим запросом
-            if message_.get(LINK_BEHAVIOR_FLAG) and app_callback_id:
+            if message.get(LINK_BEHAVIOR_FLAG) and app_callback_id:
                 headers = [(self.__from_msg_cls.CALLBACK_ID_HEADER_NAME, app_callback_id.encode())]
             else:
                 headers = [('kafka_correlationId', 'test_123')]
@@ -175,7 +176,7 @@ class TestCase:
 
             self.post_setup_user(user)
 
-            commands = self.app_model.answer(message, user) or []
+            commands = await self.app_model.answer(message, user) or []
 
             answers = self._generate_answers(
                 user=user, commands=commands, message=message

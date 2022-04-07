@@ -6,10 +6,10 @@ from collections import namedtuple
 from unittest.mock import Mock
 
 import scenarios.behaviors.behaviors
-from smart_kit.utils.picklable_mock import PicklableMock
+from smart_kit.utils.picklable_mock import PicklableMock, AsyncPicklableMock
 
 
-class BehaviorsTest(unittest.TestCase):
+class BehaviorsTest(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.user = PicklableMock()
         self.user.settings = PicklableMock()
@@ -17,10 +17,10 @@ class BehaviorsTest(unittest.TestCase):
         self.user.local_vars.values = {"test_local_var_key": "test_local_var_value"}
         self.description = PicklableMock()
         self.description.timeout = Mock(return_value=10)
-        self.success_action = PicklableMock()
-        self.success_action.run = PicklableMock()
-        self.fail_action = PicklableMock()
-        self.timeout_action = PicklableMock()
+        self.success_action = AsyncPicklableMock()
+        self.success_action.run = AsyncPicklableMock()
+        self.fail_action = AsyncPicklableMock()
+        self.timeout_action = AsyncPicklableMock()
 
         self.description.success_action = self.success_action
         self.description.fail_action = self.fail_action
@@ -28,7 +28,7 @@ class BehaviorsTest(unittest.TestCase):
         self.descriptions = {"test": self.description}
         self._callback = namedtuple('Callback', 'behavior_id expire_time scenario_id')
 
-    def test_success(self):
+    async def test_success(self):
         callback_id = "123"
         behavior_id = "test"
         item = {"behavior_id": behavior_id, "expire_time": 2554416000, "scenario_id": None,
@@ -36,38 +36,38 @@ class BehaviorsTest(unittest.TestCase):
         items = {str(callback_id): item}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
         behaviors.initialize()
-        behaviors.success(callback_id)
+        await behaviors.success(callback_id)
         # self.success_action.run.assert_called_once_with(self.user, TextPreprocessingResult({}))
         self.success_action.run.assert_called_once()
         self.assertDictEqual(behaviors.raw, {})
 
-    def test_success_2(self):
+    async def test_success_2(self):
         callback_id = "123"
         items = {}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
         behaviors.initialize()
-        behaviors.success(callback_id)
+        await behaviors.success(callback_id)
         self.success_action.run.assert_not_called()
 
-    def test_fail(self):
+    async def test_fail(self):
         callback_id = "123"
         behavior_id = "test"
         item = {"behavior_id": behavior_id, "expire_time": 2554416000, "scenario_id": None}
         items = {str(callback_id): item}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
         behaviors.initialize()
-        behaviors.fail(callback_id)
+        await behaviors.fail(callback_id)
         self.fail_action.run.assert_called_once()
         self.assertDictEqual(behaviors.raw, {})
 
-    def test_timeout(self):
+    async def test_timeout(self):
         callback_id = "123"
         behavior_id = "test"
         item = {"behavior_id": behavior_id, "expire_time": 2554416000, "scenario_id": None}
         items = {str(callback_id): item}
         behaviors = scenarios.behaviors.behaviors.Behaviors(items, self.descriptions, self.user)
         behaviors.initialize()
-        behaviors.timeout(callback_id)
+        await behaviors.timeout(callback_id)
         self.timeout_action.run.assert_called_once()
         self.assertDictEqual(behaviors.raw, {})
 

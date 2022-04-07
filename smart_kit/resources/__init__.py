@@ -40,9 +40,7 @@ from core.configs.base_config import BaseConfig
 from core.db_adapter.aioredis_adapter import AIORedisAdapter
 from core.db_adapter.db_adapter import db_adapters
 from core.db_adapter.ignite_adapter import IgniteAdapter
-from core.db_adapter.ignite_thread_adapter import IgniteThreadAdapter
 from core.db_adapter.memory_adapter import MemoryAdapter
-from core.db_adapter.redis_adapter import RedisAdapter
 from core.descriptions.descriptions import registered_description_factories
 from core.model.queued_objects.limited_queued_hashable_objects_description import \
     LimitedQueuedHashableObjectsDescriptionsItems
@@ -393,9 +391,7 @@ class SmartAppResources(BaseConfig):
     def init_db_adapters(self):
         db_adapters[None] = MemoryAdapter
         db_adapters["ignite"] = IgniteAdapter
-        db_adapters["ignite_thread"] = IgniteThreadAdapter
         db_adapters["memory"] = MemoryAdapter
-        db_adapters["redis"] = RedisAdapter
         db_adapters["aioredis"] = AIORedisAdapter
         db_adapters["aioredis_sentinel"] = AIORedisSentinelAdapter
 

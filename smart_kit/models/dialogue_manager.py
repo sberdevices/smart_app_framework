@@ -27,27 +27,27 @@ class DialogueManager:
     def _nothing_found_action(self):
         return self.actions.get(self.NOTHING_FOUND_ACTION) or NothingFoundAction()
 
-    def run(self, text_preprocessing_result, user):
+    async def run(self, text_preprocessing_result, user):
         before_action = user.descriptions["external_actions"].get("before_action")
         if before_action:
             params = user.parametrizer.collect(text_preprocessing_result)
-            before_action.run(user, text_preprocessing_result, params)
+            await before_action.run(user, text_preprocessing_result, params)
         scenarios_names = user.last_scenarios.scenarios_names
         scenario_key = user.message.payload[field.INTENT]
         if scenario_key in scenarios_names:
             scenario = self.scenarios[scenario_key]
             is_form_filling = isinstance(scenario, FormFillingScenario)
             if is_form_filling:
-                if not scenario.text_fits(text_preprocessing_result, user):
+                if not await scenario.text_fits(text_preprocessing_result, user):
                     params = user.parametrizer.collect(text_preprocessing_result)
-                    if scenario.check_ask_again_requests(text_preprocessing_result, user, params):
-                        reply = scenario.ask_again(text_preprocessing_result, user, params)
+                    if await scenario.check_ask_again_requests(text_preprocessing_result, user, params):
+                        reply = await scenario.ask_again(text_preprocessing_result, user, params)
                         return reply, True
                     smart_kit_metrics.counter_nothing_found(self.app_name, scenario_key, user)
-                    return self._nothing_found_action.run(user, text_preprocessing_result), False
-        return self.run_scenario(scenario_key, text_preprocessing_result, user), True
+                    return await self._nothing_found_action.run(user, text_preprocessing_result), False
+        return await self.run_scenario(scenario_key, text_preprocessing_result, user), True
 
-    def run_scenario(self, scen_id, text_preprocessing_result, user):
+    async def run_scenario(self, scen_id, text_preprocessing_result, user):
         initial_last_scenario = user.last_scenarios.last_scenario_name
         scenario = self.scenarios[scen_id]
         params = {log_const.KEY_NAME: log_const.CHOSEN_SCENARIO_VALUE,
@@ -55,7 +55,7 @@ class DialogueManager:
                   log_const.SCENARIO_DESCRIPTION_VALUE: scenario.scenario_description
                   }
         log(log_const.LAST_SCENARIO_MESSAGE, user, params)
-        run_scenario_result = scenario.run(text_preprocessing_result, user)
+        run_scenario_result = await scenario.run(text_preprocessing_result, user)
 
         actual_last_scenario = user.last_scenarios.last_scenario_name
         if actual_last_scenario and actual_last_scenario != initial_last_scenario:

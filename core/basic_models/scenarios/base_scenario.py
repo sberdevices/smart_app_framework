@@ -46,23 +46,23 @@ class BaseScenario:
     def build_available_requirement(self):
         return self._available_requirement
 
-    def check_available(self, text_preprocessing_result, user):
+    async def check_available(self, text_preprocessing_result, user):
         if not self.switched_off:
-            return self.available_requirement.check(text_preprocessing_result, user)
+            return await self.available_requirement.check(text_preprocessing_result, user)
         return False
 
     def _log_params(self):
         return {log_const.KEY_NAME: log_const.SCENARIO_VALUE}
 
-    def text_fits(self, text_preprocessing_result, user):
+    async def text_fits(self, text_preprocessing_result, user):
         return False
 
-    def get_no_commands_action(self, user, text_preprocessing_result, params: Dict[str, Any] = None):
+    async def get_no_commands_action(self, user, text_preprocessing_result, params: Dict[str, Any] = None):
         log_params = {log_const.KEY_NAME: scenarios_log_const.CHOSEN_ACTION_VALUE,
                       scenarios_log_const.CHOSEN_ACTION_VALUE: self._empty_answer}
         log(scenarios_log_const.CHOSEN_ACTION_MESSAGE, user, log_params)
         try:
-            empty_answer = self.empty_answer.run(user, text_preprocessing_result, params) or []
+            empty_answer = await self.empty_answer.run(user, text_preprocessing_result, params) or []
         except KeyError:
             log_params = {log_const.KEY_NAME: scenarios_log_const.CHOSEN_ACTION_VALUE}
             log("Scenario has empty answer, but empty_answer action isn't defined",
@@ -70,11 +70,11 @@ class BaseScenario:
             empty_answer = []
         return empty_answer
 
-    def get_action_results(self, user, text_preprocessing_result,
+    async def get_action_results(self, user, text_preprocessing_result,
                            actions: List[Action], params: Dict[str, Any] = None) -> List[Command]:
         results = []
         for action in actions:
-            result = action.run(user, text_preprocessing_result, params)
+            result = await action.run(user, text_preprocessing_result, params)
             log_params = self._log_params()
             log_params["class"] = action.__class__.__name__
             log("called action: %(class)s", user, log_params)
@@ -96,5 +96,5 @@ class BaseScenario:
     def history(self):
         return {"scenario_path": [{"scenario": self.id, "node": None}]}
 
-    def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
-        return self.get_action_results(user, text_preprocessing_result, self.actions, params)
+    async def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
+        return await self.get_action_results(user, text_preprocessing_result, self.actions, params)

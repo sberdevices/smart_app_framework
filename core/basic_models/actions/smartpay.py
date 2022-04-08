@@ -30,7 +30,7 @@ class SmartPayAction(HTTPRequestAction):
     def run(self, user: BaseUser, text_preprocessing_result: BaseTextPreprocessingResult,
             params: Optional[Dict[str, Union[str, float, int]]] = None) -> Optional[List[Command]]:
         self.http_action.method_params["url"] = \
-            user.settings["template_settings"]["smart_pay_url"] + self.http_action.method_params["url"]
+            user.settings["template_settings"]["smartpay_url"] + self.http_action.method_params["url"]
         return super().run(user, text_preprocessing_result, params)
 
 

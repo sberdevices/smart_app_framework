@@ -12,7 +12,7 @@ from core.message.from_message import SmartAppFromMessage
 from core.utils.stats_timer import StatsTimer
 from smart_kit.message.smartapp_to_message import SmartAppToMessage
 from smart_kit.start_points.main_loop_http import BaseHttpMainLoop
-from smart_kit.utils.monitoring import smart_kit_metrics
+from core.monitoring.monitoring import monitoring
 
 
 class AIOHttpMainLoop(BaseHttpMainLoop):
@@ -46,7 +46,7 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
             log("Failed to get user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                    log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")
             load_error = True
-            smart_kit_metrics.counter_load_error(self.app_name)
+            monitoring.counter_load_error(self.app_name)
         return self.user_cls(
             message.uid,
             message=message,
@@ -89,9 +89,9 @@ class AIOHttpMainLoop(BaseHttpMainLoop):
             except (DBAdapterException, ValueError):
                 log("Failed to set user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                        log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")
-                smart_kit_metrics.counter_save_error(self.app_name)
+                monitoring.counter_save_error(self.app_name)
             if not no_collisions:
-                smart_kit_metrics.counter_save_collision(self.app_name)
+                monitoring.counter_save_collision(self.app_name)
         return no_collisions
 
     def run(self):

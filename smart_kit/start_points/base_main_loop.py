@@ -15,7 +15,6 @@ from core.model.base_user import BaseUser
 from core.basic_models.parametrizers.parametrizer import BasicParametrizer
 from core.message.msg_validator import MessageValidator
 from smart_kit.start_points.postprocess import PostprocessMainLoop
-from smart_kit.utils.monitoring import smart_kit_metrics
 from smart_kit.models.smartapp_model import SmartAppModel
 
 
@@ -96,8 +95,7 @@ class BaseMainLoop:
     def _init_monitoring_config(self, template_settings):
         monitoring_config = template_settings["monitoring"]
         monitoring.apply_config(monitoring_config)
-        smart_kit_metrics.apply_config(monitoring_config)
-        smart_kit_metrics.init_metrics(app_name=self.app_name)
+        monitoring.init_metrics(app_name=self.app_name)
 
     async def load_user(self, db_uid, message):
         db_data = None
@@ -108,7 +106,7 @@ class BaseMainLoop:
             log("Failed to get user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                    log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")
             load_error = True
-            smart_kit_metrics.counter_load_error(self.app_name)
+            monitoring.counter_load_error(self.app_name)
             # to skip message when load failed
             raise
         return self.user_cls(
@@ -139,9 +137,9 @@ class BaseMainLoop:
             except (DBAdapterException, ValueError):
                 log("Failed to set user data", params={log_const.KEY_NAME: log_const.FAILED_DB_INTERACTION,
                                                        log_const.REQUEST_VALUE: str(message.value)}, level="ERROR")
-                smart_kit_metrics.counter_save_error(self.app_name)
+                monitoring.counter_save_error(self.app_name)
             if not no_collisions:
-                smart_kit_metrics.counter_save_collision(self.app_name)
+                monitoring.counter_save_collision(self.app_name)
         return no_collisions
 
     def run(self):

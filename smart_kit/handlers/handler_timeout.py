@@ -5,7 +5,7 @@ from smart_kit.handlers.handler_base import HandlerBase
 from smart_kit.message.app_info import AppInfo
 from core.names.field import APP_INFO
 from smart_kit.names.message_names import RUN_APP, MESSAGE_TO_SKILL, SERVER_ACTION
-from smart_kit.utils.monitoring import smart_kit_metrics
+from core.monitoring.monitoring import monitoring
 
 
 class HandlerTimeout(HandlerBase):
@@ -24,7 +24,7 @@ class HandlerTimeout(HandlerBase):
                         app_info = AppInfo(action_params[original_message_name].get(APP_INFO, {}))
                         break
 
-                smart_kit_metrics.counter_incoming(self.app_name, user.message.message_name, self.__class__.__name__,
+                monitoring.counter_incoming(self.app_name, user.message.message_name, self.__class__.__name__,
                                                    user, app_info=app_info)
 
             callback_id = user.message.callback_id

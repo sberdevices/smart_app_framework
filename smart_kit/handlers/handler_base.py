@@ -1,5 +1,5 @@
 # coding: utf-8
-from smart_kit.utils.monitoring import smart_kit_metrics
+from core.monitoring.monitoring import monitoring
 
 
 class HandlerBase:
@@ -11,5 +11,5 @@ class HandlerBase:
 
     async def run(self, payload, user):
         # отправка события о входящем сообщении в систему мониторинга
-        smart_kit_metrics.counter_incoming(self.app_name, user.message.message_name, self.__class__.__name__,
+        monitoring.counter_incoming(self.app_name, user.message.message_name, self.__class__.__name__,
                                            user, app_info=user.message.app_info)

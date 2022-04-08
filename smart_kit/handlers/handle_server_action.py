@@ -6,7 +6,7 @@ from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from core.utils.pickle_copy import pickle_deepcopy
 
 from smart_kit.handlers.handler_base import HandlerBase
-from smart_kit.utils.monitoring import smart_kit_metrics
+from core.monitoring.monitoring import monitoring
 
 
 class HandlerServerAction(HandlerBase):
@@ -30,7 +30,7 @@ class HandlerServerAction(HandlerBase):
         log("HandlerServerAction %(server_action_id)s started", user, params)
 
         app_info = user.message.app_info
-        smart_kit_metrics.counter_incoming(self.app_name, user.message.message_name, self.__class__.__name__,
+        monitoring.counter_incoming(self.app_name, user.message.message_name, self.__class__.__name__,
                                            user, app_info=app_info)
 
         action_id = self.get_action_name(payload, user)

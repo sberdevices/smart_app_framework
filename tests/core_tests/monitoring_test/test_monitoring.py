@@ -7,12 +7,16 @@ from core.monitoring.monitoring import Monitoring
 from smart_kit.utils.picklable_mock import PicklableMock
 
 
-class MonitoringTest1(unittest.TestCase):
+class MonitoringTest(unittest.TestCase):
     def setUp(self):
         self.logger = PicklableMock()
         self.logger.exception = PicklableMock()
         self.config = PicklableMock()
         self.mock_rep = PicklableMock()
+        Monitoring._monitoring_items = {
+            Monitoring.COUNTER: {},
+            Monitoring.HISTOGRAM: {}
+        }
         self.monitoring = Monitoring()
         self.monitoring.apply_config({})
 
@@ -39,7 +43,7 @@ class MonitoringTest1(unittest.TestCase):
         event_name = "test_histogram"
         histogram_item = self.monitoring._monitoring_items[self.monitoring.HISTOGRAM]
         self.assertTrue(histogram_item == dict())
-        histogram = self.monitoring.got_histogram(event_name)
+        histogram = self.monitoring._got_histogram(event_name)
         self.assertTrue(event_name not in histogram_item)
         self.assertIsNone(histogram)
 
@@ -48,7 +52,7 @@ class MonitoringTest1(unittest.TestCase):
         event_name = "test_histogram"
         histogram_item = self.monitoring._monitoring_items[self.monitoring.HISTOGRAM]
         self.assertTrue(histogram_item == dict())
-        self.monitoring.got_histogram(event_name)
+        self.monitoring._got_histogram(event_name)
         histogram_item = self.monitoring._monitoring_items[self.monitoring.HISTOGRAM]
         self.assertTrue(event_name in histogram_item)
         self.assertEqual(type(histogram_item[event_name]), type(Histogram('histogram_name', 'histogram_name')))
@@ -68,12 +72,22 @@ class MonitoringTest1(unittest.TestCase):
                 self.assertTrue(event_name in counter_item, event_name)
 
     def test_monitoring_init(self):
+        from core.monitoring.monitoring import monitoring
+
         class MyCustomMonitoring(Monitoring):
             pass
 
-        from core.monitoring import init_monitoring
-        init_monitoring(MyCustomMonitoring)
-        from core.monitoring import monitoring
-        self.assertIsInstance(monitoring.monitoring, MyCustomMonitoring)
-        init_monitoring(Monitoring)
-        self.assertIsInstance(monitoring.monitoring, Monitoring)
+        class SomeClass:
+            @monitoring.got_histogram("test_histogram")
+            def some_method(self):
+                return "test"
+
+        monitoring.set_instance(MyCustomMonitoring)
+        self.assertIsInstance(monitoring.instance, MyCustomMonitoring)
+        monitoring.set_instance(Monitoring)
+        self.assertIsInstance(monitoring.instance, Monitoring)
+        obj = SomeClass()
+        self.assertEqual(obj.some_method(), "test")
+        self.assertEqual(obj.some_method(), "test")
+        self.assertIn('test_histogram', Monitoring._monitoring_items[Monitoring.HISTOGRAM].keys())
+        self.assertIn('test_histogram', MyCustomMonitoring._monitoring_items[Monitoring.HISTOGRAM].keys())

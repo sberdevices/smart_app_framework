@@ -34,13 +34,13 @@ class Monitoring:
     HISTOGRAM = "histogram"
     DEFAULT_ENABLED = True
     DEFAULT_DISABLED_METRICS = []
+    _monitoring_items = {
+        COUNTER: {},
+        HISTOGRAM: {}
+    }
 
     def __init__(self):
         self._enabled = self.DEFAULT_ENABLED
-        self._monitoring_items = {
-            self.COUNTER: {},
-            self.HISTOGRAM: {}
-        }
         self.disabled_metrics = self.DEFAULT_DISABLED_METRICS.copy()
         self.buckets = Histogram.DEFAULT_BUCKETS
 
@@ -67,10 +67,10 @@ class Monitoring:
         if counter:
             counter.inc()
 
-    def got_histogram_decorate(self, name, description=None):
+    def got_histogram(self, name, description=None):
         def decor(func):
             def wrap(*args, **kwargs):
-                decor_ = self.got_histogram(name, description=None)
+                decor_ = self._got_histogram(name, description=None)
                 if decor_:
                     return decor_(func)(*args, **kwargs)
                 else:
@@ -78,7 +78,7 @@ class Monitoring:
             return wrap
         return decor
 
-    def got_histogram(self, name, description=None):
+    def _got_histogram(self, name, description=None):
         if self.check_enabled(name):
             histogram = self._monitoring_items[self.HISTOGRAM]
             if not histogram.get(name):
@@ -273,4 +273,25 @@ class Monitoring:
         monitoring.got_histogram_observe(_filter_monitoring_msg(monitoring_msg), value)
 
 
-monitoring = Monitoring()
+class Proxy:
+    def __init__(self, default_cls):
+        self.instance = default_cls()
+
+    def got_histogram(self, param):
+        def decor_(func):
+            def wrap(*args, **kwargs):
+                wrapped_func = self.instance.got_histogram(param)(func)
+                value = wrapped_func(*args, **kwargs)
+                return value
+            return wrap
+        return decor_
+
+    def set_instance(self, cls):
+        if not isinstance(self.instance, cls):
+            self.instance = cls()
+
+    def __getattr__(self, item):
+        return getattr(self.instance, item)
+
+
+monitoring = Proxy(Monitoring)

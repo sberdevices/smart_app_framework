@@ -174,7 +174,7 @@ class FormFillingScenario(BaseScenario):
             user.last_scenarios.delete(self.id)
         return action_messages
 
-    @monitoring.got_histogram_decorate("scenario_time")
+    @monitoring.got_histogram("scenario_time")
     def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
         form = self._get_form(user)
         user.last_scenarios.add(self.id, text_preprocessing_result)

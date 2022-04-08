@@ -18,7 +18,7 @@ class SmartPayActionTest(unittest.TestCase):
             },
             settings={
                 "template_settings": {
-                    "smart_pay_url": "0.0.0.0"
+                    "smartpay_url": "0.0.0.0"
                 }
             }
         )

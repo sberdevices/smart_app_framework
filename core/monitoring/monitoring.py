@@ -4,7 +4,7 @@ import re
 from core.logging.logger_constants import KEY_NAME
 from core.logging.logger_utils import log
 
-from prometheus_client import Counter, Histogram
+from prometheus_client import Counter, Histogram, REGISTRY
 
 
 def _filter_monitoring_msg(msg):
@@ -34,15 +34,23 @@ class Monitoring:
     HISTOGRAM = "histogram"
     DEFAULT_ENABLED = True
     DEFAULT_DISABLED_METRICS = []
-    _monitoring_items = {
-        COUNTER: {},
-        HISTOGRAM: {}
-    }
 
     def __init__(self):
         self._enabled = self.DEFAULT_ENABLED
         self.disabled_metrics = self.DEFAULT_DISABLED_METRICS.copy()
         self.buckets = Histogram.DEFAULT_BUCKETS
+        self._monitoring_items = {
+            self.COUNTER: {},
+            self.HISTOGRAM: {}
+        }
+        self._clean_registry()
+
+    @staticmethod
+    def _clean_registry():
+        """При создании нового инстанса мониторинга удаляем все созданные коллекторы"""
+        collectors = list(REGISTRY._collector_to_names.keys())
+        for collector in collectors:
+            REGISTRY.unregister(collector)
 
     def check_enabled(self, name: str):
         metric_disabled = next((True for m in self.disabled_metrics if re.fullmatch(m, name)), False)
@@ -287,7 +295,7 @@ class Proxy:
         return decor_
 
     def set_instance(self, cls):
-        if not isinstance(self.instance, cls):
+        if type(self.instance) != type(cls):
             self.instance = cls()
 
     def __getattr__(self, item):

@@ -13,10 +13,6 @@ class MonitoringTest(unittest.TestCase):
         self.logger.exception = PicklableMock()
         self.config = PicklableMock()
         self.mock_rep = PicklableMock()
-        Monitoring._monitoring_items = {
-            Monitoring.COUNTER: {},
-            Monitoring.HISTOGRAM: {}
-        }
         self.monitoring = Monitoring()
         self.monitoring.apply_config({})
 
@@ -75,19 +71,28 @@ class MonitoringTest(unittest.TestCase):
         from core.monitoring.monitoring import monitoring
 
         class MyCustomMonitoring(Monitoring):
-            pass
+            def got_histogram(self, name, description=None):
+                def decorator(function):
+                    def wrapper(*args, **kwargs):
+                        result = function(*args, **kwargs) + " " + name
+                        return result
+                    return wrapper
+                return decorator
 
         class SomeClass:
             @monitoring.got_histogram("test_histogram")
             def some_method(self):
                 return "test"
 
+        obj = SomeClass()
+
         monitoring.set_instance(MyCustomMonitoring)
         self.assertIsInstance(monitoring.instance, MyCustomMonitoring)
+
+        self.assertEqual(obj.some_method(), "test test_histogram")
+
         monitoring.set_instance(Monitoring)
         self.assertIsInstance(monitoring.instance, Monitoring)
-        obj = SomeClass()
+
         self.assertEqual(obj.some_method(), "test")
-        self.assertEqual(obj.some_method(), "test")
-        self.assertIn('test_histogram', Monitoring._monitoring_items[Monitoring.HISTOGRAM].keys())
-        self.assertIn('test_histogram', MyCustomMonitoring._monitoring_items[Monitoring.HISTOGRAM].keys())
+        self.assertIn('test_histogram', monitoring._monitoring_items[Monitoring.HISTOGRAM].keys())

@@ -7,8 +7,7 @@ from lazy import lazy
 
 from scenarios.scenario_descriptions.form_filling_scenario import FormFillingScenario
 from smart_kit.system_answers.nothing_found_action import NothingFoundAction
-from smart_kit.utils.monitoring import smart_kit_metrics
-
+from core.monitoring.monitoring import monitoring
 
 class DialogueManager:
     NOTHING_FOUND_ACTION = "nothing_found_action"
@@ -43,7 +42,7 @@ class DialogueManager:
                     if scenario.check_ask_again_requests(text_preprocessing_result, user, params):
                         reply = scenario.ask_again(text_preprocessing_result, user, params)
                         return reply, True
-                    smart_kit_metrics.counter_nothing_found(self.app_name, scenario_key, user)
+                    monitoring.counter_nothing_found(self.app_name, scenario_key, user)
                     return self._nothing_found_action.run(user, text_preprocessing_result), False
         return self.run_scenario(scenario_key, text_preprocessing_result, user), True
 
@@ -59,6 +58,6 @@ class DialogueManager:
 
         actual_last_scenario = user.last_scenarios.last_scenario_name
         if actual_last_scenario and actual_last_scenario != initial_last_scenario:
-            smart_kit_metrics.counter_scenario_change(self.app_name, actual_last_scenario, user)
+            monitoring.counter_scenario_change(self.app_name, actual_last_scenario, user)
 
         return run_scenario_result

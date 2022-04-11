@@ -10,7 +10,7 @@ from core.names.field import APP_INFO
 from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from core.utils.pickle_copy import pickle_deepcopy
 from scenarios.actions.action_params_names import TO_MESSAGE_NAME, TO_MESSAGE_PARAMS, LOCAL_VARS
-from smart_kit.utils.monitoring import smart_kit_metrics
+from core.monitoring.monitoring import monitoring
 
 
 class Behaviors:
@@ -136,7 +136,7 @@ class Behaviors:
             self._log_callback(
                 callback_id,
                 "behavior_success",
-                smart_kit_metrics.counter_behavior_success,
+                monitoring.counter_behavior_success,
                 "success",
                 callback_action_params,
             )
@@ -158,7 +158,7 @@ class Behaviors:
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
             self._log_callback(callback_id, "behavior_fail",
-                               smart_kit_metrics.counter_behavior_fail, "fail",
+                               monitoring.counter_behavior_fail, "fail",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
             result = behavior.fail_action.run(self._user, text_preprocessing_result, callback_action_params)
@@ -177,7 +177,7 @@ class Behaviors:
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
             self._log_callback(callback_id, "behavior_timeout",
-                               smart_kit_metrics.counter_behavior_timeout, "timeout",
+                               monitoring.counter_behavior_timeout, "timeout",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
             result = behavior.timeout_action.run(self._user, text_preprocessing_result, callback_action_params)
@@ -197,7 +197,7 @@ class Behaviors:
             behavior = self.descriptions[callback.behavior_id]
             callback_action_params = callback.action_params
             self._log_callback(callback_id, "behavior_misstate",
-                               smart_kit_metrics.counter_behavior_misstate, "misstate",
+                               monitoring.counter_behavior_misstate, "misstate",
                                callback_action_params)
             text_preprocessing_result = TextPreprocessingResult(callback.text_preprocessing_result)
             result = behavior.misstate_action.run(self._user, text_preprocessing_result, callback_action_params)
@@ -248,7 +248,7 @@ class Behaviors:
             callback_action_params = self.get_callback_action_params(callback_id)
             to_message_name = callback_action_params.get(TO_MESSAGE_NAME)
             app_info = callback_action_params.get(APP_INFO, {})
-            smart_kit_metrics.counter_behavior_expire(self._user.settings.app_name, to_message_name)
+            monitoring.counter_behavior_expire(self._user.settings.app_name, to_message_name)
             log_params = {log_const.KEY_NAME: "behavior_expire",
                           log_const.BEHAVIOR_CALLBACK_ID_VALUE: callback_id,
                           log_const.BEHAVIOR_DATA_VALUE: str(self._callbacks[callback_id]),
@@ -300,4 +300,4 @@ class Behaviors:
                         log_const.LAST_HOSTNAME: callback.hostname,
                         }
             )
-            smart_kit_metrics.counter_host_has_changed(self._user.settings.app_name)
+            monitoring.counter_host_has_changed(self._user.settings.app_name)

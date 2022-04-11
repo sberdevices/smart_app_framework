@@ -29,10 +29,9 @@ def get_app_config(environment_variable=ENVIRONMENT_VARIABLE):
     set_default(app_config, "REFERENCES_PATH", references_path)
 
     # import and init monitoring first - because other classes use a singleton instance of Monitoring
-    from core.monitoring.monitoring import Monitoring
-    from core.monitoring import init_monitoring
+    from core.monitoring.monitoring import Monitoring, monitoring
     set_default(app_config, 'MONITORING', Monitoring)
-    init_monitoring(app_config.MONITORING)
+    monitoring.set_instance(app_config.MONITORING)
 
     from core.logging.logger_utils import LoggerMessageCreator
     from core.message.from_message import SmartAppFromMessage

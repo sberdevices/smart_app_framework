@@ -84,7 +84,7 @@ class TreeScenario(FormFillingScenario):
                 all_forms_fields.update(form_field_data)
         return all_forms_fields
 
-    @monitoring.got_histogram_decorate("scenario_time")
+    @monitoring.got_histogram("scenario_time")
     def run(self, text_preprocessing_result, user, params: Dict[str, Any] = None):
         main_form = self._get_form(user)
         user.last_scenarios.add(self.id, text_preprocessing_result)

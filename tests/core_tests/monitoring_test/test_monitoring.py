@@ -71,12 +71,26 @@ class MonitoringTest(unittest.TestCase):
         from core.monitoring.monitoring import monitoring
 
         class MyCustomMonitoring(Monitoring):
+            pass
+
+        monitoring.set_instance(MyCustomMonitoring)
+        self.assertEqual(type(monitoring.instance), MyCustomMonitoring)
+
+        monitoring.set_instance(Monitoring)
+        self.assertEqual(type(monitoring.instance), Monitoring)
+
+    def test_decorator(self):
+        from core.monitoring.monitoring import monitoring
+
+        class MyCustomMonitoring(Monitoring):
             def got_histogram(self, name, description=None):
                 def decorator(function):
                     def wrapper(*args, **kwargs):
                         result = function(*args, **kwargs) + " " + name
                         return result
+
                     return wrapper
+
                 return decorator
 
         class SomeClass:
@@ -85,14 +99,13 @@ class MonitoringTest(unittest.TestCase):
                 return "test"
 
         obj = SomeClass()
+        self.assertEqual(obj.some_method(), "test")
 
         monitoring.set_instance(MyCustomMonitoring)
-        self.assertIsInstance(monitoring.instance, MyCustomMonitoring)
-
         self.assertEqual(obj.some_method(), "test test_histogram")
 
         monitoring.set_instance(Monitoring)
-        self.assertIsInstance(monitoring.instance, Monitoring)
-
         self.assertEqual(obj.some_method(), "test")
+
         self.assertIn('test_histogram', monitoring._monitoring_items[Monitoring.HISTOGRAM].keys())
+

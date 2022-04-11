@@ -295,7 +295,7 @@ class Proxy:
         return decor_
 
     def set_instance(self, cls):
-        if type(self.instance) != type(cls):
+        if type(self.instance) != cls:
             self.instance = cls()
 
     def __getattr__(self, item):

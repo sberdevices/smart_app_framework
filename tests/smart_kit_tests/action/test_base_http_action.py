@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from smart_kit.action.base_http import BaseHttpRequestAction
+from smart_kit.utils.picklable_mock import PicklableMock
 
 
 class BaseHttpRequestActionTest(unittest.TestCase):
@@ -11,13 +12,13 @@ class BaseHttpRequestActionTest(unittest.TestCase):
     @staticmethod
     def set_request_mock_attribute(request_mock, return_value=None):
         return_value = return_value or {}
-        request_mock.return_value = Mock(
-            __enter__=Mock(return_value=Mock(
-                json=Mock(return_value=return_value),
+        request_mock.return_value = PicklableMock(
+            __enter__=PicklableMock(return_value=PicklableMock(
+                json=PicklableMock(return_value=return_value),
                 cookies={},
                 headers={},
             ),),
-            __exit__=Mock()
+            __exit__=PicklableMock()
         )
 
     @patch('requests.request')

@@ -22,6 +22,11 @@ class HTTPRequestAction(Action):
     """
 
     HTTP_ACTION = BaseHttpRequestAction
+    POST = "POST"
+    GET = "GET"
+    PUT = "PUT"
+    DELETE = "DELETE"
+    PATCH = "PATCH"
 
     def __init__(self, items, id=None):
         self.http_action = self.HTTP_ACTION(items["params"], id)

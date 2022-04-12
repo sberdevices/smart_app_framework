@@ -285,10 +285,10 @@ class Proxy:
     def __init__(self, default_cls):
         self.instance = default_cls()
 
-    def got_histogram(self, param):
+    def got_histogram(self, *args_, **kwargs_):
         def decor_(func):
             def wrap(*args, **kwargs):
-                wrapped_func = self.instance.got_histogram(param)(func)
+                wrapped_func = self.instance.got_histogram(*args_, **kwargs_)(func)
                 value = wrapped_func(*args, **kwargs)
                 return value
             return wrap

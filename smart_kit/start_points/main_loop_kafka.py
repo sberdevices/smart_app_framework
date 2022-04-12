@@ -121,8 +121,8 @@ class MainLoop(BaseMainLoop):
             request.update_empty_items({"topic_key": topic_key, "kafka_key": kafka_key})
             to_message = get_to_message(command.name)
             answer = to_message(command=command, message=message, request=request,
-                                 masking_fields=self.masking_fields,
-                                 validators=self.to_msg_validators)
+                                masking_fields=self.masking_fields,
+                                validators=self.to_msg_validators)
             if answer.validate():
                 answers.append(answer)
             else:

@@ -42,15 +42,16 @@ class HandlerRespond(HandlerBase):
         else:
             log("HandlerRespond with action %(action_name)s started without callback", user, params)
 
-        text_preprocessing_result = TextPreprocessingResult(payload.get("message", {}))
-
         smart_kit_metrics.counter_incoming(self.app_name, user.message.message_name, self.__class__.__name__, user)
 
-        params = {
-            log_const.KEY_NAME: log_const.NORMALIZED_TEXT_VALUE,
-            "normalized_text": str(text_preprocessing_result.raw),
-        }
-        log("text preprocessing result: '%(normalized_text)s'", user, params, level="DEBUG")
+        text_preprocessing_result = TextPreprocessingResult(payload.get("message", {}))
+
+        if payload.get("message"):
+            params = {
+                log_const.KEY_NAME: log_const.NORMALIZED_TEXT_VALUE,
+                "normalized_text": str(text_preprocessing_result.raw),
+            }
+            log("text preprocessing result: '%(normalized_text)s'", user, params, level="DEBUG")
 
         action = user.descriptions["external_actions"][action_name]
         return action.run(user, text_preprocessing_result, action_params)

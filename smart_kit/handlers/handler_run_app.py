@@ -7,10 +7,10 @@ from core.text_preprocessing.preprocessing_result import TextPreprocessingResult
 from smart_kit.handlers.handler_base import HandlerBase
 
 
-class HandlerText(HandlerBase):
+class HandlerRunApp(HandlerBase):
 
     def __init__(self, app_name, dialogue_manager):
-        super(HandlerText, self).__init__(app_name)
+        super().__init__(app_name)
         log(
             f"{self.__class__.__name__}.__init__ started.", params={log_const.KEY_NAME: log_const.STARTUP_VALUE}
         )
@@ -22,17 +22,12 @@ class HandlerText(HandlerBase):
     def run(self, payload, user):
         super().run(payload, user)
 
-        text_preprocessing_result = TextPreprocessingResult(payload["message"])
+        params = {log_const.KEY_NAME: "handling_run_app"}
+        log(f"{self.__class__.__name__}.run started", user, params)
 
-        params = {
-            log_const.KEY_NAME: log_const.NORMALIZED_TEXT_VALUE,
-            "normalized_text": str(text_preprocessing_result.raw),
-        }
-        log("text preprocessing result: '%(normalized_text)s'", user, params)
-
-        answer = self._handle_base(text_preprocessing_result, user)
+        answer = self._handle_base(user)
         return answer
 
-    def _handle_base(self, text_preprocessing_result, user):
-        answer, is_answer_found = self.dialogue_manager.run(text_preprocessing_result, user)
+    def _handle_base(self, user):
+        answer, is_answer_found = self.dialogue_manager.run(TextPreprocessingResult({}), user)
         return answer or []
